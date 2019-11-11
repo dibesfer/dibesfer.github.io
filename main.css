@@ -1,0 +1,123 @@
+<style>
+
+html {
+  scroll-behavior: smooth;
+}
+
+.post-footer-line.post-footer-line-1 {
+    display: none;
+}
+
+img {
+max-width: 100%;
+height: auto;
+}
+
+/*#Blog1 img {
+height: unset !important;
+}*/
+
+.separator a {
+  margin: unset !important;
+}
+
+body {
+  line-height: 1.75;
+  background-color: white;
+}
+
+.title {
+   display: none;
+}
+
+.date-header {
+   font-size: inherit;
+   font-weight: inherit;
+   color: gray;
+   margin-bottom: -40px;
+}
+
+hr {
+border: solid 2px ;
+color: black;
+}
+
+a {
+text-decoration: none;
+color: purple;
+
+}
+
+.blog-feeds {
+display:none
+}
+
+#blog-pager {
+display:none
+}
+
+.post-title {
+
+font-size: 36px;
+margin-top: -10px;
+
+}
+
+li {
+  line-height: 2;
+}
+
+
+@media screen and (min-width: 800px){
+
+body {
+width: 700px;
+margin: auto;
+font-size: 20px;
+}
+
+/* PONERLE BORDE NEGRO A LA VERSIÓN DESKTOP*/
+
+body {
+
+   padding: 20px 70px;
+   margin: 50px auto;
+
+}
+
+html {
+   background-color:cadetblue;
+}
+
+}
+
+@media screen and (max-width: 800px){
+
+body {
+max-width: 100%;
+margin: 15px;
+}
+
+.date-outer {
+margin: 0 10px;
+font-size: 17px;
+}
+}
+
+/* INHABILITAR SELECCIÓN DE TEXTO */
+
+* {
+  -webkit-user-select: none; /* Safari 3.1+ */
+  -moz-user-select: none; /* Firefox 2+ */
+  -ms-user-select: none; /* IE 10+ */
+  -khtml-user-select: none;
+  user-select: none; /* Standard syntax */
+}
+
+/* INHABILITAR BOTÓN DERECHO */
+
+</style>
+
+<script>
+document.addEventListener('contextmenu', event => event.preventDefault());
+</script>
