@@ -13,10 +13,6 @@ max-width: 100%;
 height: auto;
 }
 
-/*#Blog1 img {
-height: unset !important;
-}*/
-
 .separator a {
   margin: unset !important;
 }
@@ -117,7 +113,3 @@ font-size: 17px;
 /* INHABILITAR BOTÓN DERECHO */
 
 </style>
-
-<script>
-document.addEventListener('contextmenu', event => event.preventDefault());
-</script>
