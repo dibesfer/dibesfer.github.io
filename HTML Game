@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<meta charset="utf-8">
+<title>HTML-Game</title>
+
+	<!-- GOOGLE FONTS LINK -->
+	<!-- Css Implementation: "font-family: 'Press Start 2P', cursive;" -->
+	<link rel="preconnect" href="https://fonts.gstatic.com">
+	<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet"> 
+
+<style>
+
+	body {
+
+		background-color: black ;
+		color: #08ff20;
+		font-family: 'Press Start 2P', cursive;
+		line-height: 1.4;
+
+	}
+
+	/* Body for Desktop Browsers */
+
+	body {
+
+		font-size: large;
+
+	}
+	/* END DESKTOP MODE*/
+	main {
+
+		font-family: ;
+		width: 600px;
+		max-width:100%;
+		margin: auto;
+	}
+	
+	.mainarticle {
+
+		
+
+	}
+
+	/* LINKS */
+
+	a {
+
+		color: white;
+		text-decoration: none;	
+		transition: 1s;
+
+	}
+
+	a:hover {
+
+		color: red;
+		transition: 1s;
+	
+	}
+
+	#SHOWBOX1 {
+
+		border: dotted 6px #08ff20;
+		padding: 15px;
+		max-width: 100%;
+		height: 100px;
+		
+		overflow-y: auto;
+		overflow-wrap: break-word;
+	}
+
+	#TEXTBOX1 {
+
+		padding: 15px;
+		background-color: black;
+		color: #08ff20;
+		font-family: inherit;
+		border: dotted 6px #08ff20;
+		font-size: large;
+	}
+
+	footer {
+	
+		text-align:center;
+		font-size: small;
+
+	}
+
+</style>
+
+</head>
+
+<body>
+<header>
+
+<center><h1>___HTML_game___</h1><h3>Choose Your Path Adventure</h3></center>
+<hr style="color:white;height:15px;border:solid green 6px;" />
+</header>
+
+<main>
+
+	
+	
+	<div class="mainarticle">
+		
+		<h3>Subtitle 1</h3>
+		<p>Welcome  to the console-like html game</p>
+	
+	</div>
+
+	<div id="user_stats">
+
+		<div id="lifebar">HP: </div><br/>
+
+	</div>
+
+	<div id="SHOWBOX1">
+	
+		<p>Welcome player</p>	
+
+	</div><br/>
+
+	<input type="text-box" id="TEXTBOX1" placeholder="Write here..." ></input><br/><br/>
+
+</main>
+
+<footer>
+
+<p><a href="https://fonts.google.com/specimen/Press+Start+2P?preview.text_type=custom&sidebar.open=true&selection.family=Press+Start+2P">Font link</a></p>
+
+<p>Made by <a href="https://dibesfer.com" >dibesfer.com</a></p>
+
+
+</footer>
+
+</body>
+
+
+<!-- Script always under everything (?) -->
+<script>
+
+var userlife = 100;
+
+document.getElementById("lifebar").innerHTML += userlife;
+
+if (userlife < 100) { document.getElementById("lifebar").innerHTML += userlife;  }
+
+document.getElementById("TEXTBOX1").oninput = function() {readTextbox()};
+
+function readTextbox() {
+  var x = document.getElementById("TEXTBOX1").value;
+  document.getElementById("SHOWBOX1").innerHTML = "You wrote: " + x;
+
+	if (x=="help") {   document.getElementById("SHOWBOX1").innerHTML = "HELP CENTER: " + x; }
+	
+
+}
+
+
+</script>
+
+</html>
