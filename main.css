@@ -1,5 +1,20 @@
 <style>
 
+  
+  body {
+    color: white;                                               
+  }
+  				  
+  #project_list {
+	background-color: darkgrey;
+	border-radius: 5px;					  
+  }
+
+  #banner {
+  	background-color: white;						  
+  }						  
+  
+
 html {
   scroll-behavior: smooth;
 }
@@ -78,6 +93,10 @@ li {
   line-height: 2;
 }
 
+main {
+	background-color: black;
+	border-radius: 5px;					  
+  }		
 
 @media screen and (min-width: 800px){
 
@@ -97,7 +116,7 @@ body {
 }
   
 main {
-  padding: 15px;
+  padding: 20px;
   }
 
 /*html {
