@@ -57,8 +57,8 @@ transition: 0.4s;
 <center>
 
 <p><i>A pure HTML, CSS and JS game</i></p>
-<p>made by dibesfer</p>
-<p>For more visit <a href="https://dibesfer.com">dibesfer.com</a></p>
+<p><i>made by dibesfer</i></p>
+<p>Visit <a href="https://dibesfer.com">dibesfer.com</a> for more content</p>
 
 </center>
 
@@ -67,15 +67,25 @@ transition: 0.4s;
 var marker = document.getElementById("marker");
 var dialogBox = document.getElementById("dialogbox");
 var supernum=0;
+var supersum=1;
 var numbox =document.getElementById("shownum");
 dialogBox.innerHTML = "Is this too easy for you? ";
 numbox.innerHTML = supernum;
 
 function numsum(){
-   supernum++;
+   supernum = supernum + supersum;
    numbox.innerHTML = supernum ;
    if(supernum==5){
        dialogBox.innerHTML = "¡Wow! You started hard on this.";
+   }
+   
+   if(supernum==10){
+       dialogBox.innerHTML = "¡10 points! This is just the beginning.";
+   }
+   
+   if(supernum==20){
+       supersum = 2;
+       dialogBox.innerHTML = "¡Okay! You are serious on this, lets sum now 2 by 2";
    }
 
    if(supernum==100){
