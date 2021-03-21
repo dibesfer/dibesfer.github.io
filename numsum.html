@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Numsum</title>
+
+<style>
+
+#shownum {
+   font-size: 40px;
+   text-align: center;
+   border: solid 3px black;
+   border-radius:100%;
+   width: max-content;
+   padding: 10px;
+}
+
+#butnumsum{
+width: 200px;
+height: 50px;
+background-color: white;
+border: solid 3px black;
+transition: 0.4s;
+font-size: large;
+}
+
+#butnumsum:focus{
+background-color: gold;
+transition: 0.4s;
+}
+
+</style>
+
+</head>
+<center>
+<div id="title">
+<h2>Numsum</h2>
+<h3 id="marker">Reach the hundred!</h3>
+</div>
+
+<div id="dialogbox">
+</div><br/>
+
+<div id="shownum"></div>
+<br/><button id="butnumsum" onclick="numsum()" value="Numsum">Click</button>
+
+</center>
+
+<script>
+
+var marker = document.getElementById("marker");
+var dialogBox = document.getElementById("dialogbox");
+var supernum=0;
+var numbox =document.getElementById("shownum");
+dialogBox.innerHTML = "Is this too easy for you? ";
+numbox.innerHTML = supernum;
+
+function numsum(){
+   supernum++;
+   numbox.innerHTML = supernum ;
+   if(supernum==5){
+       dialogBox.innerHTML = "¡Wow! You started hard on this.";
+   }
+
+   if(supernum==100){
+      dialogBox.innerHTML= "YOU'VE DONE MATE! See? You're not that bad after all.";
+
+      marker.innerHTML = "You have won!";
+   }
+
+}
+
+</script>
+</html>
