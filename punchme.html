@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<h1>PunchMe!<h1>
+<h3>Want to release some stress?</h3>
+<div onclick="punch()" id="imagebox">
+<img id="image1" src="" width="100%" />
+</div>
+
+<script>
+
+var counter = 0;
+var images = [
+"https://lh3.googleusercontent.com/-XgvtqQz6DQQ/YFfAyOUx-cI/AAAAAAAACaw/NTorCjTX8TMW-627J4drxxjvtdiNQkh0QCNcBGAsYHQ/s1600/1616363718865184-0.png",
+
+"https://lh3.googleusercontent.com/--cdBGKENECk/YFfAxeDBMCI/AAAAAAAACas/dqg6RbOpvlYUcEWlw1YPKjPnqYqXJxXgACNcBGAsYHQ/s1600/1616363715586388-1.png",
+
+"https://lh3.googleusercontent.com/--trma861gNs/YFfAwQ5QUTI/AAAAAAAACao/3uokQMx-lscfgqSJ3hhxfGNK3YsABpYDgCNcBGAsYHQ/s1600/1616363712390530-2.png",
+
+"https://lh3.googleusercontent.com/-InJGsU1H0DY/YFfAvnG7ofI/AAAAAAAACak/Yjzjq0-8lq00wm3dNak6mCmXn8MEqzZPgCNcBGAsYHQ/s1600/1616363709230852-3.png", 
+
+"https://lh3.googleusercontent.com/-CKFhtHCJ6DE/YFfAu6Dhr2I/AAAAAAAACag/-oB27yYwh2wO8cyL9Q6kkEFQrncLJy27ACNcBGAsYHQ/s1600/1616363705379353-4.png",
+
+"https://lh3.googleusercontent.com/-egrbGGxqjIc/YFfAt6RqqAI/AAAAAAAACac/W5MTbBAqtAgXqwv9M8ISn6I9aRwSg8ZNQCNcBGAsYHQ/s1600/1616363701946558-5.png",
+
+"https://lh3.googleusercontent.com/-a001DRKbe78/YFfAtIpkKpI/AAAAAAAACaY/coZ3tNJiaggfQIfc87aVloxWEd_MUn03QCNcBGAsYHQ/s1600/1616363698589077-6.png",
+
+"https://lh3.googleusercontent.com/--j4SQaqRytg/YFfAsU7kqYI/AAAAAAAACaU/oIUdqBNOYKQ8zJLPOIPlCCdtANQ96X2iQCNcBGAsYHQ/s1600/1616363695050813-7.png",
+
+"https://lh3.googleusercontent.com/-Tgyzma4XUdE/YFfArYKlQlI/AAAAAAAACaQ/aGcjNKnxbsUubj9Hgrdu4oOXojkJPbSGACNcBGAsYHQ/s1600/1616363692013868-8.png",
+
+"https://lh3.googleusercontent.com/-98JgeEXTjBI/YFfAqkmofeI/AAAAAAAACaM/Mo8TvyB8_eMgqUAAMlurk_GiWvdsfcMTACNcBGAsYHQ/s1600/1616363688962803-9.png",
+
+"https://lh3.googleusercontent.com/-x3nHg4CuMKA/YFfApuVJdAI/AAAAAAAACaI/fuDIkE3MqDA0gynLvnzOWIhjnGz1Sr2WACNcBGAsYHQ/s1600/1616363684829748-10.png",
+
+"https://lh3.googleusercontent.com/-w_UjsVOEwFc/YFfAolZQIBI/AAAAAAAACaE/8c9vbPkgUbo_2NNu8iKidC2QAhAk2RS4ACNcBGAsYHQ/s1600/1616363680281399-11.png",
+
+"https://lh3.googleusercontent.com/-Qr2kRjaEp6w/YFfAnqt3htI/AAAAAAAACaA/1iVRnTNMQrI-rhgmDXENVYUdku1cNq57gCNcBGAsYHQ/s1600/1616363676927994-12.png",
+
+"https://lh3.googleusercontent.com/-XRPB9efcyn4/YFfAmtSid2I/AAAAAAAACZ8/v-EF75r4Fjo3ODxxmobnGGRiwDQyXeQ4wCNcBGAsYHQ/s1600/1616363672336242-13.png",
+
+"https://lh3.googleusercontent.com/-dD7EKOiPh1M/YFfAlv3-O7I/AAAAAAAACZ4/RdsSZlay2jsPZOL8gGIsJEd1zYrX3bQ4ACNcBGAsYHQ/s1600/1616363669509839-14.png",
+
+"https://lh3.googleusercontent.com/-DV8qatqi7Lg/YFfAk2qwZPI/AAAAAAAACZ0/CuFRI0GwsS4NGF-BlZOjOb3oEaxTSIf3QCNcBGAsYHQ/s1600/1616363665112492-15.png",
+
+"https://lh3.googleusercontent.com/-bPaEAh7rWy8/YFfAj_5QXwI/AAAAAAAACZw/evPwQ2fS7QwqR1rASQEJYHQCYyKmHl67gCNcBGAsYHQ/s1600/1616363656491098-16.png"
+
+];
+
+var image = document.getElementById("image1");
+
+image.src = images[counter];
+
+function punch() {
+   
+
+   if (counter < images.length-1){
+       counter++;
+       image.src = images[counter];
+   }
+
+   else {
+
+  counter = 0;
+  image.src = images[counter];
+}
+   
+}
+
+</script>
+
+</html>
