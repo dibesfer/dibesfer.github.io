@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Dibesfer's JS BookReader</title>
+  <meta name="description" content="">
+  <meta name="viewport" content="width=device-width, initial-scale=!">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta charset="utf-8">
+<style>
+	
+    #allbox {
+    
+    	max-width: 750px;
+        margin: auto;
+	font-size: larger;
+    
+    }
+
+	#consolebox {
+    
+    	display: flex;
+        flex-direction: column;
+        height: 500px;
+        
+    
+    }
+
+	#dialogbox {
+    
+    	height: 100%;
+        width: 100%;
+        overflow: auto;
+        z-index: 1;
+    
+    }
+
+	#indexbox {
+    
+    	height: 50%;
+    	z-index: 2;
+        border: solid 3px black;
+        
+        
+    
+    }
+
+	#buttons {
+    
+    	display: flex;
+		border: solid 3px black;
+        font-size: 30px;
+
+	}
+    
+    #leftbutton , #midbutton , #rightbutton {
+    
+    	flex: 33.33%;
+        text-align: center;
+        padding: 15px;
+        transition: 0.4s;
+    
+    }
+
+	#leftbutton:hover , #midbutton:hover , 		#rightbutton:hover {
+    
+    	background-color: silver;
+        transition: 0.4s;
+    
+    }
+
+</style>
+
+</head>
+<div id ="allbox"> <!-- Like a body -->
+<div id="consolebox">
+<div id="dialogbox">Dialog BOX</div>
+
+<div id="indexbox">
+
+<li>Title</li>
+<ol>
+
+	<li onclick="indexSelect(0)">Chapter. Beginnings </li>
+    <li onclick="indexSelect(1)">Chapter. The first step </li>
+    <li onclick="indexSelect(2)">Chapter. Second opportunities </li>
+    <li onclick="indexSelect(3)">Chapter </li>
+    <li onclick="indexSelect(4)">Chapter </li>
+    <li onclick="indexSelect(5)">Chapter </li>
+
+</ol>
+
+
+</div>
+
+</div><!--END CONSOLEBOX-->
+
+<div id="buttons">
+
+	<div id="leftbutton">🡸</div>
+    <div id="midbutton" onclick="showIndex()">INDEX</div>
+    <div id="rightbutton">🡺</div>
+
+</div>
+
+<div id="console"><br/><i>Dibesfer's Javascript Book Reader</i></div>
+</div><!-- END OF ALLBOX -->
+<script>
+
+	var indexhide = true;
+    var index = document.getElementById("indexbox");
+	var counter = 0;
+	var dialogs = [
+    
+    "<h1>The Story of Stanley</h1>" + 
+    "<img src='https://planbdetectives.com/wp-content/uploads/2014/10/Business-man-and-office-outline.jpg' width='100%'>" +
+    "<h3>About the origins</h3>" +
+    "<p>In the beginning, there was a man called Stanley.</p>",
+    
+    "<h2>Chapter I : Beginnings</h2>" + 
+    "<h3>About the origins</h3>" +
+    "<p>In the beginning, there was a man called Stanley.</p>" +
+    "<p> Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi est felis, rhoncus quis posuere non, tristique sed odio. Quisque luctus maximus leo sed luctus. Mauris arcu mauris, molestie nec urna interdum, posuere auctor massa. Aliquam ut mi vulputate, volutpat neque id, ultricies nisl. Proin diam tellus, cursus sit amet mollis et, scelerisque blandit sapien. Maecenas sapien mi, maximus a eros quis, tincidunt euismod arcu. Morbi quis ornare leo. Nulla sed felis nec urna blandit finibus. Morbi posuere sapien eu nunc egestas venenatis. Donec dapibus, elit eget tristique ullamcorper, nisl sem elementum lorem, ac consequat libero nisl sed nisi. Aenean at scelerisque dui. Aliquam vulputate magna sit amet ex elementum aliquet. Suspendisse vel nisi non ex aliquet fermentum. Sed tempus gravida velit, sed convallis est semper ac."+
+
+"Donec facilisis fringilla arcu vel commodo. In a pretium massa. Sed lacinia ut odio sit amet feugiat. Etiam ex massa, consectetur et tempor non, facilisis sit amet arcu. In ut rutrum lacus. Mauris quis egestas felis. Nulla ullamcorper sem a mi pulvinar, sit amet blandit diam euismod. Vivamus varius diam in velit porta, in scelerisque libero rutrum. Nam eros odio, blandit vitae arcu eu, lobortis vehicula ligula. Phasellus mauris metus, interdum at aliquam vel, porta id sem. Ut ut augue gravida, sodales massa ut, semper velit. Etiam tristique malesuada mauris id tempor. Nullam finibus metus eget mi vulputate euismod." +
+"</p>",
+    
+    
+    "<h2>Chapter II : Beginnings</h2>" + 
+    "<h3>About the origins</h3>" +
+    "<p>In the beginning, there was a man called Stanley.</p>",
+    
+    
+    "<h2>Chapter III : Beginnings</h2>" + 
+    "<h3>About the origins</h3>" +
+    "<p>In the beginning, there was a man called Stanley.</p>",
+    
+    
+    "<h2>Chapter IV : Beginnings</h2>" + 
+    "<h3>About the origins</h3>" +
+    "<p>In the beginning, there was a man called Stanley.</p>",
+    
+    
+    "<h2>Chapter V : Beginnings</h2>" + 
+    "<h3>About the origins</h3>" +
+    "<p>In the beginning, there was a man called Stanley.</p>",
+    
+    
+    "<h2>Chapter VI : Beginnings</h2>" + 
+    "<h3>About the origins</h3>" +
+    "<p>In the beginning, there was a man called Stanley.</p>",
+    
+    
+    "<h2>Chapter VII : Beginnings</h2>" + 
+    "<h3>About the origins</h3>" +
+    "<p>In the beginning, there was a man called Stanley.</p>"
+    
+    ];
+
+	var dialogBox = document.getElementById("dialogbox");
+    
+    //Ocultamos el índice al iniciar
+    index.style.display = "none";
+    
+    dialogBox.innerHTML = dialogs[counter];
+    
+    //The buttons 
+    
+    var rbutton = document.getElementById("rightbutton");
+    var mbutton = document.getElementById("midbutton");    
+    var lbutton = document.getElementById("leftbutton");
+    
+    rbutton.onclick = function() {gorite()};
+    
+    function gorite(){
+    
+    	if(counter < dialogs.length-1){counter = counter + 1;}
+        
+        else {counter = 0;}
+        
+        dialogBox.innerHTML = dialogs[counter];
+      
+    }
+    
+    lbutton.onclick = function() {goleft()};
+    
+    function goleft(){
+    
+    if(counter != 0 ){
+    	
+        counter = counter - 1;
+    	dialogBox.innerHTML = dialogs[counter];
+    
+    }   
+    
+    }
+    
+    function index(){
+    
+    	if(counter < dialogs.length-1){counter = counter + 1;}
+        
+        else {counter = 0;}
+        
+        dialogBox.innerHTML = dialogs[counter];
+      
+    }
+    
+    function showIndex() {
+    
+  		if (indexhide == true) {
+        
+  			index.style.display = "block";
+            indexhide = false;
+  		} 
+        else {
+    		index.style.display = "none";
+            indexhide = true;
+  		}
+	}
+    
+    var num;
+    function indexSelect(num){
+    
+    if (indexhide == false){
+    counter = num;
+    dialogBox.innerHTML = dialogs[num];
+    }
+    }
+    
+    
+    
+
+</script>
+
+</html>
