@@ -20,6 +20,8 @@ height: auto;
 body {
   line-height: 1.75;
   /*background-color: white;*/
+  
+  font-family: Verdana;
 }
 
 /* BACKGROUND */
