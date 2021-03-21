@@ -93,6 +93,10 @@ body {
    margin: 50px auto;
 
 }
+  
+main {
+  padding: 15px;
+  }
 
 /*html {
    background-color:cadetblue;
