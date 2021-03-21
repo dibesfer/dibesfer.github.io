@@ -97,6 +97,7 @@ main {
 	background-color: black;
 	border-radius: 5px;					  
         color: white;
+        padding: 10px;
 }		
 
 @media screen and (min-width: 800px){
