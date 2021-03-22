@@ -3,9 +3,15 @@
 <head>
 <title>PunchMe</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+
+   <style>
+       
+   </style>
+   
+   
 </head>
 <h1>PunchMe!<h1>
-<h3>Want to release some stress?</h3>
+<h3 id="subtitle">Want to release some stress?</h3>
 <div onclick="punch()" id="imagebox">
 <img id="image1" src="" width="100%" />
 </div>
@@ -51,7 +57,7 @@ var images = [
 ];
 
 var image = document.getElementById("image1");
-
+var dialog = document.getElementById("subtitle");
 image.src = images[counter];
 
 function punch() {
@@ -60,6 +66,11 @@ function punch() {
    if (counter < images.length-1){
        counter++;
        image.src = images[counter];
+      
+      if (counter==images.length){
+         dialog.innerHTML = "It's dead!";        
+      }
+      
    }
 
    else {
@@ -69,6 +80,8 @@ function punch() {
 }
    
 }
+   
+
 
 </script>
 
