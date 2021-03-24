@@ -97,7 +97,7 @@ function numsum(){
    }
 
    if(supernum==60){
-       supersum = 60;
+       supersum = 4;
        dialogBox.innerHTML = "¡Okay! You are serious on this, lets sum now by 4";
    }
 
@@ -105,6 +105,20 @@ function numsum(){
       dialogBox.innerHTML= "YOU'VE DONE MATE! See? You're not that bad after all.";
 
       marker.innerHTML = "You have won!";
+   }
+
+   if(supernum==110){
+      
+      dialogBox.innerHTML= "Seems youre made of iron, mate.";
+
+      marker.innerHTML = "Level 2. Reach a thousand!";
+   }
+
+   if(supernum==120){
+      supernum = 6;
+      dialogBox.innerHTML= "Guess I'be gone? I'm here to help you. Here is a bonus. Now you sum by 6.";
+
+     
    }
    
    btn.onmouseup = function() {chgBG()}
