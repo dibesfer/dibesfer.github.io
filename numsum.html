@@ -78,6 +78,10 @@ numbox.innerHTML = supernum;
 function numsum(){
    supernum = supernum + supersum;
    numbox.innerHTML = supernum ;
+   btn.style.transition = "0.4s";
+   btn.style.backgroundColor = "gold";
+
+
    if(supernum==5){
        dialogBox.innerHTML = "¡Wow! You started hard on this.";
    }
@@ -100,8 +104,9 @@ function numsum(){
    btn.onmouseup = function() {chgBG()}
 
    function chgBG(){
-       btn.style.backgroundColor = "white";
        btn.style.transition = "0.4s";
+       btn.style.backgroundColor = "white";
+       
    }
 }
 
