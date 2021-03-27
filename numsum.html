@@ -87,47 +87,41 @@ function numsum(){
        dialogBox.innerHTML = "¡Wow! You started hard on this.";
    }
    
-   if(supernum==10){
+   else if(supernum==10){
        dialogBox.innerHTML = "¡10 points! This is just the beginning.";
    }
    
-   if(supernum==40){
+   else if(supernum==40){
        supersum = 2;
        dialogBox.innerHTML = "¡Okay! You are serious on this, lets sum now 2 by 2";
    }
 
-   if(supernum==60){
+   else if(supernum==60){
        supersum = 4;
        dialogBox.innerHTML = "¡Okay! You are serious on this, lets sum now by 4";
    }
 
-   if(supernum==100){
+   else if(supernum==100){
       dialogBox.innerHTML= "YOU'VE DONE MATE! See? You're not that bad after all.";
 
       marker.innerHTML = "You have won!";
    }
 
-   if(supernum==110){
+   else if(supernum==110){
       
       dialogBox.innerHTML= "Seems youre made of iron, mate.";
 
       marker.innerHTML = "Level 2. Reach a thousand!";
    }
 
-   if(supernum==120){
-      supernum = 6;
+   else if(supernum==120){
+      supersum = 6;
       dialogBox.innerHTML= "Guess I'be gone? I'm here to help you. Here is a bonus. Now you sum by 6.";
 
      
    }
    
-   btn.onmouseup = function() {chgBG()}
-
-   function chgBG(){
-       btn.style.transition = "all 0.4s";
-       btn.style.backgroundColor = "white";
-      
-   }
+   
 }
 
 </script>
