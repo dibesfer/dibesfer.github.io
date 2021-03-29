@@ -30,6 +30,7 @@ body {
 .faiter {
 
 	flex: 50%;
+    max-width: 50%;
     background-color: ;
     border: solid 3px black;
 
@@ -43,33 +44,36 @@ h2, h3 {
 #player-hp {
 
 	border: solid 3px gold;
+    color: white;
+    text-align: center;
+    background-color: gray;
 
 }
 
 #player-hpbar {
 
-	background-color: green;
-    color: white;
-    text-align: center;
-
+	background-color: green;    
+    width: 100%;
+    height: 18px;
 }
 
 #enemy-hp {
 
 	border: solid 3px gold;
+    color: white;
+    text-align: center;
+    background-color: gray;
 
 }
 
 #enemy-hpbar {
 
-	background-color: green;
-    color: white;
-    text-align: center;
-
-
+	background-color: green;    
+    width: 100%;
+    height: 18px;
 }
 
-.btn {
+#btn {
 
 	width:  100%;
 	border: solid 3px black;
@@ -107,10 +111,12 @@ h2, h3 {
 </div><!-- END stats-->
 
 <div id="player-hp">
-<div id="player-hpbar">
 100/100
-</div><!-- END hpbar-->
 </div><!-- END hp-->
+
+<div id="player-hpbar">
+
+</div><!-- END hpbar-->
 
 <h2>Aurelio</h2>
 <img src="https://freepikpsd.com/wp-content/uploads/2019/10/fighter-png-Transparent-Images.png" width="100%">
@@ -119,13 +125,14 @@ h2, h3 {
 <div class="faiter">
 
 <div id="enemy-hp">
-<div id="enemy-hpbar">
 100/100
-</div><!-- END hpbar-->
-</div><!-- END hp-->
+
+</div><!-- END enemy-hp-->
+<div id="enemy-hpbar">
+</div><!-- END enemy-hpbar-->
 
 <h2>Gerónimo</h2>
-<img src="https://assets.stickpng.com/images/580b57fcd9996e24bc43c342.png" width="100%">
+<img src="https://lh3.googleusercontent.com/proxy/hqPRvjJR_u-LSnM8CTccxDHYjcH9J503E4nfhcnstvvKtMXrYNXVi2Aw4NAmACxsjNXUaQcOxmAwHwX76mNDiSGZU9qf9QrOO50Ji0c81JXr4ykspe3Su7Mj54SMmJPidm1C7WGiHOeLjlldaA" width="100%">
 </div><!-- END faiter-->
 
 
@@ -139,7 +146,7 @@ h2, h3 {
 </div><!-- END console-->
 
 
-<button class="btn" onclick="attack()">Attack!</button>
+<button id="btn" onclick="attack()">Attack!</button>
 
 </div><!-- END KombatSistem-->
 <center><i><h3>by dibesfer</h3></i></center>
@@ -181,14 +188,17 @@ function attack(){
     var damage1 = getRndInteger(0,10);
     var damage2 = getRndInteger(0,10);
 	var consol = getid("console");
+    var playerhp = getid("player-hp");
     var playerhpbar = getid("player-hpbar");
+    var enemyhp = getid("enemy-hp");
     var enemyhpbar = getid("enemy-hpbar");
     
-    
+    if (player.hp > 0 && enemy.hp > 0){
     consol.innerHTML = player.name + " attacked " + enemy.name + " causing " + damage1 + " damage points. ";
    	enemy.hp -= damage1;
     
-    playerhpbar.innerHTML = player.hp + "/100";
+    enemyhp.innerText = enemy.hp + "/100";
+    enemyhpbar.style.width = enemy.hp + "%";
     
     consol.innerHTML += enemy.name + " attacked back " + player.name + " causing " + damage2 + " damage points. ";
    	player.hp -= damage2;
@@ -196,7 +206,24 @@ function attack(){
     consol.innerHTML += player.tostring();
 	consol.innerHTML += enemy.tostring();
     
-    enemyhpbar.innerHTML = enemy.hp + "/100";
+    playerhp.innerText = player.hp + "/100";
+    playerhpbar.style.width = player.hp + "%";
+    }
+    
+    else if (player.hp <= 0){
+    
+    	consol.innerHTML = enemy.name + " won!";
+        btn.innerHTML = "Start Again" ;
+    
+    }
+    
+    else {
+    
+    	consol.innerHTML = player.name + " won!";
+    	        btn.innerHTML = "Start Again" ;
+
+    }
+    
 }
 
 
