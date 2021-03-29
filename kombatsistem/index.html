@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>KombatSistem</title>
+<style>
+
+
+#screen {
+
+	background: url("https://miro.medium.com/max/3840/0*H_OWQZPYn5YEaWOV") no-repeat  center;
+    width: 100%;
+    max-width: 900px;
+    height: 300px;
+    overflow: auto;
+    display: flex;
+    
+    justify-content: center;
+    margin: auto;
+
+}
+
+.faiter {
+
+	flex: 50%;
+    background-color: ;
+    border: solid 3px black;
+
+}
+
+
+body {
+  background-color: red;
+  font-family: verdana;
+}
+
+h2, h3 {
+  color: ;
+  text-align: center;
+}
+
+.hp {
+
+	border: solid 3px gold;
+
+}
+
+.hpbar {
+
+	background-color: green;
+    color: white;
+    text-align: center;
+
+
+}
+
+.btn {
+
+	width: 50%;
+
+}
+
+</style>
+</head>
+<body>
+
+<h1>Kombat Sistem</h1>
+<h3>by dibesfer</h3>
+
+<div id="KombatSistem">
+
+<div id="screen">
+
+<div class="faiter">
+<div class="stats">
+</div><!-- END stats-->
+
+<div class="hp">
+<div class="hpbar">
+100/100
+</div><!-- END hpbar-->
+</div><!-- END hp-->
+
+<h2>Aurelio</h2>
+<img src="https://freepikpsd.com/wp-content/uploads/2019/10/fighter-png-Transparent-Images.png" width="100%">
+</div><!-- END faiter-->
+
+<div class="faiter">
+
+<div class="hp">
+<div class="hpbar">
+100/100
+</div><!-- END hpbar-->
+</div><!-- END hp-->
+
+<h2>Gerónimo</h2>
+<img src="https://assets.stickpng.com/images/580b57fcd9996e24bc43c342.png" width="100%">
+</div><!-- END faiter-->
+
+
+
+</div><!-- END screen-->
+
+<button class="btn" onclick="attack()">Attack!</button>
+
+</div><!-- END KombatSistem-->
+
+<script>
+
+class character {
+
+	constructor{name,hp}{
+    	
+        this.name = name;
+        this.hp = hp;
+    }
+
+}
+
+var player = new character("Aurelius",100);
+var enemy = new character("Geronimus",100);
+
+function attack(){
+
+	
+
+}
+
+</script>
+
+</body>
+</html>
