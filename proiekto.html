@@ -1,23 +1,53 @@
-<!DOCTYPE>
+<!DOCTYPE html>
 <html>
-
 <head>
 <script type="text/javascript" src="https://dibesfer.github.io/ferscript.js"></script>  
 </head>
 <body>
-
-<h1>This is a proiekt written in ferscript</h1>
-<h3>Insert his code into your head section</h3>
-  <pre><script type="text/javascript" src="https://dibesfer.github.io/ferscript.js"></script>  </pre>
-  <div id="demo"></div>
-  <script>
-  
-    var demo = getid('demo');
-    write(demo,'Hey mates');
-    demo.innerHTML += 'How are you?';
-    
-  </script>
-  
+<h1>Ferscript Project</h1>
+<h2>This is a proiekt written in ferscript</h2>
+<h3>Insert this code into your head section</h3>
+  <code> < script type="text/javascript" src="https://dibesfer.github.io/ferscript.js"> </script >  </code><br/><br/>
+<div id="demo"></div>
+<div id="demo2"></div>
+<input id="input" type="text" placeholder="Write here"/>
+<button id="send" onclick="sendinfo()">Send</button>
 </body>
+<script>
 
+var demo = getid('demo');
+var demo2 = getid('demo2');
+var send = getid('send');
+
+write(demo,'Hi, how are you?');
+
+function sendinfo(){
+
+var inputbox = getid('input');
+var input = inputbox.value;
+
+handeloptions(input);
+
+inputbox.value = "";
+
+}
+
+function handeloptions(input){
+    
+    var res = input.toUpperCase();
+	if (res == "FINE"){
+    
+    	clear(demo);
+        write(demo,"Happy to hear that niggah!");
+    
+    }
+    
+    else {
+    	clear(demo);
+		write(demo,"Sorry, I didn't understand that " + input);
+    }
+
+}
+
+</script>
 </html>
