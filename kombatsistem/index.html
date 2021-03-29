@@ -49,13 +49,13 @@ h2, h3 {
 
 }
 
-.hp {
+#enemy-hp {
 
 	border: solid 3px gold;
 
 }
 
-.hpbar {
+#enemy-hpbar {
 
 	background-color: green;
     color: white;
@@ -113,8 +113,8 @@ h2, h3 {
 
 <div class="faiter">
 
-<div class="hp">
-<div class="hpbar">
+<div id="enemy-hp">
+<div id="enemy-hpbar">
 100/100
 </div><!-- END hpbar-->
 </div><!-- END hp-->
@@ -174,9 +174,24 @@ var enemy = new character("Geronimus",100);
 function attack(){
 	
     var damage1 = getRndInteger(0,10);
+    var damage2 = getRndInteger(0,10);
 	var consol = getid("console");
+    var playerhpbar = getid("player-hpbar");
+    var enemyhpbar = getid("enemy-hpbar");
+    
+    
     consol.innerHTML = player.name + " attacked " + enemy.name + " causing " + damage1 + " damage points. ";
-
+   	enemy.hp -= damage1;
+    
+    playerhpbar.innerHTML = player.hp + "/100";
+    
+    consol.innerHTML += enemy.name + " attacked back " + player.name + " causing " + damage2 + " damage points. ";
+   	player.hp -= damage2;
+    
+    consol.innerHTML += player.tostring();
+	consol.innerHTML += enemy.tostring();
+    
+    enemyhpbar.innerHTML = enemy.hp + "/100";
 }
 
 
