@@ -4,6 +4,10 @@
 <title>KombatSistem</title>
 <style>
 
+body {
+  background-color: red;
+  font-family: verdana;
+}
 
 #screen {
 
@@ -11,9 +15,8 @@
     width: 100%;
     max-width: 900px;
     height: 300px;
-    overflow: auto;
+    overflow: hidden;
     display: flex;
-    
     justify-content: center;
     margin: auto;
 
@@ -26,16 +29,24 @@
     border: solid 3px black;
 
 }
-
-
-body {
-  background-color: red;
-  font-family: verdana;
-}
-
+h1 { color: white ; }
 h2, h3 {
   color: ;
   text-align: center;
+}
+
+#player-hp {
+
+	border: solid 3px gold;
+
+}
+
+#player-hpbar {
+
+	background-color: green;
+    color: white;
+    text-align: center;
+
 }
 
 .hp {
@@ -55,7 +66,23 @@ h2, h3 {
 
 .btn {
 
-	width: 50%;
+	width:  100%;
+	border: solid 3px black;
+    padding: 10px;
+    font-size: unset;
+    background-color: gold;
+
+}
+
+#console {
+
+	background-color: blue;
+    padding: 10px;
+    color: gold;
+    font-family: consolas;
+	font-size: large;
+    height: 70px ;
+    border: 3px black solid;
 
 }
 
@@ -63,8 +90,8 @@ h2, h3 {
 </head>
 <body>
 
-<h1>Kombat Sistem</h1>
-<h3>by dibesfer</h3>
+<center><h1>Kombat Sistem</h1></center>
+
 
 <div id="KombatSistem">
 
@@ -74,8 +101,8 @@ h2, h3 {
 <div class="stats">
 </div><!-- END stats-->
 
-<div class="hp">
-<div class="hpbar">
+<div id="player-hp">
+<div id="player-hpbar">
 100/100
 </div><!-- END hpbar-->
 </div><!-- END hp-->
@@ -100,18 +127,43 @@ h2, h3 {
 
 </div><!-- END screen-->
 
+<div id="console">
+
+<p>Enter input</p>
+
+</div><!-- END console-->
+
+
 <button class="btn" onclick="attack()">Attack!</button>
 
 </div><!-- END KombatSistem-->
+<center><i><h3>by dibesfer</h3></i></center>
+
 
 <script>
 
+function getRndInteger(min, max) {
+  return Math.floor(Math.random() * (max - min + 1) ) + min;
+}
+
+function getid(s){
+
+	return document.getElementById(s);
+
+}
+
 class character {
 
-	constructor{name,hp}{
+	constructor(name,hp){
     	
         this.name = name;
         this.hp = hp;
+    }
+    
+    tostring(){
+    
+    	return "Name: " + this.name + " HP: " + this.hp;
+     
     }
 
 }
@@ -120,10 +172,14 @@ var player = new character("Aurelius",100);
 var enemy = new character("Geronimus",100);
 
 function attack(){
-
 	
+    var damage1 = getRndInteger(0,10);
+	var consol = getid("console");
+    consol.innerHTML = player.name + " attacked " + enemy.name + " causing " + damage1 + " damage points. ";
 
 }
+
+
 
 </script>
 
