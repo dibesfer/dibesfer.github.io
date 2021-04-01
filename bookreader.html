@@ -3,7 +3,7 @@
 
 <head>
   <title>Dibesfer's JS BookReader</title>
-  <meta name="description" content="">
+  <meta name="description" content="Javascript Book reader made by dibesfer">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta charset="utf-8">
@@ -68,6 +68,8 @@
         transition: 0.4s;
     
     }
+    
+    
 
 </style>
 
@@ -118,7 +120,7 @@
     "<p>In the beginning, there was a man called Stanley.</p>",
     
     "<h1>Prologue</h1>" + 
-    "<img src='https://planbdetectives.com/wp-content/uploads/2014/10/Business-man-and-office-outline.jpg' width='100%'>" +
+    "<img src='http://c.files.bbci.co.uk/3066/production/_111609321_1-1.jpg' width='100%'>" +
     "<h3>About the origins</h3>" +
     "<p>In the beginning, there was a man called Stanley.</p>",
     
@@ -134,20 +136,21 @@
     
     "<h2>Chapter II : Beginnings</h2>" + 
     "<h3>About the origins</h3>" +
+    "<img src='https://www.incimages.com/uploaded_files/image/1920x1080/getty_962466980_405772.jpg' width='100%'>" + 
     "<p>In the beginning, there was a man called Stanley.</p>",
     
     
-    "<h2>Chapter III : Beginnings</h2>" + 
+    "<h2>Chapter III : Continueings</h2>" + 
     "<h3>About the origins</h3>" +
     "<p>In the beginning, there was a man called Stanley.</p>",
     
     
-    "<h2>Chapter IV : Beginnings</h2>" + 
+    "<h2>Chapter IV : Everlastings</h2>" + 
     "<h3>About the origins</h3>" +
     "<p>In the beginning, there was a man called Stanley.</p>",
     
     
-    "<h2>Chapter V : Beginnings</h2>" + 
+    "<h2>Chapter V : The infinite Circle</h2>" + 
     "<h3>About the origins</h3>" +
     "<p>In the beginning, there was a man called Stanley.</p>",
     
@@ -184,9 +187,45 @@
         
         else {counter = 0;}
         
-        dialogBox.innerHTML = dialogs[counter];
+        
+        unfade(dialogBox);
+        	dialogBox.innerHTML = dialogs[counter] ;
+        
+        
+        
+        
+        
       
     }
+    
+    function unfade(element) {
+    var op = 0.1;  // initial opacity
+	element.style.opacity = 0;
+	//element.style.display = 'block';
+    var timer = setInterval(function () {
+        if (op >= 1){
+            clearInterval(timer);
+        }
+        	element.style.opacity = op;
+
+        element.style.filter = 'alpha(opacity=' + op * 100 + ")";
+        op += op * 0.1;
+    }, 50);
+    
+}
+
+function fade(element) {
+    var op = 1;  // initial opacity
+    var timer = setInterval(function () {
+        if (op <= 0.1){
+            clearInterval(timer);
+            element.style.display = 'none';
+        }
+        element.style.opacity = op;
+        element.style.filter = 'alpha(opacity=' + op * 100 + ")";
+        op -= op * 0.1;
+    }, 50);
+}
     
     lbutton.onclick = function() {goleft()};
     
@@ -196,7 +235,7 @@
     	
         counter = counter - 1;
     	dialogBox.innerHTML = dialogs[counter];
-    
+     unfade(dialogBox);
     }   
     
     }
@@ -229,6 +268,7 @@
     
     if (indexhide == false){
     counter = num;
+    unfade(dialogBox)
     dialogBox.innerHTML = dialogs[num];
     }
     }
