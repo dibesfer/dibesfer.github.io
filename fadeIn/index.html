@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<style>
+
+	#show {
+    
+    	display: none;
+    
+    }
+    
+
+</style>
+</head>
+<body>
+
+<button class="btn2">Fade in</button>
+
+<p id="show">This is a paragraph.</p>
+
+<script>
+
+//var show = document.getElementById("show");
+//var result = show.value;
+
+var shown = false;
+
+$(document).ready(function(){
+  
+  
+  
+  $(".btn2").click(function(){
+  
+  if (shown == false) {
+  
+    $("#show").fadeIn(1000);
+    shown = true;
+    
+  }
+  
+  else {
+  
+  	$("#show").fadeOut(1000);
+    shown = false;
+  
+  }
+    
+  });
+});
+</script>
+</body>
+</html>
