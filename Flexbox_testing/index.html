@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<style>
+
+body {
+
+margin: 0;
+box-sizing: border-box;
+
+}
+
+#container {
+	
+    display: flex;
+    justify-content: center;
+    margin: 0;
+    background-color: darkslategrey;
+    /*align-items: center;*/
+    height: 1200px;
+    
+}
+
+.contained {
+
+	
+    width: 850px;
+    background-color: darkblue;
+    color: white;
+    font-family: arial;
+    text-align:center;
+
+}
+
+.boxy {
+
+	background-color: white;
+    color: black;
+    padding: 15px;
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    flex-wrap: wrap;
+
+}
+
+.boxy-contained {
+
+	width: 33%;
+	flex: 33.33%;
+	flex-direction: row;
+    border: solid blue 3px;
+}
+
+</style>
+
+</head>
+<body>
+<div id="container">
+
+<div class="contained">
+<h1>Hello</h1>
+<p>How are you?</p>
+
+
+<div class="boxy">
+<h3>How to layout a web with flexbox</h3>
+
+<div class="boxy-contained">
+<pre>
+
+.contained {
+
+	
+    width: 850px;
+    background-color: darkblue;
+    color: white;
+    font-family: arial;
+    text-align:center;
+
+}
+
+</pre>
+</div>
+
+
+<div class="boxy-contained">
+<p>
+
+1. Create a div with an id "container"
+
+</p>
+
+<pre>
+
+#container {
+	
+    display: flex;
+    justify-content: center;
+    margin: 0;
+    background-color: darkslategrey;
+    /*align-items: center;*/
+    height: 1200px;
+    
+}
+
+</pre>
+</div>
+
+
+
+
+<div class="boxy-contained">
+
+<p>
+
+2. Create a div with the id "contained"
+
+</p>
+
+<pre>
+
+.contained {
+
+	
+    width: 850px;
+    background-color: darkblue;
+    color: white;
+    font-family: arial;
+    text-align:center;
+
+}
+
+</pre>
+</div>
+
+
+
+
+
+<div class="boxy-contained">
+<p>
+
+3. Create a div with the class "boxy"
+
+</p>
+
+<pre>
+
+.boxy {
+
+	background-color: white;
+    color: black;
+    padding: 15px;
+    text-align: left;
+
+}
+
+</pre>
+</div>
+
+
+
+</div>
+
+</div>
+
+
+</div>
+</body>
+
+</html>
