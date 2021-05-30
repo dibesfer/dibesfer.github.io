@@ -21,7 +21,7 @@
 	#chineserandomword {
     	border: solid 8px red;
         text-align: center;
-        font-family: arial;
+        
         background-color: gold;
         max-width : 500px; 
         margin: 0 auto;
@@ -57,33 +57,40 @@
 
 <script>
 
-
 var chinesediv = document.getElementById("chineserandomword");
 var myVar = setInterval(myTimer, 1500);
 var index;
 
-
-
 let sentences = [
 
-	"<h1>喜欢</h1><h3>xǐ huān</h3><h3>like</h3>", 
-    "<h1>爱</h1><h3>ài</h3><h3>love</h3>", 
-    "<h1>问</h1><h3>wèn</h3><h3>question</h3>", 
-    "<h1>说</h1><h3>shuō</h3><h3>say</h3>", 
-    "<h1>看见</h1><h3>kàn jiàn</h3><h3>see</h3>", 
-    "<h1>卖</h1><h3>mài</h3><h3>sell</h3>", 
-    "<h1>拿</h1><h3>ná</h3><h3>take</h3>", 
-    "<h1>教</h1><h3>jiāo</h3><h3>teach</h3>", 
-    "<h1>想</h1><h3>xiǎng</h3><h3>think</h3>", 
-    "<h1>走</h1><h3>zǒu</h3><h3>walk</h3>", 
-    "<h1>要</h1><h3>yào</h3><h3>want</h3>",
-    "<h1>写</h1><h3>xiě</h3><h3>write</h3>",
-    "<h1>工作</h1><h3>gōng zuò</h3><h3>work</h3>",
-    "<h1>祝</h1><h3>zhù</h3><h3>wish</h3>"
+	"<h1>喜欢</h1><h3>xǐ huān</h3><h3>to like</h3>", 
+    "<h1>爱</h1><h3>ài</h3><h3>to love</h3>", 
+    "<h1>问</h1><h3>wèn</h3><h3>to ask</h3>", 
+    "<h1>说</h1><h3>shuō</h3><h3>to say</h3>", 
+    "<h1>看见</h1><h3>kàn jiàn</h3><h3>to see</h3>", 
+    "<h1>卖</h1><h3>mài</h3><h3>to sell</h3>", 
+    "<h1>拿</h1><h3>ná</h3><h3>to take</h3>", 
+    "<h1>教</h1><h3>jiāo</h3><h3>to teach</h3>", 
+    "<h1>想</h1><h3>xiǎng</h3><h3>to think</h3>", 
+    "<h1>走</h1><h3>zǒu</h3><h3>to walk</h3>", 
+    "<h1>要</h1><h3>yào</h3><h3>to want</h3>",
+    "<h1>写</h1><h3>xiě</h3><h3>to write</h3>",
+    "<h1>工作</h1><h3>gōng zuò</h3><h3>to work</h3>",
+	"<h1>吃</h1><h3>chī</h3><h3>to eat</h3>",
+	"<h1>给</h1><h3>gěi</h3><h3>to give</h3>",
+	"<h1>开</h1><h3>kāi</h3><h3>to open</h3>",
+	"<h1>有</h1><h3>yǒu</h3><h3>to have</h3>",
+	"<h1>知道</h1><h3>zhī dao</h3><h3>to know</h3>",
+	"<h1>去</h1><h3>qù</h3><h3>to go</h3>",
+	"<h1>做</h1><h3>zuò</h3><h3>to do/make</h3>",
+	"<h1>用</h1><h3>yòng</h3><h3>to use</h3>",
+	"<h1>找</h1><h3>zhǎo</h3><h3>to find</h3>",
+	"<h1>告诉</h1><h3>gào su</h3><h3>to find</h3>",
+    "<h1>祝</h1><h3>zhù</h3><h3>to wish</h3>"
    
     ];
     
-    chinesediv.innerHTML = sentences[shuffle(0,sentences.length)];
+    chinesediv.innerHTML = sentences[shuffle(0,sentences.length-1)];
 //let number = [0,1,2,3,4,5,6,7,8,9,10];
 var latest_result;
 
@@ -98,12 +105,6 @@ function myTimer() {
 function randomint(min, max) {
   return Math.floor(Math.random() * (max - min + 1) ) + min;
 }
-/*
-function shuffle(o) {
-    for(var j, x, i = o.length; i; j = parseInt(Math.random() * i), x = o[--i], o[i] = o[j], o[j] = x);
-    return o;
-};
-*/
 
 function shuffle(min, max) {
 
