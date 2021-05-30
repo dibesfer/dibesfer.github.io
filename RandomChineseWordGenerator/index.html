@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<style>
+
+	#chineserandomword {
+    	border: solid 8px red;
+        text-align: center;
+        font-family: arial;
+        background-color: gold;
+        max-width : 500px; 
+        margin: 0 auto;
+        
+    }
+    
+    #chineserandomword h1 {
+    
+    	font-size: 60px;
+        background-color: white;
+        font-family: 'Hiragino Kaku Gothic Pro', 'WenQuanYi Zen Hei', '微軟正黑體', '蘋果儷中黑', Helvetica, Arial, sans-serif;
+        /* font by https://gist.github.com/tomkao/785988 */
+    
+    }
+    
+    #chineserandomword h3 {
+    
+    	font-size: 30px;
+        background-color: white;
+    
+    }
+
+</style>
+</head>
+
+<body>
+
+<h3>Random Chinese Verb Generator</h3>
+
+<p id="chineserandomword"></p>
+
+<script>
+
+
+var chinesediv = document.getElementById("chineserandomword");
+var myVar = setInterval(myTimer, 1500);
+var index;
+
+
+
+let sentences = [
+
+	"<h1>喜欢</h1><h3>xǐ huān</h3><h3>like</h3>", 
+    "<h1>爱</h1><h3>ài</h3><h3>love</h3>", 
+    "<h1>问</h1><h3>wèn</h3><h3>question</h3>", 
+    "<h1>说</h1><h3>shuō</h3><h3>say</h3>", 
+    "<h1>看见</h1><h3>kàn jiàn</h3><h3>see</h3>", 
+    "<h1>卖</h1><h3>mài</h3><h3>sell</h3>", 
+    "<h1>拿</h1><h3>ná</h3><h3>take</h3>", 
+    "<h1>教</h1><h3>jiāo</h3><h3>teach</h3>", 
+    "<h1>想</h1><h3>xiǎng</h3><h3>think</h3>", 
+    "<h1>走</h1><h3>zǒu</h3><h3>walk</h3>", 
+    "<h1>要</h1><h3>yào</h3><h3>want</h3>",
+    "<h1>写</h1><h3>xiě</h3><h3>write</h3>",
+    "<h1>工作</h1><h3>gōng zuò</h3><h3>work</h3>",
+    "<h1>祝</h1><h3>zhù</h3><h3>wish</h3>"
+   
+    ];
+    
+    chinesediv.innerHTML = sentences[shuffle(0,sentences.length)];
+//let number = [0,1,2,3,4,5,6,7,8,9,10];
+var latest_result;
+
+function myTimer() {
+
+  //var randomnumber = shuffle(number)
+  index = shuffle(0,sentences.length-1);
+  var d = new Date();
+  chinesediv.innerHTML = sentences[index];
+}
+
+function randomint(min, max) {
+  return Math.floor(Math.random() * (max - min + 1) ) + min;
+}
+/*
+function shuffle(o) {
+    for(var j, x, i = o.length; i; j = parseInt(Math.random() * i), x = o[--i], o[i] = o[j], o[j] = x);
+    return o;
+};
+*/
+
+function shuffle(min, max) {
+
+  var result;
+  
+  result = Math.floor(Math.random() * (max - min + 1) ) + min;
+
+  while (latest_result == result) {
+  		  result = Math.floor(Math.random() * (max - min + 1) ) + min;
+  }
+
+  latest_result = result;
+  
+  return result;
+}
+
+</script>
+
+</body>
+</html>
