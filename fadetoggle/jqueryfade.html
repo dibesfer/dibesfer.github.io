@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script>
+
+var words = ["Hello, how are you?", "Hope you are fine ", "Good bye! :)"];
+var images = [
+
+	"<img src='https://images.unsplash.com/photo-1500622944204-b135684e99fd?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1000&q=80' width='50%'>",
+    "<img src='https://www.stockvault.net/data/2009/07/22/109588/thumb16.jpg' width='50%'>",
+    "<img src='https://images.all-free-download.com/images/graphicthumb/canoe_water_nature_221611.jpg' width='50%' > "
+
+];
+
+var index = 0 ;
+
+var index_images = 0;
+
+var fadetoggle_control = false;
+
+$(document).ready(function(){
+  
+  setInterval(
+  
+  function fadetoggle_presentation(){
+  
+  	if (fadetoggle_control == false) {
+    	$("#fadeshow").fadeToggle();
+        $("#imagecontainer").fadeToggle();
+    	fadetoggle_control = true;
+    }
+    
+    else {
+    
+    	$("#fadeshow").fadeToggle();
+        $("#imagecontainer").fadeToggle();
+    	$("#fadeshow").text(words[index]);
+    	$("#imagecontainer").html(images[index_images]);
+    	index_images++;
+    	index++;
+    	fadetoggle_control = false;
+    
+    }
+    if (index_images == images.length) {index_images = 0;}
+    if (index == words.length) {index = 0;}
+    
+  }, 
+  1000); // The time it will wait until starting again
+  setTimeOut(fadetoggle_presentation, 3000)
+  
+});
+
+
+</script>
+</head>
+<body>
+
+<p>Demonstrate fadeToggle() with different speed parameters.</p>
+<div id="imagecontainer" ></div>
+<div id="fadeshow" style="width:500PX;height:400px;">
+
+
+</div>
+<br>
+
+</body>
+</html>
