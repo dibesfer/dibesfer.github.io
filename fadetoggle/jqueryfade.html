@@ -34,8 +34,8 @@ $(document).ready(function(){
     
     else {
     
-    	$("#fadeshow").fadeToggle();
-        $("#imagecontainer").fadeToggle();
+    	$("#fadeshow").fadeToggle("fast");
+        $("#imagecontainer").fadeToggle("fast");
     	$("#fadeshow").text(words[index]);
     	$("#imagecontainer").html(images[index_images]);
     	index_images++;
@@ -47,7 +47,7 @@ $(document).ready(function(){
     if (index == words.length) {index = 0;}
     
   }, 
-  1000); // The time it will wait until starting again
+  500); // The time it will wait until starting again
   //setTimeOut(fadetoggle_presentation, 3000)
   
 });
