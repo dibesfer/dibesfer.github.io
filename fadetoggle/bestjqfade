@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+</head>
+<body>
+
+<div style="height:120px;border:solid 3px black;width: 50%;margin: 0 auto;padding:3.5%;">
+<center>
+<h1 id="demo" style="display:none;">Click the button to wait 3 seconds, then alert "Hello".</h1>
+</center>
+</div>
+<script>
+var textbox = document.getElementById("demo");
+
+var words = [
+"Hi",
+"How are you?",
+"Hope you are fine :)"
+];
+
+	setTimeout(function(){
+    
+    	$("#demo").text(words[0]);
+    	$("#demo").fadeIn(1000);
+  		//$("#demo").text(words[index]);
+  		$("#demo").fadeOut(1000);
+  		$("#demo").text(words[index++]);
+    
+	},0);
+  
+  var index = 0;
+  
+  	setInterval(function() {
+    
+    
+    
+    $("#demo").fadeIn(1000);
+  	//$("#demo").text(words[index]);
+  	$("#demo").fadeOut(1000);
+  	$("#demo").text(words[index++]);
+  
+  	if (index == words.length){ index = 0; }
+    
+    } , 2000) ;
+  
+
+
+
+</script>
+
+</body>
+</html>
