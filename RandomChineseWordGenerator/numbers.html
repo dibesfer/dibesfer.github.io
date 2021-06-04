@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable='no'">
+  <meta charset="utf-8">
+  <title>RCWG</title>
+  <meta name="description" content="Dibesfer Chinese Words Generator in javascript. Learn mandarin verbs.">
+  <meta name="keywords" content="Chinese, javascript, words, verbs, learn chinese.">
+  <meta name="author" content="Dibesfer">
+	<link rel="preconnect" href="https://fonts.gstatic.com">
+<link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&display=swap" rel="stylesheet"> 
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+<style>
+
+#demo {
+
+	font-size: 60px;
+    font-family: arial;
+    /*font-family: 'Ma Shan Zheng', cursive;*/
+
+}
+
+#demo hr {
+
+	border: 3px solid black;
+
+}
+
+</style>
+</head>
+<body>
+
+<div style="height:300px;border:solid 6px black;width: 200px ;margin: 0 auto;padding:3.5%;">
+<center>
+<div id="demo" style="display:none;">Click the button to wait 3 seconds, then alert "Hello".</div>
+</center>
+</div>
+<script>
+var textbox = document.getElementById("demo");
+
+var words = [
+"零<hr/>líng<br/>0",
+"一<hr/>yī<br/>1",
+"二<hr/>èr<br/>2",
+"三<hr/>sān<br/>3",
+"四<hr/>sì<br/>4",
+"五<hr/>wǔ<br/>5",
+"六<hr/>liù<br/>6",
+"七<hr/>qī<br/>7",
+"八<hr/>bā<br/>8",
+"九<hr/>jiǔ<br/>9",
+"十<hr/>shí<br/>10",
+  "十一<hr/>shí yī <br/>11",
+  "十二<hr/>shí èr<br/>12",
+  "十三<hr/>shí sān<br/>13",
+  "二十<hr/>èr shí<br/>20",
+  "二十一<hr/>èr shí yī<br/>10",
+"<i style='font-size:20px'>by dibesfer.com</i>"
+];
+    var index = 0;
+    $("#demo").html(words[0]);
+    $("#demo").fadeIn(500);
+    
+  	$("#demo").fadeOut(800);
+  	$("#demo").html(words[index++]);
+     
+  	
+  
+  	setInterval(function() {
+    
+    
+    
+    $("#demo").fadeIn(500);
+  	//$("#demo").text(words[index]);
+  	$("#demo").fadeOut(1200);
+  	$("#demo").html(words[index++]);
+  
+  	if (index == words.length){ index = 0; }
+    
+    } , 2000) ;
+  
+
+
+
+</script>
+
+</body>
+</html>
