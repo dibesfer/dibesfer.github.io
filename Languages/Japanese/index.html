@@ -1,1 +1,137 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable='no'">
+  <meta charset="utf-8">
+  <title>RCWG</title>
+  <meta name="description" content="Dibesfer Chinese Words Generator in javascript. Learn mandarin verbs.">
+  <meta name="keywords" content="Japanese, javascript, words, letters, alphabet, learn japanese.">
+  <meta name="author" content="Dibesfer">
+	
+	<link rel="preconnect" href="https://fonts.gstatic.com">
+<link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c&display=swap" rel="stylesheet"> 
+<style>
+	
+	body {
+	
+		font-family: verdana;
+		
+	}
+
+	#chineserandomword {
+    	
+        text-align: center;
+        
+        background-color: red;
+        max-width : 400px; 
+        margin: 0 auto;
+        padding: 20px;
+        
+    }
+    
+    #chineserandomword h1 {
+    
+    	font-size: 100px;
+       background-color: white;
+	    font-weight: unset;
+       font-family: 'M PLUS Rounded 1c', sans-serif;       
+    
+    }
+    
+    #chineserandomword h3 {
+    
+    	font-size: 40px;
+        background-color: white;
+    
+    }
+
+</style>
+</head>
+
+<body>
+
+	<center><h3>Random Japanese Hiragana Generator</h3></center>
+
+<p id="chineserandomword"></p>
+	
+	<br/><center> by <a href="https://dibesfer.com">dibesfer.com</a> </center>
+
+<script>
+
+var chinesediv = document.getElementById("chineserandomword");
+var myVar = setInterval(myTimer, 1000);
+var index;
+
+let sentences = [
+
+	"<h1>あ</h1><h3>a</h3>",
+    "<h1>い</h1><h3>i</h3>",
+    "<h1>う</h1><h3>u</h3>",
+    "<h1>え</h1><h3>e</h3>",
+    "<h1>お</h1><h3>o</h3>",
+    "<h1>か</h1><h3>ka</h3>",
+    "<h1>き</h1><h3>ki</h3>",
+    "<h1>く</h1><h3>ku</h3>",
+    "<h1>け</h1><h3>ke</h3>",
+    "<h1>こ</h1><h3>ko</h3>",
+    "<h1>け</h1><h3>ke</h3>",
+    "<h1>さ</h1><h3>sa</h3>",
+    "<h1>し</h1><h3>shi</h3>",
+    "<h1>す</h1><h3>su</h3>",
+    "<h1>せ</h1><h3>se</h3>",
+    "<h1>そ</h1><h3>so</h3>",
+    "<h1>た</h1><h3>ta</h3>",
+    "<h1>ち</h1><h3>chi</h3>",
+   "<h1>つ</h1><h3>tsu</h3>",
+   "<h1>て</h1><h3>te</h3>",
+   "<h1>と</h1><h3>to</h3>",
+   "<h1>な</h1><h3>na</h3>",
+   "<h1>に</h1><h3>ni</h3>",
+   "<h1>ぬ</h1><h3>nu</h3>",
+   "<h1>ね</h1><h3ne</h3>",
+   "<h1>の</h1><h3>no</h3>",
+   "<h1>は</h1><h3>ha/wa</h3>",
+   "<h1>ひ</h1><h3>hi</h3>",
+   "<h1>ふ</h1><h3>fu/hu</h3>",
+   "<h1>へ</h1><h3>he/e</h3>",
+   "<h1>ほ</h1><h3>ho</h3>",
    
+    ];
+    
+    chinesediv.innerHTML = sentences[shuffle(0,sentences.length-1)];
+//let number = [0,1,2,3,4,5,6,7,8,9,10];
+var latest_result;
+
+function myTimer() {
+
+  //var randomnumber = shuffle(number)
+  index = shuffle(0,sentences.length-1);
+  var d = new Date();
+  chinesediv.innerHTML = sentences[index];
+}
+
+function randomint(min, max) {
+  return Math.floor(Math.random() * (max - min + 1) ) + min;
+}
+
+function shuffle(min, max) {
+
+  var result;
+  
+  result = Math.floor(Math.random() * (max - min + 1) ) + min;
+
+  while (latest_result == result) {
+  		  result = Math.floor(Math.random() * (max - min + 1) ) + min;
+  }
+
+  latest_result = result;
+  
+  return result;
+}
+
+</script>
+
+</body>
+</html>
