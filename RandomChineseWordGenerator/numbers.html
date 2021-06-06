@@ -1,90 +1,116 @@
 <!DOCTYPE html>
 <html>
 <head>
-
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable='no'">
-  <meta charset="utf-8">
-  <title>RCWG</title>
-  <meta name="description" content="Dibesfer Chinese Words Generator in javascript. Learn mandarin verbs.">
-  <meta name="keywords" content="Chinese, javascript, words, verbs, learn chinese.">
-  <meta name="author" content="Dibesfer">
-	<link rel="preconnect" href="https://fonts.gstatic.com">
-<link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&display=swap" rel="stylesheet"> 
-
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<title>W3.CSS</title>
+<meta name="viewport" content="width=device-width, initial-scale=1"  user-scalable="no">
+<link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
 
 <style>
 
-#demo {
-
-	font-size: 60px;
-    font-family: arial;
-    /*font-family: 'Ma Shan Zheng', cursive;*/
-
-}
-
-#demo hr {
-
-	border: 3px solid black;
-
-}
-
+  #container {
+   /*background-color: red; */
+  }
+  
+  #container hr {
+   
+   border: 3px black solid;
+   /*background-color: white; */
+    
+  }
+  
+  #container {
+   
+    font-size: 40px;
+    /*background-color: white;*/
+    
+  }
+  
 </style>
-</head>
+  </head>
 <body>
 
-<div style="height:500px;border:solid 6px black;width: 75% ;margin: 0 auto;padding:3.5%;">
-<center>
-<div id="demo" style="display:none;">Click the button to wait 3 seconds, then alert "Hello".</div>
-</center>
-</div>
-<script>
-var textbox = document.getElementById("demo");
+<div id="container" class="w3-content w3-section" style="text-align:center;max-width:500px">
+  <!--The w3-animate-opacity class animates an element in and out (takes 0.8 seconds).-->
 
-var words = [
-"零<hr/>líng<br/>0",
-"一<hr/>yī<br/>1",
-"二<hr/>èr<br/>2",
-"三<hr/>sān<br/>3",
-"四<hr/>sì<br/>4",
-"五<hr/>wǔ<br/>5",
-"六<hr/>liù<br/>6",
-"七<hr/>qī<br/>7",
-"八<hr/>bā<br/>8",
-"九<hr/>jiǔ<br/>9",
-"十<hr/>shí<br/>10",
-  "十一<hr/>shí yī <br/>11",
-  "十二<hr/>shí èr<br/>12",
-  "十三<hr/>shí sān<br/>13",
-  "二十<hr/>èr shí<br/>20",
-  "二十一<hr/>èr shí yī<br/>10",
-"<i style='font-size:20px'>by dibesfer.com</i>"
-];
-    var index = 0;
-    $("#demo").html(words[0]);
-    $("#demo").fadeIn(500);
-    
-  	$("#demo").fadeOut(800);
-  	$("#demo").html(words[index++]);
+	 
+	<div class="mySlides w3-animate-opacity">数字<hr/>shù zì<br/>Números</div>
+  <div class="mySlides w3-animate-opacity">零<hr/>líng<br/>0</div>
+  <div class="mySlides w3-animate-opacity">一<hr/>yī<br/>1</div>
+    <div class="mySlides w3-animate-opacity">二<hr/>èr<br/>2</div>
+    <div class="mySlides w3-animate-opacity">三<hr/>sān<br/>3</div>
+    <div class="mySlides w3-animate-opacity">四<hr/>sì<br/>4</div>
+    <div class="mySlides w3-animate-opacity">五<hr/>wǔ<br/>5</div>
+    <div class="mySlides w3-animate-opacity">六<hr/>liù<br/>6</div>
+      <div class="mySlides w3-animate-opacity">七<hr/>qī<br/>7</div>
+      <div class="mySlides w3-animate-opacity">八<hr/>bā<br/>8</div>
+      <div class="mySlides w3-animate-opacity">九<hr/>jiǔ<br/>9</div>
+      <div class="mySlides w3-animate-opacity">十<hr/>shí<br/>10</div>
+      <div class="mySlides w3-animate-opacity">十一<hr/>shí yī <br/>11</div>
+      <div class="mySlides w3-animate-opacity">十二<hr/>shí èr<br/>12</div>
+      <div class="mySlides w3-animate-opacity">十三<hr/>shí sān<br/>13</div>
+        <div class="mySlides w3-animate-opacity">二十<hr/>èr shí<br/>20</div>
+      <div class="mySlides w3-animate-opacity">二十一<hr/>èr shí yī<br/>21</div>
+      <div class="mySlides w3-animate-opacity">二十二<hr/>èr shí èr<br/>21</div>
+      <div class="mySlides w3-animate-opacity">二十三<hr/>èr shí sān<br/>21</div>
+        <div class="mySlides w3-animate-opacity">三十三<hr/>sān shí sān<br/>33</div>
+        <div class="mySlides w3-animate-opacity">九十九<hr/>jiǔ shí jiǔ<br/>99</div>
+        <div class="mySlides w3-animate-opacity">一百<hr/>yī bǎi<br/>100</div>
+    <div class="mySlides w3-animate-opacity">一百二十二<hr/>yī bǎi èr shí sān<br/>123</div>
+    <div class="mySlides w3-animate-opacity">二百<hr/>liǎng  bǎi<br/>200</div>
+    <div class="mySlides w3-animate-opacity">一千<hr/>yī qiān<br/>1000</div>
+
+	    <div class="mySlides w3-animate-opacity">一万<hr/>yī wàn<br/>10.000</div>
+
+	    <div class="mySlides w3-animate-opacity">十万<hr/>shí wàn<br/>10 x 10.000 = <br/> 100.000</div>
+      <div class="mySlides w3-animate-opacity">一百万<hr/>yī bǎi wàn<br/>100 x 10.000 = <br/>1.000.000</div>
+
+	<div class="mySlides w3-animate-opacity"> <i style='font-size:20px'>by <a href="https://dibesfer.com">dibesfer.com</a></i></div>
+        
      
-  	
-  
-  	setInterval(function() {
-    
-    
-    
-    $("#demo").fadeIn(500);
-  	//$("#demo").text(words[index]);
-  	$("#demo").fadeOut(1200);
-  	$("#demo").html(words[index++]);
-  
-  	if (index == words.length){ index = 0; }
-    
-    } , 2000) ;
-  
 
+  
+</div>
 
+<script>
+var myIndex = 0;
+carousel();
+var latest_result;
 
+function carousel() {
+  var i;
+  var x = document.getElementsByClassName("mySlides");
+  for (i = 0; i < x.length; i++) {
+    x[i].style.display = "none";  
+  }
+  myIndex++;
+  
+  if (myIndex > x.length) {myIndex = 1}    
+  
+  //myIndex = shuffle(0,x.length-1);
+  
+  x[myIndex-1].style.display = "block";  
+  setTimeout(carousel, 1000);    
+}
+/*
+function randomint(min, max) {
+  return Math.floor(Math.random() * (max - min + 1) ) + min;
+}
+
+function shuffle(min, max) {
+
+  var result;
+  
+  result = randomint(min, max);
+
+  while (latest_result == result) {
+  		  result = Math.floor(Math.random() * (max - min + 1) ) + min;
+  }
+
+  latest_result = result;
+  
+  return result;
+}
+*/
 </script>
 
 </body>
