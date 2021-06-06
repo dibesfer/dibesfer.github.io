@@ -12,10 +12,78 @@
   <meta name="description" content="Dibesfer Github Page. Developer Illustrator Writer">
   <meta name="keywords" content="HTML, CSS, JavaScript">
   <meta name="author" content="Dibesfer">
+  
+  <!-- FONTS -->
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+	<link href="https://fonts.googleapis.com/css2?family=Jost&display=swap" rel="stylesheet"> 
+  
+  <style>
+  
+  * {
+  
+  	box-sizing: border-box;
+  
+  }
+  
+  body {
+  
+  	margin: 0;
+    font-family: "Jost", sans-serif;
+  
+  }
+  
+  main {
+  	
+    max-width: 800px;
+    margin: 0px auto;
+    width: 100%;
+    border: solid 3px black;
+  }
+  
+  iframe {
+  
+  	width: 100%;
+  
+  }
+  
+  #details_menu {
+  
+  	font-size: 20px;
+  	margin: 15px 5px;
+  
+  }
+  
+  #details_menu ol {
+    margin: 0 auto;
+    max-width: 400px;
+    
+    
+  
+  }
+  
+  #details_menu li:hover {
+  transition: 1s;
+  	font-weight: bold;
+    
+  
+  }
+  
+  </style>
+  
 </head>
 	
 <body>
-	<details><summary>Menu</summary>
+<main>
+<header>
+
+<center>
+
+<h2>dibesfer.github.io</h2>
+
+</center>
+
+</header>
+	<details id="details_menu"><summary style="text-align: center;">Menu</summary>
 <ol>
 
 <li onclick="changecontent('temaweb')">TemaWeb</li>
@@ -41,17 +109,17 @@
 		<li>TemaWeb</li>
 		</ol>
 	</details>
-<iframe id="textbox" width="500px" height="400px" src="https://dibesfer.github.io" style="border: solid 3px black;"></iframe>
+<iframe id="textbox" width="500px" height="400px" src="https://dibesfer.github.io" style="border: solid 2px black;"></iframe>
 
-
-<iframe width="500px" height="400px" src="https://dibesfer.github.io"></iframe>
-
+<center> by <a href="https://dibesfer.com">dibesfer.com</a></center>
+</main>
 <script>
 
 var indexbox = document.getElementById("textbox");
 
 function changecontent(link) {
-	
+
+	 
     indexbox.src = "https://dibesfer.github.io/" + link;
 
 }
