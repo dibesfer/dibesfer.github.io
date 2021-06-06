@@ -7,15 +7,21 @@
 
 <style>
 
+  #container {
+   background-color: red; 
+  }
+  
   #container h1 {
    
     font-size: 80px;
+    
     
   }
   
   #container p {
    
     font-size: 24px;
+    background-color: white;
     
   }
   
@@ -56,7 +62,7 @@ function carousel() {
   myIndex++;
   if (myIndex > x.length) {myIndex = 1}    
   x[myIndex-1].style.display = "block";  
-  setTimeout(carousel, 2500);    
+  setTimeout(carousel, 2000);    
 }
 </script>
 
