@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable='no'">
+  <meta charset="utf-8">
+  <title>Dibesfer</title>
+  <meta name="description" content="Dibesfer Github Page. Developer Illustrator Writer. Testing counter with countapi.xyz ">
+  <meta name="keywords" content="HTML, CSS, JavaScript">
+  <meta name="author" content="Dibesfer">
+	</head>
+<body>
+
+	<h1>Testing Collective Clicker</h1>
+  
+  <h2 id="counter"></h2>
+  <button onclick="sumaruno()">click me</button>
+  <p><i>Page made the 2021 June 10th by dibesfer</i></p>
+  
+</body>
+<script>
+// THIS GETS THE CURRENT URL AND PUTS IT ON THE BUTTON
+	var url = window.location.href;
+
+  
+	
+//THIS IS THE PART THAT REFERENCES THE COUNTER  
+
+const countEl = document.getElementById('counter');
+
+updateVisitCount();
+
+function sumaruno() {
+	fetch('https://api.countapi.xyz/update/dibestesting/collclicker/?amount=1')
+	.then(res => res.json())
+	.then(res => {
+		countEl.innerHTML = res.value;
+	})
+}
+  
+// THIS PART JUST MAKES A LINK TO THE CURRENT URL DIRECTION
+/*
+function getsetlink(){
+	//var url = window.location.href;
+
+  	// This only changes the link
+	//document.getElementById("reloadlink").innerHTML = "<a href='" + url + " '>Reaload me</a>";
+
+	// This changes the url to the current url aka REFRESH / RELOAD THE PAGE
+	window.location.href = url;
+}
+*/ 
+//getsetlink();
+  
+//function timer() {setInterval("getsetlink()",5000);}
+
+//timer();
+
+// SPECIAL THANKS TO Florin Pop https://youtu.be/R8GS-8nlekY
+  
+</script>
+</html>
