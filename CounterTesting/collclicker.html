@@ -7,13 +7,63 @@
   <meta name="description" content="Dibesfer Github Page. Developer Illustrator Writer. Testing counter with countapi.xyz ">
   <meta name="keywords" content="HTML, CSS, JavaScript">
   <meta name="author" content="Dibesfer">
+  
+  <style>
+    * {
+    
+    	box-sizing: border-box;
+    
+    }
+    
+    body { 
+    	background-color: darkslateblue;
+    	display: flex;
+    	align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        font-family: verdana;
+        color: white;
+    }
+  	
+    #counter {
+    
+    	background-color: cadetblue;
+        padding: 15px;
+    	border: solid 3px gold;
+    }
+    
+    #coll_button {
+    
+    	background-color: limegreen;
+        border: solid gold 3px;
+        padding: 15px;
+        font-size: inherit;
+        color: wh
+    
+    
+    }
+     #coll_button:active {
+    
+    	background-color: cadetblue;
+        border: solid black 3px;
+        padding: 15px;
+        font-size: inherit;
+        transition: 0.2s;
+        color: white;
+    
+    
+    }
+  
+  </style>
+
+
 	</head>
 <body>
 
-	<h1>Testing Collective Clicker</h1>
+	<h1>Collective Clicker</h1>
   
   <h2 id="counter"></h2>
-  <button onclick="sumaruno()">click me</button>
+  <button id="coll_button" onclick="sumaruno()">Sum one!</button>
   <p><i>Page made the 2021 June 10th by dibesfer</i></p>
   
 
