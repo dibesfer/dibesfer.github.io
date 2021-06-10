@@ -6,7 +6,7 @@
   
   <h3>This page reloads itself every 5 seconds. But if you feel anxious...</h3>
   <h3>Click here to reload the page!</h3>
-  <div id="count"></div>
+  <h2 id="counter"></h2>
   <button id="reloadlink" ></button>
 
   <p><i>Page made the 2021 June 10th by dibesfer</i></p>
@@ -21,7 +21,7 @@ const countEl = document.getElementById('count');
 updateVisitCount();
 
 function updateVisitCount() {
-	fetch('https://api.countapi.xyz/update/dibesteting/github/?amount=1')
+	fetch('https://api.countapi.xyz/update/dibestesting/github/?amount=1')
 	.then(res => res.json())
 	.then(res => {
 		countEl.innerHTML = res.value;
