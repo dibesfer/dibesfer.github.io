@@ -13,7 +13,12 @@
   
 </body>
 <script>
+// THIS GETS THE CURRENT URL AND PUTS IT ON THE BUTTON
+	var url = window.location.href;
 
+  	// This only changes the link
+	document.getElementById("reloadlink").innerHTML = "<a href='" + url + " '>Reaload me</a>";
+	
 //THIS IS THE PART THAT REFERENCES THE COUNTER  
 
 const countEl = document.getElementById('counter');
@@ -31,19 +36,20 @@ function updateVisitCount() {
 // THIS PART JUST MAKES A LINK TO THE CURRENT URL DIRECTION
 
 function getsetlink(){
-	var url = window.location.href;
+	//var url = window.location.href;
 
   	// This only changes the link
-	document.getElementById("reloadlink").innerHTML = "<a href='" + url + " '>Reaload me</a>";
+	//document.getElementById("reloadlink").innerHTML = "<a href='" + url + " '>Reaload me</a>";
 
-	//window.location.href = url;
+	// This changes the url to the current url aka REFRESH / RELOAD THE PAGE
+	window.location.href = url;
 }
   
-getsetlink();
+//getsetlink();
   
-//function timer() {setInterval("getsetlink()",5000);}
+function timer() {setInterval("getsetlink()",5000);}
 
-//timer();
+timer();
 
 // SPECIAL THANKS TO Florin Pop https://youtu.be/R8GS-8nlekY
   
