@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+
+<body>
+
+  
+  <h3>This page reloads itself every 5 seconds. But if you feel anxious...</h3>
+  <h3>Click here to reload the page!</h3>
+  <div id="count"></div>
+  <button id="reloadlink" ></button>
+
+  <p><i>Page made the 2021 June 10th by dibesfer</i></p>
+  
+</body>
+<script>
+
+//THIS IS THE PART THAT REFERENCES THE COUNTER  
+
+const countEl = document.getElementById('count');
+
+updateVisitCount();
+
+function updateVisitCount() {
+	fetch('https://api.countapi.xyz/update/dibesteting/github/?amount=1')
+	.then(res => res.json())
+	.then(res => {
+		countEl.innerHTML = res.value;
+	})
+}
+  
+// THIS PART JUST MAKES A LINK TO THE CURRENT URL DIRECTION
+
+function getsetlink(){
+	var url = window.location.href;
+
+  	// This only changes the link
+	//document.getElementById("reloadlink").innerHTML = "<a href='" + url + " '>Reaload me</a>";
+
+	window.location.href = url;
+}
+  
+//getsetlink();
+  
+function timer() {setInterval("getsetlink()",5000);}
+
+timer();
+
+// SPECIAL THANKS TO Florin Pop https://youtu.be/R8GS-8nlekY
+  
+</script>
+</html>
