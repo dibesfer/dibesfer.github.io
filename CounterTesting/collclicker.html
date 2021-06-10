@@ -18,8 +18,9 @@
   
 </body>
 <script>
+	
 // THIS GETS THE CURRENT URL AND PUTS IT ON THE BUTTON
-	var url = window.location.href;
+//	var url = window.location.href;
 
   
 	
@@ -27,14 +28,33 @@
 
 const countEl = document.getElementById('counter');
 
-updateVisitCount();
-
+//updateVisitCount();
+	
+    
+    //sumaruno();
+    function showuno(){
+    fetch('https://api.countapi.xyz/get/dibestesting/collclicker/')
+	.then(res => res.json())
+	.then(res => {
+		 countEl.innerHTML = res.value
+         
+         //countEl.innerHTML = res.value;
+	})
+    }
+ 
 function sumaruno() {
+	
+	
 	fetch('https://api.countapi.xyz/update/dibestesting/collclicker/?amount=1')
 	.then(res => res.json())
 	.then(res => {
-		countEl.innerHTML = res.value;
+		 countEl.innerHTML = res.value
+         
+         //countEl.innerHTML = res.value;
 	})
+    
+     
+	
 }
   
 // THIS PART JUST MAKES A LINK TO THE CURRENT URL DIRECTION
@@ -44,6 +64,22 @@ function getsetlink(){
 
   	// This only changes the link
 	//document.getElementById("reloadlink").innerHTML = "<a href='" + url + " '>Reaload me</a>";
+
+	// This changes the url to the current url aka REFRESH / RELOAD THE PAGE
+	window.location.href = url;
+}
+*/ 
+//getsetlink();
+  
+function timer() {setInterval("showuno()",1000);}
+
+timer();
+
+// SPECIAL THANKS TO Florin Pop https://youtu.be/R8GS-8nlekY
+  
+</script>
+</html>
+
 
 	// This changes the url to the current url aka REFRESH / RELOAD THE PAGE
 	window.location.href = url;
