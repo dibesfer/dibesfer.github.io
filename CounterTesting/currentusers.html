@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+
+<body>
+
+<!-- https://api.countapi.xyz/create?namespace=dibestesting&key=currentusers&value=0 -->
+The content of the body element is displayed in your browser.
+
+<div id="counter"></div>
+
+<script>
+
+var userisactive = true;
+
+const countEl = document.getElementById('counter');
+
+	sumaruno();
+	//showuno();
+    // ONLY SHOWS THE VARIABLE
+    function showuno(){
+    
+    	fetch('https://api.countapi.xyz/get/dibestesting/currentusers/')
+		.then(res => res.json())
+		.then(res => {
+			 countEl.innerHTML = res.value
+             
+             if (userisactive) {
+             
+             	sumaruno();
+                userisactive = false;
+             
+             }
+    
+    })
+    }
+    
+    function sumaruno() {
+	
+	
+		fetch('https://api.countapi.xyz/update/dibestesting/currentusers/?amount=-1')
+		.then(res => res.json())
+		.then(res => {
+			 countEl.innerHTML = res.value
+		})
+	}
+    
+    function restaruno() {
+	
+	
+		fetch('https://api.countapi.xyz/update/dibestesting/currentusers/?amount=-1')
+		.then(res => res.json())
+		.then(res => {
+			 countEl.innerHTML = res.value
+		})
+	}
+
+window.addEventListener("beforeunload", function (e) {
+  saveFormData();
+
+  (e || window.event).returnValue = null;
+  return null;
+});
+
+function saveFormData() {
+    restaruno();
+    countEl.innerHTML = " BYE ";
+}
+
+
+function timer() {setInterval("showuno()",1000);}
+
+timer();
+
+</script>
+</body>
+
+</html>
