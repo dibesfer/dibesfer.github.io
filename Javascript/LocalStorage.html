@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+
+<body>
+
+<h1> Your name is: </h1>
+
+<div id="demo"></div>
+<form>
+<input id="inputbox" type="textbox">
+<input id="inputbox" type="button" value="Save" onclick="saveData()">
+<input id="inputbox" type="button" value="Clear" onclick="clearData()">
+
+
+</form>
+<script>
+
+var name = localStorage.getItem("mykey","myValue")
+var demo = document.getElementById("demo");
+
+if (demo.text == "null") {
+
+	demo.innerHTML = "You haven't yet entered a name."
+
+}
+
+//name = "asdsas";
+
+
+var data = localStorage.setItem("mykey",name);
+var inputbox = document.getElementById("inputbox");
+
+
+demo.innerHTML = localStorage.getItem("mykey",name);
+
+function saveData() {
+	name = inputbox.value;
+    data = localStorage.setItem("mykey",name);
+	demo.innerHTML = localStorage.getItem("mykey",name);
+	inputbox.value = "";
+}
+
+function clearData() { 
+
+	localStorage.clear();
+    demo.innerHTML = "Waiting for input...";
+
+}
+
+</script>
+
+</body>
+
+</html>
