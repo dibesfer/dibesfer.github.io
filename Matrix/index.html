@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script type="text/javascript" src="https://dibesfer.github.io/ferscript.js"></script>
+</head>
+<body>
+
+<h1>How to basic matrix/grid movement in javascript</h1>
+
+The content of the body element is displayed in your browser.
+
+<div id="demo">Demo</div>
+
+<script>
+
+function main(){
+
+    
+    var matrix = [[1,1,1,1,1],[1,1,1,1,1] 
+,[1,1,1,1,1]
+,[1,1,1,1,1]
+,[1,1,1,1,1]];
+    var playerX = 2;
+    var playerY = 2;
+    matrix[playerX][playerY] = 0;
+    var demo = getid("demo");
+    demo.innerHTML += " hi ";
+    
+
+    demo.innerHTML += "<br/>"
+
+
+var length = 5; // user defined
+
+for(var i = 0; i < length; i++) {
+
+    for(var j = 0; j < length; j++) 
+        {
+          
+            
+            demo.innerHTML += matrix[i][j] + " ";
+            
+        }
+
+    // Once we ended a row we make a break space
+
+    demo.innerHTML += "<br/>"
+        
+}
+
+
+
+}
+main();
+
+
+</script>
+</body>
+
+</html>
