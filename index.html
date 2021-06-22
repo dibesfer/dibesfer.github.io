@@ -3,7 +3,7 @@
 <head>
   
 <!-- Adsense code
-<script data-ad-client="ca-pub-9244841916029231" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+
 -->
 	
 <meta content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no' name='viewport'/> 
@@ -15,6 +15,7 @@
  <!--link rel="icon" href="demo_icon.png" type="image/png"--> 
   <link rel="stylesheet" type="text/css" href="https://dibesfer.github.io/main.css">
   <script src="https://dibesfer.github.io/main.js"></script>
+	<script src="https://dibesfer.github.io/ferscript.js"></script>
   <style>
 		
 						  body {
@@ -62,7 +63,47 @@
 	</header>
                                                            
        </main>
-                                                           
+	<footer>
+	
+		<center id="visits_counter">Total visits </center>
+		
+	</footer>                                            
+	<script>
+	
+	function main(){
+		
+		var countEl = getid("visits_counter");
+		
+		
+    		function showuno(){
+    			fetch('https://api.countapi.xyz/get/dibestesting/github_visits/')
+				.then(res => res.json())
+				.then(res => {
+					 countEl.innerHTML = res.value
+         
+         			//countEl.innerHTML = res.value;
+			})
+   		}
+		
+		showuno();
+		/*
+		function updateVisitCount() {
+		fetch('https://api.countapi.xyz/update/dibestesting/github_visits/?amount=1')
+			.then(res => res.json())
+			.then(res => {
+				countEl.innerHTML = res.value;
+			})
+		}
+		
+		updateVisitCount();
+		*/
+	
+		function timer() {setInterval("showuno()",1000);}
+		timer();
+	}
+	main();
+	</script>
+	
 </body>
 </html>
                                                           
