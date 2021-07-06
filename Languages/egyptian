@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<meta content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no' name='viewport'/> 
+  <meta charset="utf-8">
+  <title>Dibesfer</title>
+  <meta name="description" content="Dibesfer Github Page. Developer Illustrator Writer">
+  <meta name="keywords" content="HTML, CSS, JavaScript">
+  <meta name="author" content="Dibesfer">
+<script src="https://dibesfer.github.io/ferscript.js">
+</script>
+
+<style>
+
+	#showbox {
+    
+    	font-size: 300px;
+    
+    }
+
+</style>
+
+</head>
+
+<body>
+The content of the body element is displayed in your browser.
+
+<div id="showbox"></div>
+
+</body>
+
+<script>
+
+	var glyphs = ["𓀞", "𓀟", "𓀠",
+    "𓅰", "𓅯", "𓅮" ]
+	var showbox = getid("showbox")
+	var index = 0;
+
+	function change_glyph(){
+    
+    	if (index < glyphs.length - 1){
+    
+    		index++;
+        
+        }
+    
+    	else {
+        
+        	index=0;
+        
+        }
+        
+        showbox.innerHTML = glyphs[index];
+    
+    }
+
+    setInterval("change_glyph()",200);
+
+
+</script>
+
+</html>
