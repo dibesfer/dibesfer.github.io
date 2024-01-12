@@ -1,29 +1,22 @@
 * {
  
- margin: 0;
+
  box-sizing: border-box;
 }
 
 body {
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  max-width: 800px;
+  margin: auto;
   color: white;
   background-color: blue;
-  background-repeat: no-repeat;
-  background-attachment: fixed;
-  background-position: center; 
-  height: 100vh;
   font-family: monospace;
-  line-height: 1.5;
+
 }
 
 main {
   
-  padding: 40px;
-  margin: 50px;
-  
-  text-align: center;
+
+
   /*
   border: solid 10px black;
   border-radius: 10px;
@@ -38,5 +31,5 @@ a {
   color: blue;
   background-color: white;
   text-shadow: none;
-  padding: 5px;
+
 }
