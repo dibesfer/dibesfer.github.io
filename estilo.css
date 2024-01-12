@@ -1,6 +1,5 @@
 * {
  
-
  box-sizing: border-box;
 }
 
@@ -10,6 +9,8 @@ body {
   color: white;
   background-color: blue;
   font-family: monospace;
+  font-size: 1.5em;
+  padding: 0 15px ;
 
 }
 
