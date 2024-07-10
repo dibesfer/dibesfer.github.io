@@ -27,10 +27,14 @@ main {
 }
 
 a {
-  text-decoration: none;
+  text-decoration:;
   font-weight: bold;
-  color: blue;
-  background-color: white;
+  color: white;
   text-shadow: none;
+}
 
+.specialLink {
+  background-color: white;
+  color: blue;
+  text-decoration: none;
 }
