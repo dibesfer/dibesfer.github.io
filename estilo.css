@@ -7,7 +7,8 @@ body {
   max-width: 800px;
   margin: auto;
   color: white;
-  background-color: blue;
+  background: rgb(6,0,106);
+background: linear-gradient(90deg, rgba(6,0,106,1) 0%, rgba(0,0,255,1) 50%, rgba(6,0,106,1) 100%);
   font-family: monospace;
   font-size: 1.5em;
   padding: 0 15px ;
@@ -28,7 +29,6 @@ main {
 }
 
 a {
-  font-weight: bold;
   color: white;
   text-shadow: none;
 }
@@ -43,4 +43,12 @@ a {
 
 	text-align:center
 
+}
+
+hr {
+  border: white dashed
+}
+
+.pixel {
+  image-rendering: pixelated;
 }
