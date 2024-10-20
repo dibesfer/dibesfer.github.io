@@ -15,6 +15,10 @@ background: linear-gradient(90deg, rgba(6,0,106,1) 0%, rgba(0,0,255,1) 50%, rgba
 text-align: center;
 line-height: 2;
 
+  cursor: url(cursor.png), default;
+
+
+
 }
 
 main {
@@ -32,6 +36,7 @@ main {
 a {
   color: white;
   text-shadow: none;
+ cursor: url(pointer.png), auto;
 }
 
 .specialLink {
@@ -49,6 +54,17 @@ a {
 hr {
   border: white dashed
 }
+
+ ::-moz-selection { /* Code for Firefox */
+  color: blue;
+  background: white;
+}
+
+::selection {
+  color: blue;
+  background: white;
+}
+
 
 .pixel {
   image-rendering: pixelated;
