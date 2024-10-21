@@ -69,3 +69,33 @@ hr {
 .pixel {
   image-rendering: pixelated;
 }
+
+#animatedBar{
+  height: 50px;
+  border: solid 3px red;
+}
+
+#animatedBarInterior {
+  height: 100%;
+  border: solid 3px yellow;
+  width: 50%;
+  margin-left: 25%;
+}
+
+#description {
+ 
+  
+  
+  animation-name: example;
+  animation-duration: 2s;
+  animation-iteration-count: infinite;
+  animation-direction: alternate;
+}
+
+@keyframes example {
+  0%   {color:white; }
+  25%  {color:yellow; }
+  50%  {color:limegreen; }
+  75%  {color:green; }
+  100% {color:purple;}
+}
