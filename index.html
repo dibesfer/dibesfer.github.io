@@ -28,8 +28,8 @@
     gtag('config', 'G-WQ043CLMXE');
   </script>
   <!-- Google Analytics End -->
-   <!-- SUPABASE cdn -->
-   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <!-- SUPABASE cdn -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 </head>
 
 <body>
@@ -42,18 +42,24 @@
       <hr>
       <h1>¡Hola Mundo! :)</h1>
       <p>Bienvenido a la página de dibesfer en github.com</p>
-      <h3>🏠 Principal</h3>
-      <p><a href="https://dibesfer.com">dibesfer.com</a><br><a
-          href="https://dibesfer.codeberg.page">dibesfer.codeberg.page</a></p>
-      <h3>ℹ️ Info</h3>
-      <p><a href="https://info.dibesfer.com">info.dibesfer.com</a><br><a
-          href="https://dibesfer.github.io">dibesfer.github.io</a></p>
-      <h3>📝 Blog</h3>
-      <p><a href="https://blog.dibesfer.com">blog.dibesfer.com</a><br><a
-          href="https://dibesfer.blogspot.com">dibesfer.blogspot.com</a></p>
-      <h3>🦣 Mastodon</h3>
-      <p><a rel="me" href="https://mastodon.social/@dibesfer" target="_blank">mastodon.social/@dibesfer</a>
-      </p>
+      <div class="contenedores">
+      <div class="contenedor">
+        <h3>🏠 Principal</h3>
+        <p><a href="https://dibesfer.com">dibesfer.com</a><br><a
+            href="https://dibesfer.codeberg.page">dibesfer.codeberg.page</a></p>
+        <h3>ℹ️ Info</h3>
+        <p><a href="https://info.dibesfer.com">info.dibesfer.com</a><br><a
+            href="https://dibesfer.github.io">dibesfer.github.io</a></p>
+      </div>
+      <div class="contenedor">
+        <h3>📝 Blog</h3>
+        <p><a href="https://blog.dibesfer.com">blog.dibesfer.com</a><br><a
+            href="https://dibesfer.blogspot.com">dibesfer.blogspot.com</a></p>
+        <h3>🦣 Mastodon</h3>
+        <p><a rel="me" href="https://mastodon.social/@dibesfer" target="_blank">mastodon.social/@dibesfer</a>
+        </p>
+      </div>
+    </div>
       <br>
       <hr>
 
@@ -90,11 +96,11 @@
       <p>Total visits: <span id="totalVisits"></span></p>
       <h3>Página oficial <a class="specialLink" href="https://dibesfer.com">dibesfer.com</a></h3><br>
       <div style="display: flex;">
-      <img src="mandala.png" alt="mandala" width="33.33%">
-      <img src="mandala2.png" alt="mandala" width="33.33%">
-      <img src="mandala3.png" alt="mandala" width="33.33%">
-      
-      </div>
+        <img src="mandala.png" alt="mandala" width="33.33%">
+        <img src="mandala2.png" alt="mandala" width="33.33%">
+        <img src="mandala3.png" alt="mandala" width="33.33%">
+        
+      </div><br>
   </main>
 
   <footer>
@@ -102,7 +108,7 @@
 
   </footer>
   <script>
-    
+
     const supabaseUrl = 'https://qugihsopwjemzakhrbvw.supabase.co'
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF1Z2loc29wd2plbXpha2hyYnZ3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE2OTg0OTQxMDksImV4cCI6MjAxNDA3MDEwOX0.1q5fBic1cjueaiP2-p6W19C68ye8FTPLFne2a-fKwZ8'
     const database = supabase.createClient(supabaseUrl, supabaseKey)
