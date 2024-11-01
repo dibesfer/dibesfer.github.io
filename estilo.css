@@ -1,42 +1,29 @@
 * {
- margin: 0;
- box-sizing: border-box;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+html {
+  cursor: url(cursor.png), default;
 }
 
 body {
   max-width: 800px;
   margin: auto;
   color: white;
-  background: rgb(6,0,106);
-background: linear-gradient(90deg, rgba(6,0,106,1) 0%, rgba(0,0,255,1) 50%, rgba(6,0,106,1) 100%);
+  background: rgb(6, 0, 106);
+  background: linear-gradient(90deg, rgba(6, 0, 106, 1) 0%, rgba(0, 0, 255, 1) 50%, rgba(6, 0, 106, 1) 100%);
   font-family: monospace;
   font-size: 1.4em;
-  padding: 0 15px ;
-text-align: center;
-line-height: 2;
-
-  cursor: url(cursor.png), default;
-
-
-
-}
-
-main {
-  
-
-
-  /*
-  border: solid 10px black;
-  border-radius: 10px;
-  box-shadow: 10px 10px 20px 0px black;
-  background-image: linear-gradient( 75deg, black, limegreen, black);
-  text-shadow: 2px 2px 4px white;*/
+  padding: 0 15px;
+  text-align: center;
+  line-height: 2;
 }
 
 a {
   color: white;
   text-shadow: none;
- cursor: url(pointer.png), auto;
+  cursor: url(pointer.png), auto;
 }
 
 .specialLink {
@@ -47,15 +34,15 @@ a {
 
 .textCenter {
 
-	text-align:center
-
+  text-align: center
 }
 
 hr {
   border: white dashed
 }
 
- ::-moz-selection { /* Code for Firefox */
+::-moz-selection {
+  /* Code for Firefox */
   color: blue;
   background: white;
 }
@@ -70,7 +57,7 @@ hr {
   image-rendering: pixelated;
 }
 
-#animatedBar{
+#animatedBar {
   height: 50px;
   border: solid 3px red;
 }
@@ -90,11 +77,25 @@ hr {
 }
 
 @keyframes example {
-  0%   {color:white; }
-  25%  {color:yellow; }
-  50%  {color:limegreen; }
-  75%  {color:green; }
-  100% {color:purple;}
+  0% {
+    color: white;
+  }
+
+  25% {
+    color: yellow;
+  }
+
+  50% {
+    color: limegreen;
+  }
+
+  75% {
+    color: green;
+  }
+
+  100% {
+    color: purple;
+  }
 }
 
 .contenedores {
@@ -102,6 +103,7 @@ hr {
   justify-content: center;
   flex-wrap: wrap;
 }
+
 .contenedor {
   border: solid 3px white;
   border-radius: 15px;
