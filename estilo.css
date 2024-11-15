@@ -14,7 +14,7 @@ body {
   background: rgb(6, 0, 106);
   background: linear-gradient(90deg, rgba(6, 0, 106, 1) 0%, rgba(0, 0, 255, 1) 50%, rgba(6, 0, 106, 1) 100%);
   font-family: monospace;
-  
+  font-size: larger;
   padding: 0 15px;
   text-align: center;
   line-height: 2;
