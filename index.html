@@ -18,7 +18,7 @@
   <meta property='og:description' content='Information about dibesfer' />
   <meta property="og:title" content="info.dibesfer">
   <link rel="stylesheet" href="estilo.css">
-  
+
   <!-- SUPABASE cdn -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 </head>
@@ -104,6 +104,18 @@
     const database = supabase.createClient(supabaseUrl, supabaseKey)
 
     const totalVisits = document.getElementById("totalVisits")
+
+    //LOCALHOST
+    var localVisits = localStorage.getItem("infoDibesferLocalVisits")
+    if (localVisits == null) {
+      localVisits = 1
+    }
+    else {
+      localVisits++
+    }
+    localStorage.setItem("infoDibesferLocalVisits", localVisits)
+
+
     //REALTIME 
     // Create a function to handle inserts
     const handleInserts = (payload) => {
@@ -162,6 +174,36 @@
         totalVisits.textContent = res.data[0].github
       }
     }
+
+
+    async function insertUserAgent() {
+
+      let myUserAgent = window.navigator.userAgent
+      var userLang = navigator.language || navigator.userLanguage;
+      var userScreen = "Width: " + innerWidth + " Height: " + innerHeight
+      var userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
+
+      if (localVisits >= 0) {
+        const { data, error } = await database
+          .from("userAgents")
+          .insert([
+            {
+              userAgent: myUserAgent,
+              http: window.location.href,
+              from: document.referrer,
+              localVisits: localVisits,
+              language: userLang,
+              size: userScreen,
+              timezone: userTimeZone
+              //url: window.location.href
+              //email: param1,
+              //username: param1.split("@")[0]
+            },
+          ])
+          .select()
+      }
+    }
+    insertUserAgent()
 
 
   </script>
