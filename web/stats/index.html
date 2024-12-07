@@ -21,6 +21,24 @@
 
   <!-- SUPABASE cdn -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+
+
+  <style>
+    #consola {
+        border: solid 1px white;
+        max-height: 100vh;
+        overflow: auto;
+        text-align: left;
+    }
+
+    #consola div {
+        border: solid 1px white;
+        overflow: auto;
+        padding: 15px;
+    }
+</style>
+
+
 </head>
 
 <body>
@@ -31,26 +49,12 @@
     <h3 id="description">Dibujos y escritos de Fer</h1>
       <!-- <div id="animatedBar"><div id="animatedBarInterior"></div></div> -->
       <hr>
-      <h1>¡Hola Mundo! :)</h1>
-      <p>Bienvenido a la página de dibesfer en github.com</p>
-      <div class="contenedores">
-        <div class="contenedor">
-          <h3>🏠 Principal</h3>
-          <p><a href="https://dibesfer.com">dibesfer.com</a><br><a
-              href="https://dibesfer.codeberg.page">dibesfer.codeberg.page</a></p>
-          <h3>ℹ️ Info</h3>
-          <p><a href="https://info.dibesfer.com">info.dibesfer.com</a><br><a
-              href="https://dibesfer.github.io">dibesfer.github.io</a></p>
-        </div>
-        <div class="contenedor">
-          <h3>📝 Blog</h3>
-          <p><a href="https://blog.dibesfer.com">blog.dibesfer.com</a><br><a
-              href="https://dibesfer.blogspot.com">dibesfer.blogspot.com</a></p>
-          <h3>🦣 Mastodon</h3>
-          <p><a rel="me" href="https://mastodon.social/@dibesfer" target="_blank">mastodon.social/@dibesfer</a>
-          </p>
-        </div>
-      </div>
+      <h1>⚙️ Web stats</h1>
+      <hr>
+      <br>
+      <p style="text-align: left; background-color: rgb(0, 24, 41);padding: 15px;">Legend: <span style="color:yellow">Bot</span> <span style="color:blue">Windows</span> <span style="color:purple">Macintosh</span> <span style="color:green">Android</span> <span style="color:orange">Linux</span></p> 
+            <div id="consola"></div>
+
       <br>
       <hr>
 
@@ -84,8 +88,7 @@
       <p>✉️ contact <a href="mailto:dibesfer@gmail.com">dibesfer@gmail.com</a></p>
       <hr><br>
       <p>Total visits: <span id="totalVisits"></span></p>
-      <h3>Página oficial <a class="specialLink" href="https://dibesfer.com">dibesfer.com</a></h3>
-      <p><a href="/web/stats/">Web stats</a></p><br>
+      <h3>Página oficial <a class="specialLink" href="https://dibesfer.com">dibesfer.com</a></h3><br>
       <div style="display: flex;">
         <img src="/art/mandala.png" alt="mandala" width="33.33%">
         <img src="/art/mandala2.png" alt="mandala" width="33.33%">
@@ -206,6 +209,65 @@
     }
     insertUserAgent()
 
+
+    // GET ALL USERAGENTS
+
+    async function getalluseragents(tableName, rowName) {
+            const res = await database.from(tableName).select(rowName)//.range(3000,5000)
+            //console.log(res.data)
+
+            res.data.sort(function (a, b) {
+                if (a.id > b.id) {
+                    return 1;
+                }
+                if (a.id < b.id) {
+                    return -1;
+                }
+                // a must be equal to b
+                return 0;
+            });
+
+            var botStyle
+            res.data.forEach(element => {
+                if(element.id != undefined && element.localVisits >= 0){
+
+                    if (element.userAgent.includes("bot") || element.userAgent.includes("1061943")){
+                        botStyle = "style='background-color:yellow; color:black'"
+                    }
+                    else if (element.userAgent.includes("Windows")){
+                        botStyle = "style='background-color:blue'"
+                    }
+                    else if (element.userAgent.includes("Macintosh")){
+                        botStyle = "style='background-color:purple'"
+                    }
+                    else if (element.userAgent.includes("Android")){
+                        botStyle = "style='background-color:green'"
+                    }
+                    else if (element.userAgent.includes("Linux")){
+                        botStyle = "style='background-color:orange;color:black;'"
+                    }
+                    else botStyle = ""
+
+                    consola.innerHTML += "<div " + botStyle + "><details><summary>" + element.id + "   <b>Date</b>: " + element.created_at + "</summary>" +
+                        
+                    "<b>User Agent</b>: " + element.userAgent +
+                    
+                    "<br><b>From</b>: " + element.from + "<br><b>Http</b>: " + element.http + 
+                    
+                    "<br><b>Local visits</b>: " + element.localVisits + 
+                    
+                    "<br><b>Language</b>: " + element.language + 
+                    
+                    "<br><b>Timezone</b>: " + element.timezone +
+                    
+                    "<br><b>Size</b>: " + element.size + "</details></div>" 
+                }
+
+                
+            });
+
+        }
+        getalluseragents("userAgents", "*")
 
   </script>
   <script src="/codigo.js"></script>
