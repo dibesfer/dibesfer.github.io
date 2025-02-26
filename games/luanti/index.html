@@ -499,6 +499,29 @@ end)</pre>
 
             <div>
                 <h2 id="colorizetextures">Colorize Textures</h2>
+                <p>Let's create a plain black and white (or grayscale) texture image.</p>
+                <div style="text-align: center;">
+                <img src="textures/wool.png" alt="plain white wool" class="pixel" width="100px">
+                
+            </div>
+            <p>Use the texture modifier <b>^[colorize:#ff0000:180</b> to set a RGB color red and a ratio: 0-only the texture to 255-only the color</p>
+            <pre class="prettyprint">
+core.register_node('blank:wool', {
+    description = 'Wool',
+    tiles = { 'wool.png' },
+    groups = { dig_immediate = 3 },
+    paramtype = "light",
+})
+
+core.register_node('blank:red_wool', {
+    description = 'Wool',
+    tiles = { "wool.png^[colorize:#ff0000:180" },
+    groups = { dig_immediate = 3 },
+    paramtype = "light",
+})</pre>
+<p>Use colors like green #00FF00 or blue #0000FF</p>
+<img src="assets/wool.png" alt="" class="panoramic">
+
             </div>
 
             <div>
