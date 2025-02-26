@@ -76,7 +76,10 @@ header details summary {
 
 */
 }
-
+main {
+    overflow: auto;
+    flex: 1;
+}
 #background1{
     background-color: wheat;
     width: 900px;
@@ -86,10 +89,7 @@ header details summary {
     box-shadow: 0 0 30px rgba(255, 255, 255, 0.527);
 }
 
-main {
-    overflow: auto;
-    flex: 1;
-}
+
 
 @media screen and (min-width: 800px) {
     #background1 {
@@ -170,12 +170,15 @@ b {
 }
 
 #upArrow {
-    display: none;
+    
     position: fixed;
     bottom: 10px;
     right: 25px;
-    font-size: 60px;
+    font-size: 40px;
+    
 }
+
+
 
 #upArrow a {
     color: blue;
