@@ -198,16 +198,19 @@ core.register_node('blank:stone', {
     description = 'Stone',
     tiles = { 'stone.png' },
     groups = { dig_immediate = 3 },
+    paramtype = "light"
 })
 core.register_node('blank:water', {
     description = 'Water',
     tiles = { 'water.png' },
     groups = { dig_immediate = 3 },
+    paramtype = "light"
 })
 core.register_node('blank:river_water', {
     description = 'River Water',
     tiles = { 'river_water.png' },
     groups = { dig_immediate = 3 },
+    paramtype = "light"
 })</pre>
 
                     <p>Now we register the aliases</p>
@@ -269,11 +272,6 @@ core.register_biome({
                     <p>Now we have this (v7 mapgen)</p>
                     <img class="panoramic" src="assets/firstbiome.png" alt="">
                 </div>
-
-
-
-
-
 
                 <h3>Create a flower 🌺</h3>
                 <p>Let's create two vegetations, flower and long plant.</p>
