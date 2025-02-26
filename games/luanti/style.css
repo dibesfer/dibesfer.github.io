@@ -77,19 +77,22 @@ header details summary {
 */
 }
 
-main {
+#background1{
     background-color: wheat;
-    padding: 15px;
-    overflow: auto;
-    flex: 1;
-    max-width: 100%;
     width: 900px;
+    max-width: 100%;
     margin: auto;
+    padding: 15px;
     box-shadow: 0 0 30px rgba(255, 255, 255, 0.527);
 }
 
+main {
+    overflow: auto;
+    flex: 1;
+}
+
 @media screen and (min-width: 800px) {
-    main {
+    #background1 {
         padding: 0 55px
     }
 }

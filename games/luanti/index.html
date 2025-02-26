@@ -31,7 +31,7 @@
     <link rel="stylesheet" href="style.css">
 
     <!-- SUPABASE cdn -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 
 </head>
 
@@ -69,133 +69,137 @@
         </details>
     </header>
     <main>
-        <div>
-            <h2 id="introduction">Introduction</h2>
-            <img class="panoramic" src="assets/hills.png" alt="hills">
-            <p>Luanti is a voxel game engine written in C++ that allows you to mod it with Lua.</p>
-        </div>
-        <div>
-            <h2 id="games">Games 🕹️</h2>
-            <p>When you start Luanti for the first time it will tell you to download a game. A game is necessary to
-                generate worlds.</p>
-            <p> Some famous games made with this engine are Minetest the game, VoxeLibre and NodeCore</p>
-            <p>Some little pearls are Void, Cavegame and Colorlandia</p>
-        </div>
-        <div>
-            <h2 id="servers">Servers</h2>
-            <p>Some famous servers are Your Land, Capture the Flag and SquareOne</p>
-            <p>See the server list here <a href="http://servers.luanti.org/">servers.luanti.org</a> or see the <a
-                    href="https://dibesfer.com/p/games/minetest/epicserverlist.html">Epic Server List</a></p>
-            <p>Make your server for free with playit.gg with <a target="_blank"
-                    href="/p/games/minetest/pdf/Minetest Server with playitgg.pdf">this guide</a></p>
-        </div>
-        <div>
-            <h2 id="nae">Nodes and entities</h2>
-            <p>Luanti worlds are made of blocks or voxels, luanti calls them nodes. They are static elements and can
-                have different shapes "drawtype"</p>
-            <p>Entities are objects that aren't attached to a grid position like nodes. Typically for objects that move
-                like NPCs</p>
+        <div id="background1">
+            <div>
+                <h2 id="introduction">Introduction</h2>
+                <img class="panoramic" src="assets/hills.png" alt="hills">
+                <p>Luanti is a voxel game engine written in C++ that allows you to mod it with Lua.</p>
+            </div>
+            <div>
+                <h2 id="games">Games 🕹️</h2>
+                <p>When you start Luanti for the first time it will tell you to download a game. A game is necessary to
+                    generate worlds.</p>
+                <p> Some famous games made with this engine are Minetest the game, VoxeLibre and NodeCore</p>
+                <p>Some little pearls are Void, Cavegame and Colorlandia</p>
+            </div>
+            <div>
+                <h2 id="servers">Servers</h2>
+                <p>Some famous servers are Your Land, Capture the Flag and SquareOne</p>
+                <p>See the server list here <a href="http://servers.luanti.org/">servers.luanti.org</a> or see the <a
+                        href="https://dibesfer.com/p/games/minetest/epicserverlist.html">Epic Server List</a></p>
+                <p>Make your server for free with playit.gg with <a target="_blank"
+                        href="/p/games/minetest/pdf/Minetest Server with playitgg.pdf">this guide</a></p>
+            </div>
+            <div>
+                <h2 id="nae">Nodes and entities</h2>
+                <p>Luanti worlds are made of blocks or voxels, luanti calls them nodes. They are static elements and can
+                    have different shapes "drawtype"</p>
+                <p>Entities are objects that aren't attached to a grid position like nodes. Typically for objects that
+                    move
+                    like NPCs</p>
 
-        </div>
-        <div>
-            <h2 id="modbas">Modding basics</h2>
-            <p>Go to your luanti folder and get into /mods create a new folder mymod, inside create two files:
+            </div>
+            <div>
+                <h2 id="modbas">Modding basics</h2>
+                <p>Go to your luanti folder and get into /mods create a new folder mymod, inside create two files:
 
-            </p>
+                </p>
 
-            <p>mod.conf</p>
-            <p>name = mymod</p>
-            <p>init.lua</p>
-            <p>--Here goes the code</p>
+                <p>mod.conf</p>
+                <p>name = mymod</p>
+                <p>init.lua</p>
+                <p>--Here goes the code</p>
 
-        </div>
-        <div>
-            <h2 id="mwl">Modding with Lua</h2>
-            <p>There are some functions to do what you want to do. They are called <a
-                    href="https://api.luanti.org/core-namespace-reference/#global-callback-registration-functions"
-                    target="_blank">Global callback registration functions</a></p>
-            <p>Salute the player:</p>
-            <pre class="prettyprint">
+            </div>
+            <div>
+                <h2 id="mwl">Modding with Lua</h2>
+                <p>There are some functions to do what you want to do. They are called <a
+                        href="https://api.luanti.org/core-namespace-reference/#global-callback-registration-functions"
+                        target="_blank">Global callback registration functions</a></p>
+                <p>Salute the player:</p>
+                <pre class="prettyprint">
 <b>core.register_on_joinplayer</b>(function(player, last_login)
     local playername = player:get_player_name()
     core.chat_send_player(playername, "Hi " .. playername .. "!")
 end)
 </pre>
-            <p>♪ Play a sound when a player joins</p>
-            <p>Have a welcomesound.ogg file in /sounds folder</p>
-            <pre class="prettyprint">
+                <p>♪ Play a sound when a player joins</p>
+                <p>Have a welcomesound.ogg file in /sounds folder</p>
+                <pre class="prettyprint">
 local music_file = "welcomesound"
 local sound = nil
 
 core.register_on_joinplayer(function(player, last_login)
-    sound = minetest.sound_play(music_file, {
+    sound = core.sound_play(music_file, {
             loop = false,
             gain = 0.5 ,  -- Adjust volume
             name = "welcoming sound",  -- Identifier for the sound
     })
 end)</pre>
-            <p>Create new nodes</p>
-            <pre class="prettyprint ">
+                <p>Create new nodes</p>
+                <pre class="prettyprint ">
 core.register_node('blank:grass', {
     description = 'Beautiful grass node',
     tiles = { 'grass.png' },
     groups = { dig_immediate = 3 },
     is_ground_content = true
 })</pre>
-            <p>Use <b>/giveme blank:grass</b> to get the node.</p>
-        </div>
+                <p>Use <b>/giveme blank:grass</b> to get the node.</p>
+            </div>
 
 
 
 
-        <div>
-            <h2 id="htsfz">Create your game</h2>
-            <p>To start from zero we will create our own game.</p>
-            <p>We need to go to our luanti installation path and enter /games. Create a folder, for example: "Blank".
-            </p>
-            <p>Inside of it we will create a file called <b>game.conf</b></p>
-            <pre class="">
+            <div>
+                <h2 id="htsfz">Create your game</h2>
+                <p>To start from zero we will create our own game.</p>
+                <p>We need to go to our luanti installation path and enter /games. Create a folder, for example:
+                    "Blank".
+                </p>
+                <p>Inside of it we will create a file called <b>game.conf</b></p>
+                <pre class="">
 title = Blank
 author = dibesfer
 description = Absolute blank template to start your projects from.
 disallowed_mapgens = v6</pre>
-            <p>Also we will create a <b>/mods</b> folder</p>
-            <p>Inside of it we will create the main mod we will just call <b>blank</b></p>
-            <p>Inside of <b>/blank</b> we will create a <b>mod.conf</b> and <b>init.lua</b> files.</p>
-            <p>mod.conf (name = blank)</p>
-            <p>init.lua we will work upon of this.</p>
-            <p>We will also create a folder <b>/textures</b> for storing our assets.</p>
-        </div>
-
-
-        <div>
-
-            <h2 id="fullBiome">Create A Full Biome</h2>
-            <img class="longimage" src="assets/landscape.png" alt="">
-
-            <p>Want to make your own voxel world like Minecraft?
-                follow this short steps guide with images</p>
-            <p>Objectives:</p>
-            <ol>
-                <li>Create a node (stone, water, river_water)</li>
-                <li>Create a biome (grass, dirt)</li>
-                <li>Create a plant (flower, long plant)</li>
-                <li>Create an ore (ruby, sapphire, emerald, mese)</li>
-                <li>Create an schematic (tree)</li>
-            </ol>
-
-            <h3>Create your first node</h3>
-            <p>In order to create worlds with most map generators like v7, valleys, flat... Luanti needs to set three
-                essential nodes:
-                stone, water and river water.
-            </p>
-            <div style="text-align: center;">
-                <img class="pixel" width="75px" src="textures/stone.png" alt="">
-                <img class="pixel" width="75px" src="textures/water.png" alt="">
-                <img class="pixel" width="75px" src="textures/river_water.png" alt="">
+                <p>Also we will create a <b>/mods</b> folder</p>
+                <p>Inside of it we will create the main mod we will just call <b>blank</b></p>
+                <p>Inside of <b>/blank</b> we will create a <b>mod.conf</b> and <b>init.lua</b> files.</p>
+                <p>mod.conf (name = blank)</p>
+                <p>init.lua we will work upon of this.</p>
+                <p>We will also create a folder <b>/textures</b> for storing our assets.</p>
             </div>
+
+
             <div>
-                <pre class="prettyprint">
+
+                <h2 id="fullBiome">Create A Full Biome</h2>
+                <img class="longimage" src="assets/landscape.png" alt="">
+
+                <p>Want to make your own voxel world like Minecraft?
+                    follow this short steps guide with images</p>
+                <p>Objectives:</p>
+                <ol>
+                    <li>Create a node (stone, water, river_water)</li>
+                    <li>Create a biome (grass, dirt)</li>
+                    <li>Create a plant (flower, long plant)</li>
+                    <li>Create an ore (ruby, sapphire, emerald, mese)</li>
+                    <li>Create an schematic (tree)</li>
+                </ol>
+
+                <h3>Create your first node</h3>
+                <p>In order to create worlds with most map generators like v7, valleys, flat... Luanti needs to set
+                    three
+                    essential nodes:
+                    stone, water and river water.
+                </p>
+                <div style="text-align: center;">
+                    <img class="pixel" width="75px" src="textures/stone.png" alt="">
+                    <img class="pixel" width="75px" src="textures/water.png" alt="">
+                    <img class="pixel" width="75px" src="textures/river_water.png" alt="">
+                </div>
+                <div>
+                    <pre class="prettyprint">
 core.register_node('blank:stone', {
     description = 'Stone',
     tiles = { 'stone.png' },
@@ -212,33 +216,33 @@ core.register_node('blank:river_water', {
     groups = { dig_immediate = 3 },
 })</pre>
 
-                <p>Now we register the aliases</p>
+                    <p>Now we register the aliases</p>
 
-                <pre class="prettyprint">
+                    <pre class="prettyprint">
 core.register_alias('mapgen_stone', 'blank:stone')
 core.register_alias('mapgen_water_source', 'blank:water')
 core.register_alias('mapgen_river_water_source', 'blank:river_water')</pre>
-                <p>Mapgen v6 needs a lot more of essential nodes like lava so we will skip it to keep it simple.</p>
+                    <p>Mapgen v6 needs a lot more of essential nodes like lava so we will skip it to keep it simple.</p>
 
-                <p>With these nodes we will have a world like this (if we select Valleys mapgen)</p>
-                <img class="panoramic" src="assets/emptiness.png" alt="">
-                <p>Let's paint it green adding some grass.</p>
-
-            </div>
-
-
-            <div>
-                <h3>Create a biome ⛰️</h3>
-                <p>Lets create a grass and dirt node.</p>
-
-                <div style="text-align: center;">
-
-                    <img width="75px" src="textures/grass.png" alt="grass" class="pixel">
-                    <img width="75px" src="textures/dirt.png" alt="dirt" class="pixel">
+                    <p>With these nodes we will have a world like this (if we select Valleys mapgen)</p>
+                    <img class="panoramic" src="assets/emptiness.png" alt="">
+                    <p>Let's paint it green adding some grass.</p>
 
                 </div>
 
-                <pre class="prettyprint">
+
+                <div>
+                    <h3>Create a biome ⛰️</h3>
+                    <p>Lets create a grass and dirt node.</p>
+
+                    <div style="text-align: center;">
+
+                        <img width="75px" src="textures/grass.png" alt="grass" class="pixel">
+                        <img width="75px" src="textures/dirt.png" alt="dirt" class="pixel">
+
+                    </div>
+
+                    <pre class="prettyprint">
 core.register_node('blank:grass', {
     description = 'Grass',
     tiles = { 'grass.png' },
@@ -251,8 +255,8 @@ core.register_node('blank:dirt', {
     groups = { dig_immediate = 3 },
     paramtype = "light",
 })</pre>
-                <p>Register the biome</p>
-                <pre class="prettyprint">
+                    <p>Register the biome</p>
+                    <pre class="prettyprint">
 core.register_biome({
     name = "grassland",
     node_top = "blank:grass",
@@ -268,24 +272,24 @@ core.register_biome({
     heat_point = 10,
     humidity_point = 10,
 })</pre>
-                <p>Now we have this (v7 mapgen)</p>
-                <img class="panoramic" src="assets/firstbiome.png" alt="">
-            </div>
-
-
-            <div>
-
-
-
-                <h3>Create a flower 🌺</h3>
-                <p>Let's create two vegetations, flower and long plant.</p>
-
-                <div style="text-align: center;">
-                    <img width="75px" src="textures/vegetation/flower.png" alt="flower" class="pixel">
-                    <img width="75px" src="textures/vegetation/long_plant.png" alt="long plant" class="pixel">
+                    <p>Now we have this (v7 mapgen)</p>
+                    <img class="panoramic" src="assets/firstbiome.png" alt="">
                 </div>
 
-                <pre class="prettyprint">
+
+                <div>
+
+
+
+                    <h3>Create a flower 🌺</h3>
+                    <p>Let's create two vegetations, flower and long plant.</p>
+
+                    <div style="text-align: center;">
+                        <img width="75px" src="textures/vegetation/flower.png" alt="flower" class="pixel">
+                        <img width="75px" src="textures/vegetation/long_plant.png" alt="long plant" class="pixel">
+                    </div>
+
+                    <pre class="prettyprint">
 core.register_node("blank:flower", {
     description = "Blank Flower",
     drawtype = "plantlike",
@@ -299,9 +303,9 @@ core.register_node("blank:flower", {
     groups = { dig_immediate = 3},
 })</pre>
 
-                <p>Register a decoration</p>
+                    <p>Register a decoration</p>
 
-                <pre class="prettyprint">
+                    <pre class="prettyprint">
 core.register_decoration({
     name = "blank_flower",
     deco_type = "simple",
@@ -312,27 +316,27 @@ core.register_decoration({
     y_min = 0,
     decoration = { "blank:blank_flower"},
 })</pre>
-                <p>Now we see the flowers spawning in the world!</p>
-                <img class="panoramic" src="assets/flowers.png" alt="">
+                    <p>Now we see the flowers spawning in the world!</p>
+                    <img class="panoramic" src="assets/flowers.png" alt="">
 
-                <h3>Create and register an ore 💎</h3>
-                <p>Let's create ruby, emerald, sapphire and mese</p>
-                <div style="text-align: center;">
-                    <img width="50px" src="textures/ruby.png" alt="ruby" class="pixel">
-                    <img width="50px" src="textures/emerald.png" alt="emerald" class="pixel">
-                    <img width="50px" src="textures/sapphire.png" alt="sapphire" class="pixel">
-                    <img width="50px" src="textures/mese.png" alt="mese" class="pixel">
-                </div>
+                    <h3>Create and register an ore 💎</h3>
+                    <p>Let's create ruby, emerald, sapphire and mese</p>
+                    <div style="text-align: center;">
+                        <img width="50px" src="textures/ruby.png" alt="ruby" class="pixel">
+                        <img width="50px" src="textures/emerald.png" alt="emerald" class="pixel">
+                        <img width="50px" src="textures/sapphire.png" alt="sapphire" class="pixel">
+                        <img width="50px" src="textures/mese.png" alt="mese" class="pixel">
+                    </div>
 
-                <pre class="prettyprint ">
+                    <pre class="prettyprint ">
 core.register_node('blank:ruby', {
     description = 'Ruby',
     tiles = { 'ruby.png' },
     groups = { dig_immediate = 3 },
     is_ground_content = true
 })</pre>
-                <p>Register it</p>
-                <pre class="prettyprint ">
+                    <p>Register it</p>
+                    <pre class="prettyprint ">
 core.register_ore({
     ore_type = "scatter",
     ore = "blank:ruby",
@@ -343,15 +347,15 @@ core.register_ore({
     y_max = 31000,
     y_min = -127,
 })</pre>
-                <p>Now we see the ores. Plenty of ores</p>
+                    <p>Now we see the ores. Plenty of ores</p>
 
-                <img class="panoramic" src="assets/ores.png" alt="">
+                    <img class="panoramic" src="assets/ores.png" alt="">
 
 
-                <h3>Trees 🌲</h3>
-                <p>Create wood and leaves, create a tree, create a schematic, register a decoration</p>
+                    <h3>Trees 🌲</h3>
+                    <p>Create wood and leaves, create a tree, create a schematic, register a decoration</p>
 
-                <pre class="prettyprint">
+                    <pre class="prettyprint">
 core.register_node('blank:wood', {
     description = 'Wood',
     tiles = { 'wood.png' },
@@ -364,20 +368,20 @@ core.register_node('blank:leaves', {
     groups = { dig_immediate = 3 },
 })
 </pre>
-                <p>Go in-game an build a tree.</p>
-                <p>Download <b>Worldedit</b> mod and enable it on your world.</p>
-                <p>Build a tree and select the opposite vertices of an imaginary box.</p>
-                <p>We set first position with <b>//1</b> and second position with <b>//2</b></p>
+                    <p>Go in-game an build a tree.</p>
+                    <p>Download <b>Worldedit</b> mod and enable it on your world.</p>
+                    <p>Build a tree and select the opposite vertices of an imaginary box.</p>
+                    <p>We set first position with <b>//1</b> and second position with <b>//2</b></p>
 
 
-                <img class="panoramic" src="assets/tree-schem.png" alt="">
-                <p>Save an schematic writing <b>//mtschemcreate tree</b></p>
-                <p>Now navigate to your world path and enter the schems folder.</p>
-                <p>Take that file and put it into a new folder inside your mod called schematics.</p>
-                <p>Register the decoration</p>
+                    <img class="panoramic" src="assets/tree-schem.png" alt="">
+                    <p>Save an schematic writing <b>//mtschemcreate tree</b></p>
+                    <p>Now navigate to your world path and enter the schems folder.</p>
+                    <p>Take that file and put it into a new folder inside your mod called schematics.</p>
+                    <p>Register the decoration</p>
 
 
-                <pre class="prettyprint">
+                    <pre class="prettyprint">
 core.register_decoration({
     name = "tree",
     deco_type = "schematic",
@@ -388,16 +392,16 @@ core.register_decoration({
     biomes = "normalland",
     y_max = 31000,
     y_min = 0,
-    schematic = minetest.get_modpath("blank") .. "/schematics/tree.mts",
+    schematic = core.get_modpath("blank") .. "/schematics/tree.mts",
     flags = "place_center_x, place_center_z",
     rotation = "random",
 })
 </pre>
-                <p>We use place_offset_y=1 because by default Luanti places decorations at ground level.</p>
-                <p>Now trees will spawn all over the place</p>
-                <img class="panoramic" src="assets/trees.png" alt="">
+                    <p>We use place_offset_y=1 because by default Luanti places decorations at ground level.</p>
+                    <p>Now trees will spawn all over the place</p>
+                    <img class="panoramic" src="assets/trees.png" alt="">
 
-                <pre style="display: none;">
+                    <pre style="display: none;">
 
 Routepaper
 
@@ -425,35 +429,35 @@ Register your firstly created ores, time to fill that depths with shiny minerals
     ill skip schematics till the end
 
             </pre>
-            </div>
+                </div>
 
-            <div>
-                <h2 id="blank">Blank</h2>
-                <p>Blank is a minimal template. It was made along with this tutorial.</p>
-                <p>Blank contains only 11 nodes and 1 item the "" hand</p>
-                <p>grass, stone, dirt, ruby, sapphire, mese, water, river water, flower, wood, leaves</p>
-                <p>You can download it from Luanti ContentDB <a href="">here</a></p>
+                <div>
+                    <h2 id="blank">Blank</h2>
+                    <p>Blank is a minimal template. It was made along with this tutorial.</p>
+                    <p>Blank contains only 11 nodes and 1 item the "" hand</p>
+                    <p>grass, stone, dirt, ruby, sapphire, mese, water, river water, flower, wood, leaves</p>
+                    <p>You can download it from Luanti ContentDB <a href="">here</a></p>
 
-            </div>
+                </div>
 
-            <div>
-                <h2 id="colorize">Colorize your messages</h2>
-                <p>Let's store this info in mod storage and create a variable for color</p>
-                <pre class="prettyprint">
+                <div>
+                    <h2 id="colorize">Colorize your messages</h2>
+                    <p>Let's store this info in mod storage and create a variable for color</p>
+                    <pre class="prettyprint">
 local storage = core.get_mod_storage()
 default_color = "#FFFFFF" -- White
 </pre>
-                <p>Function to get a player's saved color
-                </p>
+                    <p>Function to get a player's saved color
+                    </p>
 
-                <pre class="prettyprint lang-lua">
+                    <pre class="prettyprint lang-lua">
 local function get_player_color(player_name)
     return storage:get_string(player_name) ~= "" and storage:get_string(player_name) or default_color
 end
 </pre>
 
-                <p>Command to set chat color</p>
-                <pre class="prettyprint lang-lua">
+                    <p>Command to set chat color</p>
+                    <pre class="prettyprint lang-lua">
 core.register_chatcommand("setcolor", {
     params = "#RRGGBB",
     description = "Set your chat color",
@@ -467,45 +471,48 @@ core.register_chatcommand("setcolor", {
     end,
 })
 </pre>
-                <p>Modify player messages
-                </p>
-                <pre class="prettyprint lang-lua">
+                    <p>Modify player messages
+                    </p>
+                    <pre class="prettyprint lang-lua">
 core.register_on_chat_message(function(name, message)
     local color = get_player_color(name)
     core.chat_send_all(core.colorize(color, "<" .. name .. "> " .. message))
     return true 
 end)</pre>
-                <p>return true stops default chat handling. Now use <b>/setcolor #ff0000</b> to turn the text red.</p>
-                <p>Use a resource like <a href="https://rgbcolorpicker.com/">rgbcolorpicker.com</a> to get your color rgb code!</p>
-            
-                <img src="assets/chatcolor.png" alt="colored chat">
+                    <p>return true stops default chat handling. Now use <b>/setcolor #ff0000</b> to turn the text red.
+                    </p>
+                    <p>Use a resource like <a href="https://rgbcolorpicker.com/">rgbcolorpicker.com</a> to get your
+                        color rgb code!</p>
 
-            </div>
+                    <img src="assets/chatcolor.png" alt="colored chat">
+
+                </div>
 
 
-            <div>
-                <h2 id="textures">Textures</h2>
-                <p>Tired of boring plain textures?</p>
-                <p>Use gimp to apply Filter > Noise > HSV Noise</p>
-                <img src="assets/gimpnoise1.png" alt="gimp edition">
-                <img src="assets/gimpnoise2.png" alt="gimp edition">
-                <p>Now the world looks like this</p>
-                <img class="panoramic" src="assets/noisetextures.png" alt="noise textures landscape">
+                <div>
+                    <h2 id="textures">Textures</h2>
+                    <p>Tired of boring plain textures?</p>
+                    <p>Use gimp to apply Filter > Noise > HSV Noise</p>
+                    <img src="assets/gimpnoise1.png" alt="gimp edition">
+                    <img src="assets/gimpnoise2.png" alt="gimp edition">
+                    <p>Now the world looks like this</p>
+                    <img class="panoramic" src="assets/noisetextures.png" alt="noise textures landscape">
 
-            </div>
+                </div>
 
-           
-               
 
-            <div>
-                <h2 id="colorizetextures">Colorize Textures</h2>
-                <p>Let's create a plain black and white (or grayscale) texture image.</p>
-                <div style="text-align: center;">
-                <img src="textures/wool.png" alt="plain white wool" class="pixel" width="100px">
-                
-            </div>
-            <p>Use the texture modifier <b>^[colorize:#ff0000:180</b> to set a RGB color red and a ratio: 0-only the texture to 255-only the color</p>
-            <pre class="prettyprint">
+
+
+                <div>
+                    <h2 id="colorizetextures">Colorize Textures</h2>
+                    <p>Let's create a plain black and white (or grayscale) texture image.</p>
+                    <div style="text-align: center;">
+                        <img src="textures/wool.png" alt="plain white wool" class="pixel" width="100px">
+
+                    </div>
+                    <p>Use the texture modifier <b>^[colorize:#ff0000:180</b> to set a RGB color red and a ratio: 0-only
+                        the texture to 255-only the color</p>
+                    <pre class="prettyprint">
 core.register_node('blank:wool', {
     description = 'Wool',
     tiles = { 'wool.png' },
@@ -519,28 +526,28 @@ core.register_node('blank:red_wool', {
     groups = { dig_immediate = 3 },
     paramtype = "light",
 })</pre>
-<p>Use colors like green #00FF00 or blue #0000FF</p>
-<img src="assets/wool.png" alt="" class="panoramic">
+                    <p>Use colors like green #00FF00 or blue #0000FF</p>
+                    <img src="assets/wool.png" alt="" class="panoramic">
 
-            </div>
+                </div>
 
-            <div>
-                <h2 id="gallery">Gallery</h2>
-                <p>Let's get creative</p>
-                <img src="assets/creative.png" alt="" class="panoramic">
-                <p>Meet the player (change camera model with C)</p>
-                <img src="assets/player.png" alt="" class="panoramic">
-            </div>
+                <div>
+                    <h2 id="gallery">Gallery</h2>
+                    <p>Let's get creative</p>
+                    <img src="assets/creative.png" alt="" class="panoramic">
+                    <p>Meet the player (change camera model with C)</p>
+                    <img src="assets/player.png" alt="" class="panoramic">
+                </div>
 
-            <div>
-                <h2 id="futtut">Future Tutorials 🎓</h2>
+                <div>
+                    <h2 id="futtut">Future Tutorials 🎓</h2>
 
-                <p>- Create an entity</p>
-                <p>- Create a recipe</p>
-                <p>- Create a tool</p>
+                    <p>- Create an entity</p>
+                    <p>- Create a recipe</p>
+                    <p>- Create a tool</p>
 
-            </div>
-            <!-- THIS IS VERY COOL
+                </div>
+                <!-- THIS IS VERY COOL
             <div>
                 <h2>Test width</h2>
                 <div style="max-width: 100%; overflow: hidden;">
@@ -582,42 +589,44 @@ core.register_node('blank:red_wool', {
                         href="#sapphire">Sapphire</a> | <a href="#mese">Mese</a></p>
             </div>
  -->
-            <div>
-                <h2 id="links">Links</h2>
-                <p><a target="_blank" href="https://luanti.org">Luanti website</a></p>
-                <p><a target="_blank" href="https://docs.luanti.org">Luanti docs</a></p>
-                <p><a target="_blank" href="https://api.luanti.org">Luanti api</a></p>
-                <p><a href="https://rubenwardy.com/minetest_modding_book/en/basics/getting_started.html">rubenwardy -
-                        Modding book</a></p>
-            </div>
+                <div>
+                    <h2 id="links">Links</h2>
+                    <p><a target="_blank" href="https://luanti.org">Luanti website</a></p>
+                    <p><a target="_blank" href="https://docs.luanti.org">Luanti docs</a></p>
+                    <p><a target="_blank" href="https://api.luanti.org">Luanti api</a></p>
+                    <p><a href="https://rubenwardy.com/minetest_modding_book/en/basics/getting_started.html">rubenwardy
+                            -
+                            Modding book</a></p>
+                </div>
 
-            <div>
-                <h2 id="credits">Credits</h2>
-                <p>Author: dibesfer</p>
-                <p>Coded with HTML, CSS and javascript on VSCodium</p>
-                <p>Host: codeberg pages</p>
-                <p>luanti - celeron55 (Perttu Ahola) celeron55@gmail.com</p>
-                <p>Fonts: Ubuntu and Ubuntu Mono</p>
-                <p><a href="https://github.com/googlearchive/code-prettify/blob/master/docs/getting_started.md">Google
-                        Code
-                        Prettify</a></p>
-            </div>
-            <div>
-                <h2 id="stats">Stats</h2>
-                <p>Local visits: <span id="myLocalVisits"></span></p>
-                <p>Total visits: <span id="totalVisits"></span></p>
-            </div>
-            <hr>
-            <div style="padding: 40px;text-align: center;">
-                <p>2025/02/11</p>
-                <p>by <a target="_blank" href="/">dibesfer</a></p>
-                <p>Contact <a href="mailto:dibesfer@gmail.com">dibesfer@gmail.com</a></p>
-            </div>
+                <div>
+                    <h2 id="credits">Credits</h2>
+                    <p>Author: dibesfer</p>
+                    <p>Coded with HTML, CSS and javascript on VSCodium</p>
+                    <p>Host: codeberg pages</p>
+                    <p>luanti - celeron55 (Perttu Ahola) celeron55@gmail.com</p>
+                    <p>Fonts: Ubuntu and Ubuntu Mono</p>
+                    <p><a href="https://github.com/googlearchive/code-prettify/blob/master/docs/getting_started.md">Google
+                            Code
+                            Prettify</a></p>
+                </div>
+                <div>
+                    <h2 id="stats">Stats</h2>
+                    <p>Local visits: <span id="myLocalVisits"></span></p>
+                    <p>Total visits: <span id="totalVisits"></span></p>
+                </div>
+                <hr>
+                <div style="padding: 40px;text-align: center;">
+                    <p>2025/02/11</p>
+                    <p>by <a target="_blank" href="/">dibesfer</a></p>
+                    <p>Contact <a href="mailto:dibesfer@gmail.com">dibesfer@gmail.com</a></p>
+                </div>
 
-            <div id="upArrow">
-                <a href="#introduction">▲</a>
-            </div>
+                <div id="upArrow">
+                    <a href="#introduction">▲</a>
+                </div>
 
+            </div>
     </main>
 
 
@@ -626,115 +635,115 @@ core.register_node('blank:red_wool', {
         const supabaseUrl = 'https://qugihsopwjemzakhrbvw.supabase.co'
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF1Z2loc29wd2plbXpha2hyYnZ3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE2OTg0OTQxMDksImV4cCI6MjAxNDA3MDEwOX0.1q5fBic1cjueaiP2-p6W19C68ye8FTPLFne2a-fKwZ8'
         const database = supabase.createClient(supabaseUrl, supabaseKey)
-    
+
         const totalVisits = document.getElementById("totalVisits")
         const myLocalVisits = document.getElementById("myLocalVisits")
-    
+
         //LOCALHOST
         var localVisits = localStorage.getItem("luantiguideLocalVisits")
         if (localVisits == null) {
-          localVisits = 1
+            localVisits = 1
         }
         else {
-          localVisits++
+            localVisits++
         }
         localStorage.setItem("luantiguideLocalVisits", localVisits)
-    
-        myLocalVisits.textContent=localVisits
-    
+
+        myLocalVisits.textContent = localVisits
+
         //REALTIME 
         // Create a function to handle inserts
         const handleInserts = (payload) => {
-          //console.log('Change received!', payload)
-          getOnlyResources("visits", "luantiguide")
+            //console.log('Change received!', payload)
+            getOnlyResources("visits", "luantiguide")
         }
-    
+
         // Listen to inserts
         database
-          .channel('visits')
-          .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'visits' }, handleInserts)
-          .subscribe()
-    
+            .channel('visits')
+            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'visits' }, handleInserts)
+            .subscribe()
+
         async function insertResources(tableName) {
-          const { data, error } = await database
-            .from(tableName)
-            .update([
-              {
-                luantiguide: currentVisits
-                //url: window.location.href
-                //email: param1,
-                //username: param1.split("@")[0]
-              },
-            ]).eq("id", 1)
-            .select()
-    
-          //getResources("visits", "github")
+            const { data, error } = await database
+                .from(tableName)
+                .update([
+                    {
+                        luantiguide: currentVisits
+                        //url: window.location.href
+                        //email: param1,
+                        //username: param1.split("@")[0]
+                    },
+                ]).eq("id", 1)
+                .select()
+
+            //getResources("visits", "github")
         }
-    
+
         /* .from('visits')
         .update({ other_column: 'otherValue' })
         
         .select()
          */
-    
+
         //insertResources("visits")
         getResources("visits", "luantiguide")
         var currentVisits = 0
         async function getResources(tableName, rowName) {
-          const res = await database.from(tableName).select(rowName)//.range(3000,5000)
-          /* console.log(res.data[0].github) */
-          currentVisits = res.data[0].luantiguide
-          currentVisits++
-          insertResources("visits")
-          if (res.data[0] != undefined) {
-            totalVisits.textContent = currentVisits
-          }
+            const res = await database.from(tableName).select(rowName)//.range(3000,5000)
+            /* console.log(res.data[0].github) */
+            currentVisits = res.data[0].luantiguide
+            currentVisits++
+            insertResources("visits")
+            if (res.data[0] != undefined) {
+                totalVisits.textContent = currentVisits
+            }
         }
-    
+
         async function getOnlyResources(tableName, rowName) {
-          const res = await database.from(tableName).select(rowName)//.range(3000,5000)
-          //console.log(res.data[0].dibesfer)
-    
-          if (res.data[0] != undefined) {
-    
-            totalVisits.textContent = res.data[0].luantiguide
-          }
+            const res = await database.from(tableName).select(rowName)//.range(3000,5000)
+            //console.log(res.data[0].dibesfer)
+
+            if (res.data[0] != undefined) {
+
+                totalVisits.textContent = res.data[0].luantiguide
+            }
         }
-    
-    
+
+
         async function insertUserAgent() {
-    
-          let myUserAgent = window.navigator.userAgent
-          var userLang = navigator.language || navigator.userLanguage;
-          var userScreen = "Width: " + innerWidth + " Height: " + innerHeight
-          var userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
-    
-          if (localVisits >= 0) {
-            const { data, error } = await database
-              .from("userAgents")
-              .insert([
-                {
-                  userAgent: myUserAgent,
-                  http: window.location.href,
-                  from: document.referrer,
-                  localVisits: localVisits,
-                  language: userLang,
-                  size: userScreen,
-                  timezone: userTimeZone
-                  //url: window.location.href
-                  //email: param1,
-                  //username: param1.split("@")[0]
-                },
-              ])
-              .select()
-          }
-          console.log("hello" + localVisits)
+
+            let myUserAgent = window.navigator.userAgent
+            var userLang = navigator.language || navigator.userLanguage;
+            var userScreen = "Width: " + innerWidth + " Height: " + innerHeight
+            var userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
+
+            if (localVisits >= 0) {
+                const { data, error } = await database
+                    .from("userAgents")
+                    .insert([
+                        {
+                            userAgent: myUserAgent,
+                            http: window.location.href,
+                            from: document.referrer,
+                            localVisits: localVisits,
+                            language: userLang,
+                            size: userScreen,
+                            timezone: userTimeZone
+                            //url: window.location.href
+                            //email: param1,
+                            //username: param1.split("@")[0]
+                        },
+                    ])
+                    .select()
+            }
+            console.log("hello" + localVisits)
 
         }
         insertUserAgent()
-    
-    
-      </script>
+
+
+    </script>
 </body>
 
 </html>
