@@ -146,10 +146,6 @@ core.register_node('blank:grass', {
 })</pre>
                 <p>Use <b>/giveme blank:grass</b> to get the node.</p>
             </div>
-
-
-
-
             <div>
                 <h2 id="htsfz">Create your game</h2>
                 <p>To start from zero we will create our own game.</p>
@@ -169,9 +165,7 @@ disallowed_mapgens = v6</pre>
                 <p>init.lua we will work upon of this.</p>
                 <p>We will also create a folder <b>/textures</b> for storing our assets.</p>
             </div>
-
-
-            <div>
+            <div style="background-color: green;">
 
                 <h2 id="fullBiome">Create A Full Biome</h2>
                 <img class="longimage" src="assets/landscape.png" alt="">
@@ -277,19 +271,19 @@ core.register_biome({
                 </div>
 
 
-                <div>
 
 
 
-                    <h3>Create a flower 🌺</h3>
-                    <p>Let's create two vegetations, flower and long plant.</p>
 
-                    <div style="text-align: center;">
-                        <img width="75px" src="textures/vegetation/flower.png" alt="flower" class="pixel">
-                        <img width="75px" src="textures/vegetation/long_plant.png" alt="long plant" class="pixel">
-                    </div>
+                <h3>Create a flower 🌺</h3>
+                <p>Let's create two vegetations, flower and long plant.</p>
 
-                    <pre class="prettyprint">
+                <div style="text-align: center;">
+                    <img width="75px" src="textures/vegetation/flower.png" alt="flower" class="pixel">
+                    <img width="75px" src="textures/vegetation/long_plant.png" alt="long plant" class="pixel">
+                </div>
+
+                <pre class="prettyprint">
 core.register_node("blank:flower", {
     description = "Blank Flower",
     drawtype = "plantlike",
@@ -303,9 +297,9 @@ core.register_node("blank:flower", {
     groups = { dig_immediate = 3},
 })</pre>
 
-                    <p>Register a decoration</p>
+                <p>Register a decoration</p>
 
-                    <pre class="prettyprint">
+                <pre class="prettyprint">
 core.register_decoration({
     name = "blank_flower",
     deco_type = "simple",
@@ -316,27 +310,27 @@ core.register_decoration({
     y_min = 0,
     decoration = { "blank:blank_flower"},
 })</pre>
-                    <p>Now we see the flowers spawning in the world!</p>
-                    <img class="panoramic" src="assets/flowers.png" alt="">
+                <p>Now we see the flowers spawning in the world!</p>
+                <img class="panoramic" src="assets/flowers.png" alt="">
 
-                    <h3>Create and register an ore 💎</h3>
-                    <p>Let's create ruby, emerald, sapphire and mese</p>
-                    <div style="text-align: center;">
-                        <img width="50px" src="textures/ruby.png" alt="ruby" class="pixel">
-                        <img width="50px" src="textures/emerald.png" alt="emerald" class="pixel">
-                        <img width="50px" src="textures/sapphire.png" alt="sapphire" class="pixel">
-                        <img width="50px" src="textures/mese.png" alt="mese" class="pixel">
-                    </div>
+                <h3>Create and register an ore 💎</h3>
+                <p>Let's create ruby, emerald, sapphire and mese</p>
+                <div style="text-align: center;">
+                    <img width="50px" src="textures/ruby.png" alt="ruby" class="pixel">
+                    <img width="50px" src="textures/emerald.png" alt="emerald" class="pixel">
+                    <img width="50px" src="textures/sapphire.png" alt="sapphire" class="pixel">
+                    <img width="50px" src="textures/mese.png" alt="mese" class="pixel">
+                </div>
 
-                    <pre class="prettyprint ">
+                <pre class="prettyprint ">
 core.register_node('blank:ruby', {
     description = 'Ruby',
     tiles = { 'ruby.png' },
     groups = { dig_immediate = 3 },
     is_ground_content = true
 })</pre>
-                    <p>Register it</p>
-                    <pre class="prettyprint ">
+                <p>Register it</p>
+                <pre class="prettyprint ">
 core.register_ore({
     ore_type = "scatter",
     ore = "blank:ruby",
@@ -347,15 +341,15 @@ core.register_ore({
     y_max = 31000,
     y_min = -127,
 })</pre>
-                    <p>Now we see the ores. Plenty of ores</p>
+                <p>Now we see the ores. Plenty of ores</p>
 
-                    <img class="panoramic" src="assets/ores.png" alt="">
+                <img class="panoramic" src="assets/ores.png" alt="">
 
 
-                    <h3>Trees 🌲</h3>
-                    <p>Create wood and leaves, create a tree, create a schematic, register a decoration</p>
+                <h3>Trees 🌲</h3>
+                <p>Create wood and leaves, create a tree, create a schematic, register a decoration</p>
 
-                    <pre class="prettyprint">
+                <pre class="prettyprint">
 core.register_node('blank:wood', {
     description = 'Wood',
     tiles = { 'wood.png' },
@@ -368,20 +362,20 @@ core.register_node('blank:leaves', {
     groups = { dig_immediate = 3 },
 })
 </pre>
-                    <p>Go in-game an build a tree.</p>
-                    <p>Download <b>Worldedit</b> mod and enable it on your world.</p>
-                    <p>Build a tree and select the opposite vertices of an imaginary box.</p>
-                    <p>We set first position with <b>//1</b> and second position with <b>//2</b></p>
+                <p>Go in-game an build a tree.</p>
+                <p>Download <b>Worldedit</b> mod and enable it on your world.</p>
+                <p>Build a tree and select the opposite vertices of an imaginary box.</p>
+                <p>We set first position with <b>//1</b> and second position with <b>//2</b></p>
 
 
-                    <img class="panoramic" src="assets/tree-schem.png" alt="">
-                    <p>Save an schematic writing <b>//mtschemcreate tree</b></p>
-                    <p>Now navigate to your world path and enter the schems folder.</p>
-                    <p>Take that file and put it into a new folder inside your mod called schematics.</p>
-                    <p>Register the decoration</p>
+                <img class="panoramic" src="assets/tree-schem.png" alt="">
+                <p>Save an schematic writing <b>//mtschemcreate tree</b></p>
+                <p>Now navigate to your world path and enter the schems folder.</p>
+                <p>Take that file and put it into a new folder inside your mod called schematics.</p>
+                <p>Register the decoration</p>
 
 
-                    <pre class="prettyprint">
+                <pre class="prettyprint">
 core.register_decoration({
     name = "tree",
     deco_type = "schematic",
@@ -397,11 +391,11 @@ core.register_decoration({
     rotation = "random",
 })
 </pre>
-                    <p>We use place_offset_y=1 because by default Luanti places decorations at ground level.</p>
-                    <p>Now trees will spawn all over the place</p>
-                    <img class="panoramic" src="assets/trees.png" alt="">
+                <p>We use place_offset_y=1 because by default Luanti places decorations at ground level.</p>
+                <p>Now trees will spawn all over the place</p>
+                <img class="panoramic" src="assets/trees.png" alt="">
 
-                    <pre style="display: none;">
+                <pre style="display: none;">
 
 Routepaper
 
@@ -429,35 +423,33 @@ Register your firstly created ores, time to fill that depths with shiny minerals
     ill skip schematics till the end
 
             </pre>
-                </div>
+            </div>
+            <div>
+                <h2 id="blank">Blank</h2>
+                <p>Blank is a minimal template. It was made along with this tutorial.</p>
+                <p>Blank contains only 11 nodes and 1 item the "" hand</p>
+                <p>grass, stone, dirt, ruby, sapphire, mese, water, river water, flower, wood, leaves</p>
+                <p>You can download it from Luanti ContentDB <a href="">here</a></p>
 
-                <div>
-                    <h2 id="blank">Blank</h2>
-                    <p>Blank is a minimal template. It was made along with this tutorial.</p>
-                    <p>Blank contains only 11 nodes and 1 item the "" hand</p>
-                    <p>grass, stone, dirt, ruby, sapphire, mese, water, river water, flower, wood, leaves</p>
-                    <p>You can download it from Luanti ContentDB <a href="">here</a></p>
-
-                </div>
-
-                <div>
-                    <h2 id="colorize">Colorize your messages</h2>
-                    <p>Let's store this info in mod storage and create a variable for color</p>
-                    <pre class="prettyprint">
+            </div>
+            <div>
+                <h2 id="colorize">Colorize your messages</h2>
+                <p>Let's store this info in mod storage and create a variable for color</p>
+                <pre class="prettyprint">
 local storage = core.get_mod_storage()
 default_color = "#FFFFFF" -- White
 </pre>
-                    <p>Function to get a player's saved color
-                    </p>
+                <p>Function to get a player's saved color
+                </p>
 
-                    <pre class="prettyprint lang-lua">
+                <pre class="prettyprint lang-lua">
 local function get_player_color(player_name)
     return storage:get_string(player_name) ~= "" and storage:get_string(player_name) or default_color
 end
 </pre>
 
-                    <p>Command to set chat color</p>
-                    <pre class="prettyprint lang-lua">
+                <p>Command to set chat color</p>
+                <pre class="prettyprint lang-lua">
 core.register_chatcommand("setcolor", {
     params = "#RRGGBB",
     description = "Set your chat color",
@@ -471,48 +463,42 @@ core.register_chatcommand("setcolor", {
     end,
 })
 </pre>
-                    <p>Modify player messages
-                    </p>
-                    <pre class="prettyprint lang-lua">
+                <p>Modify player messages
+                </p>
+                <pre class="prettyprint lang-lua">
 core.register_on_chat_message(function(name, message)
     local color = get_player_color(name)
     core.chat_send_all(core.colorize(color, "<" .. name .. "> " .. message))
     return true 
 end)</pre>
-                    <p>return true stops default chat handling. Now use <b>/setcolor #ff0000</b> to turn the text red.
-                    </p>
-                    <p>Use a resource like <a href="https://rgbcolorpicker.com/">rgbcolorpicker.com</a> to get your
-                        color rgb code!</p>
+                <p>return true stops default chat handling. Now use <b>/setcolor #ff0000</b> to turn the text red.
+                </p>
+                <p>Use a resource like <a href="https://rgbcolorpicker.com/">rgbcolorpicker.com</a> to get your
+                    color rgb code!</p>
 
-                    <img src="assets/chatcolor.png" alt="colored chat">
+                <img src="assets/chatcolor.png" alt="colored chat">
+
+            </div>
+            <div>
+                <h2 id="textures">Textures</h2>
+                <p>Tired of boring plain textures?</p>
+                <p>Use gimp to apply Filter > Noise > HSV Noise</p>
+                <img src="assets/gimpnoise1.png" alt="gimp edition">
+                <img src="assets/gimpnoise2.png" alt="gimp edition">
+                <p>Now the world looks like this</p>
+                <img class="panoramic" src="assets/noisetextures.png" alt="noise textures landscape">
+
+            </div>
+            <div>
+                <h2 id="colorizetextures">Colorize Textures</h2>
+                <p>Let's create a plain black and white (or grayscale) texture image.</p>
+                <div style="text-align: center;">
+                    <img src="textures/wool.png" alt="plain white wool" class="pixel" width="100px">
 
                 </div>
-
-
-                <div>
-                    <h2 id="textures">Textures</h2>
-                    <p>Tired of boring plain textures?</p>
-                    <p>Use gimp to apply Filter > Noise > HSV Noise</p>
-                    <img src="assets/gimpnoise1.png" alt="gimp edition">
-                    <img src="assets/gimpnoise2.png" alt="gimp edition">
-                    <p>Now the world looks like this</p>
-                    <img class="panoramic" src="assets/noisetextures.png" alt="noise textures landscape">
-
-                </div>
-
-
-
-
-                <div>
-                    <h2 id="colorizetextures">Colorize Textures</h2>
-                    <p>Let's create a plain black and white (or grayscale) texture image.</p>
-                    <div style="text-align: center;">
-                        <img src="textures/wool.png" alt="plain white wool" class="pixel" width="100px">
-
-                    </div>
-                    <p>Use the texture modifier <b>^[colorize:#ff0000:180</b> to set a RGB color red and a ratio: 0-only
-                        the texture to 255-only the color</p>
-                    <pre class="prettyprint">
+                <p>Use the texture modifier <b>^[colorize:#ff0000:180</b> to set a RGB color red and a ratio: 0-only
+                    the texture to 255-only the color</p>
+                <pre class="prettyprint">
 core.register_node('blank:wool', {
     description = 'Wool',
     tiles = { 'wool.png' },
@@ -526,31 +512,29 @@ core.register_node('blank:red_wool', {
     groups = { dig_immediate = 3 },
     paramtype = "light",
 })</pre>
-                    <p>Use colors like green #00FF00 or blue #0000FF</p>
-                    <img src="assets/wool.png" alt="" class="panoramic">
+                <p>Use colors like green #00FF00 or blue #0000FF</p>
+                <img src="assets/wool.png" alt="" class="panoramic">
 
-                </div>
+            </div>
+            <div>
+                <h2 id="gallery">Gallery</h2>
+                <p>Let's get creative</p>
+                <img src="assets/creative.png" alt="" class="panoramic">
+                <p>Meet the player (change camera model with C)</p>
+                <img src="assets/player.png" alt="" class="panoramic">
+                <img src="assets/portal.png" alt="" class="panoramic">
+                <img src="assets/abstract.png" alt="" class="panoramic">
+                <img src="assets/mapgenv7.png" alt="" class="panoramic">
+            </div>
+            <div>
+                <h2 id="futtut">Future Tutorials 🎓</h2>
 
-                <div>
-                    <h2 id="gallery">Gallery</h2>
-                    <p>Let's get creative</p>
-                    <img src="assets/creative.png" alt="" class="panoramic">
-                    <p>Meet the player (change camera model with C)</p>
-                    <img src="assets/player.png" alt="" class="panoramic">
-                    <img src="assets/portal.png" alt="" class="panoramic">
-                    <img src="assets/abstract.png" alt="" class="panoramic">
-                    <img src="assets/mapgenv7.png" alt="" class="panoramic">
-                </div>
+                <p>- Create an entity</p>
+                <p>- Create a recipe</p>
+                <p>- Create a tool</p>
 
-                <div>
-                    <h2 id="futtut">Future Tutorials 🎓</h2>
-
-                    <p>- Create an entity</p>
-                    <p>- Create a recipe</p>
-                    <p>- Create a tool</p>
-
-                </div>
-                <!-- THIS IS VERY COOL
+            </div>
+            <!-- THIS IS VERY COOL
             <div>
                 <h2>Test width</h2>
                 <div style="max-width: 100%; overflow: hidden;">
@@ -592,44 +576,44 @@ core.register_node('blank:red_wool', {
                         href="#sapphire">Sapphire</a> | <a href="#mese">Mese</a></p>
             </div>
  -->
-                <div>
-                    <h2 id="links">Links</h2>
-                    <p><a target="_blank" href="https://luanti.org">Luanti website</a></p>
-                    <p><a target="_blank" href="https://docs.luanti.org">Luanti docs</a></p>
-                    <p><a target="_blank" href="https://api.luanti.org">Luanti api</a></p>
-                    <p><a href="https://rubenwardy.com/minetest_modding_book/en/basics/getting_started.html">rubenwardy
-                            -
-                            Modding book</a></p>
-                </div>
-
-                <div>
-                    <h2 id="credits">Credits</h2>
-                    <p>Author: dibesfer - dibesfer@gmail.com</p>
-                    <p>Coded with HTML, CSS and javascript on VSCodium</p>
-                    <p>Host: codeberg pages</p>
-                    <p>luanti - celeron55 (Perttu Ahola) celeron55@gmail.com</p>
-                    <p>Fonts: Ubuntu and Ubuntu Mono</p>
-                    <p><a href="https://github.com/googlearchive/code-prettify/blob/master/docs/getting_started.md">Google
-                            Code
-                            Prettify</a></p>
-                </div>
-                <div>
-                    <h2 id="stats">Stats</h2>
-                    <p>Local visits: <span id="myLocalVisits"></span></p>
-                    <p>Total visits: <span id="totalVisits"></span></p>
-                </div>
-                <hr>
-                <div style="padding: 40px;text-align: center;">
-                    <p>2025/02/11</p>
-                    <p>by <a target="_blank" href="/">dibesfer</a></p>
-                    <p>Contact <a href="mailto:dibesfer@gmail.com">dibesfer@gmail.com</a></p>
-                </div>
-
-                <div id="upArrow">
-                    <a href="#introduction">▲</a>
-                </div>
-
+            <div>
+                <h2 id="links">Links</h2>
+                <p><a target="_blank" href="https://luanti.org">Luanti website</a></p>
+                <p><a target="_blank" href="https://docs.luanti.org">Luanti docs</a></p>
+                <p><a target="_blank" href="https://api.luanti.org">Luanti api</a></p>
+                <p><a href="https://rubenwardy.com/minetest_modding_book/en/basics/getting_started.html">rubenwardy
+                        -
+                        Modding book</a></p>
             </div>
+            <div>
+                <h2 id="credits">Credits</h2>
+                <p>Author: dibesfer - dibesfer@gmail.com</p>
+                <p>Coded with HTML, CSS and javascript on VSCodium</p>
+                <p>Host: codeberg pages</p>
+                <p>luanti - celeron55 (Perttu Ahola) celeron55@gmail.com</p>
+                <p>Fonts: Ubuntu and Ubuntu Mono</p>
+                <p><a href="https://github.com/googlearchive/code-prettify/blob/master/docs/getting_started.md">Google
+                        Code
+                        Prettify</a></p>
+            </div>
+            <div>
+                <h2 id="stats">Stats</h2>
+                <p>Local visits: <span id="myLocalVisits"></span></p>
+                <p>Total visits: <span id="totalVisits"></span></p>
+            </div>
+            <hr>
+            <div style="padding: 40px;text-align: center;">
+                <p>2025/02/11</p>
+                <p>by <a target="_blank" href="/">dibesfer</a></p>
+                <p>Contact <a href="mailto:dibesfer@gmail.com">dibesfer@gmail.com</a></p>
+            </div>
+        </div>
+
+        <div id="upArrow">
+            <a href="#introduction">▲</a>
+        </div>
+
+        </div>
     </main>
 
 
