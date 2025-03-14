@@ -1,0 +1,17 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: sans-serif;
+    background-color: darkslategray;
+    color: white;
+}
+#mainContainer {
+    max-width: 900px;
+    margin: auto;
+}
+
+hr {
+     color: white
+}
