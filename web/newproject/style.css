@@ -15,3 +15,7 @@ body {
 hr {
      color: white
 }
+
+header , footer {
+    text-align: center;
+}
