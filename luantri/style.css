@@ -21,6 +21,7 @@ main {
 
 a {
     color: gold;
+    text-decoration: none;
 }
 
 hr {
