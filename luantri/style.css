@@ -3,6 +3,13 @@ body {
     font-family: Arial, Helvetica, sans-serif;
 }
 
+@media (prefers-color-scheme: dark) {
+    body {
+        color: white;
+        background-color: black;
+    }
+  }
+
 header , footer{
     text-align: center;
 }
@@ -12,9 +19,16 @@ main {
     margin: auto;
 }
 
+a {
+    color: gold;
+}
+
+hr {
+    border: solid 3px black;
+}
+
 @media (prefers-color-scheme: dark) {
-    body {
-        color: white;
-        background-color: black;
+    hr {
+        border: solid 3px white;
     }
   }
