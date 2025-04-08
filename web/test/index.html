@@ -55,22 +55,22 @@ img {
 .flexgriditem {
   flex: 33.33%;
   text-align:center;
+  overflow: hidden;
 
 }
 .zoomableimage {
   max-width: 100%;
   overflow:hidden;
-  line-height: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  aspect-ratio: 16/9;
+  transition: 1s;
 
 }
 
-.zoomableimage img {
-  object-fit: cover;
-   aspect-ratio: 16/9;
-   transition: 1s;
-}
 
-.zoomableimage img:hover {
+.zoomableimage:hover {
   transform: scale(2);
   
 }
@@ -88,6 +88,7 @@ filter: invert(1)
 ::selection {
   background-color: darkgray;
   color: black;
+}
 </style>
 </head>
 <body>
