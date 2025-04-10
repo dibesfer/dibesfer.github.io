@@ -64,6 +64,7 @@ img {
 
 .flexgriditem {
   flex: 33.33%;
+  width: 33.33%;
   text-align: center;
   overflow: hidden;
 }
@@ -111,4 +112,28 @@ img {
 ::selection {
   background-color: darkgray;
   color: black;
+}
+
+/* ANIMATIONS */
+
+#dibesfer-logo {
+  transition: 1s ;
+}
+#dibesfer-logo:hover {
+  transform: rotate(360deg);
+}
+
+#fer-logo {
+  transition: 1s;
+}
+#fer-logo:hover {
+  transform: rotate(-360deg);
+}
+
+#dibesfer-title {
+  transition: 0.4s;
+}
+
+#dibesfer-title:hover {
+  filter: invert(1) drop-shadow( 0 0 10px white);
 }
