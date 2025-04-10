@@ -43,7 +43,8 @@ footer {
 
 a {
   text-decoration: none;
-  color: unset;
+  /* color: unset; */
+  color: gold;
 }
 
 img {
@@ -136,4 +137,14 @@ img {
 
 #dibesfer-title:hover {
   filter: invert(1) drop-shadow( 0 0 10px white);
+}
+
+#mainBody {
+  max-width: 800px;
+  margin: auto;
+  padding: 0 10px;
+}
+
+#supertitle {
+  text-align: center;
 }
