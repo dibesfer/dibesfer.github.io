@@ -3,13 +3,25 @@
   box-sizing: border-box;
 }
 
+@font-face {
+  font-family: Jost;
+  src: url(assets/fonts/Jost-VariableFont_wght.ttf);
+}
+
+body {
+  font-family: Jost;
+  font-size: large;
+}
+
 body {
   background-color: black;
   color: white;
-  font-family: Verdana, sans-serif;
-  line-height: 2;
+/*   font-family: Verdana, sans-serif;
+ */  line-height: 2;
 
 }
+
+
 
 
 header {
