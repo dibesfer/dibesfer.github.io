@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+	<title>
+		FMF Mi primera web
+	</title>
+	<!-- FAVICON  -->
+	<link rel="icon" type="image/x-icon" href="assets/favicon/favicon.ico">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="empresa" content="PAU CASALS">
+	<meta name="author" content="dibesfer">
+	<meta name="description" content="Mi primera página web. Una página web de ejemplo">
+	<meta charset="UTF-8">
+	<link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+	<header id="homeLink">
+		<p id="consolaLocalhost"></p>
+		<h1 id="mainTitle"><a href="https://dibesfer.github.io/TECWEB-Fer/index.html">TECWEB-Fer</a></h1>
+		<p>👋 Bienvenido máquina 🤖</p>
+
+		<h3 style="font-family: Oregano;"><em>A mi primera p&aacute;gina web</em></h3>
+		<p>Hoy es <span id="diadehoy"></span></p>
+
+	</header>
+	<div id="layoutsSticky">
+		<p><small>Sticky menu</small></p>
+		<nav><a href="#homeLink">Home</a> | <a href="#supermenu">Supermenu</a> | &lt;Contact&gt; | <a
+				href="#creditsTitle">Credits</a></nav>
+	</div>
+
+	<div class="pattern-background"></div>
+	<hr>
+
+
+	<main>
+		<h2>¡Hola Mundo!🌍 Hello World! 🌎 你好世界! 🌏</h2>
+		<img style="float:left" height="100px"
+			src="https://upload.wikimedia.org/wikipedia/commons/7/7f/Rotating_earth_animated_transparent.gif">
+
+		<p><strong>Buenos días España 🇪🇸</strong>. Hola caracola. 🐚<b>Hola caracola.</b> <i>Hola caracola.</i> </p>
+		<p>Hola caracola. Espacio en blanco &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+			Espacio en blanco</p>
+		<p>Probando, probando, un dos tres, probando, probando. <em>¿Se me oye?</em></p>
+
+		<button onclick="botoncito()">Click on me!</button><span id="botoncitodecir"></span>
+		<br><br>
+
+
+		<!-- FLEX 3 PICTURES -->
+		<div class="flex3x3">
+			<div>
+				<img class="decoImage" style="clear: both ; width: 200px;"
+					src="https://blz-contentstack-images.akamaized.net/v3/assets/blt3452e3b114fab0cd/blt5fc24cb2747b0d21/6169fe9f35f1b36b742c74a0/0L3WGRUB75G31578518302792.png"
+					alt="">
+			</div>
+			<div>
+				<img class="decoImage" style="clear: both ; width: 200px; border-radius: 50%;"
+					src="https://blz-contentstack-images.akamaized.net/v3/assets/blt3452e3b114fab0cd/bltf98f9b287fd259db/616a0201bdc5454d581ba20f/1S1T3ZP0XYGV1552513933946.png"
+					alt="">
+			</div>
+
+			<div>
+				<img class="decoImage" style="clear: both ; width: 200px;"
+					src="https://blz-contentstack-images.akamaized.net/v3/assets/blt3452e3b114fab0cd/bltf92062bb8562399a/616a01d15e87796834fb5b0a/V4R3T5LFVXXQ1607718423211.png"
+					alt="">
+			</div>
+		</div>
+
+		<hr>
+
+		<div class="pinkBox">
+
+			<p style="text-align:center">Entidades con ampersand & <br> &Atilde; &Auml; &Acirc; &Aacute; &Agrave; &amp;
+				&copy; & &reg;</p>
+
+
+		</div>
+
+		<br>
+		<div class="blueBox">
+
+			<p style="text-align:center">🟦Blue Box<br>Caja azul <br>Caixa blau</p>
+
+
+		</div>
+
+		<section>
+			<article>
+				<h2>Etiquetas especiales</h2>
+				<p>bdo: <bdo dir="rtl">Texto al revés</bdo></p>
+				<p>kbd: Para copiar <kbd>CTRL</kbd> + <kbd>C</kbd>, para pegar <kbd>CTRL</kbd> + <kbd>V</kbd></p>
+				<p>mark: <mark>importante</mark></p>
+				<p>small: <small>pequeñito</small></p>
+				<p>code:</p>
+				<code>
+			echo "Hello World!";
+			</code>
+				<p>xmp: <del>deprecated</del></p>
+				<!--<p>xmp:</p>
+				 Deprecated Better use JS object.textContent = "<html>" <xmp>
+					<!DOCTYPE html>
+				</xmp> -->
+
+				<p>del e ins: Ofertón <del>100€</del> <ins>90€</ins></p>
+				<p>sub y sup: <sub>sub</sub> - normal - <sup>sup</sup></p>
+				<p>abbr: <abbr title="HyperText Markup Language">HTML</abbr></p>
+				<p>address:
+				<address>L'Hospitalet de Llobregat, C/ Muntanya 1, 08901</address>
+				</p>
+				<p>time: <time datetime="2025-05-30">30-05-2025</time></p>
+				<p></p>
+				<p></p>
+			</article>
+
+			<article>
+				<h2>Junio</h2>
+				<p>Descripción de los proyectos que haremos en junio</p>
+			</article>
+
+		</section>
+
+		<div>
+			<h2>Fetch text from file</h2>
+			<div id="fetchedText"></div>
+		</div>
+
+		<div>
+			<p>https://www.w3.org/wiki/images/a/af/Cssed_borderstyles.png</p>
+			<h2>Supermenu</h2>
+			<div id="supermenu">
+				<nav>
+					<ul>
+						<li>Portada</li>
+						<li>Presentación</li>
+						<li>Índice</li>
+						<li>Galería</li>
+						<li>Sobre mí</li>
+						<li>Enlaces</li>
+						<li>Contacta</li>
+						<li>Salir &rarr;</li>
+					</ul>
+				</nav>
+			</div>
+		</div>
+
+
+
+		<!-- LAYOUTS / DISPOSICIONES -->
+		<div>
+			<h2>LAYOUTS / DISPOSICIONES</h2>
+
+			<div id="layoutsFixed">I am a fixed element. We don't have cookies here. </div>
+			<div id="layoutsAbsolute">I am absolute</div>
+			<div id="layoutsRelative">I am relative</div>
+
+
+		</div>
+
+		<!-- HACKING ATTACK -->
+		<div id="hackingContainer">
+			<h2>Hacking</h2>
+			<img id="hackingImage" src="assets/images/lacaixa_Captura de pantalla 2025-06-03 125634.png" alt="">
+		</div>
+
+
+		<!-- BEAUTICARD -->
+		<h2>Beauticard <span id="bc-counter"></span></h2>
+		<p>Ideas: csv db, tinder swipe</p>
+		<div id="bc-container" class="beauticard-container">
+			
+		</div>
+
+		<!-- F L E X -->
+		<div>
+			<h2>The Flex</h2>
+			<div class="flexText">
+
+				<div>
+					<div>
+						<p>1. Title</p>
+						<p>image</p>
+						<p>Description</p>
+						<p>*extra information</p>
+					</div>
+				</div>
+				<div>
+					<div>2</div>
+				</div>
+				<div>
+					<div>3<br>2 <br>1</div>
+				</div>
+				<div>
+					<div><img style="filter: invert(1);" width="75%"
+							src="https://marketplace.canva.com/HwJxw/MAFYBRHwJxw/1/tl/canva-phone-icon-illustration-MAFYBRHwJxw.png"
+							alt=""></div>
+				</div>
+				<div>
+					<div>5</div>
+				</div>
+				<div>
+					<div>6</div>
+				</div>
+				<div>
+					<div>7</div>
+				</div>
+				<div>
+					<div>8</div>
+				</div>
+				<div>
+					<div>9</div>
+				</div>
+
+
+			</div>
+		</div>
+
+	</main>
+	<hr>
+	<div class="pattern-background"></div>
+	<footer>
+
+		<br>
+		<div>
+			<img class="logo" height="75px" src="https://upload.wikimedia.org/wikipedia/commons/b/b7/Flag_of_Europe.svg"
+				title="Unión Europea">
+			<img class="logo" height="75px"
+				src="https://upload.wikimedia.org/wikipedia/commons/7/7d/Escudo_de_Espa%C3%B1a_%28variant%29.svg"
+				title="Reino de España">
+			<img class="logo" height="75px"
+				src="https://upload.wikimedia.org/wikipedia/commons/0/0f/Escut_de_Catalunya_%28apuntat%29.svg"
+				title="Escudo de Cataluña">
+			<img class="logo" height="75px"
+				src="https://upload.wikimedia.org/wikipedia/commons/1/1a/Escut_de_L%27Hospitalet_de_Llobregat.svg"
+				title="Hospitalet de Llobregat">
+		</div>
+		<img style="background-color: rgb(132, 226, 229);padding:5px; border-radius: 15px;"
+			src="https://www.paucasals.com/imagen/logo.png" alt="logotipo de la escuela" title="Logotipo de la escuela"
+			width="50%">
+		<!-- filter: drop-shadow(5px 5px 5px white); -->
+		<p>Curso: Desarrollo de Aplicaciones con Tecnologías Web - IFCD0210</p>
+		<address>L'Hospitalet de Llobregat, C/ Muntanya 1, 08901</address>
+		<iframe
+			src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2994.5009285586707!2d2.108042464057572!3d41.36320021503825!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x12a498e0b8e2afdf%3A0xb5df9d184e54032a!2sCarrer%20de%20la%20Muntanya%2C%201%2C%2008901%20L&#39;Hospitalet%20de%20Llobregat%2C%20Barcelona!5e0!3m2!1sca!2ses!4v1748607634195!5m2!1sca!2ses"
+			width="400" height="200" style="border:0;" allowfullscreen="" loading="lazy"
+			referrerpolicy="no-referrer-when-downgrade"></iframe>
+		<!--<iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2994.5059267134143!2d2.1098341999999968!3d41.3630916!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x12a498e0b8e2afdf%3A0xb5df9d184e54032a!2sCarrer%20de%20la%20Muntanya%2C%201%2C%2008901%20L&#39;Hospitalet%20de%20Llobregat%2C%20Barcelona!5e0!3m2!1ses!2ses!4v1748533248777!5m2!1ses!2ses" width="600" height="300" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>-->
+
+		<p class="greatWord">上帝</p>
+		<p> Shàngdì = Dios en chino</p>
+		<!-- CREDITS -->
+		<div id="credits">
+			<h2 id="creditsTitle">Credits</h2>
+			<div id="creditsList">
+				<ul>
+					<li>Font: · Ubuntu <a href="https://fonts.google.com/specimen/Ubuntu">link</a> · Oregano <a
+							href="https://fonts.google.com/specimen/Oregano">link</a></li>
+					<li>Hosting: Github Pages <a href="https://pages.github.com/">link</a></li>
+					<li>Source Code: Github <a href="https://github.com/dibesfer/TECWEB-Fer">link</a></li>
+					<li>Author: dibesfer <a href="https://dibesfer.github.io">link</a> Mail: <a
+							href="mailto:dibesfer@gmail.com">dibesfer@gmail.com</a></li>
+					<li>Favicon made with <a href="https://favicon.io/favicon-generator/">favicon.io</a> with Zain font
+					</li>
+					<li>Made by Ferrán Minero &copy; 2025-05-29</li>
+				</ul>
+			</div>
+		</div>
+		<br><br>
+	</footer>
+
+
+	<script>
+
+		var norepeat
+
+		var frases = [
+			"Hola",
+			"Hola Caracola",
+			"Adiós",
+			"Muy buenas",
+			"¿Qué tal?",
+			"¿Cómo va el día?",
+			"¿Cuál es el orígen del universo?",
+			"¿Crees en Dios?",
+			"¿Qué opinas de la integración de China en el mercado internacional?",
+			"Wabba labba dub dub! Nena! Soy Rick Sanchez nena!"
+		];
+
+		function randomInt(min, max) {
+
+			var newnumber = Math.floor(Math.random() * (max - min + 1)) + min;
+
+			if (newnumber == norepeat) {
+				newnumber = Math.floor(Math.random() * (max - min + 1)) + min;
+			}
+			norepeat = newnumber
+
+			return newnumber
+
+		}
+
+		function addZero(i) {
+			if (i < 10) { i = "0" + i }
+			return i;
+		}
+
+		function botoncito() {
+			botoncitodecir.textContent = " " + frases[randomInt(0, frases.length - 1)]
+		}
+
+		var now = new Date()
+		var horas = now.getHours()
+		// var day = now.getDay()
+		var dia = now.toLocaleDateString('es-ES')
+		var diadelasemana = now.toLocaleDateString('es-ES', { weekday: 'long' })
+		var mes = now.toLocaleDateString('es-ES', { month: 'long' })
+		var diadentrodelmes = now.getDate()
+		diadehoy.innerHTML = diadelasemana + " " + diadentrodelmes + " de " + mes + " del " + now.getFullYear() + "<br><span style='text-align:right'><b>" + dia + "</b></span>";
+
+
+
+		let h = addZero(now.getHours());
+		let m = addZero(now.getMinutes());
+		let s = addZero(now.getSeconds());
+		let time = h + ":" + m + ":" + s;
+		diadehoy.innerHTML += " - " + time;
+
+		// https://datos.gob.es/apidata/catalog/dataset/a09002970-acciones-formativas-programadas-por-el-consorci-per-a-la-formacio-continua-de-catalunya
+
+		fetch("text.txt")
+			.then(response => response.text())
+			.then((response) => {
+				fetchedText.textContent = response
+			})
+			.catch(err => console.log(err))
+
+		var address = window.location.href
+		//alert(address)
+		if (address.startsWith("http://127.0.0.1")) {
+			consolaLocalhost.textContent = " - - - You are on LOCALHOST - - - "
+		}
+
+	</script>
+	<script src="../assets/scripts/beauticard.js"></script>
+</body>
+
+</html>

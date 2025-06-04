@@ -1,0 +1,494 @@
+/* CONECTORES */
+
+@import url("assets/styles/general.css");
+
+:root {
+    --ancho: 800px
+}
+
+header {
+    background-color: rgb(0, 34, 4);
+    background-image: url(https://img.freepik.com/foto-gratis/fiesta-halloween_23-2148603731.jpg?semt=ais_items_boosted&w=740);
+    background-position: center;
+    /* Center the image */
+    background-repeat: no-repeat;
+    /* Do not repeat the image */
+    background-size: cover;
+    /* Resize the background image to cover the entire container */
+    color: white;
+    padding: 5px;
+    text-align: center;
+
+}
+
+button {
+    font: unset;
+    border: solid 3px black;
+    background-color: white;
+}
+
+button:hover {
+    background-color: gray;
+    color: white;
+}
+
+button:active {
+    background-color: green;
+}
+
+main {
+
+    padding: 0 10px;
+    max-width: var(--ancho);
+    margin: auto;
+}
+
+footer {
+    padding: 5px;
+    box-shadow: inset 0 -40px 25px -25px rgba(0, 0, 0, 0.54);
+    background-color: gold;
+    color: rgb(133, 217, 220);
+    background-image: url(https://t3.ftcdn.net/jpg/03/53/28/08/360_F_353280884_oyeOLzk0EyvfC4pvixbvcfA4s745SaX6.jpg);
+    background-position: center;
+    /* Center the image */
+    background-repeat: no-repeat;
+    /* Do not repeat the image */
+    background-size: cover;
+    text-align: center;
+    /* Resize the background image to cover the entire container */
+
+}
+
+#creditsList {
+    color: rgb(60, 60, 60);
+    text-align: left;
+    width: max-content;
+    margin: auto;
+    max-width: 100%;
+    background-color: gold;
+    border-radius: 15px;
+    padding: 10px 0;
+    box-shadow: inset 0 0 15px black;
+    font-variant: small-caps;
+    text-emphasis: circle rgba(128, 128, 128, 0.368);
+    text-emphasis-position: under;
+}
+
+#creditsTitle::before {
+    content: "🙠 ";
+}
+
+#creditsTitle::after {
+    content: " 🙢";
+}
+
+/* #creditsList > ul {
+    padding: 0;
+} */
+
+#mainTitle {
+
+    text-shadow: 3px 3px 1px darkgreen;
+    letter-spacing: 2pt;
+
+    /* text-decoration: underline */
+}
+
+.greatWord {
+    font-size: 60px;
+    font-style: italic;
+    text-shadow: 5px 5px 2px red;
+
+}
+
+.pinkBox {
+    background-color: pink;
+    padding: 20px 5px;
+    border: groove 10px darkmagenta;
+    border-radius: 15px;
+    box-shadow: inset 0 0 15px purple;
+    font-family: monospace;
+    font-size: x-large;
+    width: 50%;
+}
+
+.blueBox {
+    background-color: cadetblue;
+    padding: 20px 40px;
+    border: groove 10px darkslategray;
+    border-radius: 15px;
+    box-shadow: inset 0 0 15px lightblue;
+    font-family: monospace;
+    font-size: x-large;
+    width: max-content;
+    color: white;
+}
+
+hr {
+    border: dashed 5px orange;
+    margin: 15px 0;
+}
+
+::selection {
+    background-color: darkgreen;
+    color: white;
+}
+
+del {
+    color: red
+}
+
+img,
+iframe {
+    max-width: 100%
+}
+
+
+
+.decoImage {
+    background-color: pink;
+    border: ridge 10px brown;
+    box-shadow: inset 0 0 40px rgb(255, 255, 218);
+}
+
+.pattern-background {
+    /* Example width */
+    height: 40px;
+    /* Example height */
+    background-image: url('https://img.pikbest.com/origin/10/00/10/47ApIkbEsT2h7.png!sw800');
+    /* Replace with your image */
+    /* Repeat the image both horizontally and vertically */
+    background-size: 100px 100px;
+    /* Size of each tile */
+    background-repeat: repeat-x
+        /* Optional: background-position: top left; */
+        /* If you want to specify a starting point */
+}
+
+#supermenu {
+    width: max-content;
+    user-select: none;
+    border-left: 10px brown ridge;
+}
+
+#supermenu ul {
+    list-style: none;
+    padding: 0;
+}
+
+#supermenu ul li {
+    border-radius: 0 15px 15px 0;
+    padding: 5px;
+    width: 100%;
+    transition: 0.2s;
+    border-bottom: rgba(255, 227, 69, 0.577) solid 5px;
+    text-shadow: 1px 1px 1px white;
+    cursor: pointer;
+}
+
+#supermenu ul li::before {
+    content: "۞ "
+}
+
+
+#supermenu ul li:nth-child(odd) {
+    background-color: rgb(142, 142, 255);
+}
+
+#supermenu ul li:nth-child(even) {
+    background-color: rgb(255, 166, 206);
+}
+
+#supermenu ul li:hover {
+    color: white;
+    width: 130%;
+    text-shadow: 1px 1px 1px black;
+}
+
+#fetchedText {
+    white-space: pre;
+    width: 100%;
+    overflow: auto;
+    background-color: brown;
+    color: white;
+    border: ridge gray 4px;
+    padding: 5px;
+}
+
+#consolaLocalhost {
+    color: red;
+    font-family: monospace;
+    background-color: black;
+    width: max-content;
+    margin: auto;
+}
+
+/* #supermenu ul li:hover::after {
+			display: inline-block;
+			transform: scale(-1, 1);
+			content: "➯ "
+		} */
+
+#layoutsFixed {
+    background-color: blue;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    text-align: center;
+    color: white;
+    z-index: 100;
+}
+
+#layoutsAbsolute {
+    background-color: pink;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+}
+
+#layoutsRelative {
+    background-color: limegreen;
+    position: relative;
+    left: -50px;
+}
+
+#layoutsSticky {
+    position: sticky;
+    top: 0;
+    background-color: red;
+    z-index: 100;
+    text-align: center;
+    color: white;
+    background-color: rgb(130, 64, 17);
+}
+
+#hackingImage {
+    border: 1px solid black;
+
+    width: 200px;
+}
+
+#hackingImage:active {
+    background-color: black;
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    right: 0;
+    left: 0;
+    margin: auto;
+    height: 100vh;
+    z-index: 101;
+    width: unset;
+}
+
+.logo {
+    filter: drop-shadow(0 0 5px white);
+}
+
+.flexText {
+    display: flex;
+    flex-wrap: wrap;
+    line-height: 1;
+}
+
+.flexText>div {
+    text-align: center;
+    color: white;
+    font-size: 100%;
+    /* border: solid 3px black; */
+    aspect-ratio: 1;
+    flex: 33.33%;
+    width: 33.33%;
+    padding: 15px;
+    transition: 0.4s;
+
+}
+
+.flexText>div:hover {
+    padding: 5px;
+    /* font-size:300%; */
+
+}
+
+.flexText>div:nth-child(even) {
+    background-color: blue
+}
+
+.flexText>div:nth-child(odd) {
+    background-color: red
+}
+
+.flexText>div>div {
+    border: 2px dashed white;
+    width: 100%;
+    height: 100%;
+    /* align-content: center; */
+    background-color: rgba(0, 0, 0, 0.315);
+
+    display: flex;
+    align-items: center;
+
+    overflow: hidden;
+    flex-direction: column;
+
+}
+
+.flexText>div>div:hover {
+    background-color: rgba(9, 132, 0, 0.664);
+    content: "spñs"
+}
+
+/* FLEX 3X3 */
+.flex3x3 {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+
+
+.beauticard {
+    flex: 33.33%;
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    font-size: 75%;
+    width: 25%;
+    max-width: 33.33%;
+    aspect-ratio: 2/3;
+    padding: 5px;
+    border-radius: 15px;
+    overflow: hidden;
+   
+}
+
+.bc-wrapper {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-shadow: 2px 2px 2px  black;
+    
+    border-radius: 15px;
+    height: 100%;
+}
+
+.bc-wrapper>div {
+    border: solid 3px black;
+}
+
+.beauticard-title {
+    border-radius:  15px 15px 0 0 ;
+    background-color: chocolate;
+    padding: 2px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 40px;
+    font-size: large;
+    background: radial-gradient(orange,red);
+}
+
+#bt-3 {
+    height: 100%;
+    color: blue;
+    /* border: solid 1px gold; */
+    border-radius: 50%;
+    overflow: hidden;
+}
+
+#bt-3 > img {
+    height: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+    /* background-color: rgb(129, 129, 129);     */
+}
+
+.beauticard-stars{
+    background-color: rgb(144, 0, 0);
+    height: 30px;
+    padding: 5px;
+    display: flex;
+    justify-content: flex-end;
+    
+}
+
+.beauticard-stars > img {
+    filter: drop-shadow(2px 2px black);
+}
+
+.beauticard-image {
+    aspect-ratio: 16/9;
+    overflow: hidden;
+    background-color: palevioletred;
+    background-image: url(https://e7.pngegg.com/pngimages/275/707/png-clipart-black-floral-pattern-pattern-background-photography-monochrome-thumbnail.png);
+    background-repeat: repeat;
+    background-size: 170px;
+}
+
+/* .beauticard-image > img {
+    
+    filter: invert(1) brightness(50%) sepia(100%) saturate(10000%);
+} */
+
+.beauticard-image > img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    background-color: rgba(0, 60, 106, 0.552);
+}
+
+.beauticard-description {
+    overflow: auto;
+    padding: 2px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background-color: rgb(90, 90, 90);
+    color: white;
+
+}
+
+.beauticard-description > p {
+    font-style: italic;
+    font-size: 12px;
+}
+
+#bt-d-under {
+    margin-top: auto;
+    
+}
+
+
+.beauticard-extra {
+    font-size: 10px;
+    padding: 2px;
+    background-color: darkgray;
+    border-radius: 0 0 15px 15px;
+
+}
+
+.beauticard-container {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+
+
+@media (max-width:600px){
+    .beauticard {
+        flex: 50%;
+        max-width: 50%;
+    }
+    
+}@media only screen and (max-width: 600px) {
+    
+}
+@media (max-width:400px){
+    .beauticard {
+        flex: 100%;
+        max-width: 100%;
+    }
+    /* body {
+        background-color: black;
+    } */
+}

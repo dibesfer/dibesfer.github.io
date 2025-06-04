@@ -1,0 +1,32 @@
+* {
+    margin: 0;
+    box-sizing: border-box
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+@font-face {
+    font-family: 'Ubuntu';
+    src: url('https://dibesfer.com/TECWEB-Fer/assets/fonts/Ubuntu/Ubuntu-Regular.ttf');
+    /* https://dibesfer.github.io/TECWEB-Fer/assets/fonts/Ubuntu-Regular.ttf */
+}
+
+@font-face {
+    font-family: 'Oregano';
+    src: url('https://dibesfer.com/TECWEB-Fer/assets/fonts/Oregano/Oregano-Regular.ttf');
+    /* https://dibesfer.github.io/TECWEB-Fer/assets/fonts/Ubuntu-Regular.ttf */
+}
+
+
+body {
+    line-height: 2;
+    background-color: lightyellow;
+    font-family: Ubuntu;
+}
+
+a {
+    color: rgb(70, 229, 70);
+    text-decoration: none;
+}
