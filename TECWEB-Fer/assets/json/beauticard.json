@@ -55,6 +55,15 @@
         "image" : "https://images.wikidexcdn.net/mwuploads/wikidex/thumb/b/b0/latest/20220912175715/Kadabra.png/800px-Kadabra.png",
         "icon" : "https://upload.wikimedia.org/wikipedia/commons/5/53/Pok%C3%A9_Ball_icon.svg"
     },
+    
+    {
+        "name": "Nightelf",
+        "type": "Night elf",
+        "level": "1",
+        "desc" : "Antaño corrompidos por la magia arcana. Una cultura guiada por Malfurion Tempestira, el druida líder.",
+        "image" : "https://wow.zamimg.com/uploads/screenshots/normal/946466.jpg",
+        "icon" : "https://upload.wikimedia.org/wikipedia/commons/thumb/e/eb/WoW_icon.svg/1200px-WoW_icon.svg.png"
+    },
     {
         "name": "Alakazam",
         "type": "Psíquico",
@@ -74,7 +83,7 @@
     {
         "name": "Jesús",
         "type": "Mesías",
-        "level": "Nº65",
+        "level": "33",
         "desc" : "Jesús Cristo 25 de diciembre del año 0 (?)",
         "image" : "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bc/%C3%9Altima_Cena_-_Juan_de_Juanes.jpg/1618px-%C3%9Altima_Cena_-_Juan_de_Juanes.jpg",
         "icon" : "https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/Christianity_Symbol.svg/938px-Christianity_Symbol.svg.png"
@@ -86,5 +95,23 @@
         "desc" : "Amiga de los gays.",
         "image" : "https://media.vogue.mx/photos/5e256a50867e820009c44ae1/master/pass/lady-gaga-glam-squad-para-premios.jpg",
         "icon" : "https://upload.wikimedia.org/wikipedia/commons/5/5b/Greater_coat_of_arms_of_the_United_States.svg"
+    },
+    {
+        "name": "Wall-e",
+        "type": "Robot de limpieza",
+        "level": "2",
+        "desc" : "Hace cubos comprimiendo basura en su panza. Además parece mostrar emociones casi humanas.",
+        "image" : "https://hips.hearstapps.com/es.h-cdn.co/fotoes/images/peliculas/wall-e/galeria/3139610-3-esl-ES/Wall-E.jpg",
+        "icon" : "https://img.icons8.com/fluent/600/disney-1.png"
+    },
+    {
+        "name": "Draenei",
+        "type": "Alien",
+        "level": "Nº65",
+        "desc" : "Una cultura que adora a los Naaru",
+        "image" : "https://www.wowchakra.com/wp-content/uploads/2020/06/WowChakraPersonalizacionDraeneiMacho.jpg",
+        "icon" : "https://upload.wikimedia.org/wikipedia/commons/thumb/e/eb/WoW_icon.svg/1200px-WoW_icon.svg.png"
     }
 ]
+    
+

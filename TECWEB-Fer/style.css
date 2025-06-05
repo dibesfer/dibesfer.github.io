@@ -405,13 +405,26 @@ iframe {
 
 .beauticard-stars{
     background-color: rgb(144, 0, 0);
+    background-image: linear-gradient(90deg,rgba(255, 0, 0, 0.44),rgb(0, 0, 0));
+
+    
     height: 30px;
-    padding: 5px;
+    
     display: flex;
     justify-content: flex-end;
+    position: relative;
     
 }
 
+.specialImage {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    height: 100%;
+    width: 100%;
+    object-fit: cover;
+    
+}
 .beauticard-stars > img {
     filter: drop-shadow(2px 2px black);
 }
@@ -474,7 +487,7 @@ iframe {
 
 
 
-@media (max-width:600px){
+@media (max-width:800px){
     .beauticard {
         flex: 50%;
         max-width: 50%;
@@ -483,7 +496,7 @@ iframe {
 }@media only screen and (max-width: 600px) {
     
 }
-@media (max-width:400px){
+@media (max-width:600px){
     .beauticard {
         flex: 100%;
         max-width: 100%;
