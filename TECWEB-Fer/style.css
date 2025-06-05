@@ -20,7 +20,6 @@ header {
     color: white;
     padding: 5px;
     text-align: center;
-
 }
 
 button {
@@ -38,12 +37,7 @@ button:active {
     background-color: green;
 }
 
-main {
 
-    padding: 0 10px;
-    max-width: var(--ancho);
-    margin: auto;
-}
 
 footer {
     padding: 5px;
@@ -348,4 +342,11 @@ iframe {
     justify-content: space-around;
     align-items: center;
     flex-wrap: wrap;
+}
+
+/* CONTAINED WIDTH */
+.containedWidth {
+    padding: 0 10px;
+    max-width: var(--ancho);
+    margin: auto;
 }

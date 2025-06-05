@@ -59,6 +59,9 @@ fetch("assets/json/beauticard.json")
             <div class="beauticard-extra">
                 9196 1ª Edition &copy; Ferrán Minero 1996
             </div>
+            <div class="beauticard-back">
+            <h1>Beauticards</h1>
+            </div>
         </div>
       `;
             card.innerHTML = cardContent
