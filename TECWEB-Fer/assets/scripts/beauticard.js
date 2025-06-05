@@ -26,7 +26,7 @@ fetch("assets/json/beauticard.json")
             </div>
 
             <div class="beauticard-stars">
-                <img class="specialImage" src="https://static.vecteezy.com/system/resources/thumbnails/009/695/745/small_2x/seamless-wavy-line-pattern-png.png">
+                <img class="specialImage" style="filter:invert(1) opacity(0.25)" src="https://static.vecteezy.com/system/resources/thumbnails/009/695/745/small_2x/seamless-wavy-line-pattern-png.png">
                 <img src="https://static.vecteezy.com/system/resources/previews/022/133/469/non_2x/star-shape-star-icon-yellow-star-in-rating-symbol-free-png.png/"
                     alt="">
                 <img src="https://static.vecteezy.com/system/resources/previews/022/133/469/non_2x/star-shape-star-icon-yellow-star-in-rating-symbol-free-png.png"
