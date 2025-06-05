@@ -1,0 +1,177 @@
+.beauticard {
+    flex: 33.33%;
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    font-size: 75%;
+    width: 25%;
+    max-width: 33.33%;
+    aspect-ratio: 2/3;
+    padding: 10px;
+    border-radius: 15px;
+    overflow: hidden;
+    transition: 0.4s;
+    user-select: none;
+    cursor: pointer;
+
+}
+
+.bc-wrapper {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-shadow: 2px 2px 2px black;
+    border-radius: 15px;
+    height: 100%;
+    transition: 0.4s;
+}
+
+
+.bc-wrapper>div {
+    border: solid 2px black;
+    filter: brightness(0.8);
+    transition: 0.4s;
+}
+
+.beauticard:hover {
+    padding: 0;
+}
+
+.beauticard:hover>.bc-wrapper>div {
+    /* box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.5); */
+    filter: brightness(1.2);
+}
+
+.beauticard-title {
+    border-radius: 15px 15px 0 0;
+    background-color: chocolate;
+    padding: 2px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 40px;
+    font-size: large;
+    background: radial-gradient(orange, red);
+}
+
+#bt-3 {
+    height: 100%;
+    color: blue;
+    /* border: solid 1px gold; */
+    border-radius: 50%;
+    overflow: hidden;
+}
+
+#bt-3>img {
+    height: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+    /* background-color: rgb(129, 129, 129);     */
+}
+
+.beauticard-stars {
+    background-color: rgb(144, 0, 0);
+    background-image: linear-gradient(90deg, rgba(255, 0, 0, 0.44), rgb(0, 0, 0));
+    height: 30px;
+    padding: 5px;
+    display: flex;
+    justify-content: flex-end;
+    position: relative;
+
+}
+
+.specialImage {
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 0;
+    bottom: 0;
+    height: 100%;
+    width: 100%;
+    object-fit: cover;
+
+}
+
+.beauticard-stars>img {
+    height: 100%;
+    filter: drop-shadow(2px 2px black);
+}
+
+.beauticard-image {
+    aspect-ratio: 16/9;
+    overflow: hidden;
+    background-color: palevioletred;
+    background-image: url(https://e7.pngegg.com/pngimages/275/707/png-clipart-black-floral-pattern-pattern-background-photography-monochrome-thumbnail.png);
+    background-repeat: repeat;
+    background-size: 170px;
+}
+
+/* .beauticard-image > img {
+    
+    filter: invert(1) brightness(50%) sepia(100%) saturate(10000%);
+} */
+
+.beauticard-image>img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    background-color: rgba(0, 60, 106, 0.552);
+}
+
+.beauticard-description {
+    overflow: auto;
+    padding: 5px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background-color: rgb(84, 84, 84);
+    background-image: url("https://static.vecteezy.com/system/resources/thumbnails/026/569/328/small/abstract-geometric-seamless-pattern-free-png.png");
+    background-size: 400px;
+    color: white;
+    
+}
+
+.beauticard-description>p {
+    font-style: italic;
+    
+}
+
+#bt-d-under {
+    margin-top: auto;
+
+}
+
+
+.beauticard-extra {
+    font-size: 10px;
+    padding: 2px;
+    background-color: darkgray;
+    border-radius: 0 0 15px 15px;
+
+}
+
+.beauticard-container {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+
+
+@media (max-width:800px) {
+    .beauticard {
+        flex: 50%;
+        max-width: 50%;
+    }
+
+}
+
+/* @media only screen and (max-width: 600px) {} */
+
+@media (max-width:600px) {
+    .beauticard {
+        flex: 100%;
+        max-width: 100%;
+    }
+
+    /* body {
+        background-color: black;
+    } */
+}

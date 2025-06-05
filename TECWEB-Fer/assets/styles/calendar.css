@@ -1,0 +1,88 @@
+/* CALENDARIO */
+
+
+.calendarioWrapper {
+    border: outset brown 15px;
+    
+    word-break:keep-all;
+    width: 50%;
+   
+    overflow: auto;
+}
+
+.nombreMes {
+    text-align: center;
+    padding: 0;
+    background-image: radial-gradient(lightblue, rgb(60, 164, 224), blue);
+    font-size: x-large;
+}
+
+.calendario {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    grid-template-rows: repeat(6, 1fr);
+    width: 100%;
+    overflow: auto;
+}
+
+/* #weekday {
+    display: contents;
+} */
+
+.calendario>div {
+    background-color: white;
+    border: solid 3px black;
+
+
+    width: 100%;
+    overflow: hidden;
+    aspect-ratio: 1;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 3vmin;
+    cursor: pointer;
+}
+
+.calendario>div:hover {
+    border: solid 6px red;
+    font-weight: bold;
+}
+
+
+.calendario>.diaFiesta {
+    background-color: red !important;
+    color: white;
+}
+
+/* FINES DE SEMANA */
+.calendario>div:nth-child(7n),
+.calendario>div:nth-child(7n-1) {
+
+    background-color: rgb(179, 179, 179) !important;
+
+}
+
+.calendario>div:nth-child(7n) {
+    color: white;
+}
+
+/* DIAS DE LA SEMANA */
+.calendario>div:nth-child(-n+7) {
+
+    background-color: blue !important;
+    justify-content: flex-start;
+    color: white;
+    font-size: large;
+
+}
+
+.calendario>div:nth-child(n+9):nth-child(-n+18) {
+  background-color: lightblue;
+}
+.calendario>div:nth-child(n+18):nth-child(-n+39) {
+  background-color: pink;
+}
+
+/* https://stackoverflow.com/questions/46308048/how-can-i-target-a-specific-column-or-row-in-a-css-grid-layout */
