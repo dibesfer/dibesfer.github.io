@@ -31,7 +31,7 @@ fetch("assets/json/beauticard.json")
                 
             if (element.stars != undefined) {
                 for (let i = 0; i < element.stars; i++) {
-                    cardContent += `<img src="https://static.vecteezy.com/system/resources/previews/022/133/469/non_2x/star-shape-star-icon-yellow-star-in-rating-symbol-free-png.png/"
+                    cardContent += `<img src="https://static.vecteezy.com/system/resources/previews/022/133/469/non_2x/star-shape-star-icon-yellow-star-in-rating-symbol-free-png.png"
                     alt="">`
                     console.log(element.stars)
                 }

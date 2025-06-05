@@ -56,8 +56,8 @@
 					<h1>JUNIO</h1>
 				</div>
 				<div class="calendario">
-					
-					
+
+
 					<div>Lunes</div>
 					<div>Martes</div>
 					<div>Miércoles</div>
@@ -65,7 +65,7 @@
 					<div>Viernes</div>
 					<div>Sábado</div>
 					<div>Domingo</div>
-					
+
 
 					<div></div>
 					<div></div>
@@ -123,8 +123,8 @@
 					<h1>JULIO</h1>
 				</div>
 				<div class="calendario">
-					
-					
+
+
 					<div>Lunes</div>
 					<div>Martes</div>
 					<div>Miércoles</div>
@@ -132,7 +132,7 @@
 					<div>Viernes</div>
 					<div>Sábado</div>
 					<div>Domingo</div>
-					
+
 
 					<div></div>
 					<div>1</div>
@@ -174,7 +174,7 @@
 					<div></div>
 					<div></div>
 
-					
+
 
 				</div>
 			</div>
@@ -283,7 +283,7 @@
 		<div>
 			<h2>LAYOUTS / DISPOSICIONES</h2>
 
-			<div id="layoutsFixed">🍪 We don't have cookies here. 
+			<div id="layoutsFixed">🍪 We don't have cookies here.
 			</div>
 			<div id="layoutsAbsolute">I am absolute</div>
 			<div id="layoutsRelative">I am relative</div>
@@ -302,7 +302,7 @@
 		<h2>Beauticard <span id="bc-counter"></span></h2>
 		<p>Ideas: csv db, tinder swipe</p>
 		<div id="bc-container" class="beauticard-container">
-			
+
 		</div>
 
 		<!-- F L E X -->
@@ -374,10 +374,10 @@
 		<!-- filter: drop-shadow(5px 5px 5px white); -->
 		<p>Curso: Desarrollo de Aplicaciones con Tecnologías Web - IFCD0210</p>
 		<address>L'Hospitalet de Llobregat, C/ Muntanya 1, 08901</address>
-		<iframe
+		<!-- <iframe
 			src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2994.5009285586707!2d2.108042464057572!3d41.36320021503825!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x12a498e0b8e2afdf%3A0xb5df9d184e54032a!2sCarrer%20de%20la%20Muntanya%2C%201%2C%2008901%20L&#39;Hospitalet%20de%20Llobregat%2C%20Barcelona!5e0!3m2!1sca!2ses!4v1748607634195!5m2!1sca!2ses"
 			width="400" height="200" style="border:0;" allowfullscreen="" loading="lazy"
-			referrerpolicy="no-referrer-when-downgrade"></iframe>
+			referrerpolicy="no-referrer-when-downgrade"></iframe> -->
 		<!--<iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2994.5059267134143!2d2.1098341999999968!3d41.3630916!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x12a498e0b8e2afdf%3A0xb5df9d184e54032a!2sCarrer%20de%20la%20Muntanya%2C%201%2C%2008901%20L&#39;Hospitalet%20de%20Llobregat%2C%20Barcelona!5e0!3m2!1ses!2ses!4v1748533248777!5m2!1ses!2ses" width="600" height="300" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>-->
 
 		<p class="greatWord">上帝</p>
@@ -474,6 +474,77 @@
 			consolaLocalhost.textContent = " - - - You are on LOCALHOST - - - "
 		}
 
+
+		// XML PARSER
+
+		// V.1
+		//var persons = []
+		// persons["name"] = {"nombre" : "juan"}
+		// persons["name"] = "John Doe"
+		// persons["age"] = 30
+		// persons["city"] = "New York"
+		// console.log("JSON " + persons.length)
+
+		// V.2
+		var persons = []
+
+		var persona = {
+			"name" : "John Doe",
+			"age" : 30,
+			"city" : "New York"
+		}
+
+		persons.push(persona)
+		console.log(persons)
+
+
+		fetch("assets/xml/basic-structure.xml")
+			.then((response) => response.text())
+			.then((text) => {
+				const parser = new DOMParser();
+				const doc = parser.parseFromString(text, "text/xml");
+				// Obtener todos los elementos (etiquetas) del XML
+				const elementos = doc.getElementsByTagName("*");
+
+				// VERSION 1
+				// for (let i = 0; i < elementos.length; i++) {
+				//   const texto = elementos[i].textContent.trim();
+				//   if (texto) {
+				//     console.log(texto);
+				//   }
+				// }
+				// 	});
+				// VERSION 2
+				// for (let i = 0; i < elementos.length; i++) {
+				// 	const etiqueta = elementos[i].nodeName;
+				// 	const contenido = elementos[i].textContent.trim();
+
+				// 	if (contenido) {
+				// 		console.log(`Nombre de etiqueta: ${etiqueta}, Contenido de etiqueta: ${contenido}`);
+				// 	}
+				// }
+				// VERSION 3
+				for (let i = 0; i < elementos.length; i++) {
+					const elem = elementos[i];
+					const etiqueta = elem.nodeName;
+
+					// Verificamos si tiene hijos que sean elementos (etiquetas)
+					const tieneHijosElementos = Array.from(elem.childNodes).some(
+						nodo => nodo.nodeType === Node.ELEMENT_NODE
+					);
+
+					if (tieneHijosElementos) {
+						// Solo mostramos el nombre de la etiqueta
+						console.log(`Nombre de etiqueta: ${etiqueta}`);
+					} else {
+						// No tiene hijos etiquetas, mostramos nombre y contenido
+						const contenido = elem.textContent.trim();
+						if (contenido) {
+							console.log(`Nombre de etiqueta: ${etiqueta}, Contenido de etiqueta: ${contenido}`);
+						}
+					}
+				}
+			});
 	</script>
 	<script src="assets/scripts/beauticard.js"></script>
 </body>
