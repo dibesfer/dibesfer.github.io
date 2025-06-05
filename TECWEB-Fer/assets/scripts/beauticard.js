@@ -1,7 +1,7 @@
 
 var bccounter = document.getElementById("bc-counter")
 
-fetch("../assets/json/beauticard.json")
+fetch("assets/json/beauticard.json")
   .then(response => response.json())
   .then(elements => {
     
@@ -10,7 +10,7 @@ fetch("../assets/json/beauticard.json")
     elements.forEach(element => {
       const card = document.createElement("div");
       card.classList.add("beauticard");
-
+      
       card.innerHTML = `
         <div class="bc-wrapper">
             <div class="beauticard-title">
@@ -26,7 +26,7 @@ fetch("../assets/json/beauticard.json")
             </div>
 
             <div class="beauticard-stars">
-                <img src="https://static.vecteezy.com/system/resources/previews/022/133/469/non_2x/star-shape-star-icon-yellow-star-in-rating-symbol-free-png.png"
+                <img src="https://static.vecteezy.com/system/resources/previews/022/133/469/non_2x/star-shape-star-icon-yellow-star-in-rating-symbol-free-png.png/"
                     alt="">
                 <img src="https://static.vecteezy.com/system/resources/previews/022/133/469/non_2x/star-shape-star-icon-yellow-star-in-rating-symbol-free-png.png"
                     alt="">
