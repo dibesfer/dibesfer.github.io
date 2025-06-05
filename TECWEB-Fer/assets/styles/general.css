@@ -24,6 +24,7 @@ body {
     line-height: 2;
     background-color: lightyellow;
     font-family: Ubuntu;
+    word-break: break-all;
 }
 
 a {
