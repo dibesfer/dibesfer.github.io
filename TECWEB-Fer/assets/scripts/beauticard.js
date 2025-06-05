@@ -2,16 +2,15 @@
 var bccounter = document.getElementById("bc-counter")
 
 fetch("assets/json/beauticard.json")
-  .then(response => response.json())
-  .then(elements => {
-    
-    const contenedor = document.getElementById("bc-container");
-   
-    elements.forEach(element => {
-      const card = document.createElement("div");
-      card.classList.add("beauticard");
-      
-      card.innerHTML = `
+    .then(response => response.json())
+    .then(elements => {
+
+        const contenedor = document.getElementById("bc-container");
+
+        elements.forEach(element => {
+            const card = document.createElement("div");
+            card.classList.add("beauticard");
+            var cardContent = `
         <div class="bc-wrapper">
             <div class="beauticard-title">
                 <div id="bt-1">${element.level}</div>
@@ -27,16 +26,20 @@ fetch("assets/json/beauticard.json")
 
             <div class="beauticard-stars">
                 <img class="specialImage" style="filter:invert(1) opacity(0.25)" src="https://static.vecteezy.com/system/resources/thumbnails/009/695/745/small_2x/seamless-wavy-line-pattern-png.png">
-                <img src="https://static.vecteezy.com/system/resources/previews/022/133/469/non_2x/star-shape-star-icon-yellow-star-in-rating-symbol-free-png.png/"
-                    alt="">
-                <img src="https://static.vecteezy.com/system/resources/previews/022/133/469/non_2x/star-shape-star-icon-yellow-star-in-rating-symbol-free-png.png"
-                    alt="">
-                <img src="https://static.vecteezy.com/system/resources/previews/022/133/469/non_2x/star-shape-star-icon-yellow-star-in-rating-symbol-free-png.png"
-                    alt="">
-                <img src="https://static.vecteezy.com/system/resources/previews/022/133/469/non_2x/star-shape-star-icon-yellow-star-in-rating-symbol-free-png.png"
-                    alt="">
-                <img src="https://static.vecteezy.com/system/resources/previews/022/133/469/non_2x/star-shape-star-icon-yellow-star-in-rating-symbol-free-png.png"
-                    alt="">
+                
+                `
+                
+            if (element.stars != undefined) {
+                for (let i = 0; i < element.stars; i++) {
+                    cardContent += `<img src="https://static.vecteezy.com/system/resources/previews/022/133/469/non_2x/star-shape-star-icon-yellow-star-in-rating-symbol-free-png.png/"
+                    alt="">`
+                    console.log(element.stars)
+                }
+            }
+
+            cardContent += `
+                
+                
             </div>
 
             <div class="beauticard-image">
@@ -58,10 +61,11 @@ fetch("assets/json/beauticard.json")
             </div>
         </div>
       `;
-      contenedor.appendChild(card);
-      bccounter.textContent = " - " + elements.length + " cards to discover!"
+            card.innerHTML = cardContent
+            contenedor.appendChild(card);
+            bccounter.textContent = " - " + elements.length + " cards to discover!"
+        });
+    })
+    .catch(error => {
+        console.error("Error cargando Pokémones:", window.location.href + error);
     });
-  })
-  .catch(error => {
-    console.error("Error cargando Pokémones:", window.location.href + error);
-  });

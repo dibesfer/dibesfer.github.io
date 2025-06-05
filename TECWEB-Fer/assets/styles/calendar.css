@@ -2,10 +2,10 @@
 
 
 .calendarioWrapper {
-    border: outset brown 15px;
+    border: outset brown 10px;
     
     word-break:keep-all;
-    width: 50%;
+    width: 100%;
    
     overflow: auto;
 }
@@ -41,7 +41,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: 3vmin;
+    font-size: 4vmin;
     cursor: pointer;
 }
 

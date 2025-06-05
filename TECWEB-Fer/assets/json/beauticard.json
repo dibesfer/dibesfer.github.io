@@ -5,7 +5,8 @@
         "level": 25,
         "desc" : "(エクゾディア) - This legendary dragon is a powerful engine of destruction. Virtually invincible, very few have faced this awesome creature and lived to tell the tale.",
         "image" : "https://media.printler.com/media/photo/164312.jpg?rmode=crop&width=725&height=1024",
-        "icon" : "https://upload.wikimedia.org/wikipedia/commons/5/53/Pok%C3%A9_Ball_icon.svg"
+        "icon" : "https://upload.wikimedia.org/wikipedia/commons/5/53/Pok%C3%A9_Ball_icon.svg",
+        "stars" : 10
     },
     {
         "name": "Gabumon",
@@ -13,7 +14,8 @@
         "level": 25,
         "desc" : "Tiene un cuerno dorado",
         "image" : "https://lafrikileria.com/blog/wp-content/uploads/2024/11/Gabumon-digimon-1024x831.png",
-        "icon" : "https://i.pinimg.com/736x/cb/72/37/cb7237d4008370333be191b72cf159a3.jpg"
+        "icon" : "https://i.pinimg.com/736x/cb/72/37/cb7237d4008370333be191b72cf159a3.jpg",
+        "stars" : 5
     },
     {
         "name": "Ivysaur",
@@ -21,7 +23,8 @@
         "level": 25,
         "desc" : "Parece una cebolleta",
         "image" : "https://www.pokemon.com/static-assets/content-assets/cms2/img/pokedex/full/002.png",
-        "icon" : "https://upload.wikimedia.org/wikipedia/commons/5/53/Pok%C3%A9_Ball_icon.svg"
+        "icon" : "https://upload.wikimedia.org/wikipedia/commons/5/53/Pok%C3%A9_Ball_icon.svg",
+        "stars" : 7
     },
     {
         "name": "Putin",
