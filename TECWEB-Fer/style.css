@@ -518,3 +518,62 @@ iframe {
         background-color: black;
     } */
 }
+
+/* CALENDARIO */
+
+
+.calendarioWrapper{
+    border: ridge rgb(114, 183, 215) 15px;
+    border-radius: 15px;
+}
+
+.nombreMes {
+    text-align: center;
+    padding: 30px;
+    background-image: radial-gradient(lightblue, rgb(60, 164, 224));
+}
+
+#calendario {
+    display: grid;
+    grid-template-columns: repeat(7,1fr);
+    grid-template-rows: repeat(6, 1fr);
+    width: 100%;
+    overflow: auto;
+    
+    
+}
+
+/* #weekday {
+    display: contents;
+} */
+
+#calendario > div {
+    background-color: white;
+    border: solid 3px black;
+    
+    
+    width: 100%;
+    overflow: hidden;
+    aspect-ratio: 1;
+    text-align: center;
+    align-content: center;
+    font-size: xx-large;
+}
+
+/* FINES DE SEMANA */
+#calendario > div:nth-child(7n) , #calendario > div:nth-child(7n-1) { 
+    
+    background-color: rgb(179, 179, 179);
+
+ }
+
+ /* DIAS DE LA SEMANA */
+ #calendario > div:nth-child(-n+7) { 
+    
+    background-color: blue !important;
+    color: white;
+    font-size: large;
+        
+ }
+
+ /* https://stackoverflow.com/questions/46308048/how-can-i-target-a-specific-column-or-row-in-a-css-grid-layout */
