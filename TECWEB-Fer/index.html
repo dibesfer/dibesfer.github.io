@@ -61,8 +61,8 @@
 				/*  A N I M A T I O N S KEYFRAMES */
 
 				#animationDiv {
-					background-color: rgb(191, 191, 255);
-					height: 100px;
+					background-color: rgb(121, 121, 169);
+					height: 200px;
 					display: flex;
 					justify-content: center;
 					text-align: center;
@@ -100,29 +100,67 @@
 				@keyframes movimiento {
 					0% {
 						/* width: 25%; */
-						left: 0
+						left: 0;
+						transform: scale(3);
+						
 					}
 
-					50% {
-						left: 100px
+					25% {
+						left: 100px;
+						transform: rotate(0);
+					}
+
+					35% {
+						transform: rotate(180deg) scale(1);
+					}
+					
+					75% {
+						left: -100px;
+						transform: rotate(180deg);
+					}
+
+					85% {
+						transform: rotate(0);
 					}
 
 					100% {
 						/* width: 100%; */
-						left: -100px;
+						left: 0;
+						transform: rotate(0deg) scale(3);
+						
 						
 					}
 				}
 
 				@keyframes movimientoY {
-					from {
+					0% {
 						/* width: 25%; */
-						top: -100px
+						top: 0;
+						transform: rotate(90deg);
 					}
 
-					to {
-						/* width: 100%; */
+					25% {
 						top: 100px;
+						transform: rotate(90deg);
+					}
+
+					35% {
+						transform: rotate(270deg);
+					}
+					
+					75% {
+						top: -100px;
+						transform: rotate(270deg);
+					}
+
+					85% {
+						transform: rotate(90deg);
+					}
+
+					100% {
+						/* width: 100%; */
+						top: 0;
+						transform: rotate(90deg);
 						
 					}
 				}
@@ -157,8 +195,8 @@
 
 
 					border: solid 3px green;
-					width: 40px;
-					height: 40px;
+					width: 70px;
+					height: 70px;
 					/* background-color: blue; */
 					position: relative;
 
@@ -203,6 +241,7 @@
 				.centerOfTheUniverse > img {
 					
 					position: absolute;
+					width: 100%;
 				}
 			</style>
 			
@@ -211,12 +250,12 @@
 				<div id="animatedDiv">
 					<div id="animatedSubDiv">
 						<div class="centerOfTheUniverse">
-							<img style="animation: movimiento 4s linear infinite forwards;" width="100%"
+							<img style="animation: movimiento 2s linear infinite ;" 
 							src="https://static.vecteezy.com/system/resources/thumbnails/049/515/113/small/bright-red-arrow-drawn-on-white-background-pointing-to-the-right-cut-out-transparent-png.png"
 							alt="">
-							<!-- <img style="transform: rotate(90deg); animation: movimientoY 1s linear infinite alternate;" width="100%"
+							<img style=" animation: movimientoY 2s linear infinite " 
 							src="https://static.vecteezy.com/system/resources/thumbnails/049/515/113/small/bright-red-arrow-drawn-on-white-background-pointing-to-the-right-cut-out-transparent-png.png"
-							alt=""> -->
+							alt=""> 
 						</div>
 						
 						
@@ -225,136 +264,9 @@
 			</div>
 
 			<!-- CALENDARIO -->
-			<div>
-				<h2>CALENDARIO</h2>
-				<!-- <div class="calendarioWrapper">
-				<div class="nombreMes">
-					<h1>JUNIO</h1>
-				</div>
-				<div class="calendario">
+			<h2>Calendar</h2>
+			<iframe scrolling="no" style="width: 100%;aspect-ratio: 1;border: none; overflow: hidden;" src="../TECWEB-Fer/p/Calendar/" frameborder="0"></iframe>
 
-
-					<div>Lunes</div>
-					<div>Martes</div>
-					<div>Miércoles</div>
-					<div>Jueves</div>
-					<div>Viernes</div>
-					<div>Sábado</div>
-					<div>Domingo</div>
-
-
-					<div></div>
-					<div></div>
-					<div></div>
-					<div></div>
-					<div></div>
-					<div></div>
-					<div>1</div>
-
-					<div>2</div>
-					<div>3</div>
-					<div>4</div>
-					<div>5</div>
-					<div>6</div>
-					<div>7</div>
-					<div>8</div>
-
-					<div style="background-color: red; color: white">9</div>
-					<div>10</div>
-					<div>11</div>
-					<div>12</div>
-					<div>13</div>
-					<div>14</div>
-					<div>15</div>
-
-					<div>16</div>
-					<div>17</div>
-					<div>18</div>
-					<div>19</div>
-					<div>20</div>
-					<div>21</div>
-					<div>22</div>
-
-					<div>23</div>
-					<div style="background-color: red; color: white">24</div>
-					<div>25</div>
-					<div>26</div>
-					<div>27</div>
-					<div>28</div>
-					<div>29</div>
-
-					<div>30</div>
-					<div></div>
-					<div></div>
-					<div></div>
-					<div></div>
-					<div></div>
-					<div></div>
-
-				</div>
-			</div>
-			<br> -->
-				<div class="calendarioWrapper">
-					<div class="nombreMes">
-						<h1>JULIO</h1>
-					</div>
-					<div class="calendario">
-
-
-						<div>Lunes</div>
-						<div>Martes</div>
-						<div>Miércoles</div>
-						<div>Jueves</div>
-						<div>Viernes</div>
-						<div>Sábado</div>
-						<div>Domingo</div>
-
-
-						<div></div>
-						<div>1</div>
-						<div>2</div>
-						<div>3</div>
-						<div>4</div>
-						<div>5</div>
-						<div>6</div>
-
-						<div>7</div>
-						<div>8</div>
-						<div>9</div>
-						<div>10</div>
-						<div>11</div>
-						<div>12</div>
-						<div>13</div>
-
-						<div>14</div>
-						<div>15</div>
-						<div>16</div>
-						<div>17</div>
-						<div>18</div>
-						<div>19</div>
-						<div>20</div>
-
-						<div>21</div>
-						<div>22</div>
-						<div>23</div>
-						<div class="diaFiesta">24</div>
-						<div>25</div>
-						<div>26</div>
-						<div>27</div>
-
-						<div>28</div>
-						<div>29</div>
-						<div class="diaFiesta">30</div>
-						<div>31</div>
-						<div></div>
-						<div></div>
-						<div></div>
-
-
-
-					</div>
-				</div>
-			</div>
 			<br>
 			<!-- FLEX 3 PICTURES -->
 			<div class="flex3x3">
