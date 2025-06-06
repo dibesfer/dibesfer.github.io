@@ -89,11 +89,13 @@
 					from {
 						/* width: 25%; */
 						color: black;
+						border: 3px solid rgba(255, 217, 0, 0);
 					}
 
 					to {
 						/* width: 100%; */
 						color: red;
+						border: 12px solid rgba(255, 217, 0, 0);
 					}
 				}
 
@@ -101,7 +103,7 @@
 					0% {
 						/* width: 25%; */
 						left: 0;
-						transform: scale(3);
+						transform: scale(1);
 						
 					}
 
@@ -126,7 +128,7 @@
 					100% {
 						/* width: 100%; */
 						left: 0;
-						transform: rotate(0deg) scale(3);
+						transform: rotate(0deg) scale(1);
 						
 						
 					}
@@ -166,8 +168,9 @@
 				}
 
 				#animatedDiv {
-					background-image: url("https://thumbs.dreamstime.com/b/enchanting-clock-magic-spellbook-design-vintage-influenced-elegance-influence-elegant-aesthetics-generative-ai-371900940.jpg");
-					background-size: cover;
+					background-image: url("https://static.vecteezy.com/system/resources/previews/009/589/903/non_2x/clock-transparent-free-png.png");
+					background-size: 130%;
+					background-position: center;
 
 					display: flex;
 					justify-content: center;
@@ -185,7 +188,7 @@
                					opacity 4000ms linear infinite; */
 
 					animation: rotation 5s linear infinite forwards,
-						colorize 3s linear infinite alternate;
+						colorize 1s linear infinite alternate;
 
 					border: solid 3px gold;
 					border-radius: 50%;
@@ -230,7 +233,8 @@
 
 				.centerOfTheUniverse {
 					position: relative;
-					background-color: blue;
+					background-color: rgba(0, 0, 255, 0.55);
+					border-radius: 50%;
 					width: 100%;
 					height: 100%;
 					display: flex;

@@ -1,7 +1,7 @@
 .beauticard {
     flex: 33.33%;
     font-family: Verdana, Geneva, Tahoma, sans-serif;
-    font-size: 75%;
+    font-size: 100%;
     width: 25%;
     max-width: 33.33%;
     aspect-ratio: 2/3;
@@ -140,6 +140,9 @@
 
 .beauticard-description>p {
     font-style: italic;
+    font-size: 85%;
+    word-break: keep-all;
+    hyphens: auto;
     
 }
 
