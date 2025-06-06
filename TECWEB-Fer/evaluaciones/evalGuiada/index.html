@@ -11,26 +11,40 @@
         *{
             
         }
+
+        html {
+            background-image : url("imagenes/bg.jpg")
+        }
         body {
             font-family: Arial, Helvetica, sans-serif;
-            margin: 0;
+            margin: 0 auto;
+            max-width: 800px;
+            background-color: white;
+            position: relative;
         }
 
         header, main {
-            margin: 15px;
+            margin: 0 20px;
         }
 
         .links {
             color:green;
-
+            font-size: larger;
+            font-weight: bold;
+            cursor: pointer;
         }
 
         .links > div {
-            margin: 0 10px
+            margin: 0 7.5px
         }
 
         .links > div:hover {
             color: lime;
+        }
+
+        #topleft {
+            position: relative;
+            left: -25px;
         }
 
         #topright {
@@ -104,7 +118,7 @@
 <body>
     <header>
 
-        <img width="150px" src="imagenes/logo.png" alt="CSS Diseño Web - Logo">
+        <img id="topleft" width="150px" src="imagenes/logo.png" alt="CSS Diseño Web - Logo">
         <div id="topright" class="childrenInline">
             <div>Telf: 936665858</div>
             <div>Correo electrónico</div>
@@ -153,6 +167,7 @@
                     perspiciatis maiores.</p>
             </div>
         </div>
+        <br>
     </main>
     <footer><h2>Curso desarrollo Web 2025</h2></footer>
 
