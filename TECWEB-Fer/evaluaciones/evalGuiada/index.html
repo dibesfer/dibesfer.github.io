@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSS - Diseño Web</title>
+
+    <style>
+
+        *{
+            
+        }
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            margin: 0;
+        }
+
+        header, main {
+            margin: 15px;
+        }
+
+        .links {
+            color:green;
+
+        }
+
+        .links > div {
+            margin: 0 10px
+        }
+
+        .links > div:hover {
+            color: lime;
+        }
+
+        #topright {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+
+        .childrenInline>div {
+            display: inline;
+        }
+
+        img {
+            max-width: 100%;
+        }
+
+        .slider {
+            width: 100%;
+            height: 240px;
+            border-radius: 15px;
+        }
+
+        .serviciosFlex {
+            display: flex;
+            gap: 30px;
+        }
+
+    
+        .serviciosFlex > div {
+            background-color: rgb(97, 97, 97);
+            padding: 0 10px;
+            border-radius: 15px;
+            color: white;
+            
+        }
+
+        .serviciosFlex > div > hr {
+            border: solid 3px;
+            margin: 0;
+        }
+
+        .serviciosFlex > div > img {
+            border-radius: 15px;
+        }
+
+        .serviciosFlex > div:nth-child(1) > hr , 
+        .serviciosFlex > div:nth-child(1) > h3 {
+            color: rgb(172, 255, 248);
+        }
+
+        .serviciosFlex > div:nth-child(2) > hr , 
+        .serviciosFlex > div:nth-child(2) > h3 {
+            color: #65ff79;
+        }
+
+        .serviciosFlex > div:nth-child(3) > hr , 
+        .serviciosFlex > div:nth-child(3) > h3 {
+            color: rgb(175, 189, 255);
+        }
+
+        footer {
+            background-color: darkgray;
+            padding: 15px;
+            color: white;
+            
+        }
+
+    </style>
+</head>
+
+<body>
+    <header>
+
+        <img width="150px" src="imagenes/logo.png" alt="CSS Diseño Web - Logo">
+        <div id="topright" class="childrenInline">
+            <div>Telf: 936665858</div>
+            <div>Correo electrónico</div>
+        </div>
+        <div style="position: absolute; top: 150px; right: 10px" class="links childrenInline">
+            <div>Inicio</div>
+            <div>Fábrica</div>
+            <div>Tienda</div>
+            <div>Faqs</div>
+        </div>
+    </header>
+    <main>
+        <h1>Galería de Fotos</h1>
+        <img class="slider" src="imagenes/slider.jpg" alt="">
+
+        <h1>Servicios</h1>
+        <div class="serviciosFlex">
+            <div>
+                <hr>
+                <h3>Diseño Web</h3>
+                <img src="imagenes/dise.jpg" alt="">
+                <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Sed esse repudiandae reprehenderit natus
+                    aliquid
+                    repellat et nisi! Debitis voluptatem fuga labore culpa dolorem qui laudantium, quidem assumenda
+                    omnis
+                    perspiciatis maiores.</p>
+            </div>
+            <div>
+                <hr>
+                <h3>Desarrollo Frameworks</h3>
+                <img src="imagenes/dise2.jpg" alt="">
+                <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Sed esse repudiandae reprehenderit natus
+                    aliquid
+                    repellat et nisi! Debitis voluptatem fuga labore culpa dolorem qui laudantium, quidem assumenda
+                    omnis
+                    perspiciatis maiores.</p>
+            </div>
+            <div>
+                <hr>
+                <h3>Desarrollo de Hardware</h3>
+                <img src="imagenes/dis3.jpg" alt="">
+                <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Sed esse repudiandae reprehenderit natus
+                    aliquid
+                    repellat et nisi! Debitis voluptatem fuga labore culpa dolorem qui laudantium, quidem assumenda
+                    omnis
+                    perspiciatis maiores.</p>
+            </div>
+        </div>
+    </main>
+    <footer><h2>Curso desarrollo Web 2025</h2></footer>
+
+
+
+</body>
+
+</html>
