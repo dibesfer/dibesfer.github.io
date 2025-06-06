@@ -176,7 +176,7 @@ iframe {
     border-radius: 0 15px 15px 0;
     padding: 5px;
     width: 100%;
-    transition: 0.2s;
+    transition: 0.2s ;
     border-bottom: rgba(255, 227, 69, 0.577) solid 5px;
     text-shadow: 1px 1px 1px white;
     cursor: pointer;
@@ -350,3 +350,4 @@ iframe {
     max-width: var(--ancho);
     margin: auto;
 }
+

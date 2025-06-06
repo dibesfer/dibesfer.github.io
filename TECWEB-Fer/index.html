@@ -50,6 +50,134 @@
 			<button onclick="botoncito()">Click on me!</button><span id="botoncitodecir"></span>
 			<br><br>
 
+
+			<!-- ANIMATION KEYFRAMES -->
+
+
+
+
+
+			<style>
+				/*  A N I M A T I O N S KEYFRAMES */
+
+				#animationDiv {
+					background-color: rgb(191, 191, 255);
+					height: 100px;
+					display: flex;
+					justify-content: center;
+					text-align: center;
+
+				}
+
+
+
+				@keyframes rotation {
+					from {
+
+						left: 0;
+					}
+
+					to {
+
+						/* left: 50%; */
+						/* font-size: 40px; */
+						transform: rotate(360deg);
+					}
+				}
+
+				@keyframes colorize {
+					from {
+						/* width: 25%; */
+						color: black;
+					}
+
+					to {
+						/* width: 100%; */
+						color: red;
+					}
+				}
+
+				@keyframes movimiento {
+					from {
+						/* width: 25%; */
+						left: -100px
+					}
+
+					to {
+						/* width: 100%; */
+						left: 100px
+			
+					}
+				}
+
+				#animatedDiv {
+					background-image: url("https://thumbs.dreamstime.com/b/enchanting-clock-magic-spellbook-design-vintage-influenced-elegance-influence-elegant-aesthetics-generative-ai-371900940.jpg");
+					background-size: cover;
+					
+					display: flex;
+					justify-content: center;
+					align-items: center;
+					aspect-ratio: 1;
+					background-color: lightblue;
+					position: relative;
+					/* animation-name: rotation;
+					animation-duration: 4s;
+					animation-iteration-count: infinite;
+					animation-timing-function: linear;
+					animation-fill-mode: forwards; */
+
+					/* animation: skew 2000ms linear infinite,
+               					opacity 4000ms linear infinite; */
+
+					animation: rotation 5s linear infinite forwards,
+							   colorize 3s linear infinite alternate;
+
+					border: solid 3px gold;
+					border-radius: 50%;
+				}
+
+				#animatedSubDiv {
+
+
+
+					width: 20px;
+					height: 20px;
+					background-color: blue;
+					position: relative;
+					
+
+
+					animation: movimiento 1s ease-in-out infinite alternate;
+				}
+
+				/* #animatedDiv::before {
+					content: "#";
+				} */
+
+				/* .test {
+					width: 50px;
+					height: 50px;
+					background-color: blue;
+					transition: 4s;
+					transition-delay: 1s;
+				}
+				.test:empty{
+					width: 100px;
+					height: 50px;
+					background-color: red;
+				} */
+			</style>
+
+			<div class="test"></div>
+			<h2>Animation @keyframes</h2>
+			<div id="animationDiv">
+				<div id="animatedDiv">
+					<div id="animatedSubDiv">
+h
+					</div>
+				</div>
+			</div>
+
 			<!-- CALENDARIO -->
 			<div>
 				<h2>CALENDARIO</h2>
@@ -181,7 +309,7 @@
 					</div>
 				</div>
 			</div>
-
+			<br>
 			<!-- FLEX 3 PICTURES -->
 			<div class="flex3x3">
 				<div>
