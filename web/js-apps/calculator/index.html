@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculator dbf</title>
+    <style>
+
+
+        * {
+            margin: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            height: 100vh;
+            font-family: Verdana, Geneva, Tahoma, sans-serif;
+        }
+
+        #consola {
+            height: 10%;
+        }
+
+        #calculatorInput {
+            width: 100%;
+            text-align: right;
+            font-size: 40px;
+            height: 20%;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(5,1fr);
+            height: 70%;
+        }
+
+        .grid > div {
+            border: solid 1px black;
+            text-align: center;
+            font-size: 40px;
+            align-content: center;
+            cursor: pointer;
+            transition: 0.05s;
+            user-select: none;
+        }
+
+        .grid > div:hover {
+            background-color: gray;
+        }
+
+        .grid > div:active {
+            background-color: rgb(88, 88, 88);
+            color: white;
+            font-weight: bold;
+        }
+
+        .red {
+            background-color: red;
+        }
+
+        .green {
+            background-color: green;
+        }
+
+
+    </style>
+</head>
+<body>
+    <div id="consola">
+        CONSOLA
+    </div>
+    <input placeholder="0" type="number" name="calculatorInput" id="calculatorInput">
+    <div class="grid">
+        
+        <div onclick="insertNumber(7)">7</div>
+        <div onclick="insertNumber(8)">8</div>
+        <div onclick="insertNumber(9)">9</div>
+        <div onclick="sumar()" style="color: blue;">+</div>
+        <div onclick="insertNumber()" style="color: red;">-</div>
+        
+        <div onclick="insertNumber(4)">4</div>
+        <div onclick="insertNumber(5)">5</div>
+        <div onclick="insertNumber(6)">6</div>
+        <div onclick="insertNumber()">/</div>
+        <div onclick="insertNumber()">*</div>
+        <div onclick="insertNumber(1)">1</div>
+        <div onclick="insertNumber(2)">2</div>
+        <div onclick="insertNumber(3)">3</div>
+        <div onclick="insertNumber()">0</div>
+       
+        
+        <div onclick="insertNumber()">,</div>
+        <div onclick="insertNumber()"></div>
+        <div onclick="insertNumber()"></div>
+        <div onclick="insertNumber()"></div>
+        <div onclick="functionC()" class="red">C</div>
+        <div onclick="equals()" class="green">=</div>
+    </div>
+
+    <script>
+        // UFF CALCULADORA
+
+        var firstNumber = null
+        var secondNumber = null
+        var awaitingInput = false
+
+        var stringInput = ""
+        function insertNumber(number){
+            //calculatorInput.value = number
+            
+            if(awaitingInput && firstNumber){
+                calculatorInput.value = 0
+                awaitingInput = false
+                
+            }
+
+            stringInput = calculatorInput.value
+            stringInput = stringInput.toString()
+
+            stringInput += number
+
+            calculatorInput.value = BigInt(parseFloat(stringInput))
+            calculatorInput.scrollLeft = calculatorInput.scrollWidth; // scroll al máximo a la derecha
+
+            
+            //alert("hola" + stringInput)
+        }
+
+        function sumar(){
+            awaitingInput = true
+            calculatorInput.style.color = "blue"
+
+            // MEMORY
+            if (firstNumber == null){
+                firstNumber = calculatorInput.value
+                
+            }
+            else {
+                secondNumber = calculatorInput.value
+            }
+
+
+        }
+
+        function restar(){
+            awaitingInput = true
+            calculatorInput.style.background = "blue"
+
+            // MEMORY
+            if (firstNumber == null){
+                firstNumber = calculatorInput.value
+                
+            }
+            else {
+                secondNumber = calculatorInput.value
+            }
+
+
+        }
+
+        function equals(){
+
+            if(firstNumber && secondNumber){
+                
+            }
+
+        }
+
+        function functionC(){
+            calculatorInput.value = null
+        }
+
+    </script>
+</body>
+</html>
