@@ -14,6 +14,7 @@
         body {
             height: 100vh;
             font-family: Verdana, Geneva, Tahoma, sans-serif;
+            background-color: wheat;
         }
 
         #consola {
@@ -22,10 +23,12 @@
 
         #calculatorInput {
             width: 100%;
-            text-align: center;
+            text-align: right;
+            padding: 5px;
             font-size: 40px;
             height: 20%;
             border: solid 3px black;
+            background-color: lightblue;
             
         }
 
@@ -37,7 +40,7 @@
 
         .grid>div {
             border: solid 1px black;
-            text-align: right;
+            text-align: center;
             font-size: 40px;
             align-content: center;
             cursor: pointer;
@@ -142,10 +145,15 @@
 
             if (stringInput.includes(".") ){
                 
+                
+                
                 if (stringInput[stringInput.length-1] == 0){
                     stringInput = stringInput.slice(0, -1)
+                    console.log("float with zero")
+                    
                 }
 
+                
             }
             stringInput += number
             
