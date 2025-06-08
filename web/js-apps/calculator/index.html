@@ -146,9 +146,7 @@
                     
                 }
 
-                if (number == 0){
-                    
-                }
+                
 
 
 
@@ -158,15 +156,23 @@
             floatInput = parseFloat(stringInput)
 
             // parseFloat() kills 0.10... like values
-            if ( stringInput.includes(".") && !stringInput[stringInput.length-1] == 0){
-                calculatorInput.value = stringInput
-            
+            if ( stringInput.includes(".")){
+
+                if(!stringInput[stringInput.length-1] == 0) {
+                    calculatorInput.value = stringInput
+                }
+                
                 console.log("calc just added a 0")
                 console.log(stringInput + " / " + number)
                 
+                if (number == 0){
+                    calculatorInput.value = stringInput
+                }
+
             }
             else {
                 calculatorInput.value = floatInput
+               
             }
             calculatorInput.scrollLeft = calculatorInput.scrollWidth; // scroll al máximo a la derecha
 
