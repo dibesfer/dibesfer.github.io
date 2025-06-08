@@ -19,6 +19,10 @@
 
         #consola {
             height: 10%;
+            overflow: auto;
+            padding: 5px;
+            font-family: monospace;
+            font-size: x-large;
         }
 
         #calculatorInput {
@@ -70,7 +74,7 @@
 
 <body>
     <div id="consola">
-        CONSOLA
+        CONSOLA<br>
     </div>
     <input value="0" placeholder="0" type="number" name="calculatorInput" id="calculatorInput">
     <div class="grid">
@@ -129,7 +133,7 @@
             //calculatorInput.value = number
             
             
-            consola.textContent += number
+            consola.innerHTML += number
 
             if (awaitingInput && firstNumber) {
                 calculatorInput.value = 0
@@ -178,7 +182,7 @@
 
         function add() {
 
-            consola.textContent += " + "
+            consola.innerHTML += " + "
 
             currentOperation = "add"
             awaitingInput = true
@@ -198,7 +202,7 @@
 
         function subtract() {
 
-            consola.textContent += " - "
+            consola.innerHTML += " - "
 
             currentOperation = "subtract"
             awaitingInput = true
@@ -213,10 +217,13 @@
                 secondNumber = calculatorInput.value
             }
 
+            
 
         }
 
         function multiply() {
+
+            consola.innerHTML += " x "
 
             currentOperation = "multiply"
             awaitingInput = true
@@ -236,6 +243,8 @@
 
         function divide() {
 
+            consola.innerHTML += " / "
+
             currentOperation = "divide"
             awaitingInput = true
             calculatorInput.style.color = "purple"
@@ -253,6 +262,8 @@
         }
 
         function equals() {
+
+            
 
             if (firstNumber) {
                 secondNumber = calculatorInput.value
@@ -282,12 +293,16 @@
                 firstNumber = null
                 secondNumber = null
                 calculatorInput.style.color = "unset"
+
+                consola.innerHTML += " = " + result + "<br>"
+                consola.scrollTop = consola.scrollHeight; // scroll al máximo a la derecha
+
             }
 
         }
 
         function functionC() {
-            calculatorInput.value = null
+            calculatorInput.value = 0
         }
 
     </script>
