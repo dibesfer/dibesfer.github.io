@@ -96,17 +96,8 @@
         </div>
 
     </div>
-    <button onclick="getClipboard()">Pegar</button>
-    <script>
-        function getClipboard() {
-            navigator.clipboard.readText()
-                .then(text => consola.innerHTML += "<br>📥 Copiado: " + text)
-                .catch(err => consola.innerHTML += "<br>❌ Error: " + err);
-        }
-
-        consola.innerHTML = window.location.href + "<br>" + window.navigator.userAgent
-
-    </script>
+    
+    
 </body>
 
 </html>

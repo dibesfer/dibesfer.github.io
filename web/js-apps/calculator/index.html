@@ -33,7 +33,7 @@
             height: 20%;
             border: solid 3px black;
             background-color: lightblue;
-            
+
         }
 
         .grid {
@@ -96,7 +96,7 @@
         <div onclick="insertComma()">,</div>
         <div onclick="insertNumber()"></div>
         <div onclick="insertNumber()"></div>
-        <div onclick="insertNumber('back')">←</div>
+        <div onclick="back('back')">←</div>
         <div onclick="functionC()" class="red">C</div>
         <div onclick="equals()" class="green">=</div>
     </div>
@@ -107,6 +107,7 @@
         var result = null
         var firstNumber = null
         var secondNumber = null
+        var equalsMemory = null
         var awaitingInput = false
 
         var stringInput = ""
@@ -114,10 +115,7 @@
 
         currentOperation = "none"
 
-        
-
         function takeValue() {
-
 
             return stringInput = calculatorInput.value.toString()
 
@@ -133,8 +131,8 @@
 
         function insertNumber(number) {
             //calculatorInput.value = number
-            
-            
+
+
             consola.innerHTML += number
 
             if (awaitingInput && firstNumber) {
@@ -143,10 +141,10 @@
             }
 
             stringInput = calculatorInput.value.toString()
-        
-            if (stringInput.endsWith(".0") ){
-                
-                if (number != 0){
+
+            if (stringInput.endsWith(".0")) {
+
+                if (number != 0) {
                     stringInput = stringInput.slice(0, -1)
                 }
             }
@@ -154,23 +152,23 @@
             floatInput = parseFloat(stringInput)
 
             // parseFloat() kills 0.10... like values
-            if ( stringInput.includes(".")){
+            if (stringInput.includes(".")) {
 
-                if(!stringInput[stringInput.length-1] == "0") {
+                if (!stringInput[stringInput.length - 1] == "0") {
                     calculatorInput.value = stringInput
                 }
-                
+
                 console.log("calc just added a 0")
                 console.log(stringInput + " / " + number)
-                
-                if (number == 0){
+
+                if (number == 0) {
                     calculatorInput.value = stringInput
                 }
 
             }
             else {
                 calculatorInput.value = floatInput
-               
+
             }
             calculatorInput.scrollLeft = calculatorInput.scrollWidth; // scroll al máximo a la derecha
 
@@ -219,7 +217,7 @@
                 secondNumber = calculatorInput.value
             }
 
-            
+
 
         }
 
@@ -265,7 +263,7 @@
 
         function equals() {
 
-            
+
 
             if (firstNumber) {
                 secondNumber = calculatorInput.value
@@ -293,14 +291,53 @@
 
                 calculatorInput.value = result
                 firstNumber = null
+                equalsMemory = secondNumber
                 secondNumber = null
-                calculatorInput.style.color = "unset"
 
+                calculatorInput.style.color = "unset"
                 consola.innerHTML += " = " + result + "<br>"
                 consola.scrollTop = consola.scrollHeight; // scroll al máximo a la derecha
 
             }
 
+            else if (equalsMemory) {
+
+                firstNumber = calculatorInput.value
+                switch (currentOperation) {
+                    case "add":
+                        result = parseFloat(firstNumber) + parseFloat(equalsMemory)
+                        break;
+
+                    case "subtract":
+                        result = parseFloat(firstNumber) - parseFloat(equalsMemory)
+                        break;
+
+                    case "multiply":
+                        result = parseFloat(firstNumber) * parseFloat(equalsMemory)
+                        break;
+
+                    case "divide":
+                        result = parseFloat(firstNumber) / parseFloat(equalsMemory)
+                        break;
+
+                    default:
+                        break;
+                }
+
+                calculatorInput.value = result
+                firstNumber = null
+                secondNumber = null
+
+                calculatorInput.style.color = "unset"
+                consola.innerHTML += " = " + result + "<br>"
+                consola.scrollTop = consola.scrollHeight; // scroll al máximo a la derecha
+
+            }
+
+        }
+
+        function back() {
+            calculatorInput.value = calculatorInput.value.toString().slice(0, -1)
         }
 
         function functionC() {
