@@ -7,6 +7,7 @@
 
     <style>
 
+
         #mainCards , .piles {
             font-size: xx-large;
         }
@@ -29,7 +30,7 @@
     </style>
 </head>
 <body>
-    <h1>Solitaire</h1>
+    <h3 id="consola"></h3>
     <div id="mainCards">
         <div>
             ♠ ♥ ♦ ♣ ♤ ♡ ♢ ♧
@@ -95,5 +96,8 @@
         </div>
         
     </div>
+    <script>
+        consola.textContent = window.location.href
+    </script>
 </body>
 </html>
