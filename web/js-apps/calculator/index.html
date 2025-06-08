@@ -128,8 +128,6 @@
         function insertNumber(number) {
             //calculatorInput.value = number
             
-
-            
             if (awaitingInput && firstNumber) {
                 calculatorInput.value = 0
                 awaitingInput = false
@@ -137,27 +135,39 @@
             }
 
             stringInput = calculatorInput.value.toString()
-            
-
-            
-
-            
-
+        
             if (stringInput.includes(".") ){
                 
                 
                 
                 if (stringInput[stringInput.length-1] == 0){
                     stringInput = stringInput.slice(0, -1)
-                    console.log("float with zero")
+                    console.log("float that ends in zero")
                     
                 }
+
+                if (number == 0){
+                    
+                }
+
+
 
                 
             }
             stringInput += number
+            floatInput = parseFloat(stringInput)
+
+            // parseFloat() kills 0.10... like values
+            if ( stringInput.includes(".") && !stringInput[stringInput.length-1] == 0){
+                calculatorInput.value = stringInput
             
-            calculatorInput.value = parseFloat(stringInput)
+                console.log("calc just added a 0")
+                console.log(stringInput + " / " + number)
+                
+            }
+            else {
+                calculatorInput.value = floatInput
+            }
             calculatorInput.scrollLeft = calculatorInput.scrollWidth; // scroll al máximo a la derecha
 
 
