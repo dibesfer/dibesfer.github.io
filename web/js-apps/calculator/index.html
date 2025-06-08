@@ -22,9 +22,11 @@
 
         #calculatorInput {
             width: 100%;
-            text-align: right;
+            text-align: center;
             font-size: 40px;
             height: 20%;
+            border: solid 3px black;
+            
         }
 
         .grid {
@@ -35,7 +37,7 @@
 
         .grid>div {
             border: solid 1px black;
-            text-align: center;
+            text-align: right;
             font-size: 40px;
             align-content: center;
             cursor: pointer;
@@ -67,7 +69,7 @@
     <div id="consola">
         CONSOLA
     </div>
-    <input placeholder="0" type="number" name="calculatorInput" id="calculatorInput">
+    <input value="0" placeholder="0" type="number" name="calculatorInput" id="calculatorInput">
     <div class="grid">
 
         <div onclick="insertNumber(7)">7</div>
@@ -75,22 +77,19 @@
         <div onclick="insertNumber(9)">9</div>
         <div onclick="add()" style="color: blue;">+</div>
         <div onclick="subtract()" style="color: red;">-</div>
-
         <div onclick="insertNumber(4)">4</div>
         <div onclick="insertNumber(5)">5</div>
         <div onclick="insertNumber(6)">6</div>
-        <div onclick="insertNumber()">/</div>
-        <div onclick="insertNumber()">*</div>
+        <div onclick="multiply()" style="color: green;">x</div>
+        <div onclick="divide()" style="color: purple;">/</div>
         <div onclick="insertNumber(1)">1</div>
         <div onclick="insertNumber(2)">2</div>
         <div onclick="insertNumber(3)">3</div>
         <div onclick="insertNumber(0)">0</div>
-
-
-        <div onclick="insertNumber()">,</div>
+        <div onclick="insertComma()">,</div>
         <div onclick="insertNumber()"></div>
         <div onclick="insertNumber()"></div>
-        <div onclick="insertNumber()"></div>
+        <div onclick="insertNumber()">←</div>
         <div onclick="functionC()" class="red">C</div>
         <div onclick="equals()" class="green">=</div>
     </div>
@@ -104,29 +103,61 @@
         var awaitingInput = false
 
         var stringInput = ""
-
+        var floatInput = 0.0
 
         currentOperation = "none"
 
+        function takeValue() {
+
+
+            return stringInput = calculatorInput.value.toString()
+
+        }
+        takeValue()
+        function putValue(value) {
+
+            calculatorInput.value = value
+            return value
+        }
+
+
+
         function insertNumber(number) {
             //calculatorInput.value = number
+            
 
+            
             if (awaitingInput && firstNumber) {
                 calculatorInput.value = 0
                 awaitingInput = false
 
             }
 
-            stringInput = calculatorInput.value
-            stringInput = stringInput.toString()
+            stringInput = calculatorInput.value.toString()
+            
 
+            
+
+            
+
+            if (stringInput.includes(".") ){
+                
+                if (stringInput[stringInput.length-1] == 0){
+                    stringInput = stringInput.slice(0, -1)
+                }
+
+            }
             stringInput += number
-
-            calculatorInput.value = BigInt(parseFloat(stringInput))
+            
+            calculatorInput.value = parseFloat(stringInput)
             calculatorInput.scrollLeft = calculatorInput.scrollWidth; // scroll al máximo a la derecha
 
 
             //alert("hola" + stringInput)
+        }
+
+        function insertComma() {
+            calculatorInput.value += ".0"
         }
 
         function add() {
@@ -165,20 +196,64 @@
 
         }
 
+        function multiply() {
+
+            currentOperation = "multiply"
+            awaitingInput = true
+            calculatorInput.style.color = "green"
+
+            // MEMORY
+            if (firstNumber == null) {
+                firstNumber = calculatorInput.value
+
+            }
+            else {
+                secondNumber = calculatorInput.value
+            }
+
+
+        }
+
+        function divide() {
+
+            currentOperation = "divide"
+            awaitingInput = true
+            calculatorInput.style.color = "purple"
+
+            // MEMORY
+            if (firstNumber == null) {
+                firstNumber = calculatorInput.value
+
+            }
+            else {
+                secondNumber = calculatorInput.value
+            }
+
+
+        }
+
         function equals() {
 
             if (firstNumber) {
                 secondNumber = calculatorInput.value
-                
+
                 switch (currentOperation) {
                     case "add":
-                    result = parseFloat(firstNumber) + parseFloat(secondNumber)
+                        result = parseFloat(firstNumber) + parseFloat(secondNumber)
                         break;
 
                     case "subtract":
-                    result = parseFloat(firstNumber) - parseFloat(secondNumber)
+                        result = parseFloat(firstNumber) - parseFloat(secondNumber)
                         break;
-                
+
+                    case "multiply":
+                        result = parseFloat(firstNumber) * parseFloat(secondNumber)
+                        break;
+
+                    case "divide":
+                        result = parseFloat(firstNumber) / parseFloat(secondNumber)
+                        break;
+
                     default:
                         break;
                 }
