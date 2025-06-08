@@ -1,34 +1,34 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>dbf - Solitaire</title>
 
     <style>
-
-
-        #mainCards , .piles {
+        #mainCards,
+        .piles {
             font-size: xx-large;
         }
 
         .piles {
             display: flex;
             justify-content: space-evenly;
-            
-            
+
+
         }
 
-        .piles > div {
+        .piles>div {
             border: solid 3px black;
             display: flex;
-            flex-direction: column;           
+            flex-direction: column;
             justify-content: center;
-            align-items: center; 
+            align-items: center;
         }
-
     </style>
 </head>
+
 <body>
     <h3 id="consola"></h3>
     <div id="mainCards">
@@ -66,7 +66,7 @@
             <div>A</div>
             <div>♣</div>
         </div>
-        
+
     </div>
 
 
@@ -74,7 +74,7 @@
         <div>
             <div>3</div>
             <div>♠</div>
-        </div>        
+        </div>
     </div>
 
     <div class="piles">
@@ -94,10 +94,19 @@
             <div>A</div>
             <div>♣</div>
         </div>
-        
+
     </div>
+    <button onclick="getClipboard()">Pegar</button>
     <script>
-        consola.textContent = window.location.href
+        function getClipboard() {
+            navigator.clipboard.readText()
+                .then(text => consola.innerHTML += "<br>📥 Copiado: " + text)
+                .catch(err => consola.innerHTML += "<br>❌ Error: " + err);
+        }
+
+        consola.innerHTML = window.location.href + "<br>" + window.navigator.userAgent
+
     </script>
 </body>
+
 </html>
