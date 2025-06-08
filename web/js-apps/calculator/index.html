@@ -1,12 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Calculator dbf</title>
     <style>
-
-
         * {
             margin: 0;
             box-sizing: border-box;
@@ -30,11 +29,11 @@
 
         .grid {
             display: grid;
-            grid-template-columns: repeat(5,1fr);
+            grid-template-columns: repeat(5, 1fr);
             height: 70%;
         }
 
-        .grid > div {
+        .grid>div {
             border: solid 1px black;
             text-align: center;
             font-size: 40px;
@@ -44,11 +43,11 @@
             user-select: none;
         }
 
-        .grid > div:hover {
+        .grid>div:hover {
             background-color: gray;
         }
 
-        .grid > div:active {
+        .grid>div:active {
             background-color: rgb(88, 88, 88);
             color: white;
             font-weight: bold;
@@ -61,23 +60,22 @@
         .green {
             background-color: green;
         }
-
-
     </style>
 </head>
+
 <body>
     <div id="consola">
         CONSOLA
     </div>
     <input placeholder="0" type="number" name="calculatorInput" id="calculatorInput">
     <div class="grid">
-        
+
         <div onclick="insertNumber(7)">7</div>
         <div onclick="insertNumber(8)">8</div>
         <div onclick="insertNumber(9)">9</div>
-        <div onclick="sumar()" style="color: blue;">+</div>
-        <div onclick="insertNumber()" style="color: red;">-</div>
-        
+        <div onclick="add()" style="color: blue;">+</div>
+        <div onclick="subtract()" style="color: red;">-</div>
+
         <div onclick="insertNumber(4)">4</div>
         <div onclick="insertNumber(5)">5</div>
         <div onclick="insertNumber(6)">6</div>
@@ -86,9 +84,9 @@
         <div onclick="insertNumber(1)">1</div>
         <div onclick="insertNumber(2)">2</div>
         <div onclick="insertNumber(3)">3</div>
-        <div onclick="insertNumber()">0</div>
-       
-        
+        <div onclick="insertNumber(0)">0</div>
+
+
         <div onclick="insertNumber()">,</div>
         <div onclick="insertNumber()"></div>
         <div onclick="insertNumber()"></div>
@@ -100,18 +98,23 @@
     <script>
         // UFF CALCULADORA
 
+        var result = null
         var firstNumber = null
         var secondNumber = null
         var awaitingInput = false
 
         var stringInput = ""
-        function insertNumber(number){
+
+
+        currentOperation = "none"
+
+        function insertNumber(number) {
             //calculatorInput.value = number
-            
-            if(awaitingInput && firstNumber){
+
+            if (awaitingInput && firstNumber) {
                 calculatorInput.value = 0
                 awaitingInput = false
-                
+
             }
 
             stringInput = calculatorInput.value
@@ -122,18 +125,20 @@
             calculatorInput.value = BigInt(parseFloat(stringInput))
             calculatorInput.scrollLeft = calculatorInput.scrollWidth; // scroll al máximo a la derecha
 
-            
+
             //alert("hola" + stringInput)
         }
 
-        function sumar(){
+        function add() {
+
+            currentOperation = "add"
             awaitingInput = true
             calculatorInput.style.color = "blue"
 
             // MEMORY
-            if (firstNumber == null){
+            if (firstNumber == null) {
                 firstNumber = calculatorInput.value
-                
+
             }
             else {
                 secondNumber = calculatorInput.value
@@ -142,14 +147,16 @@
 
         }
 
-        function restar(){
+        function subtract() {
+
+            currentOperation = "subtract"
             awaitingInput = true
-            calculatorInput.style.background = "blue"
+            calculatorInput.style.color = "red"
 
             // MEMORY
-            if (firstNumber == null){
+            if (firstNumber == null) {
                 firstNumber = calculatorInput.value
-                
+
             }
             else {
                 secondNumber = calculatorInput.value
@@ -158,18 +165,37 @@
 
         }
 
-        function equals(){
+        function equals() {
 
-            if(firstNumber && secondNumber){
+            if (firstNumber) {
+                secondNumber = calculatorInput.value
                 
+                switch (currentOperation) {
+                    case "add":
+                    result = parseFloat(firstNumber) + parseFloat(secondNumber)
+                        break;
+
+                    case "subtract":
+                    result = parseFloat(firstNumber) - parseFloat(secondNumber)
+                        break;
+                
+                    default:
+                        break;
+                }
+
+                calculatorInput.value = result
+                firstNumber = null
+                secondNumber = null
+                calculatorInput.style.color = "unset"
             }
 
         }
 
-        function functionC(){
+        function functionC() {
             calculatorInput.value = null
         }
 
     </script>
 </body>
+
 </html>
