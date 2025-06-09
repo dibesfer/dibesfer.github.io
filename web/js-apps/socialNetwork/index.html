@@ -59,10 +59,10 @@
             text-align: center;
             width: 150px;
             height: 150px;
-            
+
         }
 
-        .profilePicture > img {
+        .profilePicture>img {
             width: 100%;
             height: 100%;
             object-fit: cover;
@@ -85,7 +85,7 @@
             background-size: cover;
             color: rgb(0, 0, 0);
             font-family: initial;
-            
+
         }
 
         kbd {
@@ -110,13 +110,13 @@
 
 <body>
     <header>
-        
+
         <h1>Social Network</h1>
         <h3>Meet like-minded interesting people</h3>
         <p>🔵 100.56K people registered</p>
         <p>🟢 10234 people connected right now</p>
         <p><span style="font-size: xx-large;">⌖</span> Filter by proximity</p>
-        
+
     </header>
     <main>
 
@@ -126,7 +126,7 @@
                 <h4>Topics:</h4>
                 <div>#general 7.26M</div>
                 <div class="c-pink">#love 4.3M</div>
-                <div >#fun 3.2M</div>
+                <div>#fun 3.2M</div>
                 <div class="c-green">#friendship 2.56M</div>
                 <div class="c-blue">#job 2.14M</div>
 
@@ -152,9 +152,8 @@
 
         <div class="profile">
             <div class="profilePicture">
-                <img
-                src="https://media.licdn.com/dms/image/v2/D4E12AQGyw7ixt_s_Yw/article-cover_image-shrink_720_1280/article-cover_image-shrink_720_1280/0/1684345701317?e=2147483647&v=beta&t=xve0Y7oetaXL5N34CLlCN91C0t4yCChb48mkJX7fsRw"
-                alt="">
+                <img src="https://media.licdn.com/dms/image/v2/D4E12AQGyw7ixt_s_Yw/article-cover_image-shrink_720_1280/article-cover_image-shrink_720_1280/0/1684345701317?e=2147483647&v=beta&t=xve0Y7oetaXL5N34CLlCN91C0t4yCChb48mkJX7fsRw"
+                    alt="">
             </div>
             <div><b>Name</b>: Sam Altman</div>
             <div><b>Birthdate</b>: 28/10/1955 <b>Age</b>: 69</div>
@@ -167,11 +166,30 @@
         <br>
         <div class="profile">
             <div class="profilePicture">
-                <img
-                src="https://encrypted-tbn1.gstatic.com/images?q=tbn:ANd9GcTmTPMVY7vowg8mOQCbdbHj8OXmRdrNQjf1FqnMOM-etPr2-KcyrzJoFBDGA42IU9E9PY7f3FjdLh8iLfsEmiYCIA"
-                alt="">
+                <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEh_m8tTmsI_WV1-3XKDCtRzdOUklNtG_bxo19BX-vIzsOyB_Knfns-H2IU_sKYYncf1LyZFErPzTOMqBuQGH_Gll_7dYHbYaAxP1i-9GYQWdVzAkrelZLJmFhXyZuq7m7SowZRQJSL544LODEypvsLKDEp0FYqy9cSBA0WXd9g9zrYu6hF1jCWQtRzs/s1600/242769577_964145034133104_4896883971635531968_n_18144584956201215.jpg"
+                    alt="">
             </div>
-    
+
+            <div>Name: Ferrán Minero</div>
+            <div>Birthdate: 17/02/1996 Age: 29</div>
+            <div>Location: L'Hospitalet </div>
+            <button onclick="getLocation()">Find my location</button>
+
+            <p id="demo"></p>
+            <div id="map"></div>
+            <p><a href="https://leafletjs.com/examples/quick-start/">leafletjs.com/examples/quick-start/</a></p>
+            <div>looking for: <kbd>COLLABORATION</kbd></div>
+            <div>Description: <br>
+            Dev Illustrauthor</div>
+            <div>Contact me: dibesfer@gmail.com</div>
+        </div>
+        <br>
+        <div class="profile">
+            <div class="profilePicture">
+                <img src="https://encrypted-tbn1.gstatic.com/images?q=tbn:ANd9GcTmTPMVY7vowg8mOQCbdbHj8OXmRdrNQjf1FqnMOM-etPr2-KcyrzJoFBDGA42IU9E9PY7f3FjdLh8iLfsEmiYCIA"
+                    alt="">
+            </div>
+
             <div>Name: Bill Gates</div>
             <div>Birthdate: 28/10/1955 Age: 69</div>
             <div>Location: Massachussets </div>
@@ -186,6 +204,10 @@
                 cofundador de Microsoft.</div>
             <div>Contact me: support@microsoft.com</div>
         </div>
+
+
+
+
         <br>
         <p><small>Non-invasive ads help us mantain this project</small></p>
 
@@ -207,22 +229,22 @@
     </footer>
     <script>
 
-        
+
 
         // leaflet.js
 
-        
 
-        var map = L.map('map' , {attributionControl: false}).setView([0, 0], 0
+
+        var map = L.map('map', { attributionControl: false }).setView([0, 0], 0
         );
-       
-        
+
+
         var marker = L.marker([40, -3]).addTo(map);
 
-        map.setView(new L.LatLng(40, 0),3);
+        map.setView(new L.LatLng(40, 0), 3);
         var myAttrControl = L.control.attribution().addTo(map);
-myAttrControl.setPrefix('<a href="https://leafletjs.com/">Leaflet</a>');
-L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        myAttrControl.setPrefix('<a href="https://leafletjs.com/">Leaflet</a>');
+        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
             attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         }).addTo(map);
@@ -253,7 +275,7 @@ L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
 
         var latitude
         var longitude
-        
+
         function getLocation() {
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(success, error);
@@ -270,7 +292,7 @@ L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
             longitude = position.coords.longitude
 
             //map.panTo(new L.LatLng(latitude, longitude));
-            map.setView(new L.LatLng(latitude, longitude),10);
+            map.setView(new L.LatLng(latitude, longitude), 10);
             var marker = L.marker([latitude, longitude]).addTo(map);
         }
 
@@ -278,7 +300,7 @@ L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
             alert("Sorry, no position available.");
         }
 
-        
+
     </script>
 </body>
 
