@@ -33,8 +33,9 @@
         .subFlex {
             position: absolute;
             /* background-color: rgb(170, 68, 170); */
-            background-image: radial-gradient(rgb(230, 106, 192, var(--opa1)), rgb(231, 181, 190, var(--opa1)), rgb(196, 47, 196, var(--opa1)));
+            background-image: radial-gradient(rgb(230, 106, 192, var(--opa1)), rgb(231, 181, 190, var(--opa1)), rgb(51, 0, 47, var(--opa1)));
             background-repeat: no-repeat;
+            color: rgb(51, 0, 47);
             background-position: center;
             animation-name: bg-glow;
             animation-duration: 2s;
@@ -43,16 +44,18 @@
             backdrop-filter: blur(0.5px);
             display: flex;
             flex-direction: column;
-            width: 100%; height: 100%;
+            width: 100%;
+            height: 100%;
             justify-content: space-between;
             align-items: center;
         }
 
         .bgFlex_Container {
-            width: 100%; height:  100%;
+            width: 100%;
+            height: 100%;
             position: absolute;
             display: flex;
-            
+
             justify-content: center;
             align-items: center;
             max-width: 100%;
@@ -60,25 +63,26 @@
         }
 
         .bgFlex {
-            width: 100%; height:  100%;
+            width: 100%;
+            height: 100%;
             background-image: url("https://images.unsplash.com/photo-1538370965046-79c0d6907d47?fm=jpg&q=60&w=3000&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8Z2FsYXh5JTIwd2FsbHBhcGVyfGVufDB8fDB8fHww");
             background-size: cover;
             background-repeat: no-repeat;
             background-position: center;
-            
+
             animation-name: bg-little-glow;
             animation-duration: 4s;
             animation-iteration-count: infinite;
             animation-timing-function: linear;
-            animation-timing-function: ease-in-out;
-            
+
 
         }
 
         .mainFlex {
             position: absolute;
             display: flex;
-            width: 100%; height: 100%;
+            width: 100%;
+            height: 100%;
             justify-content: center;
             align-items: center;
         }
@@ -87,7 +91,8 @@
             position: absolute;
             display: flex;
             flex-direction: column;
-            width: 100%; height: 100%;
+            width: 100%;
+            height: 100%;
             justify-content: space-between;
             align-items: center;
         }
@@ -95,6 +100,7 @@
         .anotherFlex>* {
             border: dashed 3px white;
             border-radius: 25px;
+            background-color: rgba(255, 255, 255, 0.2);
             padding: 25px;
         }
 
@@ -115,7 +121,7 @@
             }
         }
 
-         @keyframes bg-little-glow {
+        @keyframes bg-little-glow {
             0% {
 
                 transform: scale(1);
@@ -123,7 +129,7 @@
 
             50% {
 
-               transform: scale(1.1);
+                transform: scale(1.1);
             }
 
             100% {
@@ -170,11 +176,11 @@
         <div class="bgFlex">
 
             <h1></h1>
-    
+
         </div>
-    
+
     </div>
-    
+
     <div class="subFlex">
 
 
@@ -206,6 +212,31 @@
                     <li>Code your web</li>
                     <li>Code your <a href="https://dibesfer.itch.io">game</a></li>
                 </ul>
+                <button onclick="openFullscreen();">Open Fullscreen</button>
+                <button onclick="closeFullscreen();">Close Fullscreen</button>
+
+                <script>
+                    var elem = document.documentElement;
+                    function openFullscreen() {
+                        if (elem.requestFullscreen) {
+                            elem.requestFullscreen();
+                        } else if (elem.webkitRequestFullscreen) { /* Safari */
+                            elem.webkitRequestFullscreen();
+                        } else if (elem.msRequestFullscreen) { /* IE11 */
+                            elem.msRequestFullscreen();
+                        }
+                    }
+
+                    function closeFullscreen() {
+                        if (document.exitFullscreen) {
+                            document.exitFullscreen();
+                        } else if (document.webkitExitFullscreen) { /* Safari */
+                            document.webkitExitFullscreen();
+                        } else if (document.msExitFullscreen) { /* IE11 */
+                            document.msExitFullscreen();
+                        }
+                    }
+                </script>
             </div>
         </div>
 
