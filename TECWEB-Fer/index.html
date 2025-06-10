@@ -50,12 +50,217 @@
 			<button onclick="botoncito()">Click on me!</button><span id="botoncitodecir"></span>
 			<br><br>
 
+			<!-- TABLAS -->
+
+			<style>
+				table {
+					width: 100%;
+					border-spacing: 0;
+					/* border-collapse: collapse; */
+					table-layout: fixed;
+				}
+
+				tr {
+					max-height: 1000px;
+					overflow: auto;
+				}
+
+				td,
+				th {
+					border: solid 3px black;
+					background-color: rgba(131, 224, 255, 0.521);
+					overflow: auto;
+					transition: 0.1s;
+
+				}
+
+
+
+				td:not(tr > td:first-of-type):hover {
+					border: solid 3px red;
+				}
+
+
+
+				tr>td:first-of-type {
+					background-color: rgb(146, 255, 146);
+				}
+
+				tr:hover {
+					background-color: blue;
+				}
+
+				tr:hover>td:first-of-type {
+					background-color: rgb(17, 119, 30);
+					color: white;
+				}
+
+
+
+				th {
+					background-color: rgb(145, 145, 255);
+				}
+
+				table:has(.col1:hover) .col1,
+				table:has(.col2:hover) .col2,
+				table:has(.col3:hover) .col3,
+				table:has(.col4:hover) .col4
+				 {
+					background-color: rgba(0, 255, 200, 0.493) ;
+				}
+				
+			</style>
+			<div>
+				<h2>Tablas</h2>
+
+				<table>
+					<caption>Notas Curso x Alumno</caption>
+					<colgroup>
+						<col>
+						<col>
+						<col>
+						<col>	
+
+					</colgroup>
+					<tr>
+						<th class="col1">CURSO</th>
+						<th class="col2">Web</th>
+						<th class="col3">Word</th>
+						<th class="col4">Excel</th>
+					</tr>
+					<tr>
+						<td class="col1">Examen 1</td>
+						<td class="col2">6</td>
+						<td class="col3">4</td>
+						<td class="col4">8</td>
+					</tr>
+					<tr>
+						<td class="col1">Examen 2</td>
+						<td class="col2">2</td>
+						<td class="col3">9</td>
+						<td class="col4">7</td>
+					</tr>
+					<tr>
+						<td class="col1">Examen 3</td>
+						<td class="col2">6</td>
+						<td class="col3">5</td>
+						<td class="col4">5</td>
+					</tr>
+					<tr>
+						<td class="col1">NOTA FINAL</td>
+						<td class="col2">Suficiente sadas das d asd as d as das da ssdas das d</td>
+						<td class="col3">Bien</td>
+						<td class="col4">Notable</td>
+					</tr>
+
+
+				</table>
+
+
+				<br>
+
+				<table>
+
+					<tr>
+						<th>&nbsp;</th>
+						<th colspan="2">Delegación A</th>
+						<th colspan="2">Delegación B</th>
+
+					</tr>
+					<tr>
+						<td>Meses</td>
+						<td>Enero</td>
+						<td>Febrero</td>
+						<td>Enero</td>
+						<td>Febrero</td>
+					</tr>
+					<tr>
+						<td>Ventas</td>
+						<td>50</td>
+						<td>60</td>
+						<td>45</td>
+						<td>30</td>
+					</tr>
+					<tr>
+						<td>Total:</td>
+						<td colspan="2">110</td>
+						<td colspan="2">75</td>
+
+					</tr>
+
+
+				</table>
+				<br>
+
+				<table>
+					<caption align="bottom">Delegaciones</caption>
+					<tr>
+						<th>&nbsp;</th>
+						<th colspan="2">Delegación A</th>
+						<th colspan="2">Delegación B</th>
+					</tr>
+					<tr>
+						<td rowspan="3" style="writing-mode: vertical-lr; text-orientation: upright;">Meses</td>
+						<td>Enero</td>
+						<td>Febrero</td>
+						<td>Enero</td>
+						<td>Febrero</td>
+					</tr>
+					<tr>
+						<td>Ventas</td>
+						<td>50</td>
+						<td>60</td>
+						<td>45</td>
+						<td>30</td>
+					</tr>
+					<tr>
+						<td>Total:</td>
+						<td colspan="2">110</td>
+						<td colspan="2">75</td>
+
+					</tr>
+					<tr>
+						<td>hola</td>
+					</tr>
+
+
+				</table>
+
+
+			</div>
+			<hr><br>
+			<div>
+				<h2>Listas</h2>
+				<ol type="I" start="0" >
+					<li>Julio César</li>
+					<li>Claudio</li>
+					<li>Augusto</li>
+					<li>Marco Aurelio</li>
+					<li></li>
+				</ol>
+				<ul >
+					<li type="square" >hola</li>
+					<li></li>
+					<li ></li>
+					<li></li>
+					
+
+						<ol>
+							<li></li>
+							<li></li>
+							<li></li>
+							<ol>
+							<li></li>
+							<li></li>
+							<li></li>
+						</ol>
+						</ol>
+
+					
+				</ul>
+			</div>
 
 			<!-- ANIMATION KEYFRAMES -->
-
-
-
-
 
 			<style>
 				/*  A N I M A T I O N S KEYFRAMES */
@@ -268,10 +473,10 @@
 
 			<p>acuerdate de esto</p>
 			<pre>
-				position: absolute;
-				top: 50%;
-				left: 50%;
-				transform: translate(-50%, -50%);
+position: absolute;
+top: 50%;
+left: 50%;
+transform: translate(-50%, -50%);
 			</pre>
 			<!-- CALENDARIO -->
 			<h2>Calendar</h2>
@@ -451,6 +656,8 @@
 			</div>
 
 		</div>
+
+
 	</main>
 	<hr>
 	<div class="pattern-background"></div>
