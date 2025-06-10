@@ -164,25 +164,61 @@
             width: 150px;
         }
 
-        .footer,
-        .header {
+        .footer{
             display: flex;
             width: 100%;
             justify-content: space-between;
             align-items: center;
-
-
-
+            flex: 0;
         }
 
+        .header{
+            display: grid;
+            grid-template-columns: repeat(3,1fr);
+            width: 100%;
+        }
+
+        .header > div {
+            width: max-content;
+            align-content: center;
+        }
+
+
+        .main {
+            display: flex;
+            width: 100%;
+            justify-content: space-between;
+            align-items: center;
+            flex-direction: column ;
+
+            height: 100%;
+            overflow: auto;
+            flex: 0.75;
+            box-shadow:  0 15px 0.75px rgb(255, 255, 255);
+        }
         .footer>*,
         .header>*,
-        #centercenter {
+        .main>* {
+            
             border: dashed 3px white;
             border-radius: 25px;
             background-color: rgba(255, 255, 255, 0.2);
             padding: 15px;
+            transition: 0.4s;
+            cursor: pointer;
         }
+
+        @media(min-width:740px) {
+
+            .footer>*:hover,
+            .header>*:hover,
+            .main>*:hover {
+                color: black;
+                border-color: black;
+                backdrop-filter: invert(1);
+            }
+        }
+        
     </style>
 </head>
 
@@ -211,43 +247,56 @@
     <div class="anotherFlex">
 
         <div class="header">
-            <div>ABOUT ME</div>
-            <div>
+            <div ><p>ABOUT ME</p></div>
+            
+            <div style="margin: auto;">
                 <h2>dbf</h2>
             </div>
-            <div>LOG IN</div>
+            
+            <div style="margin-left: auto;" ><a href="LOG IN">log in</a></div>
         </div>
 
-        <div id="centercenter">
-            <div id="sun">
-                <!-- 
+        <div class="main" >
+            <div id="centercenter">
+                <div id="sun">
+                    <!-- 
                 sun:https://png.pngtree.com/png-vector/20241025/ourmid/pngtree-hot-sun-isolate-on-transparent-backgruond-png-image_14167435.png
                 moon:https://upload.wikimedia.org/wikipedia/commons/3/33/Lune_ico.png
                 -->
-                <img src="https://png.pngtree.com/png-vector/20241025/ourmid/pngtree-hot-sun-isolate-on-transparent-backgruond-png-image_14167435.png"
-                    alt="">
+                    <img src="https://png.pngtree.com/png-vector/20241025/ourmid/pngtree-hot-sun-isolate-on-transparent-backgruond-png-image_14167435.png"
+                        alt="">
 
+                </div>
+                <h1 contenteditable="true">Good Morning</h1>
+                <h3 id="diadehoy">Today is Tuesday</h3>
+                <div>
+                    <p>Tasks</p>
+                    <ul>
+                        <li>Walk to the park</li>
+                        <li>Draw</li>
+                        <li>Code your web</li>
+                        <li>Code your <a href="https://dibesfer.itch.io">game</a></li>
+                    </ul>
+
+
+
+                </div>
+
+                
             </div>
-            <h1 contenteditable="true">Good Morning</h1>
-            <h3 id="diadehoy">Today is Tuesday</h3>
-            <div>
-                <p>Tasks</p>
-                <ul>
-                    <li>Walk to the park</li>
-                    <li>Draw</li>
-                    <li>Code your web</li>
-                    <li>Code your <a href="https://dibesfer.itch.io">game</a></li>
-                </ul>
 
+            <iframe src="https://dibesfer.github.io" frameborder="0"></iframe>
 
+                <iframe src="https://dibesfer.codeberg.page" frameborder="0"></iframe>
 
-            </div>
+                <iframe src="https://dibesfer.neocities.org" frameborder="0"></iframe>
+
         </div>
 
         <div class="footer">
-            <div>
+            <div id="toggleFull" onclick="toggleFullscreen();">
 
-                <button id="toggleFull" onclick="toggleFullscreen();">Toggle Fullscreen</button>
+
             </div>
             <div>
                 <p>Made by <a href="https://dibesfer.github.io">dibesfer</a></p>
