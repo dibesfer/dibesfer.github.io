@@ -1,17 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>dbf - Good Morning</title>
-        <link rel="icon" type="image/x-icon" href="/branding/favicon.ico">
+    <link rel="icon" type="image/x-icon" href="/branding/favicon.ico">
 
     <style>
-
         :root {
-            --opa1 : 0.8
-            
+            --opa1: 0.8
         }
+
         * {
             margin: 0;
             box-sizing: border-box;
@@ -23,9 +23,9 @@
         }
 
         a {
-            
+
             color: unset;
-            
+
         }
 
         .subFlex {
@@ -37,21 +37,22 @@
             animation-name: bg-glow;
             animation-duration: 2s;
             animation-iteration-count: infinite;
-            animation-timing-function:ease-in-out;
+            animation-timing-function: ease-in-out;
             backdrop-filter: blur(0.5px);
             display: flex;
-            flex-direction:column;
+            flex-direction: column;
             width: 100vw;
             height: 100vh;
             justify-content: space-between;
-            align-items:center;
+            align-items: center;
         }
 
 
-        .bgFlex{
-            
+        .bgFlex {
+
             background-image: url("https://images.unsplash.com/photo-1538370965046-79c0d6907d47?fm=jpg&q=60&w=3000&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8Z2FsYXh5JTIwd2FsbHBhcGVyfGVufDB8fDB8fHww");
             background-size: cover;
+            background-repeat: no-repeat;
             background-position: center;
             position: absolute;
             display: flex;
@@ -59,7 +60,12 @@
             height: 100vh;
             justify-content: center;
             align-items: center;
-        
+            animation-name: bg-little-glow;
+            animation-duration: 4s;
+            animation-iteration-count: infinite;
+            animation-timing-function: linear;
+            animation-timing-function: ease-in-out;
+
         }
 
         .mainFlex {
@@ -71,7 +77,7 @@
             align-items: center;
         }
 
-        .anotherFlex{
+        .anotherFlex {
             position: absolute;
             display: flex;
             flex-direction: column;
@@ -81,7 +87,7 @@
             align-items: center;
         }
 
-        .anotherFlex > * {
+        .anotherFlex>* {
             border: dashed 3px white;
             border-radius: 25px;
             padding: 25px;
@@ -89,34 +95,51 @@
 
         @keyframes bg-glow {
             0% {
-               
+
                 background-size: 100%;
             }
 
             50% {
-                
+
                 background-size: 200%;
             }
 
             100% {
-                
+
                 background-size: 100%;
+            }
+        }
+
+         @keyframes bg-little-glow {
+            0% {
+
+                transform: scale(1);
+            }
+
+            50% {
+
+               transform: scale(1.1);
+            }
+
+            100% {
+
+                transform: scale(1);
             }
         }
 
         @keyframes spin {
             0% {
-               filter: drop-shadow(5px 5px 15px rgb(255, 9, 9));
+                filter: drop-shadow(5px 5px 15px rgb(255, 9, 9));
                 transform: rotate(0);
             }
 
             50% {
                 filter: drop-shadow(5px 5px 15px rgb(255, 198, 9));
-                
+
             }
 
             100% {
-               filter: drop-shadow(5px 5px 15px rgb(255, 9, 9));
+                filter: drop-shadow(5px 5px 15px rgb(255, 9, 9));
                 transform: rotate(360deg);
             }
         }
@@ -125,7 +148,7 @@
             text-align: center;
         }
 
-        #sun > img {
+        #sun>img {
             filter: drop-shadow(0px 0px 15px rgb(255, 9, 9));
             animation-name: spin;
             animation-duration: 12s;
@@ -133,9 +156,9 @@
             animation-iteration-count: infinite;
             width: 150px;
         }
-        
     </style>
 </head>
+
 <body>
 
     <div class="bgFlex">
@@ -145,27 +168,28 @@
     </div>
 
     <div class="subFlex">
-    
-        
-    
+
+
+
     </div>
     <div class="mainFlex">
-    
- 
-    
+
+
+
     </div>
 
     <div class="anotherFlex">
-    
+
         <h2>dbf</h2>
 
         <div id="centercenter">
             <div id="sun">
-                <img  src="https://png.pngtree.com/png-vector/20241025/ourmid/pngtree-hot-sun-isolate-on-transparent-backgruond-png-image_14167435.png" alt="">
+                <img src="https://png.pngtree.com/png-vector/20241025/ourmid/pngtree-hot-sun-isolate-on-transparent-backgruond-png-image_14167435.png"
+                    alt="">
 
             </div>
             <h1>Good Morning</h1>
-            <h3>Today is Tuesday</h3>
+            <h3 id="diadehoy">Today is Tuesday</h3>
             <div>
                 <p>Tasks</p>
                 <ul>
@@ -176,9 +200,40 @@
                 </ul>
             </div>
         </div>
-        
+
         <p>Made by <a href="https://dibesfer.github.io">dibesfer</a></p>
-    
+
     </div>
+
+    <script>
+
+        function addZero(i) {
+            if (i < 10) { i = "0" + i }
+            return i;
+        }
+
+        function botoncito() {
+            botoncitodecir.textContent = " " + frases[randomInt(0, frases.length - 1)]
+        }
+
+        var now = new Date()
+        var horas = now.getHours()
+        // var day = now.getDay()
+        var dia = now.toLocaleDateString('es-ES')
+        var diadelasemana = now.toLocaleDateString('es-ES', { weekday: 'long' })
+        var mes = now.toLocaleDateString('es-ES', { month: 'long' })
+        var diadentrodelmes = now.getDate()
+        diadehoy.innerHTML = diadelasemana + " " + diadentrodelmes + " de " + mes + " del " + now.getFullYear() + "<br><span style='text-align:right'><b>" + dia + "</b></span>";
+
+
+
+        let h = addZero(now.getHours());
+        let m = addZero(now.getMinutes());
+        let s = addZero(now.getSeconds());
+        let time = h + ":" + m + ":" + s;
+        diadehoy.innerHTML += " - " + time;
+
+    </script>
 </body>
+
 </html>
