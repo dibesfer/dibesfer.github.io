@@ -97,11 +97,11 @@
             align-items: center;
         }
 
-        .anotherFlex>* {
+        .anotherFlex>*:not(.footer) {
             border: dashed 3px white;
             border-radius: 25px;
             background-color: rgba(255, 255, 255, 0.2);
-            padding: 25px;
+            padding: 20px;
         }
 
         @keyframes bg-glow {
@@ -166,6 +166,24 @@
             animation-timing-function: linear;
             animation-iteration-count: infinite;
             width: 150px;
+        }
+
+        .footer {
+            display: flex;
+            width: 100%;
+            justify-content: space-between;
+            align-items: center;
+
+            
+
+        }
+
+        .footer > * {
+            
+            border: dashed 3px white;
+            border-radius: 25px;
+            background-color: rgba(255, 255, 255, 0.2);
+            padding: 25px;
         }
     </style>
 </head>
@@ -244,7 +262,17 @@
             </div>
         </div>
 
-        <p>Made by <a href="https://dibesfer.github.io">dibesfer</a></p>
+        <div class="footer">
+            <div>
+                open full
+            </div>
+            <div>
+            <p>Made by <a href="https://dibesfer.github.io">dibesfer</a></p>
+            </div>
+            <div>
+                go up
+            </div>
+        </div>
 
     </div>
 
