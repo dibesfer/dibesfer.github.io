@@ -497,6 +497,44 @@
         let time = h + ":" + m + ":" + s;
         diadehoy.innerHTML += " - " + time;
 
+
+        // SHOW FPS
+
+
+        let lastTime = performance.now();
+        let frameCount = 0;
+        let fps = 0;
+
+        const fpsDisplay = document.createElement('div');
+        fpsDisplay.style.position = 'fixed';
+        fpsDisplay.style.top = '10px';
+        fpsDisplay.style.right = '10px';
+        fpsDisplay.style.backgroundColor = 'black';
+        fpsDisplay.style.color = 'lime';
+        fpsDisplay.style.padding = '5px';
+        fpsDisplay.style.fontFamily = 'monospace';
+        fpsDisplay.style.fontSize = "20px"
+        document.body.appendChild(fpsDisplay);
+
+        function loop() {
+            const now = performance.now();
+            frameCount++;
+
+            if (now - lastTime >= 1000) {
+                fps = frameCount;
+                frameCount = 0;
+                lastTime = now;
+                fpsDisplay.textContent = `FPS: ${fps}`;
+            }
+
+            // Render tu escena aquí si tienes una
+            requestAnimationFrame(loop);
+        }
+
+        loop();
+
+
+
     </script>
 </body>
 
