@@ -239,6 +239,8 @@
                 /* backdrop-filter: invert(1); */
             }
         }
+
+        .myForm {}
     </style>
 </head>
 
@@ -280,7 +282,86 @@
 
         <div class="main">
 
-            
+            <div
+                style="font-family:'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif; min-height: 100%; max-height: 100%; overflow: auto; color:white; background-color: rgba(146, 146, 255, 0.521); width: 100%;">
+
+                <div style="">
+                    <h1>Register new user</h1>
+                    <form action="" method="GET">
+                        <!-- 
+                        o Nombre completo (input tipo texto)
+                        o Correo electrónico (input tipo email)
+                        o Contraseña y confirmar contraseña (input tipo password)
+                        o Fecha de nacimiento (input tipo date)
+                        o Género (radio buttons)
+                        o Intereses (checkboxes)
+                        o País (select con al menos 5 opciones)
+                        o Foto de perfil (input tipo file)
+                        o Comentarios o biografía (textarea)
+                        o Nivel de satisfacción (input tipo range)
+                        o Aceptación de términos (checkbox obligatorio)
+                        o Botones: Enviar y Limpiar
+                        hidden
+                        autocomplete 
+                        -->
+                        <style>
+
+                        </style>
+                        <p>Complete name</p>
+                        <label for="name">Name:</label>
+                        <input maxlength="24" type="text" id="registeruser_name" name="name"><br>
+                        <label for="fsname">Apellido 1:</label>
+                        <input maxlength="24" type="text" id="registeruser_fsname" name="fsname"><br>
+                        <label for="ssname">Apellido 2:</label>
+                        <input maxlength="24" type="text" id="registeruser_ssname" name="ssname"><br>
+                        <label for="email">Email:</label>
+                        <input maxlength="24" type="email" id="registeruser_email" name="email">
+                        <br>
+                        <label for="password">Password:</label>
+                        <input type="password" name="password" id="registeruser_password">
+                        <br>
+                        <label for="password">Confirm password:</label>
+                        <input type="password" name="password" id="registeruser_password">
+                        <br>
+                        <label for="bdate">Birth date:</label>
+                        <input type="date" name="" id="">
+                        <br>
+                        <p>Gender:</p>
+                          <input type="radio" id="html" name="fav_language" value="HTML">
+                          <label for="html">Male</label><br>
+                          <input type="radio" id="css" name="fav_language" value="CSS">
+                          <label for="css">Female</label><br>
+                          <input type="radio" id="javascript" name="fav_language" value="JavaScript">
+                          <label for="javascript">Other</label>
+
+                        <p>Interests</p>
+                        <input type="checkbox" id="vehicle1" name="vehicle1" value="Bike">
+                        <label for="vehicle1"> Cars</label><br>
+                        <input type="checkbox" id="vehicle2" name="vehicle2" value="Car">
+                        <label for="vehicle2"> Drawing</label><br>
+                        <input type="checkbox" id="vehicle3" name="vehicle3" value="Boat">
+                        <label for="vehicle3"> Dance</label><br><br>
+
+
+
+
+                        <label for="countries">Country:</label>
+                        <select name="countries" id="countries">
+                            <option value="Spain">Spain</option>
+                            <option value="England">England</option>
+                            <option value="France">France</option>
+                            <option value="Germany">Germany</option>
+                        </select>
+                        <br>
+
+                        <label for="pfpic">Profile picture:</label>
+                        <input type="file">
+                        <br><br>
+                        <input type="submit" value="Submit">
+                    </form>
+                </div>
+
+            </div>
             <div
                 style="align-content: center; text-align: center; font-family:'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif; min-height: 100%; max-height: 100%; overflow: auto; color:white; background-color: rgba(146, 146, 255, 0.521); width: 100%;">
 
@@ -290,18 +371,10 @@
                 </div>
                 <h1>undraw.co</h1>
             </div>
-             
-            <div
-                style="align-content: center; text-align: center; font-family:'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif; min-height: 100%; max-height: 100%; overflow: auto; color:white; background-color: rgba(146, 146, 255, 0.521); width: 100%;">
 
-                <div style="text-align: center; ">
-                    <img style=" width: 500px; filter: grayscale(1) drop-shadow(0 0 15px white);"
-                        src="/assets/svg/undraw_learning-sketchingsh.svg" alt="">
-                </div>
-                <h1>undraw.co</h1>
-            </div>
 
-            
+
+
 
             <div id="centercenter">
                 <div id="sun">
