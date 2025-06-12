@@ -15,8 +15,6 @@
         * {
             margin: 0;
             box-sizing: border-box;
-
-
         }
 
         body {
@@ -24,8 +22,6 @@
             color: white;
             width: 100dvw;
             height: 100dvh;
-
-
         }
 
         #centercenter {
@@ -34,9 +30,7 @@
         }
 
         a {
-
             color: unset;
-
         }
 
         iframe,
@@ -69,7 +63,6 @@
             height: 100%;
             position: absolute;
             display: flex;
-
             justify-content: center;
             align-items: center;
             max-width: 100%;
@@ -83,13 +76,10 @@
             background-size: cover;
             background-repeat: no-repeat;
             background-position: center;
-
             animation-name: bg-little-glow;
             animation-duration: 4s;
             animation-iteration-count: infinite;
             animation-timing-function: linear;
-
-
         }
 
         .mainFlex {
@@ -110,41 +100,34 @@
             justify-content: space-between;
             align-items: center;
             padding: 10px;
-
         }
 
 
 
         @keyframes bg-glow {
             0% {
-
                 background-size: 100%;
             }
 
             50% {
-
                 background-size: 200%;
             }
 
             100% {
-
                 background-size: 100%;
             }
         }
 
         @keyframes bg-little-glow {
             0% {
-
                 transform: scale(1);
             }
 
             50% {
-
                 transform: scale(1.1);
             }
 
             100% {
-
                 transform: scale(1);
             }
         }
@@ -157,7 +140,6 @@
 
             50% {
                 filter: drop-shadow(5px 5px 15px rgb(255, 198, 9));
-
             }
 
             100% {
@@ -283,6 +265,155 @@
         </div>
 
         <div class="main">
+
+            <div style="background-color: rgb(124, 124, 124); width: 50%;">
+                <h1>JavaScript</h1>
+                <h3><i>En programación es posible todo lo matemáticamente expresable.</i></h3>
+                <style>
+                    #myCanvas {
+                        background-color: white;
+
+                        image-rendering: pixelated;
+
+                    }
+                </style>
+                <h2>Canvas</h2>
+                <canvas id="myCanvas" width="100" height="100" style="width: 100%;"></canvas>
+
+                <script>
+
+                    var playervelocity = 1
+                    var playervelocityX = 65
+                    var playervelocityY = 55
+                
+                    const canvas = document.getElementById("myCanvas");
+                    const ctx = canvas.getContext("2d");
+
+                    function drawCanvas() {
+
+                        ctx.beginPath();
+                        ctx.moveTo(0, 0);
+                        ctx.lineTo(400, 400);
+                        ctx.lineWidth = 10;
+                        ctx.stroke();
+
+                        ctx.fillStyle = "red"
+                        // "rgba(" + r + "," + g + "," + b + "," + (a / 255) + ")";
+                        ctx.fillRect(50, 50, 20, 20);
+
+                        ctx.fillStyle = "blue"
+                        // "rgba(" + r + "," + g + "," + b + "," + (a / 255) + ")";
+                        ctx.fillRect(40, 40, 10, 10);
+
+                        ctx.fillStyle = "green"
+                        // "rgba(" + r + "," + g + "," + b + "," + (a / 255) + ")";
+                        ctx.fillRect(playervelocityY, playervelocityX, 1, 1);
+                    }
+                    drawCanvas()
+
+
+                    addEventListener("keydown", logKey);
+
+                    window.addEventListener(
+                            "keydown",
+                            (event) => {
+                                if (event.defaultPrevented) {
+                                    return; // Do nothing if the event was already processed
+                                }
+
+                                let key = event.key
+                                if (key == "W" || key == "w" || key == "ArrowUp") {
+                                    playervelocityY += playervelocity
+                                    
+                                }
+
+                                if (key == "A" || key == "a" || key == "ArrowLeft") {
+                                    playervelocityX += playervelocity
+                                }
+
+                                if (key == "D" || key == "d" || key == "ArrowRight") {
+                                    playervelocityX += -playervelocity
+                                }
+
+                                if (key == "S" || key == "s" || key == "ArrowDown") {
+                                    playervelocityY += -playervelocity
+                                }
+
+                                drawCanvas()
+
+                                // Cancel the default action to avoid it being handled twice        
+                                // event.preventDefault();
+                            },
+                            true,
+                        );
+                        // window.addEventListener("keyup", (event) => {
+                        //     if (event.defaultPrevented) {
+                        //         return; // Do nothing if the event was already processed
+                        //     }
+
+                        //     let key = event.key
+                        //     if (key == "W" || key == "w" || key == "ArrowUp") {
+                        //         playervelocityY = 0
+                        //     }
+
+                        //     if (key == "A" || key == "a" || key == "ArrowLeft") {
+                        //         playervelocityX = 0
+                        //     }
+
+                        //     if (key == "D" || key == "d" || key == "ArrowRight") {
+                        //         playervelocityX = 0
+                        //     }
+
+                        //     if (key == "S" || key == "s" || key == "ArrowDown") {
+                        //         playervelocityY = 0
+                        //     }
+
+                        //     drawCanvas()
+
+                        //     // Cancel the default action to avoid it being handled twice        
+                        //     event.preventDefault();
+                        // },
+                        //     true,
+                        // )
+
+                    function logKey(e) {
+
+
+                        // switch (e.code) {
+                        //     case "KeyW":
+                        //         playerPosition[1] -= 1
+                        //         break;
+                        //     case "KeyA":
+                        //         playerPosition[0] -= 1
+                        //         break;
+                        //     case "KeyS":
+                        //         playerPosition[1] += 1
+                        //         break;
+                        //     case "KeyD":
+                        //         playerPosition[0] += 1
+                        //         break;
+                        //     case "KeyD" && "KeyS":
+                        //         playerPosition[0] += 1
+                        //         playerPosition[1] += 1
+                        //         break;
+                        //     default:
+
+                        //         break;
+                        // }
+
+                        
+
+
+                        
+
+                    }
+
+                </script>
+                <div style="height: 400px;"></div>
+                <p>Juan Pedro Cerro Martínez</p>
+            </div>
+
+            <br>
 
             <div
                 style="font-family:'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif; min-height: 100%; max-height: 100%; overflow: auto; color:white; background-color: rgba(146, 146, 255, 0.521); width: 100%;">
