@@ -297,7 +297,7 @@
                                
                                 
                                  demo.getElementsByTagName("OL")[0].innerHTML += "<li>Hola mundo</li>"
-                                 
+                                 demo.innerHTML = "<pre>" + JSON.stringify(document, null, "<br>") + "</pre>"
                             }
                             
                             else {
@@ -308,12 +308,23 @@
                         }
 
                         function clearthing() {
-                            demo.innerHTML = ""
+                            if (confirm("are you ready?"))
+                                demo.innerHTML = ""
                         }
 
 
                     </script>
                 </div>
+
+                <label for="">localStorage "name"</label><br>
+                <input type="text" name="" id="inputName"><br>
+                <button onclick="localStorage.setItem('name', inputName.value)">Save</button> 
+                <button onclick="alert(localStorage.getItem('name'))">Read</button><br>
+
+                <button onclick="setTimeout(function(){alert('hola mundo')},3000)">Temp</button>
+                <button onclick="alert(navigator.userAgent)">userAgent</button>
+                <button onclick="history.back()">Go back</button>
+                <button onclick="location.href = 'https://google.es'">Go link</button>
                 <button onclick="document.write('<h1>hola mundo!</h1>')">BORROW PAGE</button>
 
 
@@ -387,9 +398,9 @@
                     window.addEventListener(
                         "keydown",
                         (event) => {
-                            if (event.defaultPrevented) {
-                                return; // Do nothing if the event was already processed
-                            }
+                            // if (event.defaultPrevented) {
+                            //     return; // Do nothing if the event was already processed
+                            // }
 
                             let key = event.key
                             if (key == "W" || key == "w" || key == "ArrowUp") {
@@ -416,7 +427,7 @@
                             drawCanvas()
 
                             // Cancel the default action to avoid it being handled twice        
-                            event.preventDefault();
+                            // // event.preventDefault();
                         },
                         true,
                     );
