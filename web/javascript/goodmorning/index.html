@@ -276,7 +276,7 @@
                 <div
                     style="height: 400px; background-color: rgb(54, 54, 54); padding: 10px;hyphens: auto;overflow: auto;">
 
-                    <button onclick="writething()">Write</button>
+                    <button id="btnwrite">Write</button>
                     <button onclick="clearthing()">Clear</button>
                     <br><br>
                     <hr>
@@ -286,6 +286,10 @@
                         <ol type="" start="0"></ol>
                     </div>
                     <script>
+
+                        btnwrite.addEventListener("click", writething)
+                        
+                        btnwrite.addEventListener("dblclick", ()=> {document.write("helloooooo")})
 
                         function writething() {
                             
