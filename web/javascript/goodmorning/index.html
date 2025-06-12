@@ -33,6 +33,14 @@
             color: unset;
         }
 
+        button {
+            font: unset;
+            border: solid 3px lime;
+            color: lime;
+            padding: 5px;
+            background-color: green;
+        }
+
         iframe,
         img {
             max-width: 100%;
@@ -101,8 +109,6 @@
             align-items: center;
             padding: 10px;
         }
-
-
 
         @keyframes bg-glow {
             0% {
@@ -174,7 +180,6 @@
             grid-template-columns: repeat(3, 1fr);
             width: 100%;
             height: 70px;
-
             overflow: auto;
         }
 
@@ -184,7 +189,6 @@
             align-content: center;
         }
 
-
         .main {
             display: flex;
             width: 100%;
@@ -192,7 +196,6 @@
             align-items: center;
             flex-direction: column;
             scroll-behavior: smooth;
-
             height: 100%;
             overflow: auto;
             flex: 0.75;
@@ -202,7 +205,6 @@
         .footer>*,
         .header>*,
         .main>* {
-
             border: dashed 2px white;
             border-radius: 25px;
             background-color: rgba(255, 255, 255, 0.2);
@@ -216,7 +218,6 @@
             .footer>*:hover,
             .header>*:hover,
             .main>*:hover {
-                color: black;
                 border-color: black;
                 /* backdrop-filter: invert(1); */
             }
@@ -267,8 +268,73 @@
         <div class="main">
 
             <div style="background-color: rgb(124, 124, 124); width: 50%;">
-                <h1>JavaScript</h1>
+                <h1 style="font-variant: small-caps;">JavaScript</h1>
                 <h3><i>En programación es posible todo lo matemáticamente expresable.</i></h3>
+
+                <p>Empezamos:</p>
+
+                <div
+                    style="height: 400px; background-color: rgb(54, 54, 54); padding: 10px;hyphens: auto;overflow: auto;">
+
+                    <button onclick="writething()">Write</button>
+                    <button onclick="clearthing()">Clear</button>
+                    <br><br>
+                    <hr>
+                    <br><br>
+
+                    <div id="demo">
+                        <ol type="" start="0"></ol>
+                    </div>
+                    <script>
+
+                        function writething() {
+                            
+                            if (demo.getElementsByTagName("OL")[0] != undefined) {
+                               
+                                
+                                 demo.getElementsByTagName("OL")[0].innerHTML += "<li>Hola mundo</li>"
+                                 
+                            }
+                            
+                            else {
+                                demo.appendChild(document.createElement("OL"))
+                                demo.getElementsByTagName("OL")[0].innerHTML += "<li>Hola mundo</li>"
+                                
+                            }
+                        }
+
+                        function clearthing() {
+                            demo.innerHTML = ""
+                        }
+
+
+                    </script>
+                </div>
+                <button onclick="document.write('<h1>hola mundo!</h1>')">BORROW PAGE</button>
+
+
+                <p>Eventos:</p>
+                <ul>
+                    <li>click</li>
+                    <li>dblclick</li>
+                    <li>mousedown</li>
+                    <li>mouseup</li>
+                    <li>mousemove</li>
+                    <li>moveover</li>
+                    <li>mouseout</li>
+                    <li>keypress XXX</li>
+                    <li>keydown</li>
+                    <li>keyup</li>
+                    <li>submit</li>
+                    <li>focus</li>
+                    <li>blur</li>
+                    <li>reset</li>
+                    <li>scroll</li>
+                    <li>resize</li>
+                    <li>load</li>
+                </ul>
+
+
                 <style>
                     #myCanvas {
                         background-color: white;
@@ -278,103 +344,107 @@
                     }
                 </style>
                 <h2>Canvas</h2>
-                <canvas id="myCanvas" width="100" height="100" style="width: 100%;"></canvas>
+                <canvas id="myCanvas" width="50" height="50" style="width: 100%;"></canvas>
 
                 <script>
 
                     var playervelocity = 1
-                    var playervelocityX = 65
-                    var playervelocityY = 55
-                
+                    var playervelocityX = 25
+                    var playervelocityY = 25
+
                     const canvas = document.getElementById("myCanvas");
                     const ctx = canvas.getContext("2d");
 
                     function drawCanvas() {
 
-                        ctx.beginPath();
-                        ctx.moveTo(0, 0);
-                        ctx.lineTo(400, 400);
-                        ctx.lineWidth = 10;
-                        ctx.stroke();
+                        // ctx.beginPath();
+                        // ctx.moveTo(0, 0);
+                        // ctx.lineTo(400, 400);
+                        // ctx.lineWidth = 10;
+                        // ctx.stroke();
 
-                        ctx.fillStyle = "red"
-                        // "rgba(" + r + "," + g + "," + b + "," + (a / 255) + ")";
-                        ctx.fillRect(50, 50, 20, 20);
+                        // ctx.fillStyle = "red"
+                        // // "rgba(" + r + "," + g + "," + b + "," + (a / 255) + ")";
+                        // ctx.fillRect(50, 50, 20, 20);
 
-                        ctx.fillStyle = "blue"
-                        // "rgba(" + r + "," + g + "," + b + "," + (a / 255) + ")";
-                        ctx.fillRect(40, 40, 10, 10);
+                        // ctx.fillStyle = "blue"
+                        // // "rgba(" + r + "," + g + "," + b + "," + (a / 255) + ")";
+                        // ctx.fillRect(40, 40, 10, 10);
 
                         ctx.fillStyle = "green"
                         // "rgba(" + r + "," + g + "," + b + "," + (a / 255) + ")";
-                        ctx.fillRect(playervelocityY, playervelocityX, 1, 1);
+                        ctx.fillRect(playervelocityX, playervelocityY, 1, 1);
                     }
                     drawCanvas()
 
 
-                    addEventListener("keydown", logKey);
+
 
                     window.addEventListener(
-                            "keydown",
-                            (event) => {
-                                if (event.defaultPrevented) {
-                                    return; // Do nothing if the event was already processed
-                                }
+                        "keydown",
+                        (event) => {
+                            if (event.defaultPrevented) {
+                                return; // Do nothing if the event was already processed
+                            }
 
-                                let key = event.key
-                                if (key == "W" || key == "w" || key == "ArrowUp") {
-                                    playervelocityY += playervelocity
-                                    
-                                }
+                            let key = event.key
+                            if (key == "W" || key == "w" || key == "ArrowUp") {
+                                playervelocityY -= playervelocity
 
-                                if (key == "A" || key == "a" || key == "ArrowLeft") {
-                                    playervelocityX += playervelocity
-                                }
+                            }
 
-                                if (key == "D" || key == "d" || key == "ArrowRight") {
-                                    playervelocityX += -playervelocity
-                                }
+                            if (key == "W" && key == "D") {
+                                alert("multiple!")
+                            }
 
-                                if (key == "S" || key == "s" || key == "ArrowDown") {
-                                    playervelocityY += -playervelocity
-                                }
+                            if (key == "A" || key == "a" || key == "ArrowLeft") {
+                                playervelocityX -= playervelocity
+                            }
 
-                                drawCanvas()
+                            if (key == "D" || key == "d" || key == "ArrowRight") {
+                                playervelocityX += playervelocity
+                            }
 
-                                // Cancel the default action to avoid it being handled twice        
-                                // event.preventDefault();
-                            },
-                            true,
-                        );
-                        // window.addEventListener("keyup", (event) => {
-                        //     if (event.defaultPrevented) {
-                        //         return; // Do nothing if the event was already processed
-                        //     }
+                            if (key == "S" || key == "s" || key == "ArrowDown") {
+                                playervelocityY += playervelocity
+                            }
 
-                        //     let key = event.key
-                        //     if (key == "W" || key == "w" || key == "ArrowUp") {
-                        //         playervelocityY = 0
-                        //     }
+                            drawCanvas()
 
-                        //     if (key == "A" || key == "a" || key == "ArrowLeft") {
-                        //         playervelocityX = 0
-                        //     }
+                            // Cancel the default action to avoid it being handled twice        
+                            event.preventDefault();
+                        },
+                        true,
+                    );
+                    window.addEventListener("keyup", (event) => {
+                        if (event.defaultPrevented) {
+                            return; // Do nothing if the event was already processed
+                        }
 
-                        //     if (key == "D" || key == "d" || key == "ArrowRight") {
-                        //         playervelocityX = 0
-                        //     }
+                        // let key = event.key
+                        // if (key == "W" || key == "w" || key == "ArrowUp") {
+                        //     playervelocityY = 0
+                        // }
 
-                        //     if (key == "S" || key == "s" || key == "ArrowDown") {
-                        //         playervelocityY = 0
-                        //     }
+                        // if (key == "A" || key == "a" || key == "ArrowLeft") {
+                        //     playervelocityX = 0
+                        // }
 
-                        //     drawCanvas()
+                        // if (key == "D" || key == "d" || key == "ArrowRight") {
+                        //     playervelocityX = 0
+                        // }
 
-                        //     // Cancel the default action to avoid it being handled twice        
-                        //     event.preventDefault();
-                        // },
-                        //     true,
-                        // )
+                        // if (key == "S" || key == "s" || key == "ArrowDown") {
+                        //     playervelocityY = 0
+                        // }
+
+                        drawCanvas()
+
+                        // Cancel the default action to avoid it being handled twice        
+                        event.preventDefault();
+                    },
+                        true,
+                    )
 
                     function logKey(e) {
 
@@ -401,10 +471,10 @@
                         //         break;
                         // }
 
-                        
 
 
-                        
+
+
 
                     }
 
