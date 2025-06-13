@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="Ferrán Minero - dibesfer">
+    <title>dbf clock</title>
+</head>
+
+<style>
+    #clock {
+        background-color: black;
+        color: lime;
+        font-family: monospace;
+        font-size: 40px;
+        position: fixed;
+        right: 20px;
+        top: 20px;
+        padding: 5px;
+    }
+</style>
+
+<body>
+
+    <!-- 
+        Evaluación continua: UF1842
+
+        Descripción: 
+        Se requiere la elaboración de componente web reutilizable para mostrar un reloj
+        digital en la página web de forma persistente, independientemente del scroll que haga el
+        usuario en dicha página. El reloj será flotante con respecto el resto de contenido de la página.
+        
+        Se recomienda generar un contenido HTML en la página que genere scroll y comprobar así el
+        funcionamiento.
+        
+        El componente consiste en un reloj digital encuadrado con un color de fondo en la esquina
+        superior derecha del visor web. 
+        
+        Se deberá dejar un espacio de 20px entre el reloj y la parte
+        superior y derecha del visor. 
+        
+        Para su diseño se deberá crear un temporizador que llame a una
+        función cada 1000ms, la función deberá asignar como contenido del reloj (dentro de un div) la
+        hora actual del sistema cliente.
+        Para capturar la hora se deberá usar la clase Date ( let hora=new Date() )
+
+        Enviar el resultado en un fichero HTML al correo electrónico del profesor, usando como nombre
+        de archivo evaluacion1_NombreApellidos.html
+    
+    -->
+
+
+
+    <div id="clock">00:00:00</div>
+
+    <script>
+
+        function needsazero(number) {
+            let result
+
+            if (number < 10) {
+                result = "0" + number
+                return result
+            }
+
+            return number
+        }
+
+        let time
+        let hours
+        let minutes
+        let seconds
+
+        clockTick()
+        
+        function clockTick() {
+            time = new Date()
+            hours = time.getHours()
+            minutes = time.getMinutes()
+            seconds = time.getSeconds()
+
+            hours = needsazero(hours)
+            minutes = needsazero(minutes)
+            seconds = needsazero(seconds)
+            
+            clock.textContent = hours + ":" + minutes + ":" + seconds
+            setTimeout(clockTick,1000)
+        }
+
+    </script>
+</body>
+
+</html>
