@@ -9,22 +9,25 @@
 </head>
 
 <style>
+
     #clock {
         background-color: black;
         color: lime;
         font-family: monospace;
-        font-size: 40px;
+        font-size: 60px;
         position: fixed;
         right: 20px;
         top: 20px;
-        padding: 5px;
+        padding: 5px 15px;
+        width: fit-content;
     }
+
 </style>
 
 <body>
 
     <!-- 
-        Evaluación continua: UF1842
+        Evaluación continua - UF1842
 
         Descripción: 
         Se requiere la elaboración de componente web reutilizable para mostrar un reloj
@@ -50,8 +53,6 @@
     
     -->
 
-
-
     <div id="clock">00:00:00</div>
 
     <script>
@@ -63,7 +64,6 @@
                 result = "0" + number
                 return result
             }
-
             return number
         }
 
@@ -79,7 +79,7 @@
             hours = time.getHours()
             minutes = time.getMinutes()
             seconds = time.getSeconds()
-
+            
             hours = needsazero(hours)
             minutes = needsazero(minutes)
             seconds = needsazero(seconds)
