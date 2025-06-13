@@ -9,7 +9,7 @@
 
     <style>
         :root {
-            --opa1: 0.8
+            --opa1: 0.75
         }
 
         * {
@@ -33,7 +33,8 @@
             color: unset;
         }
 
-        button {
+        button,
+        select {
             font: unset;
             border: solid 3px lime;
             color: lime;
@@ -207,7 +208,7 @@
         .main>* {
             border: dashed 2px white;
             border-radius: 25px;
-            background-color: rgba(255, 255, 255, 0.2);
+            background-color: rgba(255, 255, 255, 0.3);
             padding: 15px;
             transition: 0.2s;
             cursor: pointer;
@@ -267,14 +268,53 @@
 
         <div class="main">
 
+            <div>
+
+                <h2>Apuntes 13/06/2025</h2>
+                <p>1. Repaso del código que hicimos ayer</p>
+                <p>2. Método prompt("Hola, ¿cómo te llamas?")</p>
+                <p>3. window.open("https://dibesfer.com","_blank")</p>
+                <p>4. Variables var let y const</p>
+                <p>5. Casting: document.write("HOLA" + (3+6)) // HOLA9</p>
+                <p>6. Post/pre-increment ++x VS. x++</p>
+                <p></p>
+            </div>
+
             <div style="background-color: rgb(124, 124, 124); width: 50%;">
                 <h1 style="font-variant: small-caps;">JavaScript</h1>
                 <h3><i>En programación es posible todo lo matemáticamente expresable.</i></h3>
 
                 <p>Empezamos:</p>
 
+
                 <div
                     style="height: 400px; background-color: rgb(54, 54, 54); padding: 10px;hyphens: auto;overflow: auto;">
+
+                    <label for="countries">Function:</label>
+                    <select name="countries" id="jsFunctions">
+                        <option value="write document">write document</option>
+                        <option value="say hello">Say("hello")</option>
+                        <option value="make list">Make list</option>
+                        <option value="window open">window.open()</option>
+                        <option value="make a wish">Make a wish ⭐</option>
+
+                    </select>
+                    <br><br>
+
+                    <script>
+
+
+                        var currentJsFunction
+
+                        jsFunctions.addEventListener("change", jsFunction)
+
+                        jsFunction()
+
+                        function jsFunction() {
+                            currentJsFunction = jsFunctions.value
+                        }
+
+                    </script>
 
                     <button id="btnwrite">Write</button>
                     <button onclick="clearthing()">Clear</button>
@@ -288,28 +328,97 @@
                     <script>
 
                         btnwrite.addEventListener("click", writething)
-                        
-                        btnwrite.addEventListener("dblclick", ()=> {document.write("helloooooo")})
+
+                        // DANGEROUS // btnwrite.addEventListener("dblclick", () => { document.write("helloooooo") })
 
                         function writething() {
-                            
-                            if (demo.getElementsByTagName("OL")[0] != undefined) {
-                               
-                                
-                                 demo.getElementsByTagName("OL")[0].innerHTML += "<li>Hola mundo</li>"
-                                 demo.innerHTML = "<pre>" + JSON.stringify(document, null, "<br>") + "</pre>"
+
+                            if (currentJsFunction == "write document") {
+
+
+                                demo.innerHTML = "" + JSON.stringify(document, null, "<br>") + ""
+
+
                             }
-                            
-                            else {
-                                demo.appendChild(document.createElement("OL"))
-                                demo.getElementsByTagName("OL")[0].innerHTML += "<li>Hola mundo</li>"
-                                
+
+                            if (currentJsFunction == "make list") {
+                                if (demo.getElementsByTagName("OL")[0] != undefined) {
+
+
+                                    demo.getElementsByTagName("OL")[0].innerHTML += "<li>Hola mundo</li>"
+
+                                }
+
+                                else {
+                                    demo.appendChild(document.createElement("OL"))
+                                    demo.getElementsByTagName("OL")[0].innerHTML += "<li>Hola mundo</li>"
+
+                                }
                             }
+
+                            if (currentJsFunction == "window open") {
+
+                                //window.open("https://dibesfer.com", "_blank", "width=600,height=600,toolbar=no,scrollbars=no,resizable=no")
+
+                                popupWindow()
+
+                                // sustituye la pagina actual con la siguiente
+                                // window.open("https://dibesfer.com","_self", "width=600,height=600")
+                            }
+
+                            if (currentJsFunction =="make a wish"){
+
+                                demo.textContent = "count to three..."
+                                setTimeout(()=> { demo.innerHTML += "<br>come with me, and you'll be... <br>in a World of Pure Imagination :)"; setTimeout(()=> { demo.innerHTML += "<br>if you wanna be in paradise,<br> simply look around and view it :)"} , 3000)} , 3000)
+                            }
+
+                            if (currentJsFunction == "say hello"){
+                                hello(demo, "Hello muthafucka")
+                            }
+
+                            
+                            function popupWindow() {
+                                const myWindow = window.open("", "", "width=300,height=300");
+
+                                myWindow.document.write(`
+                                <p>This is 'MsgWindow'. I am 200px wide and 100px tall!</p>
+                                <button onclick='window.close()'>close</button>
+
+                                `);
+
+
+                                // HIGHLY EXPERIMENTAL
+                                // COMMUNICATING ORIGIN WINDOW TO NEW WINDOW
+
+                                // var myscript = myWindow.document.createElement("script")
+
+                                // myscript.textContent = `
+
+                                // alert("hello world")
+
+                                // `
+                                var myp = myWindow.document.createElement("p")
+                                var oldwindow = myWindow.opener.document
+                                myp.textContent = " holaaaaaaa caracolaaaaa "
+
+                                myWindow.document.body.appendChild(myp)
+                                //myWindow.document.body.appendChild(myscript)
+
+                                myWindow.opener.document.getElementById("demo").innerHTML = "I opened a pop up window!!";
+                            }
+
+                            
+
+
                         }
 
                         function clearthing() {
                             if (confirm("are you ready?"))
                                 demo.innerHTML = ""
+                        }
+
+                        function hello(where, what){
+                            where.textContent = what
                         }
 
 
@@ -318,7 +427,7 @@
 
                 <label for="">localStorage "name"</label><br>
                 <input type="text" name="" id="inputName"><br>
-                <button onclick="localStorage.setItem('name', inputName.value)">Save</button> 
+                <button onclick="localStorage.setItem('name', inputName.value)">Save</button>
                 <button onclick="alert(localStorage.getItem('name'))">Read</button><br>
 
                 <button onclick="setTimeout(function(){alert('hola mundo')},3000)">Temp</button>
@@ -725,6 +834,8 @@
 
     </div>
     <script>
+
+
         var elem = document.documentElement;
 
         var fullmode = false
@@ -814,7 +925,7 @@
 
         const fpsDisplay = document.createElement('div');
         fpsDisplay.style.position = 'fixed';
-        fpsDisplay.style.top = '10px';
+        fpsDisplay.style.bottom = '70px';
         fpsDisplay.style.right = '10px';
         fpsDisplay.style.backgroundColor = 'black';
         fpsDisplay.style.color = 'lime';
