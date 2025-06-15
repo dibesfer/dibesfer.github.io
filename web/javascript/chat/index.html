@@ -24,7 +24,7 @@
             padding: 0 15px;
             box-shadow: inset 0 0 15px black;
             word-wrap: break-word;
-   
+
             /* hyphens: auto; */
         }
 
@@ -36,6 +36,8 @@
         .displayAuthor {
             font-weight: bold;
         }
+
+        
     </style>
 
 
@@ -50,10 +52,12 @@
     </div>
     <div id="userInputDiv">
 
-        <input placeholder="Juanito" type="text" name="usernameInput" id="usernameInput" maxlength="10">
-        <input placeholder="Esto, guau..." type="text" name="chatInput" id="userInput" maxlength="140">
-        <input type="button" name="" id="chatSendBtn" value="Send">
-        <div id="chatInputAdvice"></div>
+        <form id="chatForm">
+            <input required placeholder="Juanito" type="text" name="usernameInput" id="usernameInput" maxlength="10">
+            <input required placeholder="Esto, guau..." type="text" name="chatInput" id="userInput" maxlength="140">
+            <input type="submit" name="" id="chatSendBtn" value="Send">
+            <div id="chatInputAdvice"></div>
+        </form>
 
     </div>
 
@@ -89,10 +93,10 @@
             parahraphMsg.title = time
             let myTime = document.createElement("span")
             myTime.classList = "displayTime"
-            myTime.textContent = clockFormat(time) + " "
+            myTime.textContent = clockFormat(time) 
             let myAuthor = document.createElement("span")
             myAuthor.classList = "displayAuthor"
-            myAuthor.textContent = author
+            myAuthor.textContent = " " + author
             let myMessage = document.createElement("span")
             myMessage.textContent = ": " + message
             parahraphMsg.appendChild(myTime)
@@ -175,9 +179,11 @@
          */
 
 
-        chatSendBtn.addEventListener("click", sendMessage)
+        chatForm.addEventListener("submit", sendMessage)
 
-        async function sendMessage() {
+        async function sendMessage(e) {
+
+            e.preventDefault()
             //Get parameters
             let myAuthor = usernameInput.value
             let myMessage = userInput.value
@@ -195,10 +201,14 @@
                             //username: param1.split("@")[0]
                         },
                     ]).select()
+
+                userInput.value = ""
             }
 
             else {
+                chatInputAdvice.style.color = "red"
                 chatInputAdvice.textContent = "You can't send an empty message"
+
             }
             //getResources("visits", "dibesfer")
         }
