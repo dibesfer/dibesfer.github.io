@@ -36,8 +36,6 @@
         .displayAuthor {
             font-weight: bold;
         }
-
-        
     </style>
 
 
@@ -65,14 +63,15 @@
 
     <div id="signInDiv">
 
+        <div id="signInAdvice"></div>
         <label for="userEmail">
             Email:
         </label>
         <input type="email" name="userEmail" id="userEmail"><br>
         <label for="userPass">Password:</label>
-        <input type="password" name="userPass" id="userPass">
-        <input type="button" value="Sign in">
-        <input type="button" value="Log in">
+        <input type="password" name="userPass" id="userPass"><br>
+        <input type="button" value="Check in" id="checkIn">
+
     </div>
 
     <script>
@@ -94,6 +93,44 @@
             localVisitsDisplay.textContent = localVisits
         }
 
+
+        async function signUp() {
+            let { data, error } = await database.auth.signUp({
+                email: 'dibesfer@gmail.com',
+                password: '123456'
+
+            })
+
+            console.log(data)
+            console.log(error)
+        }
+        //signUp()
+
+        async function logIn() {
+            let { data, error } = await database.auth.signInWithPassword({
+                email: 'dibesfer@gmail.com',
+                password: '123456'
+            })
+            console.log(data)
+            console.log(error)
+        }
+        //logIn()
+
+        //logIn()
+
+        async function getUser() {
+            const { data: { user } } = await database.auth.getUser()
+            console.log(user)
+            signInAdvice.textContent = "You are logged as " + user.email.split("@")
+        }
+        //getUser()
+
+        async function magicLink() {
+            let { data, error } = await database.auth.signInWithOtp({
+                email: 'dibesfer@gmail.com'
+            })
+        }
+        //magicLink()
         //REALTIME 
         // Create a function to handle inserts
         const handleInserts = (payload) => {
@@ -107,7 +144,7 @@
             parahraphMsg.title = time
             let myTime = document.createElement("span")
             myTime.classList = "displayTime"
-            myTime.textContent = clockFormat(time) 
+            myTime.textContent = clockFormat(time)
             let myAuthor = document.createElement("span")
             myAuthor.classList = "displayAuthor"
             myAuthor.textContent = " " + author
@@ -193,6 +230,11 @@
          */
 
 
+        async function signLogIn(){
+            
+        }
+
+         checkIn.addEventListener("click",signLogIn)
         chatForm.addEventListener("submit", sendMessage)
 
         async function sendMessage(e) {
