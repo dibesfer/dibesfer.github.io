@@ -13,10 +13,28 @@
 
 
     <style>
+        body {
+            font-family: Verdana, Geneva, Tahoma, sans-serif;
+        }
+
         #chatScreen {
             background-color: rgb(210, 210, 255);
             height: 400px;
             overflow: auto;
+            padding: 0 15px;
+            box-shadow: inset 0 0 15px black;
+            word-wrap: break-word;
+   
+            /* hyphens: auto; */
+        }
+
+        .displayTime {
+            font-family: monospace;
+            font-size: large;
+        }
+
+        .displayAuthor {
+            font-weight: bold;
         }
     </style>
 
@@ -28,14 +46,15 @@
     <h1>Chat</h1>
     <div id="chatScreen">
 
-        <p>17:52:26 dibesfer: ¡Hola Mundo! Hello World!</p>
+
     </div>
     <div id="userInputDiv">
-        <form action="#" id="chatForm">
-            <input type="text" name="usernameInput" id="usernameInput">
-            <input type="text" name="chatInput" id="userInput">
-            <input type="submit" name="" id="" value="Send">
-        </form>
+
+        <input placeholder="Juanito" type="text" name="usernameInput" id="usernameInput" maxlength="10">
+        <input placeholder="Esto, guau..." type="text" name="chatInput" id="userInput" maxlength="140">
+        <input type="button" name="" id="chatSendBtn" value="Send">
+        <div id="chatInputAdvice"></div>
+
     </div>
 
     <script>
@@ -65,6 +84,24 @@
             //getOnlyResources("chat", "dibesfer")
         }
 
+        function createMsg(time, author, message) {
+            let parahraphMsg = document.createElement("p")
+            parahraphMsg.title = time
+            let myTime = document.createElement("span")
+            myTime.classList = "displayTime"
+            myTime.textContent = clockFormat(time) + " "
+            let myAuthor = document.createElement("span")
+            myAuthor.classList = "displayAuthor"
+            myAuthor.textContent = author
+            let myMessage = document.createElement("span")
+            myMessage.textContent = ": " + message
+            parahraphMsg.appendChild(myTime)
+            parahraphMsg.appendChild(myAuthor)
+            parahraphMsg.appendChild(myMessage)
+            chatScreen.appendChild(parahraphMsg)
+        }
+
+
         function getOnlyLastMessage(newInsert) {
 
             let myTime = new Date(newInsert.created_at)
@@ -73,24 +110,21 @@
 
                 newInsert.forEach(element => {
                     myTime = new Date(element.created_at)
-                    chatScreen.innerHTML += `
-                
-                    <p title="${myTime}"><span class="displayTime">${clockFormat(myTime)}</span> <span><b>${element.author}</b>: </span><span>${element.message}</span></p>
+                    createMsg(myTime, element.author, element.message)
 
-                    `
                 });
-
-
 
             }
 
             else {
 
-                chatScreen.innerHTML += `
-                
-                    <p title="${myTime}"><span class="displayTime">${clockFormat(myTime)}</span> <span><b>${newInsert.author}</b>: </span><span>${newInsert.message}</span></p>
+                createMsg(myTime, newInsert.author, newInsert.message)
 
-                    `
+                // chatScreen.innerHTML += `
+
+                //     <p title="${myTime}"><span class="displayTime">${clockFormat(myTime)}</span> <span><b>${newInsert.author}</b>: </span><span>${newInsert.message}</span></p>
+
+                //     `
 
 
             }
@@ -141,28 +175,31 @@
          */
 
 
-        chatForm.addEventListener("submit", sendMessage)
+        chatSendBtn.addEventListener("click", sendMessage)
 
         async function sendMessage() {
-
-
             //Get parameters
             let myAuthor = usernameInput.value
             let myMessage = userInput.value
 
+            if (myAuthor && myMessage) {
 
-            const { data, error } = await database
-                .from("chat")
-                .insert([
-                    {
-                        author: myAuthor,
-                        message: myMessage
-                        //url: window.location.href
-                        //email: param1,
-                        //username: param1.split("@")[0]
-                    },
-                ]).select()
-            alert("msg sent!")
+                const { data, error } = await database
+                    .from("chat")
+                    .insert([
+                        {
+                            author: myAuthor,
+                            message: myMessage
+                            //url: window.location.href
+                            //email: param1,
+                            //username: param1.split("@")[0]
+                        },
+                    ]).select()
+            }
+
+            else {
+                chatInputAdvice.textContent = "You can't send an empty message"
+            }
             //getResources("visits", "dibesfer")
         }
 
@@ -210,14 +247,9 @@
             console.log(result)
             result.forEach(element => {
                 let myTime = new Date(element.created_at)
-
-
-                chatScreen.innerHTML += `
-                
-                <p title="${myTime}"><span class="displayTime">${clockFormat(myTime)}</span> <span><b>${element.author}</b>: </span><span>${element.message}</span></p>
-
-                `
+                createMsg(myTime, element.author, element.message)
             });
+
             chatScreen.scrollTo(0, chatScreen.scrollHeight)
             // console.log(result)
             // //currentVisits++
