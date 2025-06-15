@@ -1,34 +1,43 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>dbf chat</title>
+    <link rel="icon" type="image/x-icon" href="/branding/favicon.ico">
+
+
+    <!-- SUPABASE cdn -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+
 
     <style>
-
         #chatScreen {
             background-color: rgb(210, 210, 255);
             height: 400px;
+            overflow: auto;
         }
-
     </style>
+
+
+
 </head>
+
 <body>
     <h1>Chat</h1>
     <div id="chatScreen">
 
-        <p>Example Message</p>
-        <p>17:52:26 Carlos157: Hola chicos, alguien me puede pasar los apuntes por correo?</p>
-        <p>18:20:11 Luisa176: Si, te los paso en un momento :)</p>
+        <p>17:52:26 dibesfer: ¡Hola Mundo! Hello World!</p>
     </div>
     <div id="userInputDiv">
-        <form action="#">
-        <input type="text" name="chatInput" id="userInput">
-        <input type="submit" name="" id="" value="Send">
-    </form>
+        <form action="#" id="chatForm">
+            <input type="text" name="usernameInput" id="usernameInput">
+            <input type="text" name="chatInput" id="userInput">
+            <input type="submit" name="" id="" value="Send">
+        </form>
     </div>
-    
+
     <script>
         const supabaseUrl = 'https://qugihsopwjemzakhrbvw.supabase.co'
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF1Z2loc29wd2plbXpha2hyYnZ3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE2OTg0OTQxMDksImV4cCI6MjAxNDA3MDEwOX0.1q5fBic1cjueaiP2-p6W19C68ye8FTPLFne2a-fKwZ8'
@@ -52,8 +61,42 @@
         // Create a function to handle inserts
         const handleInserts = (payload) => {
             //console.log('Change received!', payload)
-            alert("someone has written a message")
+            getOnlyLastMessage(payload.new)
             //getOnlyResources("chat", "dibesfer")
+        }
+
+        function getOnlyLastMessage(newInsert) {
+
+            let myTime = new Date(newInsert.created_at)
+
+            if (newInsert.length) {
+
+                newInsert.forEach(element => {
+                    myTime = new Date(element.created_at)
+                    chatScreen.innerHTML += `
+                
+                    <p title="${myTime}"><span class="displayTime">${clockFormat(myTime)}</span> <span><b>${element.author}</b>: </span><span>${element.message}</span></p>
+
+                    `
+                });
+
+
+
+            }
+
+            else {
+
+                chatScreen.innerHTML += `
+                
+                    <p title="${myTime}"><span class="displayTime">${clockFormat(myTime)}</span> <span><b>${newInsert.author}</b>: </span><span>${newInsert.message}</span></p>
+
+                    `
+
+
+            }
+
+            chatScreen.scrollTo(0, chatScreen.scrollHeight)
+
         }
 
         // Listen to inserts
@@ -97,6 +140,32 @@
             //console.log('Thanks for visiting this site from ' + document.referrer);
          */
 
+
+        chatForm.addEventListener("submit", sendMessage)
+
+        async function sendMessage() {
+
+
+            //Get parameters
+            let myAuthor = usernameInput.value
+            let myMessage = userInput.value
+
+
+            const { data, error } = await database
+                .from("chat")
+                .insert([
+                    {
+                        author: myAuthor,
+                        message: myMessage
+                        //url: window.location.href
+                        //email: param1,
+                        //username: param1.split("@")[0]
+                    },
+                ]).select()
+            alert("msg sent!")
+            //getResources("visits", "dibesfer")
+        }
+
         async function insertResources(tableName) {
             const { data, error } = await database
                 .from(tableName)
@@ -112,7 +181,10 @@
 
             //getResources("visits", "dibesfer")
         }
-        insertResources("chat")
+
+
+        // INITIALIZE 
+        //insertResources("chat")
 
 
 
@@ -129,6 +201,68 @@
         //insertResources("visits")
         //getResources("visits", "dibesfer")
         var currentVisits = 0
+
+        async function getFullTable(tableName) {
+
+            const res = await database.from(tableName).select("*")//.range(3000,5000)
+            //console.log(res.data[0].dibesfer)
+            let result = res.data
+            console.log(result)
+            result.forEach(element => {
+                let myTime = new Date(element.created_at)
+
+
+                chatScreen.innerHTML += `
+                
+                <p title="${myTime}"><span class="displayTime">${clockFormat(myTime)}</span> <span><b>${element.author}</b>: </span><span>${element.message}</span></p>
+
+                `
+            });
+            chatScreen.scrollTo(0, chatScreen.scrollHeight)
+            // console.log(result)
+            // //currentVisits++
+            // //insertResources("visits")
+            // if (res.data[0] != undefined) {
+
+            //     chatScreen.textContent = result
+            // }
+        }
+        getFullTable("chat")
+
+
+        function needsazero(number) {
+            let result
+
+            if (number < 10) {
+                result = "0" + number
+                return result
+            }
+            return number
+        }
+
+
+
+
+
+
+        function clockFormat(time) {
+
+            let hours
+            let minutes
+            let seconds
+
+            hours = time.getHours()
+            minutes = time.getMinutes()
+            seconds = time.getSeconds()
+
+            hours = needsazero(hours)
+            minutes = needsazero(minutes)
+            seconds = needsazero(seconds)
+
+            return hours + ":" + minutes + ":" + seconds
+
+        }
+
         async function getResources(tableName, rowName) {
             const res = await database.from(tableName).select(rowName)//.range(3000,5000)
             //console.log(res.data[0].dibesfer)
@@ -153,4 +287,5 @@
 
     </script>
 </body>
+
 </html>
