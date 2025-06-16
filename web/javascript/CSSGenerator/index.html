@@ -37,10 +37,17 @@
 
             height: 50%;
             border: solid 3px black;
-            padding: 10px;
+            overflow: auto;
+
+        }
+
+        #flexContainer>div>h3 {
+            background-color: gray;
+
         }
 
         #displayDiv {
+            width: 100%;
             flex: 100%;
             overflow: auto;
         }
@@ -53,13 +60,19 @@
         }
 
         #cssOptions {
-            
+
+            width: 50%;
             flex: 50%;
 
         }
 
         #cssCode {
+            width: 50%;
             flex: 50%;
+        }
+
+        .padded {
+            padding: 15px;
         }
     </style>
 
@@ -71,53 +84,62 @@
     </header>
     <div id="flexContainer">
         <div id="displayDiv">
-            <div id="displayDivExample">
-                TEXT
+            <h3>#displayDivExample</h3>
+            <div class="padded">
+                <div id="displayDivExample">
+                    TEXT
+                </div>
             </div>
         </div>
         <div id="cssOptions">
-            <label for="cssWidth">Width</label>
-            <input type="range" name="" id="inputWidth" min="0" max="500">
-            <select name="" id="">
-                <option value="px">px</option>
-                <option value="%">%</option>
-                <option value="vw">vw</option>
-            </select>
+            <h3>CSS Options</h3>
+            <div class="padded">
+                <label for="cssWidth">Width</label>
+                <input type="range" name="" id="inputWidth" min="0" max="500">
+                <select name="" id="">
+                    <option value="px">px</option>
+                    <option value="%">%</option>
+                    <option value="vw">vw</option>
+                </select>
 
-            <br>
-            <label for="cssHeight">Height</label>
-            <input type="number" name="cssHeight" id="inputHeight">
-            <select name="" id="">
-                <option value="px">px</option>
-            </select>
+                <br>
+                <label for="cssHeight">Height</label>
+                <input type="number" name="cssHeight" id="inputHeight">
+                <select name="" id="">
+                    <option value="px">px</option>
+                </select>
 
-            <br>
-            <label for="cssBgColor">Background color</label>
-            <input type="color" name="" id="inputBgColor" value="#ffffff">
+                <br>
+                <label for="cssBgColor">Background color</label>
+                <input type="color" name="" id="inputBgColor" value="#ffffff">
 
-            <br>
-            <label for="cssColor">Text color</label>
-            <input type="color" name="" id="inputColor" value="#000000">
+                <br>
+                <label for="cssColor">Text color</label>
+                <input type="color" name="" id="inputColor" value="#000000">
 
-            <br>
-            <label for="htmlText">Text</label>
-            <input type="text" name="" id="inputText">
+                <br>
+                <label for="htmlText">Text</label>
+                <input type="text" name="" id="inputText">
 
-            <br>
-            <label for="cssBorder">Border</label>
-            <input type="range" name="cssBorder" id="inputBorderSize" min="0" max="30" value="#000000">
-            <input type="color" name="cssBorder" id="inputBorderColor">
+                <br>
+                <label for="cssBorder">Border</label>
+                <input type="range" name="cssBorder" id="inputBorderSize" min="0" max="30" value="#000000">
+                <input type="color" name="cssBorder" id="inputBorderColor">
 
 
+            </div>
         </div>
         <div id="cssCode">
-            <pre>
+            <h3>CSS Output</h3>
+            <div class="padded">
+                <pre id="cssCodeOutput">
 #displayDivExample {
     border: solid 3px black;
     padding: 10px;
     width: 20px;
 }
             </pre>
+            </div>
         </div>
     </div>
 
@@ -125,6 +147,7 @@
 
         let myDiv = document.getElementById("displayDivExample")
         let cssCode = document.getElementById("cssCode")
+        let cssCodeOutput = document.getElementById("cssCodeOutput")
         let inputWidth = document.getElementById("inputWidth")
         let inputHeight = document.getElementById("inputHeight")
         let inputBgColor = document.getElementById("inputBgColor")
@@ -141,42 +164,46 @@
         inputBorderSize.addEventListener("input", changeBorderSize)
         inputBorderColor.addEventListener("input", changeBorderColor)
 
-        function changeWidth(){
+        function changeWidth() {
             myDiv.style.width = this.value + "px"
+            writeCode()
         }
 
-        function changeHeight(){
+        function changeHeight() {
             myDiv.style.height = this.value + "px"
+            writeCode()
         }
 
-        function changeBgColor(){
+        function changeBgColor() {
             myDiv.style.backgroundColor = this.value
+            writeCode()
         }
 
-        function changeColor(){
+        function changeColor() {
             myDiv.style.color = this.value
+            writeCode()
         }
 
-        function changeText(){
+        function changeText() {
             myDiv.textContent = this.value
+            writeCode()
         }
 
-        function changeBorderSize(){
-            myDiv.style.borderWidth = this.value + "px"   
-             writeCode() 
+        function changeBorderSize() {
+            myDiv.style.borderWidth = this.value + "px"
+            writeCode()
         }
 
-        function changeBorderColor(){
+        function changeBorderColor() {
             myDiv.style.borderColor = this.value
-           
+            writeCode()
         }
 
-        function writeCode(){
-            cssCode.textContent = "border-width: " + myDiv.style.borderWidth
-            console.log()
+        function writeCode() {
+            cssCodeOutput.textContent = "#displayDivExample {\n    " + myDiv.style.cssText.replaceAll("; ", "\n    ") + "\n}"
         }
         writeCode()
-        
+
 
 
     </script>
