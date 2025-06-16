@@ -89,7 +89,7 @@
             <div class="padded">
                 <label for="cssWidth">Width</label>
                 <input type="range" name="" id="inputWidth" min="0" max="500" value="100">
-                <select name="" id="">
+                <select name="" id="inputWidthUnit">
                     <option value="px">px</option>
                     <option value="%">%</option>
                     <option value="vw">vw</option>
@@ -98,8 +98,10 @@
                 <br>
                 <label for="cssHeight">Height</label>
                 <input type="number" name="cssHeight" id="inputHeight" value="0">
-                <select name="" id="">
+                <select name="" id="inputHeightUnit">
                     <option value="px">px</option>
+                    <option value="%">%</option>
+                    <option value="vw">vw</option>
                 </select>
 
                 <br>
@@ -144,6 +146,8 @@
         let inputText = document.getElementById("inputText")
         let inputBorderSize = document.getElementById("inputBorderSize")
         let inputBorderColor = document.getElementById("inputBorderColor")
+        let inputWidthUnit = document.getElementById("inputWidthUnit")
+        let inputHeightUnit = document.getElementById("inputHeightUnit")
 
         inputWidth.addEventListener("input", changeWidth)
         inputHeight.addEventListener("input", changeHeight)
@@ -154,12 +158,12 @@
         inputBorderColor.addEventListener("input", changeBorderColor)
 
         function changeWidth() {
-            myDiv.style.width = this.value + "px"
+            myDiv.style.width = this.value + inputWidthUnit.value
             writeCode()
         }
 
         function changeHeight() {
-            myDiv.style.height = this.value + "px"
+            myDiv.style.height = this.value + inputHeightUnit.value
             writeCode()
         }
 
@@ -191,15 +195,15 @@
         function writeCode() {
             cssCodeOutput.textContent = "#displayDivExample {\n    " + myDiv.style.cssText.replaceAll("; ", "\n    ") + "\n}"
         }
-        
+
 
         myDiv.style = `
-                    border: solid 3px black;
+            border: solid 3px black;
             padding: 10px;
             width: 100px;
             overflow: auto;`
-            writeCode()
-
+        writeCode()
+        
     </script>
 
 </body>
