@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSS Generator</title>
+
+    <style>
+        * {
+            margin: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            height: 100dvh;
+            font-family: Verdana, Geneva, Tahoma, sans-serif;
+        }
+
+        header {
+            height: 10%;
+            align-content: center;
+            text-align: center;
+        }
+
+        input {
+            text-align: right;
+        }
+
+        #flexContainer {
+            display: flex;
+            flex-wrap: wrap;
+            height: 90%;
+        }
+
+        #flexContainer>div {
+
+            height: 50%;
+            border: solid 3px black;
+            padding: 10px;
+        }
+
+        #displayDiv {
+            flex: 100%;
+            overflow: auto;
+        }
+
+        #displayDivExample {
+            border: solid 3px black;
+            padding: 10px;
+            width: 100px;
+            overflow: auto;
+        }
+
+        #cssOptions {
+            
+            flex: 50%;
+
+        }
+
+        #cssCode {
+            flex: 50%;
+        }
+    </style>
+
+</head>
+
+<body>
+    <header>
+        <h1>CSS Generator</h1>
+    </header>
+    <div id="flexContainer">
+        <div id="displayDiv">
+            <div id="displayDivExample">
+                TEXT
+            </div>
+        </div>
+        <div id="cssOptions">
+            <label for="cssWidth">Width</label>
+            <input type="range" name="" id="inputWidth" min="0" max="500">
+            <select name="" id="">
+                <option value="px">px</option>
+                <option value="%">%</option>
+                <option value="vw">vw</option>
+            </select>
+
+            <br>
+            <label for="cssHeight">Height</label>
+            <input type="number" name="cssHeight" id="inputHeight">
+            <select name="" id="">
+                <option value="px">px</option>
+            </select>
+
+            <br>
+            <label for="cssBgColor">Background color</label>
+            <input type="color" name="" id="inputBgColor" value="#ffffff">
+
+            <br>
+            <label for="cssColor">Text color</label>
+            <input type="color" name="" id="inputColor" value="#000000">
+
+            <br>
+            <label for="htmlText">Text</label>
+            <input type="text" name="" id="inputText">
+
+            <br>
+            <label for="cssBorder">Border</label>
+            <input type="range" name="cssBorder" id="inputBorderSize" min="0" max="30" value="#000000">
+            <input type="color" name="cssBorder" id="inputBorderColor">
+
+
+        </div>
+        <div id="cssCode">
+            <pre>
+#displayDivExample {
+    border: solid 3px black;
+    padding: 10px;
+    width: 20px;
+}
+            </pre>
+        </div>
+    </div>
+
+    <script>
+
+        let myDiv = document.getElementById("displayDivExample")
+        let cssCode = document.getElementById("cssCode")
+        let inputWidth = document.getElementById("inputWidth")
+        let inputHeight = document.getElementById("inputHeight")
+        let inputBgColor = document.getElementById("inputBgColor")
+        let inputColor = document.getElementById("inputColor")
+        let inputText = document.getElementById("inputText")
+        let inputBorderSize = document.getElementById("inputBorderSize")
+        let inputBorderColor = document.getElementById("inputBorderColor")
+
+        inputWidth.addEventListener("input", changeWidth)
+        inputHeight.addEventListener("input", changeHeight)
+        inputBgColor.addEventListener("input", changeBgColor)
+        inputColor.addEventListener("input", changeColor)
+        inputText.addEventListener("input", changeText)
+        inputBorderSize.addEventListener("input", changeBorderSize)
+        inputBorderColor.addEventListener("input", changeBorderColor)
+
+        function changeWidth(){
+            myDiv.style.width = this.value + "px"
+        }
+
+        function changeHeight(){
+            myDiv.style.height = this.value + "px"
+        }
+
+        function changeBgColor(){
+            myDiv.style.backgroundColor = this.value
+        }
+
+        function changeColor(){
+            myDiv.style.color = this.value
+        }
+
+        function changeText(){
+            myDiv.textContent = this.value
+        }
+
+        function changeBorderSize(){
+            myDiv.style.borderWidth = this.value + "px"   
+             writeCode() 
+        }
+
+        function changeBorderColor(){
+            myDiv.style.borderColor = this.value
+           
+        }
+
+        function writeCode(){
+            cssCode.textContent = "border-width: " + myDiv.style.borderWidth
+            console.log()
+        }
+        writeCode()
+        
+
+
+    </script>
+
+</body>
+
+</html>
