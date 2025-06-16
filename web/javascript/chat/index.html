@@ -97,8 +97,8 @@
         async function signUp() {
             let { data, error } = await database.auth.signUp({
                 email: 'dibesfer@gmail.com',
-                password: '123456'
-
+                password: '123456',
+                options: {    redirectTo: "https://dibesfer.com/web/"  },
             })
 
             console.log(data)
@@ -231,7 +231,7 @@
 
 
         async function signLogIn(){
-            //signUp()
+            signUp()
         }
 
         checkIn.addEventListener("click",signLogIn)
@@ -310,7 +310,10 @@
             const res = await database.from(tableName).select("*")//.range(3000,5000)
             //console.log(res.data[0].dibesfer)
             let result = res.data
+
+            //RECIEVED DATA
             console.log(result)
+
             result.forEach(element => {
                 let myTime = new Date(element.created_at)
                 createMsg(myTime, element.author, element.message)
