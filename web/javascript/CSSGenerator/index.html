@@ -39,7 +39,7 @@
             height: 50%;
             border: solid 1px black;
             overflow: auto;
-           
+
         }
 
         #flexContainer>div>h3 {
@@ -67,6 +67,31 @@
 
         }
 
+        #cssOptions>.padded {
+            width: 100%
+        }
+
+        .inputContainer {
+            width: 100%;
+            display: flex;
+            margin-bottom: 15px;
+        }
+    
+        .inputContainer>label {
+            flex: 30%;
+            min-width: 30%;
+            overflow: auto;
+        }
+        .inputContainer>input {
+            flex: 70%;
+            width: 70%;
+        }
+
+        /* #cssOptions>.padded>input {
+            background-color: blue;
+            max-width: 80%;
+        } */
+
         #cssCode {
             width: 50%;
             flex: 50%;
@@ -74,7 +99,7 @@
         }
 
         .padded {
-             box-shadow: inset 0 0 5px black;
+            box-shadow: inset 0 0 5px black;
             padding: 15px;
             height: 90%;
         }
@@ -98,39 +123,53 @@
         <div id="cssOptions">
             <h3>CSS Options</h3>
             <div class="padded">
-                <label for="cssWidth">Width</label>
-                <input type="range" name="" id="inputWidth" min="0" max="500" value="100">
-                <select name="" id="inputWidthUnit">
-                    <option value="px">px</option>
-                    <option value="%">%</option>
-                    <option value="vw">vw</option>
-                </select>
 
-                <br>
-                <label for="cssHeight">Height</label>
-                <input type="number" name="cssHeight" id="inputHeight" value="0">
-                <select name="" id="inputHeightUnit">
-                    <option value="px">px</option>
-                    <option value="%">%</option>
-                    <option value="vw">vw</option>
-                </select>
+                <div class="inputContainer">
+                    <label for="cssWidth">Width</label>
+                    <input type="range" name="" id="inputWidth" min="0" max="500" value="100">
+                    <select name="" id="inputWidthUnit">
+                        <option value="px">px</option>
+                        <option value="%">%</option>
+                        <option value="vw">vw</option>
+                    </select>
+                </div>
 
-                <br>
-                <label for="cssBgColor">Background color</label>
-                <input type="color" name="" id="inputBgColor" value="#ffffff">
 
-                <br>
-                <label for="cssColor">Text color</label>
-                <input type="color" name="" id="inputColor" value="#000000">
+                <div class="inputContainer">
+                    
+                    <label for="cssHeight">Height</label>
+                    <input type="number" name="cssHeight" id="inputHeight" value="0">
+                    <select name="" id="inputHeightUnit">
+                        <option value="px">px</option>
+                        <option value="%">%</option>
+                        <option value="vw">vw</option>
+                    </select>
+                </div>
 
-                <br>
-                <label for="htmlText">Text</label>
-                <input type="text" name="" id="inputText" value="TEXT">
+                <div class="inputContainer">
+                    
+                    <label for="cssBgColor">BG color</label>
+                    <input type="color" name="" id="inputBgColor" value="#ffffff">
+                </div>
 
-                <br>
-                <label for="cssBorder">Border</label>
-                <input type="range" name="cssBorder" id="inputBorderSize" min="0" max="30" value="3">
-                <input type="color" name="cssBorder" id="inputBorderColor">
+                <div class="inputContainer">
+                    
+                    <label for="cssColor">Text color</label>
+                    <input type="color" name="" id="inputColor" value="#000000">
+                </div>
+
+                <div class="inputContainer">
+                    
+                    <label for="htmlText">Text</label>
+                    <input type="text" name="" id="inputText" value="TEXT">
+                </div>
+
+                <div class="inputContainer">
+                    
+                    <label for="cssBorder">Border</label>
+                    <input type="range" name="cssBorder" id="inputBorderSize" min="0" max="30" value="3">
+                    <input type="color" name="cssBorder" id="inputBorderColor">
+                </div>
 
 
             </div>
@@ -204,7 +243,7 @@
         }
 
         function writeCode() {
-            cssCodeOutput.textContent = "#displayDivExample {\n    " + myDiv.style.cssText.replaceAll("; ", "\n    ") + "\n}"
+            cssCodeOutput.textContent = "#displayDivExample {\n    " + myDiv.style.cssText.replaceAll("; ", ";\n    ") + "\n}"
         }
 
 
@@ -216,7 +255,7 @@
             background-color: #ffffff;
         `
         writeCode()
-        
+
     </script>
 
 </body>
