@@ -137,7 +137,8 @@
             clock.title = time
 
             // Super easy way
-            //clock.textContent = time.toLocaleTimeString()
+            //clock.textContent = time.toLocaleTimeString().padStart(8,"0")
+            
             
             setTimeout(clockTick,1000)
         }
