@@ -13,9 +13,10 @@
 
 
     <style>
-        *{
+        * {
             box-sizing: border-box;
         }
+
         body {
             font-family: Verdana, Geneva, Tahoma, sans-serif;
         }
@@ -40,7 +41,7 @@
             font-weight: bold;
         }
 
-        .flex3{
+        .flex3 {
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -51,7 +52,6 @@
         }
 
         
-
     </style>
 
 
@@ -70,7 +70,7 @@
             </div>
         </div>
     </div>
-    
+
     <div id="chatScreen">
 
 
@@ -79,9 +79,10 @@
 
         <form id="chatForm">
             <!-- <input required placeholder="Juanito" type="text" name="usernameInput" id="usernameInput" maxlength="10"> -->
-            <input style="width: 100%;" required placeholder="Esto, guau..." type="text" name="chatInput" id="userInput" maxlength="140">
+            <input style="width: 100%;" required placeholder="Esto, guau..." type="text" name="chatInput" id="userInput"
+                maxlength="140">
             <input type="submit" name="" id="chatSendBtn" value="Send">
-            
+
         </form>
         <div id="chatInputAdvice"></div>
 
@@ -91,13 +92,15 @@
 
     <div id="signInDiv">
 
-        <div id="signInAdvice"></div>
+        <div id="signInAdvice">You are anonymous</div>
         <label for="userEmail">
             Email:
         </label>
         <input type="email" name="userEmail" id="userEmail"><br>
         <label for="userPass">Password:</label>
         <input type="password" name="userPass" id="userPass"><br>
+        <input type="button" value="Sign up" id="signUpBtn">
+
         <input type="button" value="Check in" id="checkIn">
 
     </div>
@@ -111,6 +114,34 @@
         const userPass = document.getElementById("userPass")
         const userNameDisplay = document.getElementById("userNameDisplay")
         const logOutBtn = document.getElementById("logOutBtn")
+        const signInDiv = document.getElementById("signInDiv")
+        const signUpBtn = document.getElementById("signUpBtn")
+        
+        // IMPORTANT
+        
+
+        async function getUser() {
+            const { data: { user } } = await database.auth.getUser()
+            if (user) {
+                console.log(user)
+                signInAdvice.textContent = "You are logged as " + user.email.split("@")[0]
+                userNameDisplay.textContent = user.email.split("@")[0]
+                signInDiv.style.display = "none"
+                return user
+            }
+
+            else {
+                console.log("no user logged in")
+                return null
+            }
+
+
+
+        }
+        let myUser = getUser()
+        console.log(myUser)
+
+        signUpBtn.addEventListener("click", signUp)
 
         logOutBtn.addEventListener("click", logOut)
 
@@ -138,6 +169,7 @@
 
             console.log(data)
             console.log(error)
+            signInAdvice.textContent = error.message
         }
         //signUp()
 
@@ -148,27 +180,18 @@
             })
             console.log(data)
             console.log(error)
+            if (error) signInAdvice.textContent = error.message
             getUser()
+            location.reload()
             
         }
-        
-        async function logOut(){
+
+        async function logOut() {
             let { error } = await database.auth.signOut()
             location.reload()
         }
 
-        async function getUser() {
-            const { data: { user } } = await database.auth.getUser()
-            if (user){
-                console.log(user)
-                signInAdvice.textContent = "You are logged as " + user.email.split("@")[0]
-                userNameDisplay.textContent = user.email.split("@")[0]
-            }
-            
-            else console.log("no user logged in")
-            
-            }
-        getUser()
+        
 
         async function magicLink() {
             let { data, error } = await database.auth.signInWithOtp({
@@ -275,11 +298,11 @@
          */
 
 
-        async function signLogIn(){
+        async function signLogIn() {
             logIn()
         }
 
-        checkIn.addEventListener("click",signLogIn)
+        checkIn.addEventListener("click", signLogIn)
         chatForm.addEventListener("submit", sendMessage)
 
         async function sendMessage(e) {
@@ -287,6 +310,8 @@
             e.preventDefault()
             //Get parameters
             let myAuthor = "Anonymous"
+
+            // if (myUser) myAuthor = myUser.email.split("@")[0]
             let myMessage = userInput.value
 
             if (myAuthor && myMessage) {
