@@ -49,6 +49,9 @@
         #chatForm {
             display: flex;
         }
+
+        
+
     </style>
 
 
@@ -59,8 +62,12 @@
     <div class="flex3">
         <h1>Chat</h1>
         <div style="display: flex;">
-            <h3>Anonymous </h3>
-            <h3 style="color: rgb(221, 58, 58);">⮨Log Out⏻</h3>
+            <div>
+                <h3 id="userNameDisplay">Anonymous </h3>
+            </div>
+            <div>
+                <h3 id="logOutBtn" style="color: rgb(221, 58, 58);">⮨Log Out⏻</h3>
+            </div>
         </div>
     </div>
     
@@ -100,6 +107,13 @@
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF1Z2loc29wd2plbXpha2hyYnZ3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE2OTg0OTQxMDksImV4cCI6MjAxNDA3MDEwOX0.1q5fBic1cjueaiP2-p6W19C68ye8FTPLFne2a-fKwZ8'
         const database = supabase.createClient(supabaseUrl, supabaseKey)
 
+        const userEmail = document.getElementById("userEmail")
+        const userPass = document.getElementById("userPass")
+        const userNameDisplay = document.getElementById("userNameDisplay")
+        const logOutBtn = document.getElementById("logOutBtn")
+
+        logOutBtn.addEventListener("click", logOut)
+
         // var localVisits = localStorage.getItem("dibesferLocalVisits")
         // if (localVisits == null) {
         //   localVisits = 1
@@ -117,8 +131,8 @@
 
         async function signUp() {
             let { data, error } = await database.auth.signUp({
-                email: 'dibesfer@gmail.com',
-                password: '123456',
+                email: userEmail.value,
+                password: userPass.value,
                 // options: { redirectTo: "https://dibesfer.com/web/javascript/chat"  },
             })
 
@@ -129,21 +143,31 @@
 
         async function logIn() {
             let { data, error } = await database.auth.signInWithPassword({
-                email: 'dibesfer@gmail.com',
-                password: '123456'
+                email: userEmail.value,
+                password: userPass.value
             })
             console.log(data)
             console.log(error)
+            getUser()
+            
         }
-        //logIn()
-
-        //logIn()
+        
+        async function logOut(){
+            let { error } = await database.auth.signOut()
+            location.reload()
+        }
 
         async function getUser() {
             const { data: { user } } = await database.auth.getUser()
-            console.log(user)
-            signInAdvice.textContent = "You are logged as " + user.email.split("@")[0]
-        }
+            if (user){
+                console.log(user)
+                signInAdvice.textContent = "You are logged as " + user.email.split("@")[0]
+                userNameDisplay.textContent = user.email.split("@")[0]
+            }
+            
+            else console.log("no user logged in")
+            
+            }
         getUser()
 
         async function magicLink() {
