@@ -119,14 +119,16 @@
         
         // IMPORTANT
         
-
+        let myUser
         async function getUser() {
             const { data: { user } } = await database.auth.getUser()
             if (user) {
-                console.log(user)
+                console.log(user.email)
                 signInAdvice.textContent = "You are logged as " + user.email.split("@")[0]
                 userNameDisplay.textContent = user.email.split("@")[0]
                 signInDiv.style.display = "none"
+                myUser = user
+                console.log(myUser.email)
                 return user
             }
 
@@ -134,12 +136,10 @@
                 console.log("no user logged in")
                 return null
             }
-
-
-
         }
-        let myUser = getUser()
-        console.log(myUser)
+        getUser()
+        
+        //console.log(myUser)
 
         signUpBtn.addEventListener("click", signUp)
 
@@ -311,7 +311,7 @@
             //Get parameters
             let myAuthor = "Anonymous"
 
-            // if (myUser) myAuthor = myUser.email.split("@")[0]
+            if (myUser) myAuthor = myUser.email.split("@")[0]
             let myMessage = userInput.value
 
             if (myAuthor && myMessage) {
@@ -381,8 +381,8 @@
             //console.log(res.data[0].dibesfer)
             let result = res.data
 
-            //RECIEVED DATA
-            console.log(result)
+            //RECIEVED DATA SUPER IMPORTANT
+            //console.log(result)
 
             result.forEach(element => {
                 let myTime = new Date(element.created_at)
@@ -410,11 +410,6 @@
             }
             return number
         }
-
-
-
-
-
 
         function clockFormat(time) {
 
