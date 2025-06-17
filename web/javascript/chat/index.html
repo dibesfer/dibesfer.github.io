@@ -128,7 +128,7 @@
                 userNameDisplay.textContent = user.email.split("@")[0]
                 signInDiv.style.display = "none"
                 myUser = user
-                console.log(myUser.email)
+                console.log(myUser)
                 return user
             }
 
@@ -180,9 +180,15 @@
             })
             console.log(data)
             console.log(error)
-            if (error) signInAdvice.textContent = error.message
-            getUser()
-            location.reload()
+            if (error) {
+                signInAdvice.style.color = "red"
+                signInAdvice.textContent = error.message
+            } 
+            else {
+                getUser()
+                location.reload()
+            }
+            
             
         }
 
