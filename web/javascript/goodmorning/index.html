@@ -281,7 +281,7 @@
                 <p>7. String methods, toUpperCase() substr(0,4) indexOf("p",3)
                 </p>
                 <p>8. Calculadora de letra de DNI</p>
-                
+
                 <p>9. Fecha: let fecha = new Date(); </p>
                 <p>9.1. let fechaTexto = String(fecha)</p>
                 <p>10. Plantilla literal= `ejemplo ${fecha.getFullYear()}`</p>
@@ -334,15 +334,24 @@
                         <ol type="" start="0"></ol>
                     </div>
                     <script>
-                        
-                        function dnicalculate(){
-                                    let input = parseInt(dniinput.value )
-                                    let letters = "TRWAGMYFPDXBNJZSQVHLCKE"
-                                    
-                                    let result = input % 23
-                                    dnioutput.textContent = "Your DNI letter is " + letters[result]
+
+                        // DNI Validator
+                        function dnicalculate() {
+
+                            // X = 0 Y = 1 Z = 2
+                            let numberInput = parseInt(dniinput.value)
+
+                            let formattedInput = dniinput.value.trim()
+                            formattedInput = formattedInput.toUpperCase()
+
+                            let stringnumbers = formattedInput.substr(0, formattedInput.length - 1)
+                            let letter = formattedInput[formattedInput.length-1]
+                            let letters = "TRWAGMYFPDXBNJZSQVHLCKE"
+                            let result = numberInput % 23
+
+                            dnioutput.textContent = "Your DNI letter is " + letters[result] + " formatted input: " + formattedInput + " /" + formattedInput.length
                         }
-                        
+
                         btnwrite.addEventListener("click", writething)
 
                         // DANGEROUS // btnwrite.addEventListener("dblclick", () => { document.write("helloooooo") })
@@ -395,12 +404,12 @@
                                 hello(demo, "Hello muthafucka")
                             }
 
-                            
-                            if (currentJsFunction == "DNI letter"){
+
+                            if (currentJsFunction == "DNI letter") {
                                 //alert(48142634 % 23)
                                 //si es NIE (X = 0 , Y = 1  , Z = 2)
 
-                                
+
 
                                 demo.innerHTML = `
                                 

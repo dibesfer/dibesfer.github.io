@@ -13,6 +13,9 @@
 
 
     <style>
+        *{
+            box-sizing: border-box;
+        }
         body {
             font-family: Verdana, Geneva, Tahoma, sans-serif;
         }
@@ -36,6 +39,16 @@
         .displayAuthor {
             font-weight: bold;
         }
+
+        .flex3{
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        #chatForm {
+            display: flex;
+        }
     </style>
 
 
@@ -43,7 +56,14 @@
 </head>
 
 <body>
-    <h1>Chat</h1>
+    <div class="flex3">
+        <h1>Chat</h1>
+        <div style="display: flex;">
+            <h3>Anonymous </h3>
+            <h3 style="color: rgb(221, 58, 58);">⮨Log Out⏻</h3>
+        </div>
+    </div>
+    
     <div id="chatScreen">
 
 
@@ -51,11 +71,12 @@
     <div id="userInputDiv">
 
         <form id="chatForm">
-            <input required placeholder="Juanito" type="text" name="usernameInput" id="usernameInput" maxlength="10">
-            <input required placeholder="Esto, guau..." type="text" name="chatInput" id="userInput" maxlength="140">
+            <!-- <input required placeholder="Juanito" type="text" name="usernameInput" id="usernameInput" maxlength="10"> -->
+            <input style="width: 100%;" required placeholder="Esto, guau..." type="text" name="chatInput" id="userInput" maxlength="140">
             <input type="submit" name="" id="chatSendBtn" value="Send">
-            <div id="chatInputAdvice"></div>
+            
         </form>
+        <div id="chatInputAdvice"></div>
 
     </div>
 
@@ -98,7 +119,7 @@
             let { data, error } = await database.auth.signUp({
                 email: 'dibesfer@gmail.com',
                 password: '123456',
-                options: { redirectTo: "https://dibesfer.com/web/javascript/chat"  },
+                // options: { redirectTo: "https://dibesfer.com/web/javascript/chat"  },
             })
 
             console.log(data)
@@ -121,7 +142,7 @@
         async function getUser() {
             const { data: { user } } = await database.auth.getUser()
             console.log(user)
-            signInAdvice.textContent = "You are logged as " + user.email.split("@")
+            signInAdvice.textContent = "You are logged as " + user.email.split("@")[0]
         }
         getUser()
 
@@ -241,7 +262,7 @@
 
             e.preventDefault()
             //Get parameters
-            let myAuthor = usernameInput.value
+            let myAuthor = "Anonymous"
             let myMessage = userInput.value
 
             if (myAuthor && myMessage) {
