@@ -98,7 +98,7 @@
             let { data, error } = await database.auth.signUp({
                 email: 'dibesfer@gmail.com',
                 password: '123456',
-                options: {    redirectTo: "https://dibesfer.com/web/"  },
+                options: { redirectTo: "https://dibesfer.com/web/javascript/chat"  },
             })
 
             console.log(data)
@@ -123,7 +123,7 @@
             console.log(user)
             signInAdvice.textContent = "You are logged as " + user.email.split("@")
         }
-        //getUser()
+        getUser()
 
         async function magicLink() {
             let { data, error } = await database.auth.signInWithOtp({
@@ -231,7 +231,7 @@
 
 
         async function signLogIn(){
-            signUp()
+            logIn()
         }
 
         checkIn.addEventListener("click",signLogIn)
