@@ -14,26 +14,30 @@
 
     <style>
         * {
+            margin: 0;
             box-sizing: border-box;
         }
 
         body {
-            font-family: Verdana, Geneva, Tahoma, sans-serif;
+            line-height: 2;
+            font-size: x-large;
         }
 
         #chatScreen {
+
             background-color: rgb(210, 210, 255);
             height: 400px;
             overflow: auto;
             padding: 0 15px;
-            box-shadow: inset 0 0 15px black;
+            box-shadow: inset 0 0 10px black;
             word-wrap: break-word;
+
             /* hyphens: auto; */
         }
 
-        .displayTime {
-            font-family: monospace;
-            font-size: large;
+        #userInputDiv,
+        #chatScreen {
+            margin: 0 10px;
         }
 
         .displayAuthor {
@@ -44,12 +48,54 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            padding: 10px;
         }
 
         #chatForm {
             display: flex;
         }
 
+        label {
+            all: unset;
+            display: inline-block;
+            min-width: 10vw;
+            border: solid 3px red;
+        }
+
+        input {
+            all: unset;
+            border: solid 3px gray;
+            padding: 5px;
+            cursor: pointer;
+            min-width: 15%;
+            background-color: lightblue;
+            /* border-bottom-left-radius: 15px;        
+            border-bottom-right-radius: 15px; */
+        }
+
+        input:hover {
+            border: dashed 3px black;
+        }
+
+        .maxWidth {
+            width: 100%;
+        }
+
+        .minWidth {
+            max-width: 800px;
+            margin: auto;
+        }
+
+        #signInDiv {
+            background-color: gray;
+            border-radius: 15px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            max-width: 400px;
+        }
     </style>
 
 
@@ -86,17 +132,25 @@
 
     </div>
 
-    <hr>
 
-    <div id="signInDiv">
+    <br>
+    <div id="signInDiv" class="minWidth">
 
         <div id="signInAdvice">You are anonymous</div>
-        <label for="userEmail">
-            Email:
-        </label>
-        <input type="email" name="userEmail" id="userEmail"><br>
-        <label for="userPass">Password:</label>
-        <input type="password" name="userPass" id="userPass"><br>
+        <input type="button" style="background-color: blue; color: white" value="IDENTIFY">
+        <br>
+        <div>
+            <div>
+                <label for="userEmail">
+                    Email:
+                </label>
+                <input type="email" name="userEmail" id="userEmail"><br>
+            </div>
+            <div>
+                <label for="userPass">Password:</label>
+                <input type="password" name="userPass" id="userPass"><br>
+            </div>
+        </div>
         <input type="button" value="Sign up" id="signUpBtn">
 
         <input type="button" value="Check in" id="checkIn">
@@ -114,9 +168,9 @@
         const logOutBtn = document.getElementById("logOutBtn")
         const signInDiv = document.getElementById("signInDiv")
         const signUpBtn = document.getElementById("signUpBtn")
-        
+
         // IMPORTANT
-        
+
         let myUser
         async function getUser() {
             const { data: { user } } = await database.auth.getUser()
@@ -132,11 +186,12 @@
 
             else {
                 console.log("no user logged in")
+                logOutBtn.style.display = "none"
                 return null
             }
         }
         getUser()
-        
+
         //console.log(myUser)
 
         signUpBtn.addEventListener("click", signUp)
@@ -181,13 +236,13 @@
             if (error) {
                 signInAdvice.style.color = "red"
                 signInAdvice.textContent = error.message
-            } 
+            }
             else {
                 getUser()
                 location.reload()
             }
-            
-            
+
+
         }
 
         async function logOut() {
@@ -195,7 +250,7 @@
             location.reload()
         }
 
-        
+
 
         async function magicLink() {
             let { data, error } = await database.auth.signInWithOtp({
@@ -454,6 +509,39 @@
                 totalVisitsCounter.textContent = res.data[0].dibesfer
             }
         }
+
+        let myNewStyle = document.createElement("style")
+
+        myNewStyle.innerHTML = `
+
+        
+                @font-face {
+                font-family: UbuntuMono;
+                src: url(/assets/fonts/UbuntuMono-Regular.ttf);
+                }
+
+        body {
+        font-family: UbuntuMono;
+        font-size: large;
+
+                background-color: black;
+                color: white
+            }
+
+            #chatScreen {
+                background-color: black;
+                border: solid 3px white;
+            }
+
+            input {
+            
+                background-color: limegreen;
+                color: black;
+
+            }
+        
+        `
+        document.head.appendChild(myNewStyle)
 
     </script>
 </body>
