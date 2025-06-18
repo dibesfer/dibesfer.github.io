@@ -37,6 +37,28 @@
             padding: 5px;
             border: solid 3px lime;
         }
+
+        table {
+            width: 50%;
+            
+            background-color: rosybrown;
+            color: black;
+            border-collapse: collapse;
+            /* border-collapse: collapse; */
+        }
+        table > tbody > tr > td {
+            border: solid 5px rgb(255, 255, 255);
+            background-color: lightblue;
+            padding: 5px;
+            text-align: center;
+        }
+
+        table > tbody > tr > th {
+            border: solid 5px gray;
+            background-color: gold;
+            padding: 5px;
+            text-align: center;
+        }
     </style>
 </head>
 
@@ -44,7 +66,98 @@
     <h1>Arithmetic operators</h1>
     <p></p>
     <p>+ - * / %</p>
-    <p>= == != > >= < <=</p>
+    <!-- <p>= == != > >= < <=</p> -->
+
+            <label for="primoNumber">Es numero primo?</label>
+            <input type="number" id="primoNumberInput">
+            <button id="primoNumberBtn">Es primo?
+            </button>
+            <br>
+
+            <script>
+
+                let primoNumber = document.getElementById("primoNumber")
+                let primoNumberInput = document.getElementById("primoNumberInput")
+                let primoNumberBtn = document.getElementById("primoNumberBtn")
+
+                primoNumberBtn.addEventListener("click", isPrimeNumber)
+
+                function isPrimeNumber(){
+
+                    let num = primoNumberInput.value 
+                    let divisor =num-1
+                    let prime = true
+
+
+                    // console.log(`
+                    //     ${num} / ${divisor} = ${num/divisor} y da de resto ${num%divisor}
+                    //     `)
+
+                    for (let i = divisor; i > 1; i--) {
+                        console.log(`${num} / ${i} = ${num/i} y da de resto ${num%i}`)
+
+                        if (num%i != 0){
+                            prime = true
+                        }
+
+                        else {
+                            prime = false
+                            break;
+                        }
+                        
+                    }
+
+                    console.log("esPrimo: " + prime)
+
+                    // do {
+                    //     divisor = num-1
+                    //     divisor--
+                    //     console.log(divisor + "se puede divir por otros numeros" + num)
+                    // } while (num % divisor == 0)
+                    
+                }
+
+
+            </script>
+
+            <label for="tablasDeMultiplicar">Introduce un número:</label>
+            <input id="tablasDeMultiplicarInput" type="text">
+            <button id="tablasDeMultiplicarBtn">Multiplicar</button>
+            <br><br>
+            <table id="tablasDeMultiplicarTable">
+                
+            </table>
+
+            <script>
+
+                let tablasDeMultiplicarBtn = document.getElementById("tablasDeMultiplicarBtn")
+                let tablasDeMultiplicarInput = document.getElementById("tablasDeMultiplicarInput")
+                let tablasDeMultiplicarTable = document.getElementById("tablasDeMultiplicarTable")
+
+                tablasDeMultiplicarBtn.addEventListener("click", tablaDeMultiplicar)
+
+
+                function tablaDeMultiplicar(){
+                    let myNumber = tablasDeMultiplicarInput.value
+
+                    tablasDeMultiplicarTable.innerHTML = `
+                    <tr>
+                    <th>Operation</th>
+                    <th>Result</th>
+                    </tr>
+                    `
+
+                    for (let i = 1; i<=10; i++){
+                        tablasDeMultiplicarTable.innerHTML += `
+                        <tr>
+                            <td>${myNumber} x ${i} =</td>
+                            <td>${myNumber * i}</td>
+
+                        </tr>`
+                    }
+                }
+            </script>
+
             <label for="gradeCalc">Insert your grade:</label><br>
             <input id="gradeCalc" type="number">
             <button id="gradeCalcBtn">Calculate grade</button>
@@ -78,7 +191,7 @@
 
                 gradeCalcBtn.addEventListener("click", gradeCalculator)
 
-                function gradeCalculator(){
+                function gradeCalculator() {
                     if (gradeCalc.value < 5) {
                         gradeCalcOutput.textContent = "Insuficiente"
                     }
