@@ -69,6 +69,28 @@
     <p>+ - * / %</p>
     <!-- <p>= == != > >= < <=</p> -->
 
+
+    <label for="">Sacar valor</label>
+    <input type="text" name="" id=""><br>
+
+    <script>
+
+        arraydeprueba = [1,2,3]
+
+        alert(arraydeprueba)
+        arraydeprueba = takeValue(arraydeprueba, 3)
+        alert(arraydeprueba)
+        //ELIMINAR UN VALOR DE UN ARRAY
+        function takeValue(arr, valor)
+        {
+            const indice = arr.indexOf(valor)
+            if (indice != -1){
+                arr.splice(indice,1)
+            }
+            return arr
+        }
+    </script>
+
     <label for="primoNumber">Es numero primo?</label>
     <input type="number" id="primoNumberInput">
     <button id="primoNumberBtn">Es primo?
