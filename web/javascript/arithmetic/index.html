@@ -82,9 +82,9 @@
 
                 primoNumberBtn.addEventListener("click", isPrimeNumber)
 
-                function isPrimeNumber(){
+                function isPrimeNumber(num){
 
-                    let num = primoNumberInput.value 
+                    if (!num) num = primoNumberInput.value 
                     let divisor =num-1
                     let prime = true
 
@@ -108,6 +108,7 @@
                     }
 
                     console.log("esPrimo: " + prime)
+                    return prime
 
                     // do {
                     //     divisor = num-1
@@ -117,6 +118,17 @@
                     
                 }
 
+                function tellMeAPrimeNumber(){
+                    let number = prompt("Tell me a prime number:")
+
+
+                    while(number == "" || !isPrimeNumber(number)){
+                        number = prompt(number + " is not prime. \n Tell me a prime number:")
+                    }
+                    alert("Fine! You made it! " + number + " is prime!")
+                   
+                }
+                tellMeAPrimeNumber()
 
             </script>
 
