@@ -192,6 +192,50 @@
         }
         getUser()
 
+
+        async function getUsersTable() {
+
+            const res = await database.from("users").select("*").eq('email', 'dibesfer@gmail.com')//.range(3000,5000)
+            //console.log(res.data[0].dibesfer)
+            let result = res.data
+
+            if (result.length > 0){
+                //EMAIL ALREADY REGISTERED, LOG IN
+            }
+            else {
+                //ELSE, SIGN IN
+                const { data, error } = await database
+                    .from("users")
+                    .insert([
+                        {
+                            email: "dibesfer@gmail.com",
+        
+                        },
+                    ])
+                    .select()
+            }
+          
+
+            console.log(result)
+            //RECIEVED DATA SUPER IMPORTANT
+            //console.log(result)
+
+            //result.forEach(element => {
+                //let myTime = new Date(element.created_at)
+                //createMsg(myTime, element.author, element.message)
+            //});
+
+            //chatScreen.scrollTo(0, chatScreen.scrollHeight)
+            // console.log(result)
+            // //currentVisits++
+            // //insertResources("visits")
+            // if (res.data[0] != undefined) {
+
+            //     chatScreen.textContent = result
+            // }
+        }
+        //getUsersTable()
+
         //console.log(myUser)
 
         signUpBtn.addEventListener("click", signUp)
