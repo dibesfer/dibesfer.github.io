@@ -136,23 +136,29 @@
     <div id="signInDiv" class="minWidth">
 
         <div id="signInAdvice">You are anonymous</div>
-        <input type="button" style="background-color: blue; color: white" value="IDENTIFY">
-        <br>
-        <div>
+        <div id="signInMain" style="display: none;">
             <div>
-                <label for="userEmail">
-                    Email:
-                </label>
-                <input type="email" name="userEmail" id="userEmail"><br>
+                <div>
+                    <label for="userEmail">
+                        Email:
+                    </label>
+                    <input type="email" name="userEmail" id="userEmail"><br>
+                </div>
+                <div>
+                    <label for="userPass">Password:</label>
+                    <input type="password" name="userPass" id="userPass"><br>
+                </div>
             </div>
-            <div>
-                <label for="userPass">Password:</label>
-                <input type="password" name="userPass" id="userPass"><br>
-            </div>
-        </div>
-        <input type="button" value="Sign up" id="signUpBtn">
 
-        <input type="button" value="Check in" id="checkIn">
+            <!-- <input type="button" value="Sign up" id="signUpBtn">
+            <input type="button" value="Check in" id="checkIn"> -->
+
+        </div>
+        <input id="identifyBtn" type="button" style="background-color: blue; color: white" value="IDENTIFY">
+        <br>
+
+
+
 
     </div>
 
@@ -167,8 +173,31 @@
         const logOutBtn = document.getElementById("logOutBtn")
         const signInDiv = document.getElementById("signInDiv")
         const signUpBtn = document.getElementById("signUpBtn")
-
+        const identifyBtn = document.getElementById("identifyBtn")
+        const signInMain = document.getElementById("signInMain")
+        const checkIn = document.getElementById("checkIn")
         // IMPORTANT
+
+        identifyBtn.addEventListener("click", toggleSignInMain)
+
+        function toggleSignInMain() {
+            if (signInMain.style.display == "none") {
+                
+                // SHOW SIGN IN MAIN
+                signInMain.style.display = "block"
+                identifyBtn.style.backgroundColor = "darkgray"
+            }
+            else {
+
+                if(!userEmail.value || !userPass.value) signInAdvice.textContent = "Please fill both fields"
+                //userPass.value
+
+                // HIDE SIGN IN MAIN
+                signInMain.style.display = "none"
+                identifyBtn.style.backgroundColor = "blue"
+            }
+            console.log(signInMain.style)
+        }
 
         let myUser
         async function getUser() {
@@ -198,7 +227,7 @@
             //console.log(res.data[0].dibesfer)
             let result = res.data
 
-            if (result.length > 0){
+            if (result.length > 0) {
                 //EMAIL ALREADY REGISTERED, LOG IN
             }
             else {
@@ -208,20 +237,21 @@
                     .insert([
                         {
                             email: "dibesfer@gmail.com",
-        
+
                         },
                     ])
                     .select()
+                if (!error) signInAdvice.textContent = "We sent a confirmation url to your email."
             }
-          
+
 
             console.log(result)
             //RECIEVED DATA SUPER IMPORTANT
             //console.log(result)
 
             //result.forEach(element => {
-                //let myTime = new Date(element.created_at)
-                //createMsg(myTime, element.author, element.message)
+            //let myTime = new Date(element.created_at)
+            //createMsg(myTime, element.author, element.message)
             //});
 
             //chatScreen.scrollTo(0, chatScreen.scrollHeight)
@@ -237,7 +267,7 @@
 
         //console.log(myUser)
 
-        signUpBtn.addEventListener("click", signUp)
+        if (signUpBtn) signUpBtn.addEventListener("click", signUp)
 
         logOutBtn.addEventListener("click", logOut)
 
@@ -404,7 +434,7 @@
             logIn()
         }
 
-        checkIn.addEventListener("click", signLogIn)
+        if (checkIn) checkIn.addEventListener("click", signLogIn)
         chatForm.addEventListener("submit", sendMessage)
 
         async function sendMessage(e) {
