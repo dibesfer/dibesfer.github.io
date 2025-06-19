@@ -90,9 +90,22 @@
     <p>the 2025/04/07</p>
     <hr>
     <p>Last updated the 2025/05/28</p>
-
+    <button onclick="openChat()">OPEN CHAT</button>
+   
   </footer>
-  
+  <script>
+    let chatHTML = ''
+
+    function openChat(){
+      
+
+      let file = "/web/javascript/chat"
+        fetch (file)
+        .then(x => x.text())
+        .then(y => document.write(y));
+
+    }
+  </script>
 </body>
 
 </html>

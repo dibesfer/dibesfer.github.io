@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>dbf codeEditor</title>
+    <style>
+
+        * {
+            margin: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: monospace;
+            padding: 15px;
+            background-color: black;
+            color: white;
+            font-size: large;
+        }
+
+        #codeEditor1 {
+            font: unset;
+            width: 100%;
+            height: 400px;
+            padding: 5px;
+            background-color: black;
+            color: white;
+            border: solid 6px white;
+        }
+
+        #displayer1 {
+            width: 100%;
+            height: 400px;
+            padding: 5px;
+            background-color: black;
+            color: white;
+            border: solid 6px white;
+        }
+
+        iframe {
+            background-color: white;
+            width: 100%;
+            height: 100%;
+        }
+
+    </style>
+</head>
+<body>
+
+    <h1>HTML display</h1>
+    <div id="displayer1">
+        <iframe id="displayer1iframe" src="https://dibesfer.com" frameborder="0"></iframe>
+    </div>
+    
+    <h1>codeEditor</h1>
+    <textarea name="" id="codeEditor1" spellcheck="false"></textarea>
+
+    <script>
+        // document.head.innerHTML = `
+        // <style>
+        //     body {
+        //     background-color: black;
+        //     color: white;
+        //     }
+        //     </style>
+        // `
+        // document.body.innerHTML = "EOELE"
+
+        // let myScript = document.createElement("script")
+        // myScript.textContent = "alert('hello')"
+
+        // document.body.appendChild(myScript)
+        const codeEditor1 = document.getElementById("codeEditor1")
+        let displayer1 = document.getElementById("displayer1")
+        let displayer1iframe = document.getElementById("displayer1iframe")
+        
+        codeEditor1.addEventListener("input", updateCode)
+        
+        
+
+        function updateCode(){
+            //displayer1.innerHTML = codeEditor1.value
+            displayer1iframe.srcdoc = codeEditor1.value
+            console.log("holi" +  displayer1iframe.srcdoc)
+        }
+
+    </script>
+</body>
+</html>
