@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>dbf chat</title>
+    <title>dbf monochat</title>
     <link rel="icon" type="image/x-icon" href="/branding/favicon.ico">
 
 
@@ -57,8 +57,9 @@
         label {
             all: unset;
             display: inline-block;
-            min-width: 10vw;
-            border: solid 3px red;
+            min-width: 10%;
+            background-color: rgba(0, 0, 0, 0.494);
+            padding: 5px;
         }
 
         input {
@@ -73,7 +74,7 @@
         }
 
         input:hover {
-            border: dashed 3px black;
+            border: dashed 3px white;
         }
 
         .maxWidth {
@@ -103,7 +104,7 @@
 
 <body>
     <div class="flex3">
-        <h1>Chat</h1>
+        <h1>monochat</h1>
         <div style="display: flex;">
             <div>
                 <h3 id="userNameDisplay">Anonymous </h3>
@@ -182,19 +183,26 @@
 
         function toggleSignInMain() {
             if (signInMain.style.display == "none") {
-                
+
                 // SHOW SIGN IN MAIN
                 signInMain.style.display = "block"
                 identifyBtn.style.backgroundColor = "darkgray"
             }
             else {
 
-                if(!userEmail.value || !userPass.value) signInAdvice.textContent = "Please fill both fields"
-                //userPass.value
+                if (!userEmail.value || !userPass.value) {
+                    signInAdvice.textContent = "Please fill both fields"
+                    //userPass.value
 
+                    
+                }
+                else {
+                    logIn()
+                }
                 // HIDE SIGN IN MAIN
-                signInMain.style.display = "none"
-                identifyBtn.style.backgroundColor = "blue"
+                //signInMain.style.display = "none"
+                //identifyBtn.style.backgroundColor = "blue"
+
             }
             console.log(signInMain.style)
         }
@@ -608,10 +616,17 @@
 
             input {
             
-                background-color: limegreen;
+                
                 color: black;
-
+                background-color: unset;
+                color: white;
+                transition: 0.2s
             }
+
+            input:focus {
+                border: solid 3px limegreen;
+            }
+
         
         `
         document.head.appendChild(myNewStyle)
