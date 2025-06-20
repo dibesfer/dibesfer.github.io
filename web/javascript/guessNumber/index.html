@@ -6,34 +6,73 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
     <style>
+        
+        * {
+            margin: 0;
+            box-sizing: border-box;
+        }
+
         body {
             background-color: black;
             color: white;
-            font-family: sans-serif;
+            font-family: Verdana, Geneva, Tahoma, sans-serif;
+            text-align: center;
+            line-height: 1.5;
         }
+
+        input, button {
+            all: unset;
+            border: solid 3px white;
+            padding: 5px;
+            text-align: center;
+            cursor: pointer;
+        }
+
+        #hangmanImage {
+            
+        }
+
+        img {
+            max-width: 100%;
+        }
+
+        #myConsoleDiv {
+            max-width: 400px;
+            margin: auto;
+            text-align: left;
+            border: 3px solid white;
+            padding: 0 15px;
+            height: 200px;
+            overflow: auto;
+        }
+
     </style>
 </head>
 
 <body>
-    <h1>guessNumber</h1>
+    <br><h1>guessNumber</h1>
     <h3 id="disclaimer" style="color: red;"></h3>
     <div id="startGame">
+        <br>
         <label for="minValue">Min value:</label>
-        <input type="number" name="" id="minValue"><br>
+        <input type="number" name="" id="minValue"><br><br>
         <label for="maxValue">Max value:</label>
-        <input type="number" name="" id="maxValue"><br>
+        <input type="number" name="" id="maxValue"><br><br>
         <button id="playBtn">PLAY</button>
     </div>
 
     <div id="game" style="display:none">
         <p>Attempts: <span id="attemptsDisplay">15</span></p>
-        <label for="resultNumber">What number I am thinking of?</label>
+        <label for="resultNumber" id="resultNumberLabel">What number I am thinking of?</label>
         <input type="number" id="resultNumber">
         <button id="checkBtn">Check</button>
-        <h2>Console:</h2>
-        <ol id="myConsole" start="0">
+        <br><br>
+        <div id="myConsoleDiv">
+            <h2>Console:</h2>
+            <ol id="myConsole" start="0">
             <li>Game Start</li>
         </ol>
+        </div>
     </div>
 
     <div id="gameEnd" style="display:none">
@@ -42,7 +81,12 @@
         
 
     </div>
+    
+    <img id="hangmanImage" style="filter: invert(1) brightness(2) drop-shadow(0 0 5px white);
+            transition:0.4s;
+            transform: rotate(180deg);" src="https://images.vexels.com/media/users/3/242389/isolated/preview/0919f3b05d8c8efbc1035a2ad463ef23-tarot-card-hanged-man-stroke.png" alt="hangman tarot png">
 
+<div id="credits">by dibesfer</div>
 
     <script>
 
@@ -59,8 +103,14 @@
         const attemptsDisplay = document.getElementById("attemptsDisplay")
         const gameEnd = document.getElementById("gameEnd")
         const endMessage = document.getElementById("endMessage")
+        const hangmanImage = document.getElementById("hangmanImage")
 
+        let hangmanRotation = 180
+
+       
         playBtn.addEventListener("click", play)
+
+        
 
         function getRndInteger(min, max) {
             return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -75,11 +125,14 @@
             randomNumber = getRndInteger(minValue, maxValue)
             console.log("Random number is " + randomNumber)
 
+            
+
             if (isNaN(minValue) || isNaN(maxValue)) {
                 disclaimer.textContent = "Not A Number"
                 return
             }
-            
+            disclaimer.textContent = ""
+            resultNumberLabel.textContent += " Between " + minValue + " and " + maxValue
             startGame.style.display = "none"
             game.style.display = "block"
 
@@ -120,14 +173,25 @@
             if (playersGuess == randomNumber){
                 game.style.display = "none"
                 gameEnd.style.display = "block"
-                endMessage.textContent = "You won niggah! In only " + myAttempts + " attempts!" 
-            }
+                endMessage.textContent = "You won ! In only " + myAttempts + " attempts!" 
+                endMessage.textContent += "The secret number is: " + randomNumber
+                hangmanImage.style.filter = "invert(1) brightness(1)  sepia(1) hue-rotate(60deg) saturate(100000%) drop-shadow(0px 0px 15px green)"
+            }   
+
+            hangmanRotation -= 12
+            hangmanImage.style.transform = "rotate(" + hangmanRotation + "deg)"
+            
+            myConsoleDiv.scrollTo(0, myConsoleDiv.scrollHeight)
 
             if (attempts - myAttempts == 0){
                 game.style.display = "none"
                 gameEnd.style.display = "block"
-                endMessage.textContent = "You lost motherfucker!"
+                endMessage.textContent = "You lost!"
+                hangmanImage.style.filter = "invert(1) brightness(1)  sepia(1) hue-rotate(300deg) saturate(100000%) drop-shadow(0px 0px 15px red)"
             }
+
+            
+
         }
 
     </script>
