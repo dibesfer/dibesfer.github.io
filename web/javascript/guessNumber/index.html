@@ -45,6 +45,9 @@
             height: 200px;
             overflow: auto;
         }
+        #endMessage {
+            white-space: pre;
+        }
 
     </style>
 </head>
@@ -82,7 +85,8 @@
 
     </div>
     
-    <img id="hangmanImage" style="margin:50px; filter: invert(1) brightness(2) drop-shadow(0 0 5px white);
+    <img id="hangmanImage" style="
+    margin:50px; filter: invert(1) brightness(2) drop-shadow(0 0 150px white);
             transition:0.4s;
             transform: rotate(180deg);" src="https://images.vexels.com/media/users/3/242389/isolated/preview/0919f3b05d8c8efbc1035a2ad463ef23-tarot-card-hanged-man-stroke.png" alt="hangman tarot png">
 
@@ -173,9 +177,9 @@
             if (playersGuess == randomNumber){
                 game.style.display = "none"
                 gameEnd.style.display = "block"
-                endMessage.textContent = "You won ! In " + myAttempts + " attempts!" 
-                endMessage.textContent += "The secret number is: " + randomNumber
-                hangmanImage.style.filter = "invert(1) brightness(1)  sepia(1) hue-rotate(60deg) saturate(100000%) drop-shadow(0px 0px 15px green)"
+                endMessage.textContent = "You won in " + myAttempts + " attempts!" 
+                endMessage.textContent += "\nThe secret number is: " + randomNumber
+                hangmanImage.style.filter = "invert(1) brightness(2)  sepia(1) hue-rotate(60deg) saturate(100000%) drop-shadow(0px 0px 150px green)"
             }   
 
             hangmanRotation -= 12
@@ -187,7 +191,7 @@
                 game.style.display = "none"
                 gameEnd.style.display = "block"
                 endMessage.textContent = "You lost!"
-                hangmanImage.style.filter = "invert(1) brightness(1)  sepia(1) hue-rotate(300deg) saturate(100000%) drop-shadow(0px 0px 15px red)"
+                hangmanImage.style.filter = "invert(1) brightness(2)  sepia(1) hue-rotate(300deg) saturate(100000%) drop-shadow(0px 0px 150px red)"
             }
 
             
