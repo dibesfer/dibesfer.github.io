@@ -107,7 +107,7 @@
         <h1>monochat</h1>
         <div style="display: flex;align-items: center;">
             <div>
-                <h3><a href="user/">profile</a> ----</h3>
+                <h3><a href="user/">profile</a>&nbsp; - &nbsp;</h3>
             </div>
             <div>
                 
@@ -201,7 +201,7 @@
                     
                 }
                 else {
-                    logIn()
+                    getUsersTable(userEmail.value)
                 }
                 // HIDE SIGN IN MAIN
                 //signInMain.style.display = "none"
@@ -233,27 +233,34 @@
         getUser()
 
 
-        async function getUsersTable() {
+        async function getUsersTable(myEmail) {
 
-            const res = await database.from("users").select("*").eq('email', 'dibesfer@gmail.com')//.range(3000,5000)
+            const res = await database.from("users").select("*").eq('email', myEmail)//.range(3000,5000)
             //console.log(res.data[0].dibesfer)
             let result = res.data
 
             if (result.length > 0) {
                 //EMAIL ALREADY REGISTERED, LOG IN
+                logIn()
             }
             else {
                 //ELSE, SIGN IN
+
+
+
                 const { data, error } = await database
                     .from("users")
                     .insert([
                         {
-                            email: "dibesfer@gmail.com",
+                            email: myEmail,
 
                         },
                     ])
                     .select()
                 if (!error) signInAdvice.textContent = "We sent a confirmation url to your email."
+            
+                signUp()
+            
             }
 
 
@@ -353,10 +360,11 @@
 
         function createMsg(time, author, message) {
             let parahraphMsg = document.createElement("p")
-            parahraphMsg.title = time
+            
             let myTime = document.createElement("span")
             myTime.classList = "displayTime"
             myTime.textContent = clockFormat(time)
+            myTime.title = time
             let myAuthor = document.createElement("span")
             myAuthor.classList = "displayAuthor"
             myAuthor.textContent = " " + author
