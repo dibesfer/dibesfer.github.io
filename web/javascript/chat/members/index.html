@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>dbf monochat - user</title>
+    <!-- SUPABASE cdn -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+
+    <style>
+        * {
+            margin: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: black;
+            color: white;
+            font-family: monospace;
+
+            max-width: 800px;
+            margin: auto;
+            line-height: 2;
+            padding: 10px;
+        }
+    </style>
+
+</head>
+
+<body>
+    <h1>members</h1>
+    <h3>of monochat</h3>
+    <p>By date:</p>
+    <ol id="dbfMembersList">
+
+        <li></li>
+        <li></li>
+        <li></li>
+
+    </ol>
+
+    <script>
+        const supabaseUrl = 'https://qugihsopwjemzakhrbvw.supabase.co'
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF1Z2loc29wd2plbXpha2hyYnZ3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE2OTg0OTQxMDksImV4cCI6MjAxNDA3MDEwOX0.1q5fBic1cjueaiP2-p6W19C68ye8FTPLFne2a-fKwZ8'
+        const database = supabase.createClient(supabaseUrl, supabaseKey)
+
+        async function fillProfile() {
+
+            userEmail.textContent = myUser.email
+
+
+            const res = await database.from("users").select("*").eq('email', myUser.email)//.range(3000,5000)
+            //console.log(res.data[0].dibesfer)
+            let result = res.data
+
+            if (result.length > 0) {
+                userUsername.textContent = res.data[0].username
+                profilePicture.src = res.data[0].profilepicture
+
+                //userDescription.textContent = "Example desc"
+            }
+            else {
+
+
+            }
+
+
+            console.log(result)
+
+        }
+
+        let dbfMembersList = document.getElementById("dbfMembersList")
+
+        dbfMembersList.innerHTML = `
+        
+        <li>hello beach</li>
+        <li>hello mountain</li>
+        <li>hello snow</li>
+        
+        `
+
+    </script>
+</body>
+
+</html>
