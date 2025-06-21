@@ -181,6 +181,7 @@
         const identifyBtn = document.getElementById("identifyBtn")
         const signInMain = document.getElementById("signInMain")
         const checkIn = document.getElementById("checkIn")
+        let usernameString
         // IMPORTANT
 
         identifyBtn.addEventListener("click", toggleSignInMain)
@@ -215,12 +216,15 @@
         async function getUser() {
             const { data: { user } } = await database.auth.getUser()
             if (user) {
+
+                usernameString = user.email.split("@")[0]
                 console.log(user.email)
-                signInAdvice.textContent = "You are logged as " + user.email.split("@")[0]
-                userNameDisplay.textContent = user.email.split("@")[0]
+                signInAdvice.textContent = "You are logged as " + usernameString
+                userNameDisplay.textContent = usernameString
                 signInDiv.style.display = "none"
                 myUser = user
                 console.log(myUser)
+                console.log(myUser.last_sign_in_at)
                 return user
             }
 
@@ -246,19 +250,6 @@
             else {
                 //ELSE, SIGN IN
 
-
-
-                const { data, error } = await database
-                    .from("users")
-                    .insert([
-                        {
-                            email: myEmail,
-
-                        },
-                    ])
-                    .select()
-                if (!error) signInAdvice.textContent = "We sent a confirmation url to your email."
-            
                 signUp()
             
             }
@@ -311,10 +302,34 @@
                 password: userPass.value,
                 // options: { redirectTo: "https://dibesfer.com/web/javascript/chat"  },
             })
-
+            console.log("---SIGNUP---")
             console.log(data)
-            console.log(error)
-            signInAdvice.textContent = error.message
+            if (error) {
+                console.log(error)
+                signInAdvice.textContent = error.message
+            } else {
+
+                console.log("We're gonna create a user profile")
+                const { data, error } = await database
+                    .from("users")
+                    .insert([
+                        {
+                            email: userEmail.value,
+                            username: userEmail.value.split("@")[0],
+                            profilepicture: "https://upload.wikimedia.org/wikipedia/commons/4/40/Anonymous_mask.svg"
+
+
+                        },
+                    ])
+                    .select()
+                if (!error) signInAdvice.textContent = "We sent a confirmation url to your email."
+                else {
+
+                }
+            }
+
+            
+            
         }
         //signUp()
 
@@ -330,7 +345,7 @@
                 signInAdvice.textContent = error.message
             }
             else {
-                getUser()
+                //getUser()
                 location.reload()
             }
 

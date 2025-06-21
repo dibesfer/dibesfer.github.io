@@ -5,8 +5,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>dbf monochat - user</title>
+    <!-- SUPABASE cdn -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+
     <style>
-        
         * {
             margin: 0;
             box-sizing: border-box;
@@ -24,6 +26,7 @@
         }
 
         #profilePicture {
+            background-color: white;
             border: 3px solid white;
             width: 150px;
             aspect-ratio: 1;
@@ -46,8 +49,22 @@
             /* Opera 7 */
             word-wrap: break-word;
             border-left: 5px dashed;
-            
 
+
+        }
+
+        .userOptions {
+            width: 100%;
+            display: flex;
+            justify-content: space-evenly;
+        }
+
+        textarea {
+            all: unset;
+            width: 100%;
+            height: 100%;
+            border: 3px white solid;
+            padding: 10px
         }
     </style>
 </head>
@@ -56,16 +73,121 @@
     <img id="profilePicture"
         src="https://static.euronews.com/articles/stories/08/05/80/38/1536x864_cmsv2_3a944929-598e-5ac2-95f5-76141156e444-8058038.jpg"
         alt="">
-    <h1>username sammy</h1>
-    <h3>email samaltman@openai.com</h3>
+    <h1>username <span id="userUsername">sammy</span></h1>
+    <h3>email <span id="userEmail">samaltman@openai.com</span></h3>
     <p>Description</p>
-    <pre>
+    <pre id="userDescription">
 Lorem ipsum, dolor sit amet consectetur adipisicing elit. Nobis neque ea molestiae reiciendis a, exercitationem ab dolores, quidem blanditiis debitis illo! Magnam itaque aliquam suscipit odio in fugiat, libero mollitia?
 
 Ipsum accusantium iusto corporis sunt amet consequatur, alias placeat officia! Nihil minus, earum libero dolor cumque ipsa illum quidem impedit architecto inventore velit https://chatgpt.com pariatur eos nam, debitis itaque expedita.
 
 Quidem odio odit magni fugiat nobis quas inventore repellendus blanditiis, sed cupiditate esse quis est veritatis quaerat rerum! Incidunt quaerat dolor doloremque iusto possimus accusamus tempore illo vitae laborum labore.
+<textarea name="" id="" spellcheck="false"></textarea>
+
 </pre>
+
+    <br>
+    <hr><br>
+    <div class="userOptions">
+        <div>EDIT</div>
+        <div></div>
+        <div id="deleteButton">DELETE</div>
+    </div>
+
+    <script>
+
+
+        const supabaseUrl = 'https://qugihsopwjemzakhrbvw.supabase.co'
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF1Z2loc29wd2plbXpha2hyYnZ3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE2OTg0OTQxMDksImV4cCI6MjAxNDA3MDEwOX0.1q5fBic1cjueaiP2-p6W19C68ye8FTPLFne2a-fKwZ8'
+        const database = supabase.createClient(supabaseUrl, supabaseKey)
+
+        const userDescription = document.getElementById("userDescription")
+        const userEmail = document.getElementById("userEmail")
+        const profilePicture = document.getElementById("profilePicture")
+        let deleteButton = document.getElementById("deleteButton")
+
+        let userUsername = document.getElementById("userUsername")
+
+        deleteButton.addEventListener("click", deleteAccount)
+
+
+
+        let myUser
+        async function getUser() {
+            const { data: { user } } = await database.auth.getUser()
+            if (user) {
+                console.log(user.email)
+                //signInAdvice.textContent = "You are logged as " + user.email.split("@")[0]
+                //userNameDisplay.textContent = user.email.split("@")[0]
+                //signInDiv.style.display = "none"
+                myUser = user
+                
+                console.log(myUser)
+                fillProfile()
+                return user
+            }
+
+            else {
+                console.log("no user logged in")
+                //logOutBtn.style.display = "none"
+                return null
+            }
+        }
+        getUser()
+
+
+        async function deleteAccount() {
+        
+            let confirmed = confirm("Are you sure you want to delete your account?\nAll the data will be destroyed.\nThis is irreversible. ")
+        
+            if (confirmed){
+                const response = await database  
+                .from('users')  
+                .delete()  
+                .eq('email', myUser.email)
+
+                alert("user data was deleted")
+
+                const { data, error } = await database.auth.admin.deleteUser(myUser.id)
+
+                if (!error)alert("Your account was successfully removed.\nFarewell! -dibesfer")
+                else alert(error.message)
+            }
+        
+        }
+
+
+        async function fillProfile() {
+
+            userEmail.textContent = myUser.email
+
+
+            const res = await database.from("users").select("*").eq('email', myUser.email)//.range(3000,5000)
+            //console.log(res.data[0].dibesfer)
+            let result = res.data
+
+            if (result.length > 0) {
+                userUsername.textContent = res.data[0].username
+                profilePicture.src = res.data[0].profilepicture
+
+                //userDescription.textContent = "Example desc"
+            }
+            else {
+                
+
+            }
+
+
+            console.log(result)
+            
+        }
+
+        function editMode(){
+
+        }
+
+
+    </script>
 </body>
 
 </html>
