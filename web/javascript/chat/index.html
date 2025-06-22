@@ -32,7 +32,7 @@
             background-color: black;
             color: white;
             height: 100vh;
-            
+
         }
 
         #chatScreen {
@@ -72,7 +72,7 @@
         a {
             text-decoration: none;
             color: rgb(0, 153, 255);
-            filter: drop-shadow(0 0 15px blue);
+            /* filter: drop-shadow(0 0 15px blue); */
             /* text-shadow: 0 0 15px blue; */
         }
 
@@ -144,6 +144,10 @@
             width: 100%;
             max-width: 400px;
             overflow: auto;
+        }
+
+        .displayTime {
+            color: gray;
         }
 
         .miniFlex {
@@ -273,6 +277,7 @@
         const signInMain = document.getElementById("signInMain")
         const checkIn = document.getElementById("checkIn")
         let usernameString
+        let myUserTable
         // IMPORTANT
 
         identifyBtn.addEventListener("click", toggleSignInMain)
@@ -336,7 +341,7 @@
                         }
                     }
                 }
-                
+
                 console.log(myUser.last_sign_in_at)
                 return user
             }
@@ -350,6 +355,21 @@
         getUser()
 
 
+        async function loadUserTable() {
+            const res = await database.from("users").select("*")
+            //console.log(res.data[0].dibesfer)
+            let result = res.data
+
+            if (result.length > 0) {
+                //EMAIL ALREADY REGISTERED, LOG IN
+                myUserTable = result
+                console.log(result)
+                getFullTable("chat")
+            }
+
+        }
+
+        loadUserTable()
         async function getUsersTable(myEmail) {
 
             const res = await database.from("users").select("*").eq('email', myEmail)//.range(3000,5000)
@@ -526,8 +546,19 @@
             myTime.textContent = clockFormat(time)
             myTime.title = time
             let myProfilePicture = document.createElement("img")
-           
-            myProfilePicture.src = "https://upload.wikimedia.org/wikipedia/commons/4/40/Anonymous_mask.svg"
+
+            myProfilePicture.src = "https://upload.wikimedia.org/wikipedia/commons/a/a6/Anonymous_emblem.svg"
+            if (author != "Anonymous") {
+                myUserTable.forEach(
+                    usuario => {
+                        if (usuario.username == author) {
+                            myProfilePicture.src = usuario.profilepicture
+                        }
+                    }
+
+                )
+            }
+
             myProfilePicture.style = `
             width: 1rem;
             height: 1rem;
@@ -540,6 +571,7 @@
             let myAuthor = document.createElement("span")
             myAuthor.classList = "displayAuthor"
             myAuthor.textContent = "" + author
+            if (author != "Anonymous") myAuthor.innerHTML = "<a href='user/###" + author + "'>" + author + "</a>"
             let myMessage = document.createElement("span")
             myMessage.textContent = ": " + message
             parahraphMsg.appendChild(myTime)
@@ -723,7 +755,7 @@
             //     chatScreen.textContent = result
             // }
         }
-        getFullTable("chat")
+
 
 
         function needsazero(number) {
