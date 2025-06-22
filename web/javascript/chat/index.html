@@ -32,6 +32,7 @@
             background-color: black;
             color: white;
             height: 100vh;
+            
         }
 
         #chatScreen {
@@ -315,6 +316,27 @@
                 signInDiv.style.display = "none"
                 myUser = user
                 console.log(myUser)
+                let myEmail = user.email
+                const res = await database.from("users").select("*").eq('email', myEmail)//.range(3000,5000)
+                //console.log(res.data[0].dibesfer)
+                let result = res.data
+
+                if (result.length > 0) {
+
+                    if (!res.data[0].confirmed) {
+
+                        const { data, error } = await database
+                            .from('users')
+                            .update({ confirmed: true })
+                            .eq('email', myEmail)
+                            .select()
+
+                        if (!error) {
+                            alert("Your account is now confirmed")
+                        }
+                    }
+                }
+                
                 console.log(myUser.last_sign_in_at)
                 return user
             }
@@ -503,12 +525,25 @@
             myTime.classList = "displayTime"
             myTime.textContent = clockFormat(time)
             myTime.title = time
+            let myProfilePicture = document.createElement("img")
+           
+            myProfilePicture.src = "https://upload.wikimedia.org/wikipedia/commons/4/40/Anonymous_mask.svg"
+            myProfilePicture.style = `
+            width: 1rem;
+            height: 1rem;
+            background-color: white;
+            border-radius: 50%;
+            object-fit: cover;
+            border: solid 1px white;
+            margin: 0 5px;
+            `
             let myAuthor = document.createElement("span")
             myAuthor.classList = "displayAuthor"
-            myAuthor.textContent = " " + author
+            myAuthor.textContent = "" + author
             let myMessage = document.createElement("span")
             myMessage.textContent = ": " + message
             parahraphMsg.appendChild(myTime)
+            parahraphMsg.appendChild(myProfilePicture)
             parahraphMsg.appendChild(myAuthor)
             parahraphMsg.appendChild(myMessage)
             chatScreen.appendChild(parahraphMsg)
