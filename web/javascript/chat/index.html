@@ -37,7 +37,6 @@
         #chatScreen {
             background-color: black;
             border: solid 3px white;
-            height: 100%;
             
             overflow: auto;
             padding: 0 10px;
@@ -45,6 +44,14 @@
             word-wrap: break-word;
 
             /* hyphens: auto; */
+        }
+
+        #header , #userInputDiv {
+            height: 10%;
+        }
+
+        #chatScreen {
+            height: 50%;
         }
 
         input {
@@ -163,18 +170,6 @@
 </head>
 
 <body>
-
-    <style>
-
-        #header , #userInputDiv {
-            height: 10%;
-        }
-
-        #chatScreen {
-            height: 50%;
-        }
-
-    </style>
     <!-- TITLE BAR / HEADER -->
     <div id="header" class="flex3">
         <p><a href="members/">monochat</a></p>
