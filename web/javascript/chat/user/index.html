@@ -82,14 +82,14 @@ Lorem ipsum, dolor sit amet consectetur adipisicing elit. Nobis neque ea molesti
 Ipsum accusantium iusto corporis sunt amet consequatur, alias placeat officia! Nihil minus, earum libero dolor cumque ipsa illum quidem impedit architecto inventore velit https://chatgpt.com pariatur eos nam, debitis itaque expedita.
 
 Quidem odio odit magni fugiat nobis quas inventore repellendus blanditiis, sed cupiditate esse quis est veritatis quaerat rerum! Incidunt quaerat dolor doloremque iusto possimus accusamus tempore illo vitae laborum labore.
-<textarea name="" id="" spellcheck="false" onchange="coocoo()"></textarea>
+<textarea name="" id="userDescriptionTextarea" spellcheck="false" ></textarea>
 
 </pre>
 
     <br>
     <hr><br>
     <div class="userOptions">
-        <div>EDIT</div>
+        <div id="EditSaveBtn">EDIT/SAVE</div>
         <div></div>
         <div id="deleteButton">DELETE</div>
     </div>
@@ -108,11 +108,31 @@ Quidem odio odit magni fugiat nobis quas inventore repellendus blanditiis, sed c
 
         let userUsername = document.getElementById("userUsername")
 
+        const userDescriptionTextarea = document.getElementById("userDescriptionTextarea")
+        const EditSaveBtn = document.getElementById("EditSaveBtn")
+
         deleteButton.addEventListener("click", deleteAccount)
         profilePicture.addEventListener("click", changeProfilePicture)
+        EditSaveBtn.addEventListener("click", editMode)
 
+        let url = window.location.href
 
         let myUser
+        let myUserTable
+        if (url.includes("###")) {
+
+            let userUrl = url.split("###")[1]
+            document.write("welcome to " + userUrl + " profile")
+
+            getUserTable(userUrl)
+
+        }
+
+        else {
+            getUser()
+        }
+
+
         async function getUser() {
             const { data: { user } } = await database.auth.getUser()
             if (user) {
@@ -133,8 +153,22 @@ Quidem odio odit magni fugiat nobis quas inventore repellendus blanditiis, sed c
                 return null
             }
         }
-        getUser()
 
+        async function getUserTable(userUrl) {
+            const res = await database.from("users").select("*").eq('username', userUrl)//.range(3000,5000)
+            //console.log(res.data[0].dibesfer)
+            let result = res.data[0]
+
+            if (result) {
+                myUserTable = result
+                fillProfileFromTable()
+                console.log(result.description)
+            }
+
+            else {
+                document.write("there is no user named " + userUrl)
+            }
+        }
 
         async function deleteAccount() {
 
@@ -171,7 +205,7 @@ Quidem odio odit magni fugiat nobis quas inventore repellendus blanditiis, sed c
             if (result.length > 0) {
                 userUsername.textContent = res.data[0].username
                 profilePicture.src = res.data[0].profilepicture
-
+                userDescription.textContent = res.data[0].description
                 //userDescription.textContent = "Example desc"
             }
             else {
@@ -184,8 +218,16 @@ Quidem odio odit magni fugiat nobis quas inventore repellendus blanditiis, sed c
 
         }
 
-        function editMode() {
+        async function fillProfileFromTable() {
 
+            userEmail.textContent = myUserTable.email
+            userUsername.textContent = myUserTable.username
+            profilePicture.src = myUserTable.profilepicture
+            userDescription.textContent = myUserTable.description
+        }
+
+        function editMode() {
+            changeDescription()
         }
 
         async function changeProfilePicture() {
@@ -208,6 +250,33 @@ Quidem odio odit magni fugiat nobis quas inventore repellendus blanditiis, sed c
 
                     if (!error) {
                         alert("Your profile picture was updated!")
+                        location.reload()
+                    }
+
+                }
+            }
+
+        }
+
+        async function changeDescription() {
+            console.log("hello ")
+            if (myUser) {
+            
+                myEmail = myUser.email
+                const res = await database.from("users").select("*").eq('email', myEmail)//.range(3000,5000)
+                //console.log(res.data[0].dibesfer)
+                let result = res.data
+
+                if (result.length > 0) {
+
+                    const { data, error } = await database
+                        .from('users')
+                        .update({ description: userDescriptionTextarea.value })
+                        .eq('email', myEmail)
+                        .select()
+
+                    if (!error) {
+                        alert("Your description was updated!")
                         location.reload()
                     }
 
