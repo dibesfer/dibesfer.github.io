@@ -45,20 +45,28 @@
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF1Z2loc29wd2plbXpha2hyYnZ3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE2OTg0OTQxMDksImV4cCI6MjAxNDA3MDEwOX0.1q5fBic1cjueaiP2-p6W19C68ye8FTPLFne2a-fKwZ8'
         const database = supabase.createClient(supabaseUrl, supabaseKey)
 
+        let dbfMembersList = document.getElementById("dbfMembersList")
+
         async function fillProfile() {
 
-            userEmail.textContent = myUser.email
 
 
-            const res = await database.from("users").select("*").eq('email', myUser.email)//.range(3000,5000)
-            //console.log(res.data[0].dibesfer)
+
+            const res = await database.from("users").select("*").eq("confirmed", true)
             let result = res.data
 
             if (result.length > 0) {
-                userUsername.textContent = res.data[0].username
-                profilePicture.src = res.data[0].profilepicture
+                dbfMembersList.innerHTML = ""
 
                 //userDescription.textContent = "Example desc"
+
+                result.forEach(element => {
+                    dbfMembersList.innerHTML += `
+                    <li>${element.username}</li>
+                    
+                    `
+                });
+
             }
             else {
 
@@ -69,16 +77,10 @@
             console.log(result)
 
         }
+        fillProfile()
 
-        let dbfMembersList = document.getElementById("dbfMembersList")
 
-        dbfMembersList.innerHTML = `
-        
-        <li>hello beach</li>
-        <li>hello mountain</li>
-        <li>hello snow</li>
-        
-        `
+
 
     </script>
 </body>

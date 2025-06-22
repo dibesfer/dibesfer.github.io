@@ -56,8 +56,7 @@
 
         label {
             all: unset;
-            display: inline-block;
-            min-width: 10%;
+
             background-color: rgba(0, 0, 0, 0.494);
             padding: 5px;
         }
@@ -67,8 +66,8 @@
             border: solid 3px gray;
             padding: 5px;
             cursor: pointer;
-            min-width: 15%;
-            background-color: lightblue;
+
+            background-color: rgba(107, 107, 107, 0.42);
             /* border-bottom-left-radius: 15px;        
             border-bottom-right-radius: 15px; */
         }
@@ -94,7 +93,29 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
+            width: 100%;
             max-width: 400px;
+            overflow: auto;
+        }
+
+        .miniFlex {
+            display: flex;
+            width: 100%;
+            border-radius: 15px;
+        }
+
+        .miniFlex>label {
+            flex: 25%;
+            width: 25%;
+            max-width: 100%;
+            overflow: auto;
+        }
+
+        .miniFlex>input {
+            flex: 75%;
+            width: 75%;
+            max-width: 100%;
+
         }
     </style>
 
@@ -104,17 +125,17 @@
 
 <body>
     <div class="flex3">
-        <h1>monochat</h1>
+        <p><a href="members/">monochat</a></p>
         <div style="display: flex;align-items: center;">
             <div>
-                <h3><a href="user/">profile</a>&nbsp; - &nbsp;</h3>
+                <p><a href="user/">profile</a></p>
             </div>
             <div>
-                
-                <h3 id="userNameDisplay">Anonymous </h3>
+
+                <p id="userNameDisplay">Anonymous </p>
             </div>
             <div>
-                <h3 id="logOutBtn" style="color: rgb(221, 58, 58);">⮨Log Out⏻</h3>
+                <p id="logOutBtn" style="color: rgb(221, 58, 58);">⮨Log Out⏻</p>
             </div>
         </div>
     </div>
@@ -127,8 +148,8 @@
 
         <form id="chatForm">
             <!-- <input required placeholder="Juanito" type="text" name="usernameInput" id="usernameInput" maxlength="10"> -->
-            <input style="width: 100%;" required placeholder="Esto, guau..." type="text" name="chatInput" id="userInput"
-                maxlength="140">
+            <input autocomplete="off" style="width: 100%;" required placeholder="Esto, guau..." type="text"
+                name="chatInput" id="userInput" maxlength="140">
             <input type="submit" name="" id="chatSendBtn" value="Send">
 
         </form>
@@ -142,25 +163,27 @@
 
         <div id="signInAdvice">You are anonymous</div>
         <div id="signInMain" style="display: none;">
+
             <div>
-                <div>
+                <div class="miniFlex">
                     <label for="userEmail">
-                        Email:
+                        Email
                     </label>
-                    <input type="email" name="userEmail" id="userEmail"><br>
+                    <input required type="email" name="userEmail" id="userEmail"><br>
                 </div>
-                <div>
-                    <label for="userPass">Password:</label>
-                    <input type="password" name="userPass" id="userPass"><br>
+                <div class="miniFlex">
+                    <label for="userPass">Password</label>
+                    <input required autocomplete="off" type="password" name="userPass" id="userPass"><br>
                 </div>
             </div>
-
+            <p>We will send a confirmation url to your email.</p>
             <!-- <input type="button" value="Sign up" id="signUpBtn">
             <input type="button" value="Check in" id="checkIn"> -->
 
         </div>
         <input id="identifyBtn" type="button" style="background-color: blue; color: white" value="IDENTIFY">
         <br>
+
 
 
 
@@ -179,6 +202,7 @@
         const signInDiv = document.getElementById("signInDiv")
         const signUpBtn = document.getElementById("signUpBtn")
         const identifyBtn = document.getElementById("identifyBtn")
+        //const signInForm = document.getElementById("signInForm")
         const signInMain = document.getElementById("signInMain")
         const checkIn = document.getElementById("checkIn")
         let usernameString
@@ -187,6 +211,7 @@
         identifyBtn.addEventListener("click", toggleSignInMain)
 
         function toggleSignInMain() {
+
             if (signInMain.style.display == "none") {
 
                 // SHOW SIGN IN MAIN
@@ -199,7 +224,7 @@
                     signInAdvice.textContent = "Please fill both fields"
                     //userPass.value
 
-                    
+
                 }
                 else {
                     getUsersTable(userEmail.value)
@@ -251,7 +276,7 @@
                 //ELSE, SIGN IN
 
                 signUp()
-            
+
             }
 
 
@@ -306,6 +331,7 @@
             console.log(data)
             if (error) {
                 console.log(error)
+                signInAdvice.style.color = "red"
                 signInAdvice.textContent = error.message
             } else {
 
@@ -328,12 +354,13 @@
                 }
             }
 
-            
-            
+
+
         }
         //signUp()
 
         async function logIn() {
+            let myEmail
             let { data, error } = await database.auth.signInWithPassword({
                 email: userEmail.value,
                 password: userPass.value
@@ -346,10 +373,40 @@
             }
             else {
                 //getUser()
-                location.reload()
+                myEmail = data.user.email
+                const res = await database.from("users").select("*").eq('email', myEmail )//.range(3000,5000)
+                //console.log(res.data[0].dibesfer)
+                let result = res.data
+
+                if (result.length > 0) {
+                    
+                    if (!res.data[0].confirmed) {
+
+                        const { data, error } = await database
+                            .from('users')
+                            .update({ confirmed: true })
+                            .eq('email', myEmail)
+                            .select()
+
+                        if (!error) {
+                            alert("Your account is now confirmed")
+                            location.reload()
+                        }
+                        
+
+
+                    }
+                    else {
+                        location.reload()
+                    }
+                }
+                else {
+                    location.reload()
+
+                }
+
+
             }
-
-
         }
 
         async function logOut() {
@@ -375,7 +432,7 @@
 
         function createMsg(time, author, message) {
             let parahraphMsg = document.createElement("p")
-            
+
             let myTime = document.createElement("span")
             myTime.classList = "displayTime"
             myTime.textContent = clockFormat(time)
@@ -645,7 +702,7 @@
             
                 
                 color: black;
-                background-color: unset;
+                
                 color: white;
                 transition: 0.2s
             }
