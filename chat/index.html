@@ -10,7 +10,8 @@
 
     <!-- SUPABASE cdn -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-
+    
+  
 
     <style>
         * {
@@ -734,7 +735,7 @@
 
         async function getFullTable(tableName) {
 
-            const res = await database.from(tableName).select("*")//.range(3000,5000)
+            const res = await database.from(tableName).select("*").order('id', { ascending: true })//.range(3000,5000)
             //console.log(res.data[0].dibesfer)
             let result = res.data
 
