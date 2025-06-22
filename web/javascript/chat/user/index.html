@@ -109,7 +109,7 @@ Quidem odio odit magni fugiat nobis quas inventore repellendus blanditiis, sed c
         let userUsername = document.getElementById("userUsername")
 
         deleteButton.addEventListener("click", deleteAccount)
-
+        profilePicture.addEventListener("click", changeProfilePicture)
 
 
         let myUser
@@ -121,7 +121,7 @@ Quidem odio odit magni fugiat nobis quas inventore repellendus blanditiis, sed c
                 //userNameDisplay.textContent = user.email.split("@")[0]
                 //signInDiv.style.display = "none"
                 myUser = user
-                
+
                 console.log(myUser)
                 fillProfile()
                 return user
@@ -137,23 +137,25 @@ Quidem odio odit magni fugiat nobis quas inventore repellendus blanditiis, sed c
 
 
         async function deleteAccount() {
-        
+
             let confirmed = confirm("Are you sure you want to delete your account?\nAll the data will be destroyed.\nThis is irreversible. ")
-        
-            if (confirmed){
-                const response = await database  
-                .from('users')  
-                .delete()  
-                .eq('email', myUser.email)
+
+            if (confirmed) {
+                alert("This function is under development")
+                return
+                const response = await database
+                    .from('users')
+                    .delete()
+                    .eq('email', myUser.email)
 
                 alert("user data was deleted")
 
                 const { data, error } = await database.auth.admin.deleteUser(myUser.id)
 
-                if (!error)alert("Your account was successfully removed.\nFarewell! -dibesfer")
+                if (!error) alert("Your account was successfully removed.\nFarewell! -dibesfer")
                 else alert(error.message)
             }
-        
+
         }
 
 
@@ -173,20 +175,48 @@ Quidem odio odit magni fugiat nobis quas inventore repellendus blanditiis, sed c
                 //userDescription.textContent = "Example desc"
             }
             else {
-                
+
 
             }
 
 
             console.log(result)
-            
-        }
-
-        function editMode(){
 
         }
 
-        function coocoo(){
+        function editMode() {
+
+        }
+
+        async function changeProfilePicture() {
+
+            if (myUser) {
+                let newSrc = prompt("Insert your new profile image url:")
+
+                myEmail = myUser.email
+                const res = await database.from("users").select("*").eq('email', myEmail)//.range(3000,5000)
+                //console.log(res.data[0].dibesfer)
+                let result = res.data
+
+                if (result.length > 0) {
+
+                    const { data, error } = await database
+                        .from('users')
+                        .update({ profilepicture: newSrc })
+                        .eq('email', myEmail)
+                        .select()
+
+                    if (!error) {
+                        alert("Your profile picture was updated!")
+                        location.reload()
+                    }
+
+                }
+            }
+
+        }
+
+        function coocoo() {
             alert("saved!")
         }
 
