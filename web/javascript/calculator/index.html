@@ -62,6 +62,12 @@
             font-weight: bold;
         }
 
+        .keyPressed {
+            background-color: rgb(88, 88, 88);
+            color: white;
+            font-weight: bold;
+        }
+
         .red {
             background-color: red;
         }
@@ -79,26 +85,26 @@
     <input value="0" placeholder="0" type="number" name="calculatorInput" id="calculatorInput">
     <div class="grid">
 
-        <div onclick="insertNumber(7)">7</div>
-        <div onclick="insertNumber(8)">8</div>
-        <div onclick="insertNumber(9)">9</div>
-        <div onclick="add()" style="color: blue;">+</div>
-        <div onclick="subtract()" style="color: red;">-</div>
-        <div onclick="insertNumber(4)">4</div>
-        <div onclick="insertNumber(5)">5</div>
-        <div onclick="insertNumber(6)">6</div>
-        <div onclick="multiply()" style="color: green;">x</div>
-        <div onclick="divide()" style="color: purple;">/</div>
-        <div onclick="insertNumber(1)">1</div>
-        <div onclick="insertNumber(2)">2</div>
-        <div onclick="insertNumber(3)">3</div>
-        <div onclick="insertNumber(0)">0</div>
-        <div onclick="insertComma()">,</div>
-        <div onclick="insertNumber()"></div>
-        <div onclick="insertNumber()"></div>
-        <div onclick="back('back')">←</div>
-        <div onclick="functionC()" class="red">C</div>
-        <div onclick="equals()" class="green">=</div>
+        <div id="key7" onclick="insertNumber(7)">7</div>
+        <div id="key8" onclick="insertNumber(8)">8</div>
+        <div id="key9" onclick="insertNumber(9)">9</div>
+        <div id="key+" onclick="add()" style="color: blue;">+</div>
+        <div id="key-" onclick="subtract()" style="color: red;">-</div>
+        <div id="key4" onclick="insertNumber(4)">4</div>
+        <div id="key5" onclick="insertNumber(5)">5</div>
+        <div id="key6" onclick="insertNumber(6)">6</div>
+        <div id="keyX" onclick="multiply()" style="color: green;">x</div>
+        <div id="key/" onclick="divide()" style="color: purple;">/</div>
+        <div id="key1" onclick="insertNumber(1)">1</div>
+        <div id="key2" onclick="insertNumber(2)">2</div>
+        <div id="key3" onclick="insertNumber(3)">3</div>
+        <div id="key0" onclick="insertNumber(0)">0</div>
+        <div id="key," onclick="insertComma()">,</div>
+        <div id="" onclick="insertNumber()"></div>
+        <div id="" onclick="insertNumber()"></div>
+        <div id="keyBack" onclick="back('back')">←</div>
+        <div id="keyC" onclick="functionC()" class="red">C</div>
+        <div id="key=" onclick="equals()" class="green">=</div>
     </div>
 
     <script>
@@ -132,7 +138,13 @@
         function insertNumber(number) {
             //calculatorInput.value = number
 
-
+            document.getElementById("key" + number)
+            .classList.add("keyPressed")
+            setTimeout(()=>{
+                document.getElementById("key" + number)
+            .classList.remove("keyPressed")
+            }, 100)
+            
             consola.innerHTML += number
 
             if (awaitingInput && firstNumber) {
@@ -343,6 +355,86 @@
         function functionC() {
             calculatorInput.value = 0
         }
+
+        document.onkeydown = function (e) {
+            e.preventDefault()
+
+            switch (e.code) {
+
+                case "Numpad0":
+                    insertNumber(0)
+
+                    break;
+                case "Numpad1":
+                    insertNumber(1)
+
+                    break;
+                case "Numpad2":
+                    insertNumber(2)
+
+                    break;
+                case "Numpad3":
+                    insertNumber(3)
+
+                    break;
+                case "Numpad4":
+                    insertNumber(4)
+
+                    break;
+                case "Numpad5":
+                    insertNumber(5)
+
+                    break;
+                case "Numpad6":
+                    insertNumber(6)
+
+                    break;
+                case "Numpad7":
+                    insertNumber(7)
+
+                    break;
+                case "Numpad8":
+                    insertNumber(8)
+
+                    break;
+                case "Numpad9":
+                    insertNumber(9)
+
+                    break;
+
+                case "NumpadAdd":
+                    add()
+                    break;
+                case "NumpadSubtract":
+                    subtract()
+                    break;
+
+                case "NumpadMultiply":
+                    multiply()
+                    break;
+                case "NumpadDivide":
+                    divide()
+                    break;
+
+                case "NumpadEnter":
+                    equals()
+                    break;
+
+                case "NumpadDecimal":
+                    insertComma()
+                    break;
+
+                case "Delete":
+                    functionC()
+                    break;
+
+                default:
+                    console.log(e.code + " is not divided.")
+                    break;
+
+            }
+
+        };
 
     </script>
 </body>
