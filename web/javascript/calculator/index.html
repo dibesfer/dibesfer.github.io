@@ -299,6 +299,7 @@
                         break;
 
                     case "divide":
+
                         result = parseFloat(firstNumber) / parseFloat(secondNumber)
                         break;
 
@@ -306,13 +307,20 @@
                         break;
                 }
 
-                calculatorInput.value = result
+                
+                if (currentOperation == "divide" && secondNumber == 0) {
+                    consola.innerHTML += "<p style='color:red'>You can't divide by zero</p>"
+                } 
+                else {
+                    calculatorInput.value = result
+                    consola.innerHTML += " = " + result + "<br>"
+                }
                 firstNumber = null
                 equalsMemory = secondNumber
                 secondNumber = null
 
                 calculatorInput.style.color = "unset"
-                consola.innerHTML += " = " + result + "<br>"
+                
                 consola.scrollTop = consola.scrollHeight;
 
             }
@@ -365,9 +373,7 @@
 
         document.onkeydown = function (e) {
             e.preventDefault()
-
             switch (e.code) {
-
                 case "Numpad0":
                     insertNumber(0)
 
