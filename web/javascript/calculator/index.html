@@ -102,7 +102,7 @@
         <div id="key," onclick="insertComma()">,</div>
         <div id="" onclick="insertNumber()"></div>
         <div id="" onclick="insertNumber()"></div>
-        <div id="keyBack" onclick="back('back')">←</div>
+        <div id="keyBack" onclick="back()">←</div>
         <div id="keyC" onclick="functionC()" class="red">C</div>
         <div id="key=" onclick="equals()" class="green">=</div>
     </div>
@@ -134,16 +134,19 @@
         }
 
 
+        function aestheticPressButton(button){
+            document.getElementById("key" + button)
+            .classList.add("keyPressed")
+            setTimeout(()=>{
+                document.getElementById("key" + button)
+            .classList.remove("keyPressed")
+            }, 100)
+        }
 
         function insertNumber(number) {
             //calculatorInput.value = number
-
-            document.getElementById("key" + number)
-            .classList.add("keyPressed")
-            setTimeout(()=>{
-                document.getElementById("key" + number)
-            .classList.remove("keyPressed")
-            }, 100)
+aestheticPressButton(number)
+            
             
             consola.innerHTML += number
 
@@ -189,11 +192,12 @@
         }
 
         function insertComma() {
+            aestheticPressButton(",")
             calculatorInput.value += ".0"
         }
 
         function add() {
-
+            aestheticPressButton("+")
             consola.innerHTML += " + "
 
             currentOperation = "add"
@@ -213,7 +217,7 @@
         }
 
         function subtract() {
-
+aestheticPressButton("-")
             consola.innerHTML += " - "
 
             currentOperation = "subtract"
@@ -234,7 +238,7 @@
         }
 
         function multiply() {
-
+            aestheticPressButton("X")
             consola.innerHTML += " x "
 
             currentOperation = "multiply"
@@ -254,7 +258,7 @@
         }
 
         function divide() {
-
+            aestheticPressButton("/")
             consola.innerHTML += " / "
 
             currentOperation = "divide"
@@ -275,7 +279,7 @@
 
         function equals() {
 
-
+            aestheticPressButton("=")
 
             if (firstNumber) {
                 secondNumber = calculatorInput.value
@@ -349,10 +353,12 @@
         }
 
         function back() {
+            aestheticPressButton("Back")
             calculatorInput.value = calculatorInput.value.toString().slice(0, -1)
         }
 
         function functionC() {
+            aestheticPressButton("C")
             calculatorInput.value = 0
         }
 
@@ -426,6 +432,10 @@
 
                 case "Delete":
                     functionC()
+                    break;
+
+                case "Backspace":
+                    back()
                     break;
 
                 default:
