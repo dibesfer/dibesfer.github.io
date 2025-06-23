@@ -6,7 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
     <style>
-        
         * {
             margin: 0;
             box-sizing: border-box;
@@ -20,7 +19,8 @@
             line-height: 1.5;
         }
 
-        input, button {
+        input,
+        button {
             all: unset;
             border: solid 3px white;
             padding: 5px;
@@ -29,11 +29,13 @@
         }
 
         #hangmanImage {
-            
+            padding: 20px;
         }
 
         img {
             max-width: 100%;
+            position: relative;
+            z-index: -1;
         }
 
         #myConsoleDiv {
@@ -45,18 +47,43 @@
             height: 200px;
             overflow: auto;
         }
+
         #endMessage {
             white-space: pre;
         }
 
+        #credits {
+            /* position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translate(-50%, -50%); */
+        }
+
+        #rankings {
+            text-align: left;
+            width: max-content;
+            margin: auto;
+        }
     </style>
 </head>
 
 <body>
-    <br><h1>guessNumber</h1>
+    <br>
+    <h1>guessNumber</h1>
+
+    <img id="hangmanImage" style="
+    filter: invert(1) brightness(2) drop-shadow(0 0 150px white);
+            transition:0.4s;
+            transform: rotate(180deg);"
+        src="https://images.vexels.com/media/users/3/242389/isolated/preview/0919f3b05d8c8efbc1035a2ad463ef23-tarot-card-hanged-man-stroke.png"
+        alt="hangman tarot png">
+
+
     <h3 id="disclaimer" style="color: red;"></h3>
     <div id="startGame">
         <br>
+        <label for="userName">Username:</label>
+        <input type="text" name="" id="userName" value="Anonymous"><br><br>
         <label for="minValue">Min value:</label>
         <input type="number" name="" id="minValue"><br><br>
         <label for="maxValue">Max value:</label>
@@ -73,27 +100,40 @@
         <div id="myConsoleDiv">
             <h2>Console:</h2>
             <ol id="myConsole" start="0">
-            <li>Game Start</li>
-        </ol>
+                <li>Game Start</li>
+            </ol>
         </div>
     </div>
 
     <div id="gameEnd" style="display:none">
         <h1 id="endMessage"></h1>
+        <br>
         <button onclick="location.reload()">Restart</button>
-        
+        <br>
 
     </div>
-    
-    <img id="hangmanImage" style="
-    margin:50px; filter: invert(1) brightness(2) drop-shadow(0 0 150px white);
-            transition:0.4s;
-            transform: rotate(180deg);" src="https://images.vexels.com/media/users/3/242389/isolated/preview/0919f3b05d8c8efbc1035a2ad463ef23-tarot-card-hanged-man-stroke.png" alt="hangman tarot png">
 
-<div id="credits">by dibesfer</div>
+
+    <br>
+    <div id="rankings">
+        <h2>Rankings</h2>
+        <hr>
+        <ol id="rankingList">
+
+        </ol>
+
+    </div>
+
+
+
+    <br><br><br>
+    <hr><br>
+    <div id="credits">by dibesfer</div>
+    <br>
+    <br>
 
     <script>
-
+        let gameOver = false
         let attempts = 15
         let myAttempts = 0
 
@@ -111,10 +151,10 @@
 
         let hangmanRotation = 180
 
-       
+
         playBtn.addEventListener("click", play)
 
-        
+
 
         function getRndInteger(min, max) {
             return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -122,14 +162,22 @@
 
         let playersGuess = 0
         let randomNumber
+        let userNameMain
+
+
+        let minValue
+        let maxValue
 
         function play() {
-            let minValue = parseInt(document.getElementById("minValue").value)
-            let maxValue = parseInt(document.getElementById("maxValue").value)
+
+            userNameMain = userName.value
+            console.log(userNameMain)
+            minValue = parseInt(document.getElementById("minValue").value)
+            maxValue = parseInt(document.getElementById("maxValue").value)
             randomNumber = getRndInteger(minValue, maxValue)
             console.log("Random number is " + randomNumber)
 
-            
+
 
             if (isNaN(minValue) || isNaN(maxValue)) {
                 disclaimer.textContent = "Not A Number"
@@ -144,9 +192,9 @@
 
         checkBtn.addEventListener("click", check)
 
-        function check(){
+        function check() {
 
-            
+
             playersGuess = parseInt(resultNumber.value)
 
             if (isNaN(playersGuess)) {
@@ -155,11 +203,12 @@
             }
 
             myAttempts++
-            console.log(myAttempts)
+
             disclaimer.textContent = ""
 
             if (playersGuess == randomNumber) {
                 myConsole.innerHTML += "<li>You won! " + playersGuess + " is exactly " + randomNumber + "</li>"
+                gameOver = true
             }
             else if (playersGuess > randomNumber) {
                 myConsole.innerHTML += "<li>" + playersGuess + " is greater than my number</li>"
@@ -174,29 +223,67 @@
 
             resultNumber.value = ""
 
-            if (playersGuess == randomNumber){
+            if (playersGuess == randomNumber) {
                 game.style.display = "none"
                 gameEnd.style.display = "block"
-                endMessage.textContent = "You won in " + myAttempts + " attempts!" 
+                endMessage.textContent = "You won in " + myAttempts + " attempts!"
                 endMessage.textContent += "\nThe secret number is: " + randomNumber
                 hangmanImage.style.filter = "invert(1) brightness(2)  sepia(1) hue-rotate(60deg) saturate(100000%) drop-shadow(0px 0px 150px green)"
-            }   
+                
+            }
 
             hangmanRotation -= 12
             hangmanImage.style.transform = "rotate(" + hangmanRotation + "deg)"
-            
+
             myConsoleDiv.scrollTo(0, myConsoleDiv.scrollHeight)
 
-            if (attempts - myAttempts == 0){
+            if (attempts - myAttempts == 0) {
                 game.style.display = "none"
                 gameEnd.style.display = "block"
                 endMessage.textContent = "You lost!"
                 hangmanImage.style.filter = "invert(1) brightness(2)  sepia(1) hue-rotate(300deg) saturate(100000%) drop-shadow(0px 0px 150px red)"
+                gameOver = true
             }
+
+            attemptsArray.push(Math.abs(randomNumber - playersGuess))
+
+            rankingList.innerHTML = ""
+            attemptsArray.forEach(element => {
+                rankingList.innerHTML += "<li>Distance from result " + element + "</li>"
+            });
+
+            if (gameOver){
+                rankingList.innerHTML = ""
+                calcRanking()
+                ranking.forEach((element1, element2) => {
+                rankingList.innerHTML += "<li>" + element1 + "/" + element2 + "</li>"
+                });
+                console.log(ranking)
+            }
+
+
 
             
 
         }
+        // R A N K I N G
+
+        let ranking = []
+        let attemptsArray = []
+        let rankingList = document.getElementById("rankingList")
+        
+        function calcRanking() {
+            let total = 0
+            let sumatorio = 0;
+            for (let puntuacion of attemptsArray) {
+                sumatorio += puntuacion
+            }
+            total = sumatorio / ((maxValue - minValue + 1) * (15 - myAttempts))
+            total = 100 - Math.floor(total * 100)
+            ranking.push([userNameMain, total])
+
+        }
+
 
     </script>
 
