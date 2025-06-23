@@ -23,6 +23,7 @@
             padding: 5px;
             font-family: monospace;
             font-size: x-large;
+            word-break: break-all;
         }
 
         #calculatorInput {
@@ -100,8 +101,8 @@
         <div id="key3" onclick="insertNumber(3)">3</div>
         <div id="key0" onclick="insertNumber(0)">0</div>
         <div id="key," onclick="insertComma()">,</div>
-        <div id="" onclick="insertNumber()"></div>
-        <div id="" onclick="insertNumber()"></div>
+        <div id="" onclick="insertNumber()" style="grid-column: span 2;"></div>
+        <!-- <div id="" onclick="insertNumber()"></div> -->
         <div id="keyBack" onclick="back()">←</div>
         <div id="keyC" onclick="functionC()" class="red">C</div>
         <div id="key=" onclick="equals()" class="green">=</div>
@@ -134,20 +135,20 @@
         }
 
 
-        function aestheticPressButton(button){
+        function aestheticPressButton(button) {
             document.getElementById("key" + button)
-            .classList.add("keyPressed")
-            setTimeout(()=>{
+                .classList.add("keyPressed")
+            setTimeout(() => {
                 document.getElementById("key" + button)
-            .classList.remove("keyPressed")
+                    .classList.remove("keyPressed")
             }, 100)
         }
 
         function insertNumber(number) {
             //calculatorInput.value = number
-aestheticPressButton(number)
-            
-            
+            aestheticPressButton(number)
+
+
             consola.innerHTML += number
 
             if (awaitingInput && firstNumber) {
@@ -217,7 +218,7 @@ aestheticPressButton(number)
         }
 
         function subtract() {
-aestheticPressButton("-")
+            aestheticPressButton("-")
             consola.innerHTML += " - "
 
             currentOperation = "subtract"
