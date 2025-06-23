@@ -134,7 +134,6 @@
             return value
         }
 
-
         function aestheticPressButton(button) {
             document.getElementById("key" + button)
                 .classList.add("keyPressed")
@@ -150,6 +149,7 @@
 
 
             consola.innerHTML += number
+            consola.scrollTop = consola.scrollHeight;
 
             if (awaitingInput && firstNumber) {
                 calculatorInput.value = 0
@@ -313,7 +313,7 @@
 
                 calculatorInput.style.color = "unset"
                 consola.innerHTML += " = " + result + "<br>"
-                consola.scrollTop = consola.scrollHeight; // scroll al máximo a la derecha
+                consola.scrollTop = consola.scrollHeight;
 
             }
 
