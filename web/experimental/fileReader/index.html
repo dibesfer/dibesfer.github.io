@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="icon" type="image/x-icon" href="/branding/favicon.ico">
+
+</head>
+
+<body>
+    <script>
+
+        document.body.innerHTML = `
+        
+        <h1>Hola Mundo!</h1>
+        <p>This page is entirely built by javascript</p>
+        <p>If you don't trust your browser turn off your router</p>
+        `
+
+        fetch("/index.html")
+            .then(response => response.text())
+            .then(elements => {
+
+                console.log(document.documentElement.innerHTML = "BOO")
+            
+            })
+            .catch(error => {
+                console.log(error);
+            });
+    </script>
+</body>
+
+</html>
