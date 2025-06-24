@@ -23,6 +23,7 @@
             padding: 5px;
             font-family: monospace;
             font-size: x-large;
+            word-break: break-all;
         }
 
         #calculatorInput {
@@ -43,7 +44,7 @@
         }
 
         .grid>div {
-            border: solid 1px black;
+            border: solid 2px black;
             text-align: center;
             font-size: 40px;
             align-content: center;
@@ -57,6 +58,12 @@
         }
 
         .grid>div:active {
+            background-color: rgb(88, 88, 88);
+            color: white;
+            font-weight: bold;
+        }
+
+        .keyPressed {
             background-color: rgb(88, 88, 88);
             color: white;
             font-weight: bold;
@@ -76,42 +83,49 @@
     <div id="consola">
         CONSOLA<br>
     </div>
-    <input value="0" placeholder="0" type="number" name="calculatorInput" id="calculatorInput">
+    <input value="0" placeholder="0" type="text" name="calculatorInput" id="calculatorInput">
     <div class="grid">
-
-        <div onclick="insertNumber(7)">7</div>
-        <div onclick="insertNumber(8)">8</div>
-        <div onclick="insertNumber(9)">9</div>
-        <div onclick="add()" style="color: blue;">+</div>
-        <div onclick="subtract()" style="color: red;">-</div>
-        <div onclick="insertNumber(4)">4</div>
-        <div onclick="insertNumber(5)">5</div>
-        <div onclick="insertNumber(6)">6</div>
-        <div onclick="multiply()" style="color: green;">x</div>
-        <div onclick="divide()" style="color: purple;">/</div>
-        <div onclick="insertNumber(1)">1</div>
-        <div onclick="insertNumber(2)">2</div>
-        <div onclick="insertNumber(3)">3</div>
-        <div onclick="insertNumber(0)">0</div>
-        <div onclick="insertComma()">,</div>
-        <div onclick="insertNumber()"></div>
-        <div onclick="insertNumber()"></div>
-        <div onclick="back('back')">←</div>
-        <div onclick="functionC()" class="red">C</div>
-        <div onclick="equals()" class="green">=</div>
+        
+        <div title="Memory Clear" onclick="memoryClear()">MC</div>
+        <div title="Memory Recovery" onclick="memoryRecovery()">MR</div>
+        <div title="Memory Save" onclick="memorySave()">MS</div>
+        <div>?</div>
+        <div>?</div>
+        <div id="key7" onclick="insertNumber(7)">7</div>
+        <div id="key8" onclick="insertNumber(8)">8</div>
+        <div id="key9" onclick="insertNumber(9)">9</div>
+        <div id="key+" onclick="add()" style="color: blue;">+</div>
+        <div id="key-" onclick="subtract()" style="color: red;">-</div>
+        <div id="key4" onclick="insertNumber(4)">4</div>
+        <div id="key5" onclick="insertNumber(5)">5</div>
+        <div id="key6" onclick="insertNumber(6)">6</div>
+        <div id="keyX" onclick="multiply()" style="color: green;">x</div>
+        <div id="key/" onclick="divide()" style="color: purple;">/</div>
+        <div id="key1" onclick="insertNumber(1)">1</div>
+        <div id="key2" onclick="insertNumber(2)">2</div>
+        <div id="key3" onclick="insertNumber(3)">3</div>
+        <div id="key0" onclick="insertNumber(0)">0</div>
+        <div id="key," onclick="insertComma()">,</div>
+        <div id="" onclick="insertNumber()" style="grid-column: span 2;"></div>
+        <!-- <div id="" onclick="insertNumber()"></div> -->
+        <div id="keyBack" onclick="back()">←</div>
+        <div id="keyC" onclick="functionC()" class="red">C</div>
+        <div id="key=" onclick="equals()" class="green">=</div>
     </div>
 
     <script>
         // UFF CALCULADORA
 
-        var result = null
-        var firstNumber = null
-        var secondNumber = null
-        var equalsMemory = null
-        var awaitingInput = false
+        let memory = 0.0
+        let result = null
+        let firstNumber = null
+        let secondNumber = null
+        let equalsMemory = null
+        let awaitingInput = false
+        let isFloat = false
 
-        var stringInput = ""
-        var floatInput = 0.0
+        let stringInput = ""
+        let floatInput = 0.0
 
         currentOperation = "none"
 
@@ -127,27 +141,40 @@
             return value
         }
 
-
+        function aestheticPressButton(button) {
+            document.getElementById("key" + button)
+                .classList.add("keyPressed")
+            setTimeout(() => {
+                document.getElementById("key" + button)
+                    .classList.remove("keyPressed")
+            }, 100)
+        }
 
         function insertNumber(number) {
             //calculatorInput.value = number
+            aestheticPressButton(number)
 
 
             consola.innerHTML += number
+            consola.scrollTop = consola.scrollHeight;
 
             if (awaitingInput && firstNumber) {
                 calculatorInput.value = 0
                 awaitingInput = false
+                isFloat = false
             }
 
-            stringInput = calculatorInput.value.toString()
 
-            if (stringInput.endsWith(".0")) {
+            stringInput = calculatorInput.value
 
-                if (number != 0) {
-                    stringInput = stringInput.slice(0, -1)
-                }
-            }
+            // if (stringInput.endsWith(".0")) {
+            //     if (number != 0) {
+            //         stringInput = stringInput.slice(0, -1)
+            //     }
+            //     else {
+
+            //     }
+            // }
             stringInput += number
             floatInput = parseFloat(stringInput)
 
@@ -164,24 +191,27 @@
                 if (number == 0) {
                     calculatorInput.value = stringInput
                 }
-
             }
             else {
                 calculatorInput.value = floatInput
-
             }
             calculatorInput.scrollLeft = calculatorInput.scrollWidth; // scroll al máximo a la derecha
-
-
             //alert("hola" + stringInput)
         }
 
         function insertComma() {
-            calculatorInput.value += ".0"
+
+            if (!isFloat) {
+                aestheticPressButton(",")
+                calculatorInput.value += "."
+                consola.innerHTML += "."
+                isFloat = true
+            }
+
         }
 
         function add() {
-
+            aestheticPressButton("+")
             consola.innerHTML += " + "
 
             currentOperation = "add"
@@ -191,17 +221,15 @@
             // MEMORY
             if (firstNumber == null) {
                 firstNumber = calculatorInput.value
-
             }
             else {
                 secondNumber = calculatorInput.value
             }
 
-
         }
 
         function subtract() {
-
+            aestheticPressButton("-")
             consola.innerHTML += " - "
 
             currentOperation = "subtract"
@@ -216,13 +244,10 @@
             else {
                 secondNumber = calculatorInput.value
             }
-
-
-
         }
 
         function multiply() {
-
+            aestheticPressButton("X")
             consola.innerHTML += " x "
 
             currentOperation = "multiply"
@@ -238,11 +263,10 @@
                 secondNumber = calculatorInput.value
             }
 
-
         }
 
         function divide() {
-
+            aestheticPressButton("/")
             consola.innerHTML += " / "
 
             currentOperation = "divide"
@@ -263,7 +287,7 @@
 
         function equals() {
 
-
+            aestheticPressButton("=")
 
             if (firstNumber) {
                 secondNumber = calculatorInput.value
@@ -282,6 +306,7 @@
                         break;
 
                     case "divide":
+
                         result = parseFloat(firstNumber) / parseFloat(secondNumber)
                         break;
 
@@ -289,14 +314,21 @@
                         break;
                 }
 
-                calculatorInput.value = result
+
+                if (currentOperation == "divide" && secondNumber == 0) {
+                    consola.innerHTML += "<p style='color:red'>You can't divide by zero</p>"
+                }
+                else {
+                    calculatorInput.value = result
+                    consola.innerHTML += " = " + result + "<br>"
+                }
                 firstNumber = null
                 equalsMemory = secondNumber
                 secondNumber = null
 
                 calculatorInput.style.color = "unset"
-                consola.innerHTML += " = " + result + "<br>"
-                consola.scrollTop = consola.scrollHeight; // scroll al máximo a la derecha
+
+                consola.scrollTop = consola.scrollHeight;
 
             }
 
@@ -337,13 +369,112 @@
         }
 
         function back() {
+            aestheticPressButton("Back")
             calculatorInput.value = calculatorInput.value.toString().slice(0, -1)
         }
 
         function functionC() {
+            aestheticPressButton("C")
             calculatorInput.value = 0
+            isFloat = false
         }
 
+        document.onkeydown = function (e) {
+            e.preventDefault()
+            switch (e.code) {
+                case "Numpad0":
+                    insertNumber(0)
+
+                    break;
+                case "Numpad1":
+                    insertNumber(1)
+
+                    break;
+                case "Numpad2":
+                    insertNumber(2)
+
+                    break;
+                case "Numpad3":
+                    insertNumber(3)
+
+                    break;
+                case "Numpad4":
+                    insertNumber(4)
+
+                    break;
+                case "Numpad5":
+                    insertNumber(5)
+
+                    break;
+                case "Numpad6":
+                    insertNumber(6)
+
+                    break;
+                case "Numpad7":
+                    insertNumber(7)
+
+                    break;
+                case "Numpad8":
+                    insertNumber(8)
+
+                    break;
+                case "Numpad9":
+                    insertNumber(9)
+
+                    break;
+
+                case "NumpadAdd":
+                    add()
+                    break;
+                case "NumpadSubtract":
+                    subtract()
+                    break;
+
+                case "NumpadMultiply":
+                    multiply()
+                    break;
+                case "NumpadDivide":
+                    divide()
+                    break;
+
+                case "NumpadEnter":
+                    equals()
+                    break;
+
+                case "NumpadDecimal":
+                    insertComma()
+                    break;
+
+                case "Delete":
+                    functionC()
+                    break;
+
+                case "Backspace":
+                    back()
+                    break;
+
+                default:
+                    console.log(e.code + " is not divided.")
+                    break;
+
+            }
+
+        };
+
+
+        // MEMORY
+
+        function memorySave(){
+            memory = calculatorInput.value
+        }
+
+        function memoryClear(){
+            memory = 0.0
+        }
+
+        function memoryRecovery(){
+            calculatorInput.value = memory
+        }
     </script>
 </body>
 
