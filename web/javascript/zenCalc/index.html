@@ -1,12 +1,107 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>zenCalc</title>
 </head>
+
 <body>
     <h1>zenCalc</h1>
-    <input type="text" name="" id="">
+    <p><span id="consolaFirstNumber">firstNumber</span> + <span id="consolaOperator">operator</span> + <span
+            id="consolaSecondNumber">secondNumber</span> = <span id="consolaResult">result</span></p>
+    <input type="text" name="" id="calculatorInput">
+    <br><br>
+    <button onclick="insertValue(0)">0</button>
+    <button onclick="insertValue(1)">1</button>
+    <button onclick="insertValue(2)">2</button>
+    <button onclick="insertValue(3)">3</button>
+    <button onclick="insertValue(4)">4</button>
+    <button onclick="insertValue(5)">5</button>
+    <button onclick="insertValue(6)">6</button>
+    <button onclick="insertValue(7)">7</button>
+    <button onclick="insertValue(8)">8</button>
+    <button onclick="insertValue(9)">9</button>
+    <button onclick="insertValue('.')">.</button>
+    <br><br>
+    <button onclick="insertOperator('+')">+</button>
+    <button onclick="insertOperator('-')">-</button>
+    <button onclick="insertOperator('/')">/</button>
+    <button onclick="insertOperator('*')">*</button>
+    <br><br>
+    <button onclick="calculate()">=</button>
+
+    <script>
+
+        const calculatorInput = document.getElementById("calculatorInput")
+        const consolaFirstNumber = document.getElementById("consolaFirstNumber")
+        const consolaOperator = document.getElementById("consolaOperator")
+        const consolaSecondNumber = document.getElementById("consolaSecondNumber")
+        const consolaResult = document.getElementById("consolaResult")
+
+        let firstNumber = null
+        let operator = null
+        let secondNumber = null
+        let result = null
+
+        calculatorInput.value = ""
+
+        function insertValue(number) {
+
+            calculatorInput.value += number
+
+            if (firstNumber == null) {
+                consolaFirstNumber.textContent = "(" + calculatorInput.value + ")"
+            }
+            else {
+                consolaSecondNumber.textContent = "(" + calculatorInput.value + ")"
+            }
+
+        }
+
+        function insertOperator(myOperator) {
+            if (calculatorInput.value){
+                operator = myOperator
+                firstNumber = parseFloat(calculatorInput.value)
+                consolaOperator.textContent = "(" + operator + ")"
+                calculatorInput.value = null
+            }
+        }
+
+        function calculate() {
+
+            if (firstNumber != null) {
+                secondNumber = parseFloat(calculatorInput.value)
+
+
+                switch (operator) {
+                    case "+":
+                        result = firstNumber + secondNumber
+                        break;
+                    case "-":
+                        result = firstNumber - secondNumber
+                        break;
+                    case "/":
+                        result = firstNumber / secondNumber
+                        break;
+                    case "*":
+                        result = firstNumber * secondNumber
+                        break;
+
+                }
+                console.log(firstNumber, operator, secondNumber, result)
+
+                consolaResult.textContent = result
+                calculatorInput.value
+            }
+
+        }
+
+
+
+    </script>
+
 </body>
+
 </html>
