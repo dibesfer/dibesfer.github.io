@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>fun</title>
+    <style>
+
+        * {
+            margin: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background-color: black;
+            color: white;
+            font-family: monospace;
+            height: 100dvh;
+            font-size: x-large;
+        }
+
+        #flexBody{
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        button {
+            background-color: rgb(78, 78, 78);
+            border: white solid 3px;
+            padding: 10px;
+            font: unset;
+            color: white;
+            transition: 0.2s;
+        }
+
+        button:active {
+            background-color: black;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="flexBody">
+        <h1>Fun website</h1>
+        <p>You've been here for <span id="secondsCounter">0</span> seconds</p>
+        <p>Clicks: <span id="clicksCounter">0</span></p>
+        
+        <button onclick="clicker()">CLICK ME</button>
+    </div>
+    
+    <script>
+        let seconds = 0
+        let clicks = 0
+        let myInterval = setInterval(sumSeconds, 1000)
+
+        function sumSeconds(){
+            seconds++
+            secondsCounter.textContent = seconds
+        }
+
+        function clicker(){
+            clicks++
+            clicksCounter.textContent = clicks
+        }
+    </script>
+
+</body>
+
+</html>
