@@ -5,6 +5,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>zenCalc</title>
+    <style>
+        body{
+            font-family: monospace;
+        }
+    </style>
 </head>
 
 <body>
@@ -72,7 +77,10 @@
         function calculate() {
 
             if (firstNumber != null) {
-                secondNumber = parseFloat(calculatorInput.value)
+                
+                if (secondNumber == null){
+                    secondNumber = parseFloat(calculatorInput.value)
+                }
 
 
                 switch (operator) {
