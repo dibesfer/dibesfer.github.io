@@ -13,8 +13,9 @@
 
         body {
             height: 100vh;
-            font-family: Verdana, Geneva, Tahoma, sans-serif;
-            background-color: wheat;
+            font-family: monospace;
+            font-size: x-large;
+            background-color: rgb(255, 233, 191);
         }
 
         #superConsola {
@@ -25,9 +26,9 @@
             height: 10%;
             overflow: auto;
             padding: 5px;
-            font-family: monospace;
-            font-size: x-large;
+            
             word-break: break-all;
+            border: solid 3px black;
         }
 
         #calculatorInput {
@@ -38,6 +39,7 @@
             height: 10%;
             border: solid 3px black;
             background-color: lightblue;
+            font-family: monospace;
         }
 
         .grid {
@@ -120,40 +122,29 @@
         <div id="" onclick="insertNumber()"></div>
         
         <!-- <div id="" onclick="insertNumber()"></div> -->
+        
+        <div></div>
+        <div></div>
         <div id="keyBack" onclick="back()">←</div>
-        <div></div>
-        <div></div>
         <div id="key=" onclick="equals()" class="green">=</div>
     </div>
 
     <script>
-        // UFF CALCULADORA
-
-        let memory = null
-        let result = null
+        
         let firstNumber = null
         let secondNumber = null
         let equalsMemory = null
         let awaitingInput = true
         let isFloat = false
-
+        let memory = null
+        let result = null
         let stringInput = ""
         let floatInput = 0.0
         calculatorInput.value = null
 
         currentOperation = "none"
 
-        
-
-        function takeValue() {
-            return stringInput = calculatorInput.value.toString()
-        }
-        takeValue()
-        function putValue(value) {
-            calculatorInput.value = value
-            return value
-        }
-
+        // Adds keyPressed class to buttons and takes the class 100 miliseconds after
         function aestheticPressButton(button) {
             document.getElementById("key" + button)
                 .classList.add("keyPressed")
@@ -209,6 +200,25 @@
 
         }
 
+        // This function saves firstnumber and secondnumber
+        //is called by all operations
+        function saveValues(){
+            // MEMORY
+            if (firstNumber == null) {
+                firstNumber = calculatorInput.value
+            }
+            else {
+                secondNumber = calculatorInput.value
+            }
+            if (result != null){
+                firstNumber = result
+                secondNumber = null
+                superConsolaFirstNumber.textContent = firstNumber
+                superConsolaSecondNumber.textContent = null
+                superConsolaResult.textContent = null
+            }
+        }
+
         function add() {
             aestheticPressButton("+")
             consola.innerHTML += " + "
@@ -218,13 +228,7 @@
             superConsolaOperation.textContent = currentOperation
             calculatorInput.style.color = "blue"
 
-            // MEMORY
-            if (firstNumber == null) {
-                firstNumber = calculatorInput.value
-            }
-            else {
-                secondNumber = calculatorInput.value
-            }
+            saveValues()
 
         }
 
@@ -237,14 +241,7 @@
             superConsolaOperation.textContent = currentOperation
             calculatorInput.style.color = "red"
 
-            // MEMORY
-            if (firstNumber == null) {
-                firstNumber = calculatorInput.value
-
-            }
-            else {
-                secondNumber = calculatorInput.value
-            }
+            saveValues()
         }
 
         function multiply() {
@@ -256,14 +253,7 @@
             superConsolaOperation.textContent = currentOperation
             calculatorInput.style.color = "green"
 
-            // MEMORY
-            if (firstNumber == null) {
-                firstNumber = calculatorInput.value
-
-            }
-            else {
-                secondNumber = calculatorInput.value
-            }
+            saveValues()
 
         }
 
@@ -276,14 +266,7 @@
             superConsolaOperation.textContent = currentOperation
             calculatorInput.style.color = "purple"
 
-            // MEMORY
-            if (firstNumber == null) {
-                firstNumber = calculatorInput.value
-
-            }
-            else {
-                secondNumber = calculatorInput.value
-            }
+            saveValues()
 
 
         }
@@ -473,7 +456,6 @@
             }
 
         };
-
 
         // MEMORY
 
