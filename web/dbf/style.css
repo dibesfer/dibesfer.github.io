@@ -1,0 +1,53 @@
+* {
+    margin: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: sans-serif;
+    line-height: 1.7;
+    height: 100dvh;
+    hyphens: auto;
+}
+
+main {
+    height: 90%;
+    overflow: auto;
+    
+}
+
+pre , img , iframe {
+    max-width: 100%;
+    
+}
+
+pre {
+    white-space: pre-wrap;
+    overflow: auto;
+    
+}
+
+@media (prefers-color-scheme: dark) {
+    body {
+        background: black;
+        color: white;
+    }
+}
+
+header , footer {
+    height: 5%;
+    background-color: gray;
+}
+
+.flexy {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 100%;
+}
+
+.maxWidthContent {
+
+    max-width: 800px;
+    margin: auto;
+}
