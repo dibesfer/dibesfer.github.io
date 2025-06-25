@@ -17,6 +17,10 @@
             background-color: wheat;
         }
 
+        #superConsola {
+            height: 10%;
+            border: solid 3px black;
+        }
         #consola {
             height: 10%;
             overflow: auto;
@@ -31,10 +35,9 @@
             text-align: right;
             padding: 5px;
             font-size: 40px;
-            height: 20%;
+            height: 10%;
             border: solid 3px black;
             background-color: lightblue;
-
         }
 
         .grid {
@@ -54,17 +57,17 @@
         }
 
         .grid>div:hover {
-            background-color: gray;
+            background-color: rgba(0, 0, 0, 0.418) !important;
         }
 
         .grid>div:active {
-            background-color: rgb(88, 88, 88);
+            background-color: rgb(88, 88, 88) !important;
             color: white;
             font-weight: bold;
         }
 
         .keyPressed {
-            background-color: rgb(88, 88, 88);
+            background-color: rgb(88, 88, 88) !important;
             color: white;
             font-weight: bold;
         }
@@ -80,63 +83,73 @@
 </head>
 
 <body>
+    <div id="superConsola">
+        <p>First number: <span id="superConsolaFirstNumber"></span></p>
+        <p>Operation: <span id="superConsolaOperation"></span></p>
+        <p>Second number: <span id="superConsolaSecondNumber"></span></p>
+        <p>Result: <span id="superConsolaResult"></span></p>
+    </div>
     <div id="consola">
         CONSOLA<br>
     </div>
-    <input value="0" placeholder="0" type="text" name="calculatorInput" id="calculatorInput">
+    <input value="" placeholder="0" type="text" name="calculatorInput" id="calculatorInput">
     <div class="grid">
         
         <div title="Memory Clear" onclick="memoryClear()">MC</div>
         <div title="Memory Recovery" onclick="memoryRecovery()">MR</div>
         <div title="Memory Save" onclick="memorySave()">MS</div>
-        <div>?</div>
-        <div>?</div>
+        <div id="keyCE" onclick="functionCE()" class="red">CE</div>
+        <div id="keyC" onclick="functionC()" class="red">C</div>
+        
         <div id="key7" onclick="insertNumber(7)">7</div>
         <div id="key8" onclick="insertNumber(8)">8</div>
         <div id="key9" onclick="insertNumber(9)">9</div>
-        <div id="key+" onclick="add()" style="color: blue;">+</div>
-        <div id="key-" onclick="subtract()" style="color: red;">-</div>
+        <div id="key+" onclick="add()" style="color: blue; background-color: lightblue;">+</div>
+        <div id="key-" onclick="subtract()" style="color: red; background-color: rgb(255, 174, 174);">-</div>
         <div id="key4" onclick="insertNumber(4)">4</div>
         <div id="key5" onclick="insertNumber(5)">5</div>
         <div id="key6" onclick="insertNumber(6)">6</div>
-        <div id="keyX" onclick="multiply()" style="color: green;">x</div>
-        <div id="key/" onclick="divide()" style="color: purple;">/</div>
+        <div id="keyX" onclick="multiply()" style="color: green; background-color: lightgreen;">x</div>
+        <div id="key/" onclick="divide()" style="color: purple; background-color: rgb(255, 128, 255);">/</div>
         <div id="key1" onclick="insertNumber(1)">1</div>
         <div id="key2" onclick="insertNumber(2)">2</div>
         <div id="key3" onclick="insertNumber(3)">3</div>
         <div id="key0" onclick="insertNumber(0)">0</div>
         <div id="key," onclick="insertComma()">,</div>
-        <div id="" onclick="insertNumber()" style="grid-column: span 2;"></div>
+        <!-- style="grid-column: span 2;" -->
+        <div id="" onclick="insertNumber()"></div>
+        
         <!-- <div id="" onclick="insertNumber()"></div> -->
         <div id="keyBack" onclick="back()">←</div>
-        <div id="keyC" onclick="functionC()" class="red">C</div>
+        <div></div>
+        <div></div>
         <div id="key=" onclick="equals()" class="green">=</div>
     </div>
 
     <script>
         // UFF CALCULADORA
 
-        let memory = 0.0
+        let memory = null
         let result = null
         let firstNumber = null
         let secondNumber = null
         let equalsMemory = null
-        let awaitingInput = false
+        let awaitingInput = true
         let isFloat = false
 
         let stringInput = ""
         let floatInput = 0.0
+        calculatorInput.value = null
 
         currentOperation = "none"
 
+        
+
         function takeValue() {
-
             return stringInput = calculatorInput.value.toString()
-
         }
         takeValue()
         function putValue(value) {
-
             calculatorInput.value = value
             return value
         }
@@ -154,49 +167,29 @@
             //calculatorInput.value = number
             aestheticPressButton(number)
 
-
             consola.innerHTML += number
             consola.scrollTop = consola.scrollHeight;
 
+            if (firstNumber == null){
+                superConsolaFirstNumber.textContent += number 
+            }
+            else {
+                superConsolaSecondNumber.textContent += number 
+            }
+
             if (awaitingInput && firstNumber) {
-                calculatorInput.value = 0
+                calculatorInput.value = null
                 awaitingInput = false
                 isFloat = false
             }
 
-
             stringInput = calculatorInput.value
 
-            // if (stringInput.endsWith(".0")) {
-            //     if (number != 0) {
-            //         stringInput = stringInput.slice(0, -1)
-            //     }
-            //     else {
-
-            //     }
-            // }
             stringInput += number
             floatInput = parseFloat(stringInput)
 
-            // parseFloat() kills 0.10... like values
-            if (stringInput.includes(".")) {
-
-                if (!stringInput[stringInput.length - 1] == "0") {
-                    calculatorInput.value = stringInput
-                }
-
-                console.log("calc just added a 0")
-                console.log(stringInput + " / " + number)
-
-                if (number == 0) {
-                    calculatorInput.value = stringInput
-                }
-            }
-            else {
-                calculatorInput.value = floatInput
-            }
-            calculatorInput.scrollLeft = calculatorInput.scrollWidth; // scroll al máximo a la derecha
-            //alert("hola" + stringInput)
+            calculatorInput.value = stringInput
+            calculatorInput.scrollLeft = calculatorInput.scrollWidth; 
         }
 
         function insertComma() {
@@ -205,6 +198,12 @@
                 aestheticPressButton(",")
                 calculatorInput.value += "."
                 consola.innerHTML += "."
+                if (firstNumber == null){
+                superConsolaFirstNumber.textContent += "."
+            }
+                else {
+                    superConsolaSecondNumber.textContent += "."
+                }
                 isFloat = true
             }
 
@@ -216,6 +215,7 @@
 
             currentOperation = "add"
             awaitingInput = true
+            superConsolaOperation.textContent = currentOperation
             calculatorInput.style.color = "blue"
 
             // MEMORY
@@ -234,6 +234,7 @@
 
             currentOperation = "subtract"
             awaitingInput = true
+            superConsolaOperation.textContent = currentOperation
             calculatorInput.style.color = "red"
 
             // MEMORY
@@ -252,6 +253,7 @@
 
             currentOperation = "multiply"
             awaitingInput = true
+            superConsolaOperation.textContent = currentOperation
             calculatorInput.style.color = "green"
 
             // MEMORY
@@ -271,6 +273,7 @@
 
             currentOperation = "divide"
             awaitingInput = true
+            superConsolaOperation.textContent = currentOperation
             calculatorInput.style.color = "purple"
 
             // MEMORY
@@ -320,6 +323,7 @@
                 }
                 else {
                     calculatorInput.value = result
+                    superConsolaResult.textContent = result
                     consola.innerHTML += " = " + result + "<br>"
                 }
                 firstNumber = null
@@ -363,9 +367,7 @@
                 calculatorInput.style.color = "unset"
                 consola.innerHTML += " = " + result + "<br>"
                 consola.scrollTop = consola.scrollHeight; // scroll al máximo a la derecha
-
             }
-
         }
 
         function back() {
@@ -375,8 +377,15 @@
 
         function functionC() {
             aestheticPressButton("C")
-            calculatorInput.value = 0
+            calculatorInput.value = null
             isFloat = false
+        }
+        
+        function functionCE() {
+            aestheticPressButton("CE")
+            calculatorInput.value = null
+            isFloat = false
+            consola.innerHTML = "CONSOLA <br>"
         }
 
         document.onkeydown = function (e) {
@@ -449,12 +458,16 @@
                     functionC()
                     break;
 
+                case "Escape":
+                    functionCE()
+                    break;
+
                 case "Backspace":
                     back()
                     break;
 
                 default:
-                    console.log(e.code + " is not divided.")
+                    console.log(e.code + " is not defined")
                     break;
 
             }
