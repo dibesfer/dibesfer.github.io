@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        body {
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <h1>JSON</h1>
+    <h3>JavaScript Object Notation</h3>
+
+    <script>
+
+        //Objeto simple
+        let json1 = {
+            "nombre" : "Ferrán Minero Fernández",
+            "Fecha_de_nacimiento" : "17/02/1996",
+            "edad" : 29,
+            "trabajo": false,
+            "pareja": null
+        }
+        // Objeto conobjeto
+        let json2 = {
+            "nombre" : "Ferrán",
+            "direccion" : {
+                "calle": "Melancolía",
+                "codigo_postal" : "08901"
+            }
+        }
+        // Objeto con array
+        let json3 = {
+            "nombre" : "Laura",
+            "hobbies" : ["Leer", "Nadar", "Viajar"],
+            "ciudad" : "Mozambique"
+        }
+        //array de objetos
+
+        let json4 = [
+            {
+                "id": 1,
+                "producto": "peras",
+                "precio" : 12.5
+            },
+            {
+                "id": 2,
+                "producto": "manzanas",
+                "precio" : 10
+            },
+            {
+                "id": 3,
+                "producto": "plátanos",
+                "precio" : 7.5
+            }
+        ]
+
+        let CP = {
+            "nombre": "Desarrollo de Aplicaciones con Tecnologías Web",
+            "codigo" :"xxxx",
+            "modulos" : [
+                
+            ]
+        }
+
+
+        console.log(json1)
+        document.write(JSON.stringify(json1))
+        document.write(json1.Fecha_de_nacimiento)
+
+    </script>
+</body>
+</html>
