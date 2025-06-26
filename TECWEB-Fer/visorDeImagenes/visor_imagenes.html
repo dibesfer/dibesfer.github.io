@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>visor_imagenes</title>
+    <style>
+        *{
+            margin: 0 auto;
+            padding: 0;
+            font-family: sans-serif;
+        }
+        #container {
+            margin: 0 auto;
+            width: 100%;
+        }
+        section {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            background-color: cadetblue;
+        }
+        #imagenes {
+            padding: 2%;
+            width: 60%;
+            text-align: center;
+        }
+        #imagenes img{
+            width: 95%;
+        } 
+        #imagenes h3 {
+            font-size: 2rem;
+            color: #2c3e50;
+            font-variant:small-caps;
+        }
+        #imagenes a {
+            font-size: 1rem;
+            font-weight: 800;
+            text-decoration: none;
+            color: #2c3e50;
+        }
+        #imagenes a:hover {
+            color: #f39c12;
+        }
+        input[type=button]{
+            width: 100px;
+            height: 50px;
+            padding:10px;
+            background-color: #2c3e50;
+            color: white;
+            margin-left: 20px;
+            border-radius: 5px;
+        }
+        input[type=button]:hover{
+            background-color: #f39c12;
+        }
+        #botonera {
+            padding-bottom: 2%;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <section>
+            <div id="imagenes">
+                
+                <img src="imagenes/conta.jpg" id="foto">
+                <p id="counter">1/4</p>
+                <h3 id="pie_de_foto">Texto img 1</h3>
+                <a href="https://www.google.com/" id="enlace">Ir a GOOGLE</a>
+            </div>
+            <div id="botonera">
+                <input type="button" value="<<" onclick="retrocederTodo();">
+                <input type="button" value="<" onclick="retroceder();">
+                <input type="button" value=">" onclick="avanzar();">
+                <input type="button" value=">>" onclick="avanceTodo();">
+               </div>
+        </section>
+    </div>
+    
+    <script>
+
+        let foto = document.getElementById("foto")
+        let pie_de_foto = document.getElementById("pie_de_foto")
+        let enlace = document.getElementById("enlace")
+        let counter = document.getElementById("counter")
+
+        let carrusel = [
+
+            ["conta.jpg", "Curso de Contabilidad", "Ir a Google", "https://google.es"],
+            ["conta2.jpg", "Contabilidad Básica", "Ir a Pau Casals", "https://paucasals.com"],
+            ["moodle.png", "Moodle", "Ir a Moodle", "https://moodle.org"],
+            ["ofima.jpg", "Ofimática con Internet", "Ir al periódico", "https://www.elperiodico.com/"]
+            
+        ]
+
+        let position = 0
+
+        foto.src = "imagenes/" + carrusel[0][0]
+        pie_de_foto.textContent = carrusel[0][1]
+        enlace.textContent = carrusel[0][2]
+        enlace.href = carrusel[0][3]
+
+        function avanzar(){
+            if (position == carrusel.length-1){
+                position = 0
+            }
+            else {
+                position++
+            }
+            foto.src = "imagenes/" + carrusel[position][0]
+            pie_de_foto.textContent = carrusel[position][1]
+            enlace.textContent = carrusel[position][2]
+            enlace.href = carrusel[position][3]
+            counter.textContent = (position+1) + "/" + (carrusel.length)
+        }
+
+        function retroceder(){
+            if (position == 0){
+                position = carrusel.length-1
+            }
+            else {
+                position--
+            }
+            foto.src = "imagenes/" + carrusel[position][0]
+            pie_de_foto.textContent = carrusel[position][1]
+            enlace.textContent = carrusel[position][2]
+            enlace.href = carrusel[position][3]
+            counter.textContent = (position+1) + "/" + (carrusel.length)
+        }
+
+        function avanceTodo(){
+            position = carrusel.length-1
+            foto.src = "imagenes/" + carrusel[position][0]
+            pie_de_foto.textContent = carrusel[position][1]
+            enlace.textContent = carrusel[position][2]
+            enlace.href = carrusel[position][3]
+            counter.textContent = (position+1) + "/" + (carrusel.length)
+        }
+
+        function retrocederTodo(){
+            position = 0
+            foto.src = "imagenes/" + carrusel[position][0]
+            pie_de_foto.textContent = carrusel[position][1]
+            enlace.textContent = carrusel[position][2]
+            enlace.href = carrusel[position][3]
+            counter.textContent = (position+1) + "/" + (carrusel.length)
+        }
+
+    </script>
+
+</body>
+</html>
