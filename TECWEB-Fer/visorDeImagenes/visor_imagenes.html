@@ -103,6 +103,14 @@
         enlace.textContent = carrusel[0][2]
         enlace.href = carrusel[0][3]
 
+        function actualizarCarrusel(){
+            foto.src = "imagenes/" + carrusel[position][0]
+            pie_de_foto.textContent = carrusel[position][1]
+            enlace.textContent = carrusel[position][2]
+            enlace.href = carrusel[position][3]
+            counter.textContent = (position+1) + "/" + (carrusel.length)
+        }
+
         function avanzar(){
             if (position == carrusel.length-1){
                 position = 0
@@ -110,11 +118,7 @@
             else {
                 position++
             }
-            foto.src = "imagenes/" + carrusel[position][0]
-            pie_de_foto.textContent = carrusel[position][1]
-            enlace.textContent = carrusel[position][2]
-            enlace.href = carrusel[position][3]
-            counter.textContent = (position+1) + "/" + (carrusel.length)
+            actualizarCarrusel()
         }
 
         function retroceder(){
@@ -124,29 +128,17 @@
             else {
                 position--
             }
-            foto.src = "imagenes/" + carrusel[position][0]
-            pie_de_foto.textContent = carrusel[position][1]
-            enlace.textContent = carrusel[position][2]
-            enlace.href = carrusel[position][3]
-            counter.textContent = (position+1) + "/" + (carrusel.length)
+            actualizarCarrusel()
         }
 
         function avanceTodo(){
             position = carrusel.length-1
-            foto.src = "imagenes/" + carrusel[position][0]
-            pie_de_foto.textContent = carrusel[position][1]
-            enlace.textContent = carrusel[position][2]
-            enlace.href = carrusel[position][3]
-            counter.textContent = (position+1) + "/" + (carrusel.length)
+            actualizarCarrusel()
         }
 
         function retrocederTodo(){
             position = 0
-            foto.src = "imagenes/" + carrusel[position][0]
-            pie_de_foto.textContent = carrusel[position][1]
-            enlace.textContent = carrusel[position][2]
-            enlace.href = carrusel[position][3]
-            counter.textContent = (position+1) + "/" + (carrusel.length)
+            actualizarCarrusel()
         }
 
     </script>
