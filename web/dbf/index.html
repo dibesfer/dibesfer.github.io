@@ -12,9 +12,12 @@
 
     <header>
         <div class="flexy">
-            <div>LOGO</div>
-            <div>dibesfer</div>
-            <div>about me</div>
+            <div class="littleIcon"><img title="dibesfer logo" src="assets/branding/dibesfer-logo.png"
+                    alt="dibesfer Logo"></div>
+            <div class="littleIcon"><img title="dibesfer logo" src="assets/branding/dibesfer-title.png"
+                    alt="dibesfer Title Logo"></div>
+            <div class="littleIcon"><img title="dibesfer logo" src="assets/branding/fer-logo.png"
+                    alt="dibesfer Fer Logo"></div>
         </div>
 
     </header>
@@ -91,23 +94,75 @@
         <div id="endOfThePage">endOfThePage</div>
     </main>
 
-
-
     <footer>
 
         <div class="flexy">
-            <div>fullscreen</div>
+            <div id="toggleFull" onclick="toggleFullscreen()">fullscreen</div>
             <div>credits</div>
             <div><a href="#endOfThePage">scroll to bottom</a></div>
         </div>
     </footer>
 
     <script>
+
+        // SCROLL TO BOTTOM
         const scrollToBottomDiv = document.getElementById("scrollToBottomDiv")
         const main = document.getElementsByTagName("MAIN")[0]
 
+        // FULLSCREEN
+        var elem = document.documentElement;
 
-        
+        var fullmode = false
+
+        if (document.fullscreenElement) {
+            fullmode = true
+            toggleFull.textContent = "No Full"
+        }
+
+        else {
+            toggleFull.textContent = "Full"
+        }
+
+        function toggleFullscreen() {
+
+            console.log("clicked")
+
+            if (document.fullscreenElement) {
+                fullmode = true
+            } else { fullmode = false }
+
+            if (fullmode) {
+                closeFullscreen()
+                toggleFull.textContent = "Full"
+            }
+            else {
+                console.log("no full")
+                openFullscreen()
+                toggleFull.textContent = "No Full"
+
+            }
+
+        }
+        function openFullscreen() {
+            if (elem.requestFullscreen) {
+                elem.requestFullscreen();
+            } else if (elem.webkitRequestFullscreen) { /* Safari */
+                elem.webkitRequestFullscreen();
+            } else if (elem.msRequestFullscreen) { /* IE11 */
+                elem.msRequestFullscreen();
+            }
+        }
+
+        function closeFullscreen() {
+            console.log("activated")
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            } else if (document.webkitExitFullscreen) { /* Safari */
+                document.webkitExitFullscreen();
+            } else if (document.msExitFullscreen) { /* IE11 */
+                document.msExitFullscreen();
+            }
+        }
 
     </script>
 

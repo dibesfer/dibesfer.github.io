@@ -36,16 +36,11 @@ pre {
     
 }
 
-@media (prefers-color-scheme: dark) {
-    body {
-        background: black;
-        color: white;
-    }
-}
 
 header , footer {
     height: 5%;
     background-color: gray;
+    padding: 5px;
 }
 
 .flexy {
@@ -56,12 +51,32 @@ header , footer {
 }
 
 .maxWidthContent {
-
+    padding: 10px;
     max-width: 800px;
     margin: auto;
 }
 
 .fullWidth {
+    padding: 10px;
     width: 100%;
     background-color: blue;
+}
+
+.littleIcon {
+    height: 100%;
+    
+}
+.littleIcon > img {
+    height: 100%;
+}
+
+
+@media (prefers-color-scheme: dark) {
+    body {
+        background: black;
+        color: white;
+    }
+    .littleIcon {
+        filter: invert(1);
+    }
 }
