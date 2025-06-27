@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Agenda de contactos personales</title>
-    
+    <link rel="icon" type="image/x-icon" href="/branding/favicon.ico">
     <script src="scripts.js">
     </script>
     
@@ -15,6 +15,9 @@
             box-sizing: border-box;    
         }
         
+        body {
+            user-select: none;
+        }
         h1 {
             width: 100vw;
             font-size: 30px;
@@ -29,17 +32,81 @@
         nav {
             background-color: antiquewhite;
             margin: 15px;
-            padding: 5px;
+            padding: 10px;
             border: solid 3px black;
             border-radius: 5px;
         }
 
         ul {
             display: flex;
+            justify-content: space-between;
+            
             list-style: none;
             padding: 0;
-            gap: 20px;
+            
+            flex-wrap: wrap;
         }
+
+        li {
+            border-radius: 5px;
+            box-shadow: 0 0 5px black;
+            padding: 10px;
+            background-color: darkseagreen;
+            transition: 0.2s;
+            user-select: none;
+            cursor: pointer;
+        }
+
+        li:hover {
+            background-color: greenyellow;
+        }
+
+        li:active {
+            box-shadow: none;
+        }
+
+        a {
+            text-decoration: none;
+        }
+
+        #contador {
+            border-radius: 15px 0 15px 0;
+            box-shadow: 0 0 5px black;
+            padding: 10px;
+            float: right;
+            width: max-content;
+            background-color: bisque;
+        }
+        
+        article {
+            border: 3px solid black;
+            border-radius: 5px;
+            background-color: lightblue;
+            padding: 10px;
+            margin: 15px;
+            width: 200px;
+            text-align: center;
+            user-select:text;
+        }
+
+        #contactos {
+            display: flex;
+            flex-wrap: wrap;
+        }
+        
+        .iconCross , .iconStar {
+            filter: brightness(3) ;
+            cursor: pointer;
+        }
+
+        .iconCross:hover {
+            filter: sepia(10) contrast(10) brightness(2) hue-rotate(0deg)
+        }
+
+        .iconStar:hover {
+            filter: sepia(10) contrast(3) brightness(2)
+        }
+
         
     </style>
 </head>
@@ -48,16 +115,24 @@
         <h1>AGENDA DE CONTACTOS PERSONALES</h1>
         <nav>
             <ul>
-                <li>Añadir contacto</li>
+                <li onclick="agregarContacto()">Añadir contacto</li>
                 <li>Crear contactos aleatorios</li>
                 <li>Vaciar todos los contactos</li>
             </ul>
+            <br>
             <div id="contador">Contactos totales: 0</div>
         </nav>
         
         <section id="contactos">
             <!-- Aquí se irán creando los artículos como nodos hijos -->
-            <article></article>
+            <article>
+                <img class="iconCross" src="cerrar.svg" alt="botón de cerrar" style="float: left;">
+                <img class="iconStar" src="destacar.svg" alt="botón de destacar" style="float: right;">
+                <h2 >Ferrán Minero Fernández</h2>
+                <a href="mailto:dibesfer@gmail.com">dibesfer@gmail.com</a>
+                <p>Tel: 646269196</p>
+            </article>
+            
         </section>
         
     </main>
