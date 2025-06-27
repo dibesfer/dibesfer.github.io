@@ -77,21 +77,29 @@
             width: max-content;
             background-color: bisque;
         }
-        
-        article {
-            border: 3px solid black;
-            border-radius: 5px;
-            background-color: lightblue;
-            padding: 10px;
-            margin: 15px;
-            width: 200px;
-            text-align: center;
-            user-select:text;
-        }
 
         #contactos {
             display: flex;
             flex-wrap: wrap;
+            margin: 15px;
+           
+        }
+
+        article {
+            flex: 33.33%;
+            max-width: 33.33%;
+            border: 3px solid black;
+            border-radius: 5px;
+            background-color: lightblue;
+            padding: 10px;
+            width: 200px;
+            text-align: center;
+            user-select:text;
+            transition: 0.2s;
+        }
+
+        article:hover {
+            transform: scale(1.05);
         }
         
         .iconCross , .iconStar {
@@ -99,6 +107,12 @@
             cursor: pointer;
         }
 
+        .iconCross {
+            float: left;
+        }
+        .iconStar {
+            float: right;
+        }
         .iconCross:hover {
             filter: sepia(10) contrast(10) brightness(2) hue-rotate(0deg)
         }
@@ -116,8 +130,8 @@
         <nav>
             <ul>
                 <li onclick="agregarContacto()">Añadir contacto</li>
-                <li>Crear contactos aleatorios</li>
-                <li>Vaciar todos los contactos</li>
+                <li onclick="crearAleatorios()">Crear contactos aleatorios</li>
+                <li onclick="vaciarTodos()">Vaciar todos los contactos</li>
             </ul>
             <br>
             <div id="contador">Contactos totales: 0</div>
@@ -125,13 +139,7 @@
         
         <section id="contactos">
             <!-- Aquí se irán creando los artículos como nodos hijos -->
-            <article>
-                <img class="iconCross" src="cerrar.svg" alt="botón de cerrar" style="float: left;">
-                <img class="iconStar" src="destacar.svg" alt="botón de destacar" style="float: right;">
-                <h2 >Ferrán Minero Fernández</h2>
-                <a href="mailto:dibesfer@gmail.com">dibesfer@gmail.com</a>
-                <p>Tel: 646269196</p>
-            </article>
+            
             
         </section>
         
