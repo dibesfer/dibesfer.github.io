@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agenda de contactos personales</title>
+    
+    <script src="scripts.js">
+    </script>
+    
+    <style>
+        * {
+            font-family: Arial, Verdana;        
+            margin: 0;
+            box-sizing: border-box;    
+        }
+        
+        h1 {
+            width: 100vw;
+            font-size: 30px;
+            text-align: center;
+        }
+
+        main {
+            display: flex;
+            flex-direction: column;
+        }
+
+        nav {
+            background-color: antiquewhite;
+            margin: 15px;
+            padding: 5px;
+            border: solid 3px black;
+            border-radius: 5px;
+        }
+
+        ul {
+            display: flex;
+            list-style: none;
+            padding: 0;
+            gap: 20px;
+        }
+        
+    </style>
+</head>
+<body>
+    <main>
+        <h1>AGENDA DE CONTACTOS PERSONALES</h1>
+        <nav>
+            <ul>
+                <li>Añadir contacto</li>
+                <li>Crear contactos aleatorios</li>
+                <li>Vaciar todos los contactos</li>
+            </ul>
+            <div id="contador">Contactos totales: 0</div>
+        </nav>
+        
+        <section id="contactos">
+            <!-- Aquí se irán creando los artículos como nodos hijos -->
+            <article></article>
+        </section>
+        
+    </main>
+    
+</body>
+</html>

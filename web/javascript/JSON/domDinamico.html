@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DOM Dinámico</title>
+    <style>
+        body{
+            font-family: sans-serif;
+        }
+    </style>
+</head>
+<body>
+    <h1>DOM Dinámico</h1>
+
+    <main id="principal"></main>
+
+    <button onclick="p2.remove()">Borrar</button>
+
+    <script>
+        let json = {"nombre": "ferran"}
+        let object = {nombre: "ferran"}
+
+        let main = document.getElementById("principal")
+
+        let div = document.createElement("div")
+        div.id="myDiv"
+        div.textContent = "Hola caracola"
+        main.appendChild(div)
+
+        let p = document.createElement("p")
+        p.innerHTML = "<strong>p Ferrán Minero Fernández</strong>"
+        div.appendChild(p)
+        // I gets the latest apppendChild()
+        main.appendChild(p)
+
+        const letraRoja = document.createAttribute("style")
+        letraRoja.value = "color: red"
+        div.setAttributeNode(letraRoja)
+        
+
+        let p2 = p.cloneNode(false)
+        let p3 = p2.cloneNode(false)
+
+        console.log(p2)
+        main.appendChild(p2)
+        main.appendChild(p3)
+        
+        p2.textContent += document.URL 
+        document.writeln()
+
+
+        
+    </script>
+</body>
+</html>
