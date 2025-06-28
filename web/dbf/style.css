@@ -14,10 +14,15 @@ body {
     hyphens: auto;
 }
 
+header,
+footer {
+    height: 6%;
+    padding: 5px;
+}
+
 main {
-    height: 90%;
+    height: 88%;
     overflow: auto;
-    
 }
 
 a {
@@ -25,22 +30,17 @@ a {
     color: purple;
 }
 
-pre , img , iframe {
+pre,
+img,
+iframe {
     max-width: 100%;
-    
+
 }
 
 pre {
     white-space: pre-wrap;
     overflow: auto;
-    
-}
 
-
-header , footer {
-    height: 5%;
-    background-color: gray;
-    padding: 5px;
 }
 
 .flexy {
@@ -48,7 +48,9 @@ header , footer {
     justify-content: space-between;
     align-items: center;
     height: 100%;
+
 }
+
 
 .maxWidthContent {
     padding: 10px;
@@ -59,14 +61,15 @@ header , footer {
 .fullWidth {
     padding: 10px;
     width: 100%;
-    background-color: blue;
+
 }
 
 .littleIcon {
     height: 100%;
-    
+
 }
-.littleIcon > img {
+
+.littleIcon>img {
     height: 100%;
 }
 
@@ -76,7 +79,101 @@ header , footer {
         background: black;
         color: white;
     }
+
     .littleIcon {
         filter: invert(1);
     }
+}
+
+.textCenter {
+    text-align: center;
+}
+
+.flexyBeauticards {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    flex-wrap: wrap;
+    background-color: gray;
+
+}
+
+
+.beauticard {
+    flex: 1;
+    background-color: blue;
+    text-align: center;
+    border: solid 6px black;
+    overflow: auto;
+    padding: 15px;
+}
+
+.beauticard img {
+    aspect-ratio: 16/9;
+    object-fit: cover;
+}
+
+.beauticard h1 {
+    font-variant: small-caps;
+}
+
+.beauticardInner {
+    background-color: rgba(128, 128, 128, 0.535);
+    border: solid 10px white;
+
+}
+
+.bcItext {
+    text-align: left;
+}
+
+/* FOR TABLETS*/
+@media only screen and (max-width: 1000px) {
+
+    .beauticard {
+        flex: 50%;
+        min-height: 500px;
+    }
+}
+
+/* MOBILE FIRST MUTHERFUCKER*/
+@media only screen and (max-width: 600px) {
+
+
+    .beauticard {
+        flex: 100%;
+        min-height: unset;
+    }
+}
+
+/* ONLY FOR DESKTOP */
+@media only screen and (min-width: 1000px) {
+
+    .flexyBeauticards {
+        height: 100%;
+
+    }
+
+    #description {
+        height: 5%;
+    }
+
+    .beauticard {
+        flex: 33.33%;
+        height: 95%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .beauticard:has(.beauticardInner:hover) {
+        transition: 0.4s;
+        padding: 5px;
+    }
+}
+
+#description {
+    flex: 100%;
+
 }
