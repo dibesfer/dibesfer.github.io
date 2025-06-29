@@ -91,22 +91,18 @@ pre {
 
 .flexyBeauticards {
     display: flex;
-    justify-content: space-between;
+    justify-content: space-around;
     align-items: center;
-
     flex-wrap: wrap;
-    background-color: gray;
-
 }
 
 
 .beauticard {
     flex: 1;
-    background-color: blue;
     text-align: center;
-    border: solid 6px black;
     overflow: auto;
     padding: 15px;
+    transition: 0.4s;
 }
 
 .beauticard img {
@@ -120,7 +116,12 @@ pre {
 
 .beauticardInner {
     background-color: rgba(128, 128, 128, 0.535);
-    border: solid 10px white;
+    border-radius: 15px;
+    box-shadow: inset 0 0 10px rgb(63, 63, 63), 0 0 10px white;
+    /* aspect-ratio: 2/3; */
+    aspect-ratio: 1;
+    
+    overflow: auto;
 
 }
 
@@ -133,6 +134,7 @@ pre {
 
     .beauticard {
         flex: 50%;
+        max-width: 50%;
         min-height: 500px;
     }
 }
@@ -144,6 +146,7 @@ pre {
     .beauticard {
         flex: 100%;
         min-height: unset;
+        max-width: unset;
     }
 }
 
@@ -168,7 +171,7 @@ pre {
     }
 
     .beauticard:has(.beauticardInner:hover) {
-        transition: 0.4s;
+        
         padding: 5px;
     }
 }
