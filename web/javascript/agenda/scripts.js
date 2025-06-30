@@ -6,11 +6,14 @@ function myOnloadFunc() {
     contactos = document.getElementById("contactos")
 }
 
+//localStorage.setItem("usuario", "dibesfer")
+//alert(localStorage.getItem("usuario"))
+localStorage.removeItem("usuario")
+
 function agregarContacto() {
     let nombre = prompt("Introduce el nombre del contacto:")
     let correo
     if (nombre) {
-
         if (nombres.indexOf(nombre) != -1) {
             alert("Este nombre ya existe!!!")
         }
