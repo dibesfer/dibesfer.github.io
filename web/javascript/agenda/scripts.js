@@ -73,6 +73,8 @@ function destacar(id) {
 }
 
 function vaciarTodos() {
+
+    if (nombres.length>0)
     nombres.forEach(
         (elemento) => {
             document.getElementById(elemento).remove()
@@ -139,6 +141,7 @@ function guardarMemoria(){
 
 function recuperarMemoria(){
     let memory = localStorage.getItem("db")
+    
     if (memory){
         
         memory = JSON.parse(memory)
