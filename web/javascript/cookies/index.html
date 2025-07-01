@@ -4,21 +4,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cookies</title>
+    <title>Cookie</title>
     <style>
         body {
             font-family: sans-serif
+        }
+
+        table {
+            border-collapse: collapse;
+
+        }
+
+        th {
+            background-color: gray;
+            color: white;
+        }
+
+        th,
+        td {
+            border: 2px black solid;
+            padding: 5px;
+        }
+
+        tr:nth-child(even) {
+
+            background-color: pink;
+
         }
     </style>
 </head>
 
 <body>
 
-    <h1>Cookies</h1>
+    <h1>🍪Cookie Creator➕</h1>
 
 
     <div>
-        <p>Your cookie</p>
+
         <div id="yourCookie"></div>
     </div>
 
@@ -30,90 +52,98 @@
     <input type="text" id="inputKey" placeholder="Key">
     <input type="text" id="inputValue" placeholder="Value">
     <button id="submitCookieButton">Submit cookie</button>
-    
+
 
     <p>To delete a cookie: add </p>
     <p>;expires=Thu, 01 Jan 1970 00:00:00 UTC</p>
     <p>to the value of your Cookie</p>
 
-    <script>
+    <p>add ; path=/ to delete different cookies</p>
 
-//expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;
-// ;expires=Thu, 01 Jan 1970 00:00:00 GMT
+    <p>HINT: Write iveBeenHere *</p>
+
+    <script>
+        //expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;
+        // ;expires=Thu, 01 Jan 1970 00:00:00 GMT
         let stringKey
         let stringValue
-
         let stringCookie
-
         submitCookieButton.addEventListener("click", submitCookie)
-
         yourCookie.textContent = document.cookie
         // document.cookie = "usuario=Fer; expires=Mon, 01 Jul 2025 14:13:00 GMT; path=/;secure domain=localhost; samesite=Strict"
-
-        // document.cookie = "sexo=luis;administrador=María; expires=Mon, 01 Jul 2025 14:13:00 GMT; path=/;secure domain=localhost; samesite=Strict"
-
-        let stringExampleCookie = `document.cookie = "sexo=luis;administrador=María; expires=Mon, 01 Jul 2025 14:13:00 GMT; path=/;secure domain=localhost; samesite=Strict"`
-
+        // document.cookie = "administrador=María; expires=Mon, 01 Jul 2025 14:13:00 GMT; path=/;secure domain=localhost; samesite=Strict"
+        let stringExampleCookie = `document.cookie = "administrador=María; expires=Mon, 01 Jul 2025 14:13:00 GMT; path=/;secure domain=localhost; samesite=Strict"`
         example.textContent = stringExampleCookie
+        let customArrAnswer = []
 
-        function leerGalletas(nombre){
-
-            
+        function leerGalletas(nombre) {
 
             let galletas = document.cookie.split(";")
             console.log(galletas)
             if (!galletas || galletas[0] == "") {
-                yourCookie.textContent = "null"
+                yourCookie.textContent = "You have no cookies"
                 return
             }
             let galletitas = []
-            for (let galleta of galletas){
-                 galletitas.push(galleta.trim().split("="));
+            for (let galleta of galletas) {
+                galletitas.push(galleta.trim().split("="));
             }
-            
-            yourCookie.innerHTML = "Number of cookies " + galletitas.length
 
-            yourCookie.innerHTML = `
+            let yourCookieHTML = "<h3>Number of cookies " + galletitas.length + "</h3>"
+            yourCookieHTML += `
                 <table>
                     <tr>
                         <th>Clave</th>
                         <th>Valor</th>
                     </tr>
             `
-
-            galletitas.forEach((elemento)=>{
-                yourCookie.innerHTML += `
+            galletitas.forEach((elemento) => {
+                yourCookieHTML += `
                 <tr>
                     <td>${elemento[0]} </td>
                     <td>${elemento[1]}</td>
                 </tr>
                 `
+                if (elemento[0] == "iveBeenHere" && elemento[1] != "") {
+                    
+                    customArrAnswer = elemento[1].split("///")
+                    console.log(customArrAnswer)
+                    alert("Welcome " + customArrAnswer[0] + "!")
+                    alert("You connected " + (customArrAnswer.length-1) + " times")
+                }
             })
-
-            yourCookie.innerHTML += "</table>"
-            
+            yourCookieHTML += "</table>"
+            yourCookie.innerHTML = yourCookieHTML
         }
 
         leerGalletas()
-
+        console.log(document.cookie)
         function submitCookie() {
             stringKey = inputKey.value
             stringValue = inputValue.value
             stringCookie = stringKey + "=" + stringValue
-            if (stringKey) {
-                
-                document.cookie = stringCookie.trim() 
-                
-                //Thu, 01 Jan 1970 00:00:00 GMT
 
-
-                alert("Cookie saved: " + stringCookie)
+            if (stringKey == "iveBeenHere") {
+                stringValue += "///" + (new Date()+86400000) 
+                stringCookie = stringKey + "=" + stringValue
+                document.cookie = stringCookie
                 leerGalletas()
+                
             }
+
             else {
-                alert("Nothing to save")
+                if (stringKey) {
+                    document.cookie = stringCookie
+                    //Thu, 01 Jan 1970 00:00:00 GMT
+                    leerGalletas()
+                }
+                else {
+                    alert("Nothing to save")
+                }
             }
         }
+        //document.cookie = "sexo=luis;administrador=María; expires=Mon, 01 Jul 2025 14:13:00 GMT; path=/;secure domain=localhost; samesite=Strict"
+
 
     </script>
 
