@@ -106,15 +106,15 @@
                 </tr>
                 `
                 if (elemento[0] == "iveBeenHere" && elemento[1] != "") {
-                    
-                    let myDate = (new Date()) 
-                   
+
+                    let myDate = (new Date())
+
                     customArrAnswer = elemento[1].split("///")
 
                     console.log(customArrAnswer)
                     alert("Welcome " + customArrAnswer[0] + "!")
                     document.cookie = elemento[0] + "=" + elemento[1] + "///" + myDate
-                    alert("You connected " + (customArrAnswer.length-1) + " times")
+                    alert("You connected " + (customArrAnswer.length - 1) + " times")
                 }
             })
             yourCookieHTML += "</table>"
@@ -129,14 +129,14 @@
             stringCookie = stringKey + "=" + stringValue
 
             if (stringKey == "iveBeenHere") {
-                let myDate = (new Date()+86400000) 
-                
-                
-                stringValue += "///" + myDate
+                let myDate = (new Date() + 86400000)
+
+                if (customArrAnswer.length == 0)
+                    stringValue += "///" + myDate
                 stringCookie = stringKey + "=" + stringValue
                 document.cookie = stringCookie
                 leerGalletas()
-                
+
             }
 
             else {
