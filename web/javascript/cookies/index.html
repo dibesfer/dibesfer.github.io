@@ -79,7 +79,7 @@
         function leerGalletas(nombre) {
 
             let galletas = document.cookie.split(";")
-            console.log(galletas)
+            //console.log(galletas)
             if (!galletas || galletas[0] == "") {
                 yourCookie.textContent = "You have no cookies"
                 return
@@ -100,15 +100,20 @@
             galletitas.forEach((elemento) => {
                 yourCookieHTML += `
                 <tr>
+                    
                     <td>${elemento[0]} </td>
                     <td>${elemento[1]}</td>
                 </tr>
                 `
                 if (elemento[0] == "iveBeenHere" && elemento[1] != "") {
                     
+                    let myDate = (new Date()) 
+                   
                     customArrAnswer = elemento[1].split("///")
+
                     console.log(customArrAnswer)
                     alert("Welcome " + customArrAnswer[0] + "!")
+                    document.cookie = elemento[0] + "=" + elemento[1] + "///" + myDate
                     alert("You connected " + (customArrAnswer.length-1) + " times")
                 }
             })
@@ -124,7 +129,10 @@
             stringCookie = stringKey + "=" + stringValue
 
             if (stringKey == "iveBeenHere") {
-                stringValue += "///" + (new Date()+86400000) 
+                let myDate = (new Date()+86400000) 
+                
+                
+                stringValue += "///" + myDate
                 stringCookie = stringKey + "=" + stringValue
                 document.cookie = stringCookie
                 leerGalletas()
