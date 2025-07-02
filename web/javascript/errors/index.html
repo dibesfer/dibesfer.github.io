@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>dbf Errors</title>
+</head>
+<body>
+    <script>
+        
+        function reportar(error){
+            console.log(error)
+        }
+
+        try {
+            //a + 5
+            
+                console.log("a"/"b")
+                let e = new Error("mi error favorito")
+            e.name = "GayError"
+            e.stack = "whatever"
+            throw e
+            
+            alert(e)
+        }
+
+        catch (error) {
+            
+            document.write(error.name + "<br>")
+            document.write(error.message + "<br>")
+            document.write(error.stack + "<br>")
+        }
+    </script>
+</body>
+</html>

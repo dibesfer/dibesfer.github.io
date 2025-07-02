@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AJAX</title>
+</head>
+<body>
+    <h1>AJAX</h1>
+    <h3>Asynchronous Javascript And XML</h3>
+    <script>
+
+        const promesa = new Promise(
+            (resolve, reject) => {
+                const exito = true
+                if (exito){
+                    resolve("TODO VA BIEN")
+                }
+                else {
+                    reject("TODO VA MAL")
+                }
+            }
+        )
+
+        console.log(promesa)
+
+        promesa.then(resultado => {
+            console.log("Todo OK")
+        }).catch( error => {
+            console.log("Todo KO")
+        })
+
+    </script>
+</body>
+</html>
