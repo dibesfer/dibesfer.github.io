@@ -12,6 +12,7 @@
 
         table {
             border-collapse: collapse;
+            max-width: 100%;
 
         }
 
@@ -38,12 +39,10 @@
 
     <h1>🍪Cookie Creator➕</h1>
 
-
     <div>
-
+        <div>Your cookie is <span id="justShowCookie"></span></div>
         <div id="yourCookie"></div>
     </div>
-
 
     <p>Example cookie</p>
     <div id="example"></div>
@@ -55,7 +54,15 @@
 
 
     <p>To delete a cookie: add </p>
-    <p>;expires=Thu, 01 Jan 1970 00:00:00 UTC</p>
+    <script>
+    
+    //const maxDate = new Date(8.64e15)
+    let time0 = new Date(0).toUTCString()
+    document.write(";expires=" + time0)
+    //var userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
+    
+    </script>
+    <!-- <p>;expires=Thu, 01 Jan 1970 00:00:00 UTC</p> -->
     <p>to the value of your Cookie</p>
 
     <p>add ; path=/ to delete different cookies</p>
@@ -68,8 +75,10 @@
         let stringKey
         let stringValue
         let stringCookie
+
         submitCookieButton.addEventListener("click", submitCookie)
-        yourCookie.textContent = document.cookie
+
+        justShowCookie.textContent = document.cookie
         // document.cookie = "usuario=Fer; expires=Mon, 01 Jul 2025 14:13:00 GMT; path=/;secure domain=localhost; samesite=Strict"
         // document.cookie = "administrador=María; expires=Mon, 01 Jul 2025 14:13:00 GMT; path=/;secure domain=localhost; samesite=Strict"
         let stringExampleCookie = `document.cookie = "administrador=María; expires=Mon, 01 Jul 2025 14:13:00 GMT; path=/;secure domain=localhost; samesite=Strict"`
@@ -107,13 +116,14 @@
                 `
                 if (elemento[0] == "iveBeenHere" && elemento[1] != "") {
 
-                    let myDate = (new Date())
+                    let myDate = (new Date().toUTCString())
 
                     customArrAnswer = elemento[1].split("///")
 
                     console.log(customArrAnswer)
+                
                     alert("Welcome " + customArrAnswer[0] + "!")
-                    document.cookie = elemento[0] + "=" + elemento[1] + "///" + myDate
+                    document.cookie = elemento[0] + "=" + elemento[1] + "///<br>" + myDate
                     alert("You connected " + (customArrAnswer.length - 1) + " times")
                 }
             })
@@ -122,21 +132,36 @@
         }
 
         leerGalletas()
-        console.log(document.cookie)
+        //console.log(document.cookie)
         function submitCookie() {
             stringKey = inputKey.value
             stringValue = inputValue.value
             stringCookie = stringKey + "=" + stringValue
 
             if (stringKey == "iveBeenHere") {
-                let myDate = (new Date() + 86400000)
+                //let myDate = (new Date(new Date().getTime() + 86400000))
+                if (stringValue.indexOf(";expires=") != -1){
+                    
+                    document.cookie = stringCookie
+                }
 
-                if (customArrAnswer.length == 0)
-                    stringValue += "///" + myDate
-                stringCookie = stringKey + "=" + stringValue
-                document.cookie = stringCookie
+                else {
+                    let myDate = new Date()
+                    console.log(customArrAnswer.length)
+                    // if (customArrAnswer.length > 0) {
+                    //     for (let i = 1; i < customArrAnswer.length - 1; i++) {
+                    //         stringValue += customArrAnswer[i]
+                    //     }
+                    // }
+
+
+                    stringValue += "<br>///<br>" + myDate
+                    stringCookie = stringKey + "=" + stringValue
+                    document.cookie = stringCookie
+                    
+                }
+                
                 leerGalletas()
-
             }
 
             else {
