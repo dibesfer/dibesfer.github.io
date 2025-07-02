@@ -1,19 +1,30 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AJAX</title>
 </head>
+
 <body>
     <h1>AJAX</h1>
     <h3>Asynchronous Javascript And XML</h3>
+    <div id="demo"></div>
     <script>
-
+let mySuperString = ""
         const promesa = new Promise(
             (resolve, reject) => {
+
                 const exito = true
-                if (exito){
+                
+                console.log(new Date() + "<br>")
+                for (let i = 0; i<17000000; i++){
+                    mySuperString += "/@/"
+                }
+                console.log(mySuperString.length)
+                
+                if (exito) {
                     resolve("TODO VA BIEN")
                 }
                 else {
@@ -22,14 +33,31 @@
             }
         )
 
-        console.log(promesa)
+
 
         promesa.then(resultado => {
-            console.log("Todo OK")
-        }).catch( error => {
-            console.log("Todo KO")
+            document.write("Todo OK: Resultado" + resultado + "<br>")
+            console.log("Todo OK: Resultado" + resultado)
+            demo.textContent = mySuperString
+            //demo.textContent = ""
+            console.log(new Date() + "<br>")
+        }).catch(error => {
+            document.write("Todo KO: Resultado" + resultado + "<br>")
+            console.log("Todo KO: Resultado" + resultado)
+
         })
+        console.log("MENSAJE")
+        console.log("MENSAJE2")
+        console.log("MENSAJE3")
+        console.log("MENSAJE4")
+
+        // fetch("https://jsonplaceholder.typicode.com/")
+        // .then(respuesta => respuesta.text())
+        // .then(html => document.write(html))
+
+
 
     </script>
 </body>
+
 </html>
