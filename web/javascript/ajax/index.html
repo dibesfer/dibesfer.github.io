@@ -12,18 +12,24 @@
     <h3>Asynchronous Javascript And XML</h3>
     <div id="demo"></div>
     <script>
-let mySuperString = ""
+        setTimeout(()=>document.write(1),7000)
+        setTimeout(()=>document.write(2),1000)
+        setTimeout(()=>document.write(3),7000)
+        setTimeout(()=>document.write(4),1000)
+    </script>
+    <!-- <script>
+        let mySuperString = ""
         const promesa = new Promise(
             (resolve, reject) => {
 
                 const exito = true
-                
+
                 console.log(new Date() + "<br>")
-                for (let i = 0; i<17000000; i++){
+                for (let i = 0; i < 17000000; i++) {
                     mySuperString += "/@/"
                 }
                 console.log(mySuperString.length)
-                
+
                 if (exito) {
                     resolve("TODO VA BIEN")
                 }
@@ -57,7 +63,7 @@ let mySuperString = ""
 
 
 
-    </script>
+    </script> -->
 </body>
 
 </html>
