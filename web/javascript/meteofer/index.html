@@ -30,9 +30,9 @@
 
         //xiwok82499@decodewp.com
         //api key:072f960119e9487890d111215250307
-        const consultarLondres = fetch("https://api.weatherapi.com/v1/current.json?key=072f960119e9487890d111215250307&q=" + "Barcelona" + "&aqi=yes")
+        const consultarBarcelona = fetch("https://api.weatherapi.com/v1/current.json?key=072f960119e9487890d111215250307&q=" + "Barcelona" + "&aqi=yes")
 
-        consultarLondres
+        consultarBarcelona
             .then(resultado => resultado.json())
             .then(json => {
                 console.log(json.location.name)
