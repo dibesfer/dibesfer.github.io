@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,11 +8,19 @@
     <style>
         body {
             font-family: sans-serif;
+            background-color: lightblue;
+        }
+
+        .meteoIcon {
+            background-color: rgb(16, 59, 131);
+            border: solid 3px white;
+            border-radius: 50%;
         }
     </style>
 </head>
+
 <body>
-    <h1>meteofer</h1>
+    <h1>🌥️meteofer</h1>
     <label for="ciudad">Ciudad:</label>
     <input id="inputCity" type="text" placeholder="New York">
     <input type="button" value="search" onclick="search()">
@@ -21,53 +30,56 @@
 
         //xiwok82499@decodewp.com
         //api key:072f960119e9487890d111215250307
+        const consultarLondres = fetch("https://api.weatherapi.com/v1/current.json?key=072f960119e9487890d111215250307&q=" + "Barcelona" + "&aqi=yes")
 
-       
-
-            const consultarLondres = fetch("https://api.weatherapi.com/v1/current.json?key=072f960119e9487890d111215250307&q=" + "Barcelona" + "&aqi=yes")
-
-            consultarLondres
+        consultarLondres
             .then(resultado => resultado.json())
             .then(json => {
                 console.log(json.location.name)
                 writeCard(json)
                 //WRITE THE HTML
             })
-            .catch(error => showCityData.textContent = country +  " NOT FOUND")
+            .catch(error => showCityData.textContent = country + " NOT FOUND")
 
-        function search(){
+        function search() {
 
             let country = inputCity.value
+
+            if (country != ""){
 
             const searchPetition = fetch("https://api.weatherapi.com/v1/current.json?key=072f960119e9487890d111215250307&q=" + country + "&aqi=yes")
 
             searchPetition
-            .then(resultado => resultado.json())
-            .then(json => {
-                console.log(json.location.name)
-                writeCard(json)
-                //WRITE THE HTML
-            })
-            .catch(error => showCityData.textContent = country +  " NOT FOUND")
+                .then(resultado => resultado.json())
+                .then(json => {
+                    console.log(json.location.name)
+                    writeCard(json)
+                    //WRITE THE HTML
+                })
+                .catch(error => showCityData.textContent = country + " NOT FOUND")
+
+            }
+            
 
         }
 
-        function writeCard(json){
+        function writeCard(json) {
             showCityData.innerHTML = `
                 <h1>${json.location.name}</h1>
                 <h3>${json.location.country}</h3>
                 <p>Localtime_epoch = ${json.location.localtime_epoch}</p>
                 <hr>
-                <p>Temperatura: ${json.current.temp_c}ºC</p>
+                <p>🌡️ Temperature: ${json.current.temp_c}ºC</p>
                 <p>Condition: </p>
 
-                <img src="https:${json.current.condition.icon}">
+                <img class="meteoIcon" src="https:${json.current.condition.icon}">
 
-                <p>Wind_kph: ${json.current.wind_kph}</p>
-                <p>Humidity: ${json.current.humidity}%</p>
-            `           
+                <p>💨 Wind kph: ${json.current.wind_kph}</p>
+                <p>💧 Humidity: ${json.current.humidity}%</p>
+            `
         }
     </script>
 
 </body>
+
 </html>
