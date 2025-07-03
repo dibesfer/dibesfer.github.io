@@ -5,6 +5,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AJAX</title>
+    <style>
+        #demo {
+            white-space: pre-wrap;
+            max-width: 100%;
+            background-color: aliceblue;
+        }
+    </style>
 </head>
 
 <body>
@@ -12,13 +19,39 @@
     <h3>Asynchronous Javascript And XML</h3>
     <div id="demo"></div>
     <script>
-        setTimeout(()=>document.write(1),7000)
-        setTimeout(()=>document.write(2),1000)
-        setTimeout(()=>document.write(3),7000)
-        setTimeout(()=>document.write(4),1000)
+        // setTimeout(()=>document.write(1 + " frase</br>"),6000)
+        // setTimeout(()=>document.write(2 + " frase</br>"),2000)
+        // setTimeout(()=>document.write(3 + " frase</br>"),4000)
+        // setTimeout(()=>document.write(4 + " frase</br>"),1000)
     </script>
-    <!-- <script>
+    <script>
+        let demo = document.getElementById("demo")
         let mySuperString = ""
+
+        // function prometer(){
+        //     return new Promise(
+        //         (resolver, rechazar) => {
+        //                             }
+        //     )
+        // }
+        
+        // prometer().then(
+        //     resultado => document.write(resultado)
+        // ).catch()
+
+        // prometer().then(
+        //     resultado => document.write(resultado)
+        // ).catch()
+
+        let ms = Math.random()*10000;
+        document.write("<h1>Title</h1>")
+        
+        setTimeout(()=> {
+            document.write("La promesa ha tardado " + (ms/1000) + " segundos.<br>") , ms )
+    
+
+        
+
         const promesa = new Promise(
             (resolve, reject) => {
 
@@ -39,12 +72,10 @@
             }
         )
 
-
-
         promesa.then(resultado => {
             document.write("Todo OK: Resultado" + resultado + "<br>")
             console.log("Todo OK: Resultado" + resultado)
-            demo.textContent = mySuperString
+            //demo.textContent = mySuperString
             //demo.textContent = ""
             console.log(new Date() + "<br>")
         }).catch(error => {
@@ -61,9 +92,18 @@
         // .then(respuesta => respuesta.text())
         // .then(html => document.write(html))
 
+        const promesaConstante = fetch("https://jsonplaceholder.typicode.com/posts")
+        
+        console.log(promesaConstante)
 
-
-    </script> -->
+        // promesaConstante.then(resultado => resultado.json())
+        // .then(json => {
+        //     demo.style.wordWrap = "pre"
+        //     demo.textContent = JSON.stringify(json, null, "\t")
+        // })
+        
+        console.log(promesaConstante)
+    </script> 
 </body>
 
 </html>
