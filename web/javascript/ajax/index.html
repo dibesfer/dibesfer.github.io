@@ -42,12 +42,23 @@
         // prometer().then(
         //     resultado => document.write(resultado)
         // ).catch()
-
+        let arrMS = []
         let ms = Math.random()*10000;
         document.write("<h1>Title</h1>")
+        let contador = 0
         
-        setTimeout(()=> {
-            document.write("La promesa ha tardado " + (ms/1000) + " segundos.<br>") , ms )
+        function myFunc(ejemplo, myms){
+            demo.innerHTML+=("Ranking " + contador + ".- hello " + ejemplo + " " + arrMS[ejemplo] + " secs. <br>")
+            contador++
+        }
+
+        for (let i = 0; i < 100; i++) {
+            ms = Math.random()*10000;
+            
+            arrMS.push((ms/1000).toFixed(2))
+            setTimeout(function() {myFunc(i,ms)},ms)
+            
+        }
     
 
         
@@ -94,7 +105,7 @@
 
         const promesaConstante = fetch("https://jsonplaceholder.typicode.com/posts")
         
-        console.log(promesaConstante)
+        //console.log(promesaConstante)
 
         // promesaConstante.then(resultado => resultado.json())
         // .then(json => {
@@ -102,7 +113,30 @@
         //     demo.textContent = JSON.stringify(json, null, "\t")
         // })
         
-        console.log(promesaConstante)
+        //console.log(promesaConstante)
+
+        const misuperpromesa = fetch("https://dibesfer.com/")
+
+        misuperpromesa
+        .then(respuesta => respuesta.text())
+        .then(texto => {
+        let mystring = "<details><summary>dibesfer.com</summary><div id='francotirador'></div> </details>"
+        
+        demo.innerHTML += mystring
+        let francotirador = document.getElementById("francotirador")
+        francotirador.textContent += texto.trim()
+    
+        })
+
+        const pokefetch = fetch("https://pokeapi.co/api/v2/pokemon?limit=-1")
+
+        pokefetch
+        .then(resultado => resultado.text())
+        .then(texto => {
+            demo.innerHTML += `
+        <details><summary>PokeApi</summary>${texto}</details>
+        `
+        })
     </script> 
 </body>
 
