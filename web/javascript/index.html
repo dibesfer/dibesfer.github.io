@@ -34,8 +34,11 @@
     <iframe src="calculator/index.html" frameborder="0"></iframe>
     <h2>Solitaire</h2>
     <iframe src="solitaire/index.html" frameborder="0"></iframe>
-    
+    <h2>Meteofer</h2>
     <iframe id="dynamicIframe" src="" frameborder="0"></iframe>
+    <h2>Privacy</h2>
+    <iframe id="privacyIframe" src="" frameborder="0"></iframe>
+    
     <script>
 
         
@@ -46,6 +49,16 @@
         .then(resultado => {
             dynamicIframe.srcdoc = resultado
         })
+
+        const promesa2 = fetch("/web/javascript/privacy")
+
+        promesa2.then(respuesta => respuesta.text())
+        .then(resultado => {
+            privacyIframe.src="/web/javascript/privacy/#hulu"
+            //privacyIframe.srcdoc = resultado
+        })
+
+        //privacyIframe
 
     </script>
 
