@@ -34,8 +34,20 @@
     <iframe src="calculator/index.html" frameborder="0"></iframe>
     <h2>Solitaire</h2>
     <iframe src="solitaire/index.html" frameborder="0"></iframe>
-
     
+    <iframe id="dynamicIframe" src="" frameborder="0"></iframe>
+    <script>
+
+        
+
+        const promesa = fetch("/web/javascript/meteofer/index.html")
+
+        promesa.then(respuesta => respuesta.text())
+        .then(resultado => {
+            dynamicIframe.srcdoc = resultado
+        })
+
+    </script>
 
 </body>
 </html>
