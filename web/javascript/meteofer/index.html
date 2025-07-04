@@ -57,9 +57,7 @@
                         //WRITE THE HTML
                     })
                     .catch(error => showCityData.textContent = country + " NOT FOUND")
-
             }
-
 
         }
 
@@ -72,9 +70,7 @@
                 <p>🌡️ Temperature: ${json.current.temp_c}ºC</p>
                 <p>Feels like: ${json.current.feelslike_c}ºC</p>
                 <p>Condition: </p>
-
                 <img class="meteoIcon" src="https:${json.current.condition.icon}">
-
                 <p>💨 Wind kph: ${json.current.wind_kph}</p>
                 <p>💧 Humidity: ${json.current.humidity}%</p>
                 <p>Last updated: ${json.current.last_updated}</p>
