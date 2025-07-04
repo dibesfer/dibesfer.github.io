@@ -44,22 +44,20 @@
         function search() {
 
             let country = inputCity.value
+            if (country != "") {
+                const searchPetition = fetch("https://api.weatherapi.com/v1/current.json?key=072f960119e9487890d111215250307&q=" + country + "&aqi=yes")
 
-            if (country != ""){
-
-            const searchPetition = fetch("https://api.weatherapi.com/v1/current.json?key=072f960119e9487890d111215250307&q=" + country + "&aqi=yes")
-
-            searchPetition
-                .then(resultado => resultado.json())
-                .then(json => {
-                    console.log(json)
-                    writeCard(json)
-                    //WRITE THE HTML
-                })
-                .catch(error => showCityData.textContent = country + " NOT FOUND")
+                searchPetition
+                    .then(resultado => resultado.json())
+                    .then(json => {
+                        console.log(json)
+                        writeCard(json)
+                        //WRITE THE HTML
+                    })
+                    .catch(error => showCityData.textContent = country + " NOT FOUND")
 
             }
-            
+
 
         }
 
@@ -80,6 +78,8 @@
                 <p>Last updated: ${json.current.last_updated}</p>
                 `
         }
+        
+       
     </script>
 
 </body>
