@@ -4,14 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
+    <style>
+        body {
+            font-family: sans-serif;
+        }
+    </style>
 </head>
 <body>
     <h1>Javascript Privacy</h1>
     <h3>What does javascript know about you?</h3>
-
+    <script>
+        document.write("<p><b>Href</b>: " + window.location.href + "</p>")
+        document.write("<p><b>UserAgent</b>: " + navigator.userAgent + "</p>")
+        document.write("<p><b>Language</b>: " + (navigator.language || navigator.userLanguage) + "</p>")
+    </script>
     <script>
 
-        alert(window.location.href)
+       
 
     </script>
 

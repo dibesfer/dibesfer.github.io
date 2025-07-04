@@ -35,7 +35,7 @@
         consultarBarcelona
             .then(resultado => resultado.json())
             .then(json => {
-                console.log(json.location.name)
+                console.log(json)
                 writeCard(json)
                 //WRITE THE HTML
             })
@@ -52,7 +52,7 @@
             searchPetition
                 .then(resultado => resultado.json())
                 .then(json => {
-                    console.log(json.location.name)
+                    console.log(json)
                     writeCard(json)
                     //WRITE THE HTML
                 })
@@ -67,16 +67,18 @@
             showCityData.innerHTML = `
                 <h1>${json.location.name}</h1>
                 <h3>${json.location.country}</h3>
-                <p>Localtime_epoch = ${json.location.localtime_epoch}</p>
+                <p>Localtime epoch = ${json.location.localtime_epoch}</p>
                 <hr>
                 <p>🌡️ Temperature: ${json.current.temp_c}ºC</p>
+                <p>Feels like: ${json.current.feelslike_c}ºC</p>
                 <p>Condition: </p>
 
                 <img class="meteoIcon" src="https:${json.current.condition.icon}">
 
                 <p>💨 Wind kph: ${json.current.wind_kph}</p>
                 <p>💧 Humidity: ${json.current.humidity}%</p>
-            `
+                <p>Last updated: ${json.current.last_updated}</p>
+                `
         }
     </script>
 
