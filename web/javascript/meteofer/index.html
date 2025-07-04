@@ -45,6 +45,8 @@
 
             let country = inputCity.value
             if (country != "") {
+                // const searchPetition = fetch("https://api.weatherapi.com/v1/forecast.json?key=072f960119e9487890d111215250307&q=" + country + "&aqi=yes&days=2")
+
                 const searchPetition = fetch("https://api.weatherapi.com/v1/current.json?key=072f960119e9487890d111215250307&q=" + country + "&aqi=yes")
 
                 searchPetition
@@ -78,8 +80,8 @@
                 <p>Last updated: ${json.current.last_updated}</p>
                 `
         }
-        
-       
+
+
     </script>
 
 </body>

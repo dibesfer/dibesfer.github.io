@@ -1,20 +1,32 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>dbf cursos SOC</title>
+    <style>
+        body {
+            font-family: sans-serif;
+        }
+    </style>
 </head>
+
 <body>
-    
+
     <h1>Cursos SOC en Cataluña</h1>
+    <h2>En Barcelona, L'Hospitalet</h2>
     <h3 id="desc"></h3>
+
+
+
     <div id="demo"></div>
+
 
     <script>
 
- //const datosGobEs = fetch("https://datos.gob.es/apidata/catalog/dataset/title/consorcio")
-        
+        //const datosGobEs = fetch("https://datos.gob.es/apidata/catalog/dataset/title/consorcio")
+
         // const cursosSoc = fetch("https://oficinadetreball.gencat.cat/opendata/recursos/ofertaCursos.json")
 
         // cursosSoc.then((res)=>res.json())
@@ -27,35 +39,53 @@
         //             <h2>${element.especialitat_formativa}</h2>
         //             <p>${element.provincia_especialitat}</p>
         //         `
-                
+
         //     });
         //     console.log(json[0])
         // } )
 
+        let counter = 0
+
         fetch('https://oficinadetreball.gencat.cat/opendata/recursos/ofertaCursos.json')
-        .then(response => response.blob())
-        .then(blob => blob.arrayBuffer())
-        .then(buffer => {
-            // Decode using the correct encoding (e.g., 'windows-1252', 'iso-8859-1', etc.)
-            const decoder = new TextDecoder('windows-1252'); // or your actual encoding
-            const text = decoder.decode(buffer);
-            const json = JSON.parse(text);
-            console.log(json);
+            .then(response => response.blob())
+            .then(blob => blob.arrayBuffer())
+            .then(buffer => {
+                // Decode using the correct encoding (e.g., 'windows-1252', 'iso-8859-1', etc.)
+                const decoder = new TextDecoder('windows-1252'); // or your actual encoding
+                const text = decoder.decode(buffer);
+                let json = JSON.parse(text);
+                console.log(json);
 
-            desc.textContent = json.length + " cursos disponibles"
+                desc.textContent = json.length + " cursos disponibles"
 
-             json.forEach(element => {
-                 demo.innerHTML += `
-                     <h2>${element.especialitat_formativa}</h2>
-                     <p>${element.provincia_especialitat}</p>
+                const sortByDate = (a, b) => {
+                    return new Date(a.data_inici) - new Date(b.data_inici)
+                }
+
+                json.sort(sortByDate)
+                let myDate = new Date()
+                myDate = (myDate.getMonth() + 1) + "/" + myDate.getDate() + "/" + myDate.getFullYear()
+                console.log(myDate)
+                json.forEach(element => {
+                    if (new Date(element.data_inici) >= new Date(myDate)) {
+
+                        if (element.provincia_especialitat == "BARCELONA" && element.municipi_centre == "HOSPITALET DE LLOBREGAT, L'") {
+                            counter++
+                            demo.innerHTML += `
+                     <h2>${counter + ".- " +element.especialitat_formativa}</h2>
+                     <p>${element.provincia_especialitat}, ${element.municipi_centre}</p>
+                    <p>Duración: ${element.data_inici} - ${element.data_fi} (${element.hores}h)</p>
                  `
-                
-             });
-             console.log(json[0])
+                        }
+                    }
+
+                });
+                desc.textContent = counter + " cursos disponibles"
+                console.log(json[5])
 
 
-        })
-        .catch(error => console.error('Error:', error));
+            })
+            .catch(error => console.error('Error:', error));
 
 
 
@@ -68,4 +98,5 @@
     </script>
 
 </body>
+
 </html>
