@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    
+    <script>
+
+        function lanzarPromesa() {
+            
+            return new Promise((resolver,rechazar) => {
+                setTimeout(() => {
+                    resolver("Datos rescibidos")
+                }, 2000);
+            })
+        }
+            async function ejecutar() {
+                try {
+                    console.log("Enviando datos...")
+                    const datos = await lanzarPromesa()
+                    console.log(datos)
+                    console.log("...")
+                    //throw new Error("FALO")
+                }
+                catch (error){
+                    console.log("Error en la recepción de datos" + error.message)
+                }
+            }
+
+            ejecutar()
+        
+
+    </script>
+
+</body>
+</html>
