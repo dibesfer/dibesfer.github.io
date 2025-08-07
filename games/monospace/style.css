@@ -5,15 +5,50 @@
 
 body {
     font-family: monospace;
+    line-height: 1.75;
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
 }
 
-header , footer {
+header,
+footer {
     background-color: gray;
     padding: 40px;
     text-align: center;
 }
 
 main {
-    max-width: 800px;
+
+    padding: 10px;
+    flex: 1;
+    margin: auto;
+}
+
+.flex3 {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+
+}
+
+.flex3Container {
+    flex: 33.33%;
+    border: 3px red solid;
     
+    padding: 10px;
+}
+
+.flexCard {
+    background-color: darkslategray;
+}
+
+/* For Mobile */
+@media screen and (max-width: 800px) {
+
+    .flex3Container {
+        flex: 100%;
+        width: 100%;
+        
+    }
 }
