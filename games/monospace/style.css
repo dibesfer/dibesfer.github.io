@@ -9,11 +9,13 @@ body {
     display: flex;
     flex-direction: column;
     height: 100dvh;
+    color: white;
+    background-color: black;
 }
 
 header,
 footer {
-    background-color: gray;
+    background-color: rgb(74, 74, 74);
     padding: 40px;
     text-align: center;
 }
@@ -34,13 +36,12 @@ main {
 
 .flex3Container {
     flex: 33.33%;
-    border: 3px red solid;
-    
     padding: 10px;
 }
 
 .flexCard {
     background-color: darkslategray;
+    padding: 10px;
 }
 
 /* For Mobile */
@@ -49,6 +50,6 @@ main {
     .flex3Container {
         flex: 100%;
         width: 100%;
-        
+
     }
 }
