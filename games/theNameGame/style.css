@@ -63,4 +63,12 @@ main {
     width: 100%;
     object-fit: cover;
     border: solid 3px green;
+    background-color: darkgray;
 }
+
+@media screen and (min-width: 400px) {
+  .flexo3 > div {
+    flex: 100%;
+  }
+}
+

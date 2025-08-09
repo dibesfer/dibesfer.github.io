@@ -1,8 +1,26 @@
 
-let mySentences = {
-    title : "Srasaui",
+let mySentences = 
+    [
+        {
+        title : "Srasaui",
     desc : "Oredaianami sari tanta",
-    img : `<img src="https://upload.wikimedia.org/wikipedia/commons/5/54/Galaxy_blue.jpg" alt="">`}
+    img : `https://upload.wikimedia.org/wikipedia/commons/5/54/Galaxy_blue.jpg`
+        },
+        {
+        title : "Movimenta",
+    desc : "Deo Salutari",
+    img : `https://i1.wp.com/www.totemguard.com/aulatotem/wp-content/uploads/2016/06/acic2VG-Imgur.gif?ssl=1`
+        },
+
+        {
+            title : "Example Title",
+            desc : "ee",
+            img: "https:// ... .png"
+        }
+
+        
+    ]
+
 
 let myCards = document.getElementsByClassName("cardsContainer")[0]
 let myString = ""
@@ -35,11 +53,14 @@ myCards.innerHTML += `
             </div>
 `
 
-myString += `<div class="card">
-    <img src="${mySentences.img}" alt="a Galaxy">
-    <h2 class="title">${mySentences.title}</h2>
-                <p>${mySentences.desc}</p>
+for (let i = 0; i < mySentences.length; i++) {
+    myString += `<div class="card">
+    <img src="${mySentences[i].img}" alt="a Galaxy">
+    <h2 class="title">${mySentences[i].title}</h2>
+                <p>${mySentences[i].desc}</p>
             </div>
 `
+    
+}
 
 myCards.innerHTML += myString
