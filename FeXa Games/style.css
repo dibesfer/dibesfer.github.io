@@ -52,20 +52,22 @@ hr {
 
 button {
     padding: 10px;
-    border: ridge 3px black;
-    background-color: unset;
+    border: ridge 6px black;
+    background-color: rgb(212, 212, 212);
     font: unset;
-    transition: 0.2s;
+    line-height: 0;
     cursor: pointer;
+    transition: 0.2s;
 }
 
-button:hover {
-    background-color: gold;
+/* button:hover {
+    border: ridge 6px rgb(243, 0, 0);
     transition: 0.4s;
-}
+} */
 
 button:active {
     font-size: larger;
+    background-color: gold;
     transition: 0.050s;
 }
 
@@ -77,7 +79,8 @@ button:active {
 .panoramic div img {
     aspect-ratio: 16/9;
     object-fit: cover;
-    border: ridge 4.5px rgb(75, 75, 75);
+    /* rgb(75, 75, 75) */
+    border: ridge 6px rgb(88, 41, 0);
     height: 100%;
     width: 100%;
 }
@@ -90,11 +93,27 @@ button:active {
     font-size: 60px;
 }
 
+/* The animation code */
+@keyframes purpleToBlue {
+    from {
+        background-image: linear-gradient(90deg, purple, blue);
+    }
+
+    to {
+        background-image: linear-gradient(90deg, blue, purple);
+    }
+}
+
+/* The element to apply the animation to */
 .purple-blue {
     background-image: linear-gradient(90deg, purple, blue);
     padding: 5px;
     border: none;
     border-radius: 50%;
+    animation-name: purpleToBlue;
+    animation-duration: 0.2s;
+    animation-iteration-count: infinite;
+    animation-timing-function: ease-in-out
 }
 
 #clickerGame {
