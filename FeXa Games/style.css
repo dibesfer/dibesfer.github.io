@@ -84,7 +84,7 @@ button:active {
     height: 100%;
     width: 100%;
     transition: 0.4s;
-    cursor: pointer;
+    /* cursor: pointer; */
     /* overflow: hidden; */
 }
 
