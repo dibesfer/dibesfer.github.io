@@ -14,6 +14,14 @@ body {
     font-style: bold;
 }
 
+.orbitron-title {
+  font-family: "Orbitron", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 800;
+  font-style: normal;
+}
+
+
 img {
     max-width: 100%;
 }
@@ -59,6 +67,12 @@ button {
 
 .icon {
     font-size: 60px;
+}
+
+.purple-blue {
+    background-image: linear-gradient(90deg, purple,blue);
+    padding: 5px;
+    border-radius: 50%;
 }
 
 #clickerGame {
