@@ -87,6 +87,7 @@ button:active {
 .purple-blue {
     background-image: linear-gradient(90deg, purple,blue);
     padding: 5px;
+    border: none;
     border-radius: 50%;
 }
 
