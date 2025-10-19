@@ -15,10 +15,10 @@ body {
 }
 
 .orbitron-title {
-  font-family: "Orbitron", sans-serif;
-  font-optical-sizing: auto;
-  font-weight: 800;
-  font-style: normal;
+    font-family: "Orbitron", sans-serif;
+    font-optical-sizing: auto;
+    font-weight: 800;
+    font-style: normal;
 }
 
 
@@ -52,19 +52,25 @@ hr {
 
 button {
     padding: 10px;
-    border: solid 3px black;
+    border: ridge 3px black;
     background-color: unset;
     font: unset;
-    transition: 0.050s;
+    transition: 0.2s;
     cursor: pointer;
 }
 
+button:hover {
+    background-color: gold;
+    transition: 0.4s;
+}
+
 button:active {
-    font-size: larger
+    font-size: larger;
+    transition: 0.050s;
 }
 
 #btnClick {
-    width: 100px;
+    width: 120px;
     height: 50px;
 }
 
@@ -85,7 +91,7 @@ button:active {
 }
 
 .purple-blue {
-    background-image: linear-gradient(90deg, purple,blue);
+    background-image: linear-gradient(90deg, purple, blue);
     padding: 5px;
     border: none;
     border-radius: 50%;
@@ -113,7 +119,7 @@ button:active {
 }
 
 @media screen and (min-width: 1000px) {
-     main {
+    main {
         padding: 15px;
     }
 }
