@@ -111,6 +111,12 @@ button:active {
     }
 }
 
+@media screen and (min-width: 1000px) {
+     main {
+        padding: 15px;
+    }
+}
+
 ::selection {
     background-color: rgb(66, 66, 66);
     color: white;
