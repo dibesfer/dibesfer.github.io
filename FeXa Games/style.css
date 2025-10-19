@@ -83,6 +83,18 @@ button:active {
     border: ridge 6px rgb(88, 41, 0);
     height: 100%;
     width: 100%;
+    transition: 0.4s;
+    cursor: pointer;
+    /* overflow: hidden; */
+}
+
+.panoramic div img:hover {
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    
+    border: ridge 13px rgb(88, 41, 0);
 }
 
 .textCenter {
