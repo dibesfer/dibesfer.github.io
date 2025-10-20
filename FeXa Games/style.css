@@ -21,7 +21,6 @@ body {
     font-style: normal;
 }
 
-
 img {
     max-width: 100%;
 }
@@ -131,7 +130,6 @@ button:active {
 #clickerGame {
     text-align: center;
 }
-
 
 @media screen and (min-width: 800px) {
     /* body {
