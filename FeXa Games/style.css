@@ -134,11 +134,11 @@ button:active {
 
 
 @media screen and (min-width: 800px) {
-    body {
-        /* height: 100dvh; */
-        /* display: flex;
-        flex-direction: column; */
-    }
+    /* body {
+        height: 100dvh;
+        display: flex;
+        flex-direction: column;
+    } */
 
     .flexy3 {
         display: flex;
