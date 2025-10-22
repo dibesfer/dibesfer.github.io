@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clicker Game Dibesfer</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <header>
+        <h1>Clicker Game</h1>
+    </header>
+    <main>
+        <br>
+        <div id="0screen">
+            <p>What is your name?</p>
+            <br>
+            <input id="inputName" type="text">
+            <button onclick="saveName()">Start</button>
+
+            <!-- <h1>Welcome back <u>Ferrán</u></h1>
+        <button>Mine</button> -->
+        </div>
+        <div id="1screen" class="hidden">
+            <h2>Welcome <span id="outputName"></span></h2>
+            <p><span id="outputClicks">0</span></p>
+            <button onclick="clickSum()">Mine</button>
+            <br><br><br><br>
+            <button onclick="restart()">Restart</button>
+        </div>
+        <br><br>
+    </main>
+    <footer>
+        <h3>22/10/2025</h3>
+        <h1>by dibesfer</h1>
+    </footer>
+    <script src="script.js"></script>
+</body>
+
+</html>

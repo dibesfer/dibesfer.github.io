@@ -1,0 +1,40 @@
+* {
+    margin: 0;
+}
+
+body {
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    /*display: flex;
+    flex-direction: column;
+    height: 100dvh;*/
+    background-color: gold;
+    
+}
+
+header , footer {
+    text-align: center;
+    padding: 15px;
+    background-color: aqua;
+}
+
+main {
+    height: 100%;
+    flex: 1;
+    /*min-width: 800px;*/
+    margin: auto;
+    background-color: pink;
+    text-align: center;
+}
+
+input , button {
+    background-color: lightgray;
+    padding: 10px;
+    font: unset;
+    border: unset;
+    border: 3px solid black;
+    cursor: pointer;
+}
+
+.hidden {
+    display: none;
+}
