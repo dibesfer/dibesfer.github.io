@@ -10,17 +10,18 @@ let oneScreen = document.getElementById("1screen")
 myName = localStorage.getItem("clickerGameName")
 outputClicks.textContent = localStorage.getItem("clickerGameClicks")
 
-if (myName != null){
+if (myName != "null") {
+    console.log("Player already registered " + myName)
     outputName.textContent = myName
     zeroScreen.style.display = "none"
     oneScreen.style.display = "block"
 }
 
-if (myClicks == null){
+if (myClicks == null) {
     myClicks = 0
 }
 
-function saveName(){
+function saveName() {
     myName = inputName.value
     localStorage.setItem("clickerGameName", myName)
     outputName.textContent = myName
@@ -28,19 +29,19 @@ function saveName(){
     oneScreen.style.display = "block"
 }
 
-function firstScreen(){
+function firstScreen() {
 
 }
 
-function clickSum(){
+function clickSum() {
     myClicks++
     localStorage.setItem("clickerGameClicks", myClicks)
     outputClicks.textContent = localStorage.getItem("clickerGameClicks")
 }
 
-function restart(){
+function restart() {
     let message = "You are about to delete all your memory. Are you sure?"
-    if (confirm(message)){
+    if (confirm(message)) {
         myName = null
         myClicks = 0
         localStorage.setItem("clickerGameName", myName)
