@@ -1,0 +1,21 @@
+body {
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    text-align: center;
+    font-size: larger;
+}
+
+a {
+    text-decoration: none;
+}
+
+input , button {
+    font: unset;
+    background-color: unset;
+    border: 3px solid black;
+    padding: 5px;
+    transition: 0.2s;
+}
+
+button:hover {
+    background-color: rgb(205, 205, 205);
+}
