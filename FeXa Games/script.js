@@ -16,3 +16,20 @@ function clickSum(){
     localStorage.setItem("fexaClicks", clicks)
     clickerShow.textContent = clicks
 }
+
+
+// Counter
+let outputSeconds = document.getElementById("outputSeconds")
+let seconds = localStorage.getItem("fexaSeconds")
+
+if (seconds == null){
+    seconds = 0
+}
+outputSeconds.textContent = seconds 
+function countSeconds(){
+    seconds++
+    localStorage.setItem("fexaSeconds", seconds)
+    outputSeconds.textContent = seconds
+}
+
+setInterval(countSeconds,1000)

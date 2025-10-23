@@ -134,6 +134,10 @@ button:active {
     text-align: center;
 }
 
+#outputSeconds {
+    font-family: monospace;
+}
+
 @media screen and (min-width: 800px) {
     /* body {
         height: 100dvh;
