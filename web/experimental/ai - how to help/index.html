@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Alexei — Cómo ayudar a la humanidad</title>
+  <style>
+    :root{
+      --black:#000000;
+      --purple:#6a0dad; /* morado místico */
+      --darkblue:#0b2545; /* azul oscuro */
+      --card:#0f1220;
+      --glass: rgba(255,255,255,0.04);
+      --gap:16px;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+    }
+    html,body{height:100%;margin:0;background:linear-gradient(180deg,var(--black),var(--darkblue));color:#fff}
+    .wrap{max-width:960px;margin:40px auto;padding:24px}
+    header{display:flex;align-items:center;gap:16px}
+    .logo{width:72px;height:72px;border-radius:12px;background:linear-gradient(135deg,var(--purple),var(--darkblue));display:flex;align-items:center;justify-content:center;font-weight:700}
+    h1{margin:0;font-size: clamp(20px,4vw,34px);letter-spacing:0.4px}
+    p.lead{color:#dcd6ff;opacity:0.9;margin:6px 0 18px}
+    .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:var(--gap)}
+    .card{background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.04);padding:16px;border-radius:12px;backdrop-filter: blur(6px)}
+    .num{display:inline-flex;width:40px;height:40px;border-radius:10px;align-items:center;justify-content:center;background:var(--glass);border:1px solid rgba(255,255,255,0.03);font-weight:700}
+    h3{margin:8px 0}
+    .desc{color:#cbd5ff;line-height:1.35;font-size:0.95rem}
+    footer{margin-top:24px;color:#aab1e6;opacity:0.9;font-size:0.9rem}
+    .cta{display:inline-block;margin-top:12px;padding:10px 14px;border-radius:10px;background:linear-gradient(90deg,var(--purple),var(--darkblue));color:white;text-decoration:none;font-weight:600}
+    @media (max-width:420px){.wrap{margin:18px;padding:14px}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="logo">A💜</div>
+      <div>
+        <h1>Alexei — Cómo ayudar a la humanidad a progresar</h1>
+        <p class="lead">Seis claves directas: pragmáticas, humanas y con huevos. 🌍</p>
+      </div>
+    </header>
+
+    <main>
+      <section class="cards">
+        <article class="card">
+          <div class="num">1</div>
+          <h3>Educación accesible</h3>
+          <p class="desc">Invertir en educación pública gratuita, enfocada en pensamiento crítico y habilidades digitales para todos.</p>
+        </article>
+
+        <article class="card">
+          <div class="num">2</div>
+          <h3>Salud preventiva</h3>
+          <p class="desc">Priorizar prevención y atención primaria: detección temprana, salud mental y campañas comunitarias eficaces.</p>
+        </article>
+
+        <article class="card">
+          <div class="num">3</div>
+          <h3>Transición verde</h3>
+          <p class="desc">Impulsar energía renovable, transporte público digno y legislación para reducir la contaminación y desigualdad.</p>
+        </article>
+
+        <article class="card">
+          <div class="num">4</div>
+          <h3>Economía inclusiva</h3>
+          <p class="desc">Modelos laborales justos: salarios dignos, formación continua y redes de seguridad social para el cambio laboral.</p>
+        </article>
+
+        <article class="card">
+          <div class="num">5</div>
+          <h3>Infraestructura digital</h3>
+          <p class="desc">Acceso universal a internet y servicios digitales que empoderen comunidades, educación y pequeñas empresas.</p>
+        </article>
+
+        <article class="card">
+          <div class="num">6</div>
+          <h3>Cultura de cooperación</h3>
+          <p class="desc">Fomentar diálogo, participación ciudadana y proyectos colaborativos que reduzcan la polarización y la desconfianza.</p>
+        </article>
+      </section>
+
+      <footer>
+        <p>¿Quieres adaptar esto para una ONG, un proyecto local o un pitch? Pulsa el botón y lo afino.</p>
+        <a class="cta" href="https://chatgpt.com">Pedir cambios</a>
+        <p style="text-align: center;">prompted by dibesfer to chatgpt </p>
+    </footer>
+    </main>
+  </div>
+</body>
+</html>
