@@ -12,7 +12,6 @@
     <meta name="keywords" content="Block City Creative Minetest Luanti server game dibesfer web website" />
 
     <style>
-
         * {
             margin: 0;
             box-sizing: border-box;
@@ -20,11 +19,12 @@
 
         body {
             text-align: center;
-            
-            
+
+
             color: white;
             line-height: 2;
-            background-color: #232323;;
+            background-color: #232323;
+            ;
         }
 
         img {
@@ -50,6 +50,7 @@
             width: 100%;
             object-fit: cover;
         }
+
         .blurry {
             background-color: rgba(80, 80, 80, 0.27);
             padding: 15px;
@@ -61,24 +62,41 @@
             border-radius: 5px;
             max-width: 100%;
         }
+
         .flex {
             display: flex;
             justify-content: center;
-            align-items:first baseline;
+            align-items: first baseline;
             flex-wrap: wrap;
-            
+
         }
 
-        .flex > div {
-            flex: 33.33%;
-            
-        }
-
-        @media only screen and (max-width: 600px) {
         .flex > div {
             flex: 100%;
         }
-}
+
+        @media only screen and (min-width: 800px) {
+            .flex > div {
+                flex: 33.33%;
+                padding: 10px;
+            }
+
+            footer {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }
+            
+        }
+
+        #realtimePlayersList {
+            border: solid 1px white;
+            margin: auto;
+            width: 400px;
+            max-width: 100%;
+            height: 120px;
+            overflow: auto;
+        }
 
     </style>
 
@@ -93,10 +111,10 @@
     <main>
 
         <!-- Main Image -->
-         <img class="panoramic" src="/FeXa Games/images/ESL-BC.png" alt="">
-         <h2>The Spawn</h2>
-         <br>
-         <div class="flex">
+        <img class="panoramic" src="/FeXa Games/images/ESL-BC.png" alt="">
+        <h2>The Spawn</h2>
+        <br>
+        <div class="flex">
 
             <div>
                 <img class="panoramic" src="images/bc-desktop.png" alt="Desktop">
@@ -113,8 +131,19 @@
                 <p>Highway by 20299</p>
             </div>
 
-         </div>
-         <br>
+        </div>
+        <br>
+        <div id="realtime">
+            <p>Players: 
+                <span id="realtimeMinPlayers"></span>
+                /
+                <span id="realtimeMaxPlayers"></span>
+            </p>
+            <div id="realtimePlayersList">
+                
+            </div>
+        </div>
+        <br>
 
     </main>
 
@@ -130,9 +159,56 @@
             <p>Server Admin: wsor</p>
             <p>Admins: wsor, meme_queen, Nezrok, ScoutTrooper, Odaxelagnia </p>
             <p>Moderators: Gulf, Leutomazien, Olliy, msn</p>
+            <p>website made by dibesfer 24/10/2025</p>
         </div>
 
     </footer>
+
+
+
+    <script>
+
+        let realtimeMinPlayers = document.getElementById("realtimeMinPlayers")
+        let realtimeMaxPlayers = document.getElementById("realtimeMaxPlayers")
+        let realtimePlayersList = document.getElementById("realtimePlayersList")
+
+        var serverListNewHtml = ""
+
+        function readJson() {
+            // http://localhost:8080
+            fetch('https://servers.minetest.net/list')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error("HTTP error " + response.status);
+                    }
+                    return response.json();
+
+                })
+                .then(json => {
+
+                    console.log(json.list)
+
+                    json.list.forEach(e =>{
+                        if (e.name == "BlockCity Creative [0.4, 5.x]" && e.address == "nri.edgy1.net"){
+                            console.log(e)
+                            realtimeMinPlayers.textContent = e.clients
+                            realtimeMaxPlayers.textContent = e.clients_max
+                            e.clients_list.forEach(client=>{
+                                realtimePlayersList.innerHTML +=
+                                `<p>${client}</p>`
+                            })
+                        }
+                    })
+
+                })
+                .catch(function (e) {
+                    console.log(e);
+                })
+        }
+        readJson()
+
+
+    </script>
 
 </body>
 
