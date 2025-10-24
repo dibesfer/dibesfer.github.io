@@ -1,11 +1,36 @@
-let words = [
-    "orarum",
+let words = ["orarum",
     "ipsalom",
     "immanu",
-    // "eccisont",
-    // "acauda",
-    // "sore dillo",
-    // "cucum"
+    "eccisont",
+    "acauda",
+    "sore dillo",
+    "cucum",
+    "orottawa",
+    "innamar",
+    "dironesai",
+
+    "accusant",
+    "iauridisei",
+    "tela da rassil",
+    "icosaedro",
+    "arauptaint",
+    "ereudimos",
+    "illodarta",
+    "accunt ittaras",
+    "onnoveno",
+    "disse",
+
+    "iaura sappirae",
+    "okki dokki toriyoki",
+    "eucotanto",
+    "seudomisticismo",
+    "ipsalaar araia",
+    "ecunta allaras",
+    "sabe dire di mans",
+    "annem auntu",
+    "jure pura juventus",
+    "teressillae",
+    "insa terra catastrofra"
 ]
 let commandInput = document.getElementById("commandInput")
 let levelOutput = document.getElementById("levelOutput")
