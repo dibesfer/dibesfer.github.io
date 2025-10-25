@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>guestbook</title>
+
+    <!-- FERSCRIPT.JS -->
+    <script src="/ferscript.js"></script>
+
+    <!-- SUPABASE cdn -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+
+    <style>
+
+        #guestbookMessages {
+            height: 120px;
+            border: solid 3px black;
+            overflow: auto;
+            padding: 5px;
+        }
+
+        #textarea {
+            resize: none;
+            width: 200px;
+        }
+
+        .displayDate {
+            color: gray;
+        }
+    </style>
+
+</head>
+
+<body>
+    <header>
+        <h1>Guestbook</h1>
+    </header>
+    <main>
+        <div id="guestbookMessages">
+            <!-- HERE GO THE MESSAGES -->
+        </div>
+        <textarea name="" id="textarea"></textarea>
+        <button onclick="send()">Send</button>
+    </main>
+    <footer>
+        <p>by dibesfer</p>
+    </footer>
+
+    <script>
+
+        const supabaseUrl = 'https://qugihsopwjemzakhrbvw.supabase.co'
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF1Z2loc29wd2plbXpha2hyYnZ3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE2OTg0OTQxMDksImV4cCI6MjAxNDA3MDEwOX0.1q5fBic1cjueaiP2-p6W19C68ye8FTPLFne2a-fKwZ8'
+        const database = supabase.createClient(supabaseUrl, supabaseKey)
+
+        let textarea = getid("textarea")
+        let guestbookMessages = getid("guestbookMessages")
+
+        async function read(tableName, rowName) {
+            const res = await database.from(tableName).select(rowName)//.range(3000,5000)
+            //console.log(res.data[0].dibesfer)
+            //currentVisits = res.data[0].dibesfer
+            //currentVisits++
+            //insertResources("visits")
+            //if (res.data[0] != undefined) {
+            //    totalVisitsCounter.textContent = currentVisits
+            //}
+            console.log(res.data)
+            if (res.data[0] != undefined) {
+                guestbookMessages.innerHTML = "" 
+                res.data.forEach(element => {
+                    let myDate = new Date(element.created_at)
+                    guestbookMessages.innerHTML += 
+                    `
+                    <p class="displayDate">${formatDate(myDate)} (${element.timezone})</p>
+                    <p> ${element.message}</p>`
+                });
+                guestbookMessages.scrollTop = guestbookMessages.scrollHeight
+            }
+            else {
+                guestbookMessages.innerHTML = "<p>No messages yet</p>"
+            }
+        }
+        read("guestbook", "*")
+
+        async function send() {
+
+            let myMessage = textarea.value
+            let userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
+
+            const { data, error } = await database
+                .from("guestbook")
+                .insert([
+                    {
+                        timezone : userTimeZone,
+                        message: myMessage
+                    },
+                ])
+                .select()
+            textarea.value = ""
+            read("guestbook","*")
+        }
+
+        function addZero(i) {
+			if (i < 10) { i = "0" + i }
+			return i;
+		}
+
+
+        function formatDate(date){
+            let myString = ""
+            var userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
+
+            myString += addZero(date.getDate()) + "/" + addZero((date.getMonth()+1)) + "/" + date.getFullYear() + " " +
+            addZero(date.getHours()) + ":" + addZero(date.getMinutes()) + ":" + addZero(date.getSeconds()) 
+
+            return myString
+        }
+
+
+
+    </script>
+
+</body>
+
+</html>
