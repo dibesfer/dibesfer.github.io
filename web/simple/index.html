@@ -1,27 +1,115 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Simple Website</title>
     <style>
-        body{
+        * {
+            margin: 0;
+            box-sizing: border-box;
+        }
+
+        body {
             background-color: black;
             color: white;
             font-family: Verdana, Geneva, Tahoma, sans-serif;
+
+            line-height: 2;
+        }
+
+        img {
+            max-width: 100%;
+        }
+
+        a {
+            text-decoration: none;
+            color: unset;
+        }
+
+        footer,
+        header {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .flex {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-evenly;
+        }
+
+        .flex>div {
+            flex: 33.33%;
+            padding: 10px;
+            max-width: 400px;
+        }
+
+        .borderFlexItem {
+            border: solid 1px white;
+            padding: 10px;
+        }
+
+        .panoramic {
+            aspect-ratio: 16/9;
+            object-fit: cover;
+        }
+
+        @media only screen and (max-width: 900px) {
+            .flex>div {
+                flex: 50%;
+
+            }
+        }
+
+        @media only screen and (max-width: 600px) {
+            .flex>div {
+                flex: 100%;
+            }
+
+            .flex > div {
+                padding: 5px;
+            }
         }
     </style>
 </head>
+
 <body>
     <header>
-        <h1>Simple Website</h1>
+        <h1>dibesfer</h1>
+        <h3>Dibujos y escritos de Fer</h3>
     </header>
     <main>
-        <h2>Subtitle</h2>
-        <p>Content</p>
+        <div class="flex">
+            <div>
+                <a href="">
+                    <div class="borderFlexItem">
+                    <h2>Gallery</h2>
+                    <img class="panoramic" src="/games/assets/torresArcoiris.png" alt="Rainbow voxel towers">
+                    <p>Drawings I do in paper and in digital.</p>
+                </div>
+                </a>
+            </div>
+            <div>
+                <div class="borderFlexItem">
+                    <h2>Games</h2>
+                    <img class="panoramic" src="/games/assets/torresArcoiris.png" alt="Rainbow voxel towers">
+                    <p>Games I code in javascript, Luanti (Lua) and Godot.</p>
+                </div>
+            </div>
+            <div>
+                <div class="borderFlexItem">
+                    <h2>Web</h2>
+                    <img class="panoramic" src="/games/assets/torresArcoiris.png" alt="Rainbow voxel towers">
+                    <p>Webs I program in HTML, CSS and Javascript.</p>
+                </div>
+            </div>
+        </div>
     </main>
     <footer>
         <p>by dibesfer</p>
     </footer>
 </body>
+
 </html>
