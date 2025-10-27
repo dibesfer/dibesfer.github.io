@@ -25,6 +25,7 @@ header {
   position: fixed;
   left: 0;
   right: 0;
+  background-color: rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(10px);
   z-index: 1;
   line-height: 0;
