@@ -2,6 +2,37 @@
 // it takes header and footer and fills them with html content
 let header = gettag("header")
 let footer = gettag("footer")
+let visitsCounter
+
+async function getalluseragents(tableName, rowName) {
+    const res = await database.from(tableName).select(rowName)//.range(3000,5000)
+    //console.log(res.data)
+    let visits = res.data
+
+    visits = visits.sort(function (a, b) {
+        if (a.id > b.id) {
+            return -1;
+        }
+        if (a.id < b.id) {
+            return 1;
+        }
+        // a must be equal to b
+        return 0;
+    });
+    
+    visitsCounter.textContent = visits.length
+    console.log(visits)
+
+    return res.data
+
+
+    
+
+}
+
+
+
+
 
 function insertHTML() {
 
@@ -19,7 +50,16 @@ function insertHTML() {
                 })
                 .then(function (html) {
                     footer.innerHTML = html
+
                 })
+                .then(
+                    () => {
+                        // VISITS COUNTER
+                        visitsCounter = getid("visitsCounter")
+                        getalluseragents("userAgents", "*")
+                        
+                    }
+                )
                 .catch(function (err) {
                     console.log('Failed to fetch page: ', err);
                 });
