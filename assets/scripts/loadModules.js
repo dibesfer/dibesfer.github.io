@@ -2,7 +2,7 @@
 // it takes header and footer and fills them with html content
 let header = gettag("header")
 let footer = gettag("footer")
-console.log(header.innerHTML)
+
 function insertHTML() {
 
     fetch('/assets/modules/header.html')
