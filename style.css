@@ -72,7 +72,7 @@ hr { border: solid 1px white;}
 .flexgrid {
 
   display: flex;
-  align-items: center;
+  align-items: baseline;
   justify-content: space-around;
   flex-wrap: wrap;
 }
@@ -91,6 +91,7 @@ hr { border: solid 1px white;}
 
 .flexgriditem > div {
   border: solid 1px white;
+  
   padding: 10px;
 }
 
