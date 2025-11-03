@@ -2,8 +2,8 @@ function getid(id) {
   return document.getElementById(id)
 }
 
-function getclass(class) {
-  return document.getElementsByClassName(class)
+function getclass(classname) {
+  return document.getElementsByClassName(classname)
 }
 
 function gettag(tag) {
