@@ -104,6 +104,11 @@ hr { border: solid 1px white;}
   .flexgriditem {
     flex: 100%;
   }
+
+  .notForMobile {
+    display: none;
+  }
+
 }
 
 .zoomableimage {
@@ -168,9 +173,15 @@ hr { border: solid 1px white;}
   margin: auto;
   padding: 15px;
   border: solid 1px white;;
+  
 }
 
+@media only screen and (max-width: 600px) {
 
+  #mainBody {
+    margin: 0 10px;
+  }
+}
 
 .textCenter {
   text-align: center;
