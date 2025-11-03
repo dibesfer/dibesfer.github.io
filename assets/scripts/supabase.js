@@ -96,7 +96,7 @@ async function insertResources(tableName) {
 //getResources("visits", "dibesfer")
 var currentVisits = 0
 async function getResources(tableName, rowName) {
-    const res = await database.from(tableName).select(rowName )//.range(3000,5000)
+    const res = await database.from(tableName).select(rowName )
     //console.log(res.data[0].dibesfer)
     currentVisits = res.data[0].dibesfer
     currentVisits++
