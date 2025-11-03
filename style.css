@@ -9,8 +9,8 @@
 }
 
 body {
-  font-family: Jost;
-  font-size: large;
+  font-family: Verdana, Geneva, Tahoma, sans-serif;
+  
 }
 
 body {
@@ -81,8 +81,14 @@ img {
 .flexgriditem {
   flex: 33.33%;
   width: 33.33%;
-  text-align: center;
+  max-width: 400px;
   overflow: hidden;
+  padding: 5px;
+}
+
+.flexgriditem > div {
+  border: solid 1px white;
+  padding: 5px;
 }
 
 @media only screen and (max-width: 900px) {
@@ -161,5 +167,9 @@ img {
 }
 
 #supertitle {
+  text-align: center;
+}
+
+.textCenter {
   text-align: center;
 }
