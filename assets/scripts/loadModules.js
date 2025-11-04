@@ -5,28 +5,24 @@ let footer = gettag("footer")
 let visitsCounter
 
 async function getalluseragents(tableName, rowName) {
-    const res = await database.from(tableName).select(rowName)//.range(3000,5000)
+    const res = await database.from(tableName).select(rowName)//.range(1000,1500)
     //console.log(res.data)
     let visits = res.data
 
-    visits = visits.sort(function (a, b) {
-        if (a.id > b.id) {
-            return -1;
-        }
-        if (a.id < b.id) {
-            return 1;
-        }
-        // a must be equal to b
-        return 0;
-    });
+    // visits = visits.sort(function (a, b) {
+    //     if (a.id > b.id) {
+    //         return -1;
+    //     }
+    //     if (a.id < b.id) {
+    //         return 1;
+    //     }
+    //     // a must be equal to b
+    //     return 0;
+    // });
     
     visitsCounter.textContent = visits.length
-    console.log(visits)
-
-    return res.data
-
-
     
+    return res.data
 
 }
 

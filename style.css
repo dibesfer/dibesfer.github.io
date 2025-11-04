@@ -33,7 +33,7 @@ header {
   
 }
 
-header a {
+header a, footer a {
     color: unset;
 }
 
