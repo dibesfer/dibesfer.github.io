@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>dibesfer - pager</title>
+    <link rel="icon" type="image/x-icon" href="/assets/branding/favicon512.ico">
+    <link rel="stylesheet" href="/style.css">
+
+    <!-- FERSCRIPT.JS -->
+    <script src="/ferscript.js"></script>
+
+    <!-- SEO -->
+    <meta name="author" content="dibesfer - Ferrán Minero" />
+    <meta name="description" content="Dibujos y escritos de Fer." />
+    <meta name="keywords"
+        content="dibesfer github info information información página web website. Ferrán Minero. Developer Illustrator Writer. Dev Illustrauthor. Symbocracy." />
+
+    <!-- SUPABASE cdn -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+
+    <style>
+        #editableContent {
+            min-height: 400px;
+        }
+    </style>
+
+</head>
+
+
+
+<body>
+    <header></header>
+
+    <main>
+        <div id="mainBody">
+
+            <h2>📄Pager</h2>
+
+            <div id="editableContent">
+                <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Inventore explicabo quo ex porro recusandae mollitia perspiciatis iusto. Corporis, maxime delectus? Quae necessitatibus illo aut itaque excepturi quia voluptatum molestiae distinctio?</p>
+
+            </div>
+
+
+            <div style="user-select: none; cursor: pointer;" class="textCenter">
+                <p><span onclick="prevPage()">previous</span> | <span id="pagerCurrent">0</span>/<span id="pagerMax">3</span> | <span onclick="nextPage()">next</span></p>
+               
+            </div>
+
+        </div>
+    </main>
+
+    <footer></footer>
+
+    <script>
+
+        let counter = 0
+        let pages = [
+            
+            "<h2>Hello World!</h2><p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Inventore explicabo quo ex porro recusandae mollitia perspiciatis iusto. Corporis, maxime delectus? Quae necessitatibus illo aut itaque excepturi quia voluptatum molestiae distinctio?</p>",
+            "<h2>Hello Saturn!</h2>",
+            "<h2>Hello Pluto!</h2>",
+            "<h2>Hello Jupiter!</h2>",
+            `<h2>Hello Uranus!</h2>
+            <p>Heh, nice rhyme</p>
+            `,
+            
+        ]  
+        pagerMax.textContent = pages.length
+        pagerCurrent.textContent = counter+1
+        function nextPage(){
+            if (counter < pages.length-1){
+            counter++
+            editableContent.innerHTML = pages[counter]
+            pagerCurrent.textContent = counter+1
+            }
+        }
+
+        function prevPage(){
+            if (counter > 0){
+            counter--
+            editableContent.innerHTML = pages[counter]
+            pagerCurrent.textContent = counter+1
+            }
+        }
+    </script>
+
+    <script src="/assets/scripts/supabase.js"></script>
+    <script src="/assets/scripts/loadModules.js"></script>
+</body>
+
+</html>
