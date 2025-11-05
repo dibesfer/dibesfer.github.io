@@ -45,6 +45,8 @@ main {
     height: 100%;
     /* background-image: url("https://cdn.pixabay.com/animation/2022/10/01/15/15/15-15-43-312_256.gif");
     background-size: cover; */
+    background-color: darkslategray;
+    color: white;
 
 }
 
@@ -82,7 +84,7 @@ button:active {
     aspect-ratio: 16/9;
     object-fit: cover;
     /* rgb(75, 75, 75) */
-    border: ridge 6px rgb(88, 41, 0);
+    border: ridge 12px rgb(62, 29, 0);
     height: 100%;
     width: 100%;
     transition: 0.2s;
@@ -96,7 +98,7 @@ button:active {
     justify-content: center;
     align-items: center;
 
-    border: ridge 13px rgb(88, 41, 0);
+    border: ridge 17px rgb(88, 41, 0);
 }
 
 .textCenter {
