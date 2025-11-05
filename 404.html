@@ -23,6 +23,7 @@
     <div class="flexgrid">
       <div class="flexgriditem">
         <h2>404 - Not found</h2>
+        <p>There is no <span id="showHref"></span> page</p>
         <p>May want to come back <a href="/">home</a>?</p>
         <div class="zoomableimage">
           <img width="100%"
@@ -37,6 +38,9 @@
   </main>
   
   <footer></footer>
+  <script>
+    showHref.textContent = window.location.href.split("https://dibesfer.com")[1]
+  </script>
   <script src="/assets/scripts/supabase.js"></script>
   <script src="/assets/scripts/loadModules.js"></script>
 </body>
