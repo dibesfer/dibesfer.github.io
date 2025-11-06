@@ -21,18 +21,18 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 
 
-<style>
-
+  <style>
     .styledIframe {
-        border: unset;
-        height: 400px;
-        
+      border: unset;
+      height: 400px;
+
     }
+
     #mainBody {
       padding: 0;
       line-height: 0;
     }
-</style>
+  </style>
 
 </head>
 
@@ -42,14 +42,14 @@
   <main>
     <div id="mainBody">
 
-    <iframe id="myIframe" class="styledIframe" width="100%" src="/games/gameDesign/"  frameborder="0" ></iframe>
-    
-<!-- src="https://dibesfer.github.io/web/blockcity/"  -->
+      <iframe id="myIframe" class="styledIframe" width="100%" src="/games/gameDesign/" frameborder="0"></iframe>
+
+      <!-- src="https://dibesfer.github.io/web/blockcity/"  -->
 
 
 
 
-      
+
     </div>
     <button onclick="changeIframeSrc()">Press</button>
   </main>
@@ -57,9 +57,31 @@
 
   <footer></footer>
   <script>
-    function changeIframeSrc(){
+    function insertHTML() {
+
+      fetch('/games/index.html')
+        .then(function (response) {
+          // When the page is loaded convert it to text
+          console.log("hello")
+          return response.text()
+          
+        })
+        .then(function (html) {
+          myIframe.srcdoc = html;
+          console.log(html)
+
+        })
+        .catch(function (err) {
+          console.log('Failed to fetch page: ', err);
+        });
+    }
+    
+
+    function changeIframeSrc() {
       //myIframe.src='/assets/books/primaryChat.txt'
-      myIframe.srcdoc = "<style>body {color: white}</style><h1>Hello world</h1>"
+      //myIframe.srcdoc = "<style>body {color: white}</style><h1>Hello world</h1>"
+      insertHTML()
+      
     }
   </script>
 
