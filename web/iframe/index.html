@@ -57,18 +57,18 @@
 
   <footer></footer>
   <script>
-    function insertHTML() {
+    function changeSrcdoc() {
 
       fetch('/games/index.html')
         .then(function (response) {
           // When the page is loaded convert it to text
-          console.log("hello")
+          
           return response.text()
           
         })
         .then(function (html) {
           myIframe.srcdoc = html;
-          console.log(html)
+          
 
         })
         .catch(function (err) {
@@ -80,7 +80,7 @@
     function changeIframeSrc() {
       //myIframe.src='/assets/books/primaryChat.txt'
       //myIframe.srcdoc = "<style>body {color: white}</style><h1>Hello world</h1>"
-      insertHTML()
+      changeSrcdoc()
       
     }
   </script>
