@@ -26,6 +26,29 @@ async function getalluseragents(tableName, rowName) {
 
 }
 
+// we already have a visitsCounter id element
+//let currentVisits = 0
+
+
+
+
+
+async function setVisits() {
+    const { data, error } = await database
+        .from('visits')
+        .update({ dibesfer: currentVisits })
+        .eq('id', 1)
+        .select()
+    visitsCounter.textContent = data[0].dibesfer
+}
+
+
+async function getVisits(tableName, rowName) {
+    const res = await database.from(tableName).select(rowName)
+    currentVisits = res.data[0].dibesfer
+    currentVisits++
+    setVisits()
+}
 
 
 
@@ -52,7 +75,8 @@ function insertHTML() {
                     () => {
                         // VISITS COUNTER
                         visitsCounter = getid("visitsCounter")
-                        getalluseragents("userAgents", "*")
+                        getVisits("visits", "dibesfer")
+                        //getalluseragents("userAgents", "*")
                         
                     }
                 )

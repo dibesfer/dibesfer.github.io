@@ -18,16 +18,16 @@ function setLocalVisits(){
 
 //REALTIME 
 // Create a function to handle inserts
-const handleInserts = (payload) => {
-    //console.log('Change received!', payload)
-   getOnlyResources("visits", "dibesfer")
-}
+// const handleInserts = (payload) => {
+//     //console.log('Change received!', payload)
+//    getOnlyResources("visits", "dibesfer")
+// }
 
 // Listen to inserts
-database
-   .channel('visits')
-   .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'visits' }, handleInserts)
-   .subscribe()
+// database
+//    .channel('visits')
+//    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'visits' }, handleInserts)
+//    .subscribe()
 
 
 
