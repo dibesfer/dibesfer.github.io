@@ -42,10 +42,8 @@
   <main>
     <div id="mainBody">
 
+    <iframe id="myIframe" class="styledIframe" width="100%" src="/games/gameDesign/"  frameborder="0" ></iframe>
     
-        
-    <iframe class="styledIframe" width="100%" src="/games/gameDesign/"  frameborder="0"></iframe>
-      
 <!-- src="https://dibesfer.github.io/web/blockcity/"  -->
 
 
@@ -53,9 +51,18 @@
 
       
     </div>
+    <button onclick="changeIframeSrc()">Press</button>
   </main>
 
+
   <footer></footer>
+  <script>
+    function changeIframeSrc(){
+      //myIframe.src='/assets/books/primaryChat.txt'
+      myIframe.srcdoc = "<style>body {color: white}</style><h1>Hello world</h1>"
+    }
+  </script>
+
   <script src="/assets/scripts/supabase.js"></script>
 
   <script src="/assets/scripts/loadModules.js"></script>
