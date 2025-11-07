@@ -9,6 +9,10 @@
         body {
             font-family: sans-serif;
         }
+        iframe {
+            width: 400px;
+            height: 300px;
+        }
     </style>
 </head>
 
@@ -16,7 +20,7 @@
     <header>
         <h1>nanotecnia</h1>
         <h3>iso se tai eretci icrata</h3>
-        <p><span onclick="changeSrcdoc('ipsu.html')">Ipsu</span> | <span onclick="changeSrcdoc('noram.html')">Noram</span> | <span onclick="changeSrcdoc('idama.html')">Idama</span></p>
+        <p><span onclick="changeSrcdoc('ipsu.html', this)">Ipsu</span> | <span onclick="changeSrcdoc('noram.html',this)">Noram</span> | <span onclick="changeSrcdoc('idama.html',this)">Idama</span></p>
     </header>
     <main>
         <iframe id="myIframe" src="ipsu.html" frameborder="0"></iframe>
@@ -32,7 +36,7 @@
         }
     </style>`
 
-        function changeSrcdoc(stringURL) {
+        function changeSrcdoc(stringURL, mythis) {
 
             fetch(stringURL)
                 .then(function (response) {
@@ -43,6 +47,7 @@
                 })
                 .then(function (html) {
                     myIframe.srcdoc =  style + html;
+                    mythis.style = "font-weight: bold"
 
 
                 })
