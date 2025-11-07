@@ -51,18 +51,22 @@
 
 
     </div>
-    <button onclick="changeIframeSrc()">Press</button>
+    <!-- <button onclick="changeIframeSrc()">Press</button> -->
   </main>
 
 
   <footer></footer>
   <script>
-    function changeSrcdoc() {
 
-      fetch('/games/index.html')
+    let myURL = window.location.href
+    let myLink = myURL.split("#")[1]
+    
+    function changeSrcdoc(stringURL) {
+
+      fetch(stringURL)
         .then(function (response) {
           // When the page is loaded convert it to text
-          
+          console.log(response)
           return response.text()
           
         })
@@ -75,6 +79,8 @@
           console.log('Failed to fetch page: ', err);
         });
     }
+
+    changeSrcdoc(myLink)
     
 
     function changeIframeSrc() {
