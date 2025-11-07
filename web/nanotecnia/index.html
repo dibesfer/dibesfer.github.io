@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>dbf - nanotecnia</title>
+    <style>
+        body {
+            font-family: sans-serif;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>nanotecnia</h1>
+        <h3>iso se tai eretci icrata</h3>
+        <p><span onclick="changeSrcdoc('ipsu.html')">Ipsu</span> | <span onclick="changeSrcdoc('noram.html')">Noram</span> | <span onclick="changeSrcdoc('idama.html')">Idama</span></p>
+    </header>
+    <main>
+        <iframe id="myIframe" src="ipsu.html" frameborder="0"></iframe>
+    </main>
+    <footer>
+        <p>aladiri <a href="https://dibesfer.github.io">dibesfer</a></p>
+    </footer>
+    <script>
+
+        let style = `<style>
+        body {
+            font-family: sans-serif;
+        }
+    </style>`
+
+        function changeSrcdoc(stringURL) {
+
+            fetch(stringURL)
+                .then(function (response) {
+                    // When the page is loaded convert it to text
+                    console.log(response)
+                    return response.text()
+
+                })
+                .then(function (html) {
+                    myIframe.srcdoc =  style + html;
+
+
+                })
+                .catch(function (err) {
+                    console.log('Failed to fetch page: ', err);
+                });
+        }
+        
+changeSrcdoc('ipsu.html')
+        
+    </script>
+</body>
+
+</html>
