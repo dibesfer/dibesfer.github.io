@@ -43,6 +43,9 @@ footer {
   padding: 40px;
 }
 
+h2 {
+  font-variant: small-caps;
+}
 #headerflex {
   display: flex;
   align-items: center;

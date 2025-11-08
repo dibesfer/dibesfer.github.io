@@ -51,6 +51,32 @@
 
 
     </div>
+    <style>
+      select {
+        border:  solid 1px white;
+        padding: 5px;
+        font: unset;
+        background-color: black;
+        color: white;
+      }
+    </style>
+    <br>
+    <div style="text-align: center;">
+      <select id="mySelect" onchange="myFunction()">
+        <option value="/games/gameDesign">Game Design
+        <option value="/web/blockcity">Block City
+        <option value="/web/exampleSites/amarila">Amarila
+        <option value="/web/exampleSites/reddia">Reddia
+        <option value="/web/exampleSites/purplia">Purplia
+      </select>
+      <script>
+        function myFunction() {
+          let x = document.getElementById("mySelect").value;
+          myIframe.src = x
+          console.log(x)
+        }
+      </script>
+    </div>
     <!-- <button onclick="changeIframeSrc()">Press</button> -->
   </main>
 
@@ -60,19 +86,20 @@
 
     let myURL = window.location.href
     let myLink = myURL.split("#")[1]
-    
+
     function changeSrcdoc(stringURL) {
 
       fetch(stringURL)
         .then(function (response) {
           // When the page is loaded convert it to text
           console.log(response)
+          console.log(myLink)
           return response.text()
-          
+
         })
         .then(function (html) {
           myIframe.srcdoc = html;
-          
+
 
         })
         .catch(function (err) {
@@ -80,14 +107,14 @@
         });
     }
 
-    changeSrcdoc(myLink)
-    
+    //changeSrcdoc(myLink)
+
 
     function changeIframeSrc() {
       //myIframe.src='/assets/books/primaryChat.txt'
       //myIframe.srcdoc = "<style>body {color: white}</style><h1>Hello world</h1>"
       changeSrcdoc()
-      
+
     }
   </script>
 
