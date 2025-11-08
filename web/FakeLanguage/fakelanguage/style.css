@@ -1,0 +1,39 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    font-size: larger;
+    margin: auto;
+    max-width: 600px;
+    background-color: green;
+}
+
+h1 {
+    color: greenyellow
+}
+
+#textConsole {
+    border: solid 3px black;
+    padding: 10px;
+    background-color: white;
+}
+
+a {
+    text-decoration: none;
+    color: limegreen;
+    padding: 15px;
+    
+    
+}
+
+#flBtn {
+    background-color: white;
+    width: max-content;
+    font-weight: bold;
+    margin: auto;
+    font-size: xx-large;
+    border: solid 3px black;
+    
+}
