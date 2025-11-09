@@ -8,8 +8,7 @@ body {
     margin: auto;
     max-width: 600px;
     background-color: green;
-    background-image: linear-gradient(180deg, green, rgb(0, 62, 0) );
-    height: 100dvh;
+    
 }   
 
 h1 {
@@ -20,7 +19,7 @@ h1 {
     border: solid 3px black;
     padding: 10px;
     margin: 10px;
-    background-color: white;
+    background-color: rgb(255, 255, 255);
 }
 
 a {
@@ -38,5 +37,16 @@ a {
     margin: auto;
     font-size: xx-large;
     border: solid 3px black;
-    
+    color: rgb(124, 255, 124);
+    padding: 5px;
+    cursor: pointer;
+    transition: 0.2s;
+    user-select: none;
+}
+
+#flBtn:hover {
+    background-color: rgb(14, 144, 0);
+}
+#flBtn:active {
+    color: rgb(243, 255, 81);
 }

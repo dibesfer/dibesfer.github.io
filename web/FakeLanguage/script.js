@@ -4,6 +4,7 @@
 let vowels = ["a", "e", "i", "o", "u", "a", "e", "i", "o", "u", "a", "e", "i", "o", "u", "ae"]
 let consonants = ["b", "c", "d", "f", "g", "h", "l", "m", "n", "p", "r", "s", "t", "v", "x", "z", "ch", "sh"]
 
+let emojis = [ "🖌️", "✏️", "🛠️", "⚒️", "⛏️", "🔨", "🗝️", "🔑", "🌀", "📡", "⚖️", "⚜️", "🔱", "🔆", "⚕️", "💠", "✳️", "✴️", "❇️" ]
 let textConsole = getid("textConsole")
 let words = 17
 let mySentence = ""
@@ -14,6 +15,7 @@ function fillASentence() {
         let wordlength = randomInt(1, 3)
         let probabilidad = randomInt(1, 3)
         let probabilidadComa = randomInt(1,10)
+        let probabilidadSigno = randomInt(1,10)
 
         for (let j = 0; j < wordlength; j++) {
 
@@ -51,16 +53,30 @@ function fillASentence() {
             }
         } 
         else {
-            mySentence += ".<br><br>"
+            if (probabilidadSigno < 9){
+                mySentence += "."
+            } else if (probabilidadSigno == 9){
+                mySentence += "!"
+            } else if (probabilidadSigno == 10){
+                mySentence += "?"
+            }
+            //mySentence += " " + emojis[randomInt(0,emojis.length-1)]
+            mySentence += "<br><br>"
             mySentence = capitalizeFirstLetter(mySentence)
             textConsole.innerHTML += mySentence
         }
     }
 }
-fillASentence()
-fillASentence()
-fillASentence()
+generate()
 // https://stackoverflow.com/questions/1026069/how-do-i-make-the-first-letter-of-a-string-uppercase-in-javascript
 function capitalizeFirstLetter(val) {
     return String(val).charAt(0).toUpperCase() + String(val).slice(1);
+}
+
+
+function generate(){
+    textConsole.innerHTML = ""
+    fillASentence()
+    fillASentence()
+    fillASentence()
 }
