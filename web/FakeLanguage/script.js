@@ -2,7 +2,7 @@
 // let consonants = ["b", "c", "d", "f", "g", "h", "l", "m", "n", "p", "r", "s", "t", "v", "x", "z", "þ", "ch", "sh",]
 
 let vowels = ["a", "e", "i", "o", "u", "a", "e", "i", "o", "u", "a", "e", "i", "o", "u", "ae"]
-let consonants = ["b", "c", "d", "f", "g", "h", "l", "m", "n", "p", "r", "s", "t", "v", "x", "z", "ch", "sh", "y"]
+let consonants = ["b", "c", "d", "f", "g", "h", "l", "m", "n", "p", "r", "s", "t", "v", "x", "z", "ch", "sh"]
 
 let textConsole = getid("textConsole")
 let words = 17
@@ -13,6 +13,7 @@ function fillASentence() {
     for (let i = 0; i < words; i++) {
         let wordlength = randomInt(1, 3)
         let probabilidad = randomInt(1, 3)
+        let probabilidadComa = randomInt(1,10)
 
         for (let j = 0; j < wordlength; j++) {
 
@@ -41,7 +42,14 @@ function fillASentence() {
             }
 
         }
-        if (i < words - 1) mySentence += " "
+        if (i < words - 1) {
+            if (probabilidadComa < 10){
+                mySentence += " "
+            }
+            else {
+                mySentence += ", "
+            }
+        } 
         else {
             mySentence += ".<br><br>"
             mySentence = capitalizeFirstLetter(mySentence)
