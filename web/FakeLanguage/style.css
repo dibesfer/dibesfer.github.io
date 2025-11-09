@@ -8,7 +8,9 @@ body {
     margin: auto;
     max-width: 600px;
     background-color: green;
-}
+    background-image: linear-gradient(180deg, green, rgb(0, 62, 0) );
+    height: 100dvh;
+}   
 
 h1 {
     color: greenyellow
@@ -17,6 +19,7 @@ h1 {
 #textConsole {
     border: solid 3px black;
     padding: 10px;
+    margin: 10px;
     background-color: white;
 }
 
