@@ -4,7 +4,7 @@
 let vowels = ["a", "e", "i", "o", "u", "a", "e", "i", "o", "u", "a", "e", "i", "o", "u", "ae"]
 let consonants = ["b", "c", "d", "f", "g", "h", "l", "m", "n", "p", "r", "s", "t", "v", "x", "z", "ch", "sh"]
 
-let emojis = [ "🖌️", "✏️", "🛠️", "⚒️", "⛏️", "🔨", "🗝️", "🔑", "🌀", "📡", "⚖️", "⚜️", "🔱", "🔆", "⚕️", "💠", "✳️", "✴️", "❇️" ]
+let emojis = ["🖌️", "✏️", "🛠️", "⚒️", "⛏️", "🔨", "🗝️", "🔑", "🌀", "📡", "⚖️", "⚜️", "🔱", "🔆", "⚕️", "💠", "✳️", "✴️", "❇️"]
 let textConsole = getid("textConsole")
 let words = 17
 let mySentence = ""
@@ -14,15 +14,15 @@ function fillASentence() {
     for (let i = 0; i < words; i++) {
         let wordlength = randomInt(1, 3)
         let probabilidad = randomInt(1, 3)
-        let probabilidadComa = randomInt(1,10)
-        let probabilidadSigno = randomInt(1,10)
+        let probabilidadComa = randomInt(1, 10)
+        let probabilidadSigno = randomInt(1, 10)
 
         for (let j = 0; j < wordlength; j++) {
 
             switch (probabilidad) {
                 case 1:
                     if (wordlength == 1)
-                    mySentence += vowels[randomInt(0, vowels.length - 1)]
+                        mySentence += vowels[randomInt(0, vowels.length - 1)]
                     else {
                         mySentence += vowels[randomInt(0, vowels.length - 1)]
                         mySentence += consonants[randomInt(0, consonants.length - 1)]
@@ -45,19 +45,19 @@ function fillASentence() {
 
         }
         if (i < words - 1) {
-            if (probabilidadComa < 10){
+            if (probabilidadComa < 10) {
                 mySentence += " "
             }
             else {
                 mySentence += ", "
             }
-        } 
+        }
         else {
-            if (probabilidadSigno < 9){
+            if (probabilidadSigno < 9) {
                 mySentence += "."
-            } else if (probabilidadSigno == 9){
+            } else if (probabilidadSigno == 9) {
                 mySentence += "!"
-            } else if (probabilidadSigno == 10){
+            } else if (probabilidadSigno == 10) {
                 mySentence += "?"
             }
             //mySentence += " " + emojis[randomInt(0,emojis.length-1)]
@@ -74,7 +74,7 @@ function capitalizeFirstLetter(val) {
 }
 
 
-function generate(){
+function generate() {
     textConsole.innerHTML = ""
     fillASentence()
     fillASentence()
