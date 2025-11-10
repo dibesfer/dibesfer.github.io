@@ -1,8 +1,8 @@
 // let vowels = ["a", "e", "i", "o", "u","a", "e", "i", "o", "u","a", "e", "i", "o", "u", "ae"]
 // let consonants = ["b", "c", "d", "f", "g", "h", "l", "m", "n", "p", "r", "s", "t", "v", "x", "z", "þ", "ch", "sh",]
 
-let vowels = ["a", "e", "i", "o", "u", "a", "e", "i", "o", "u", "a", "e", "i", "o", "u", "ae"]
-let consonants = ["b", "c", "d", "f", "g", "h", "l", "m", "n", "p", "r", "s", "t", "v", "x", "z", "ch", "sh"]
+let vowels = ["a", "e", "i", "o", "u", "a", "e", "i", "o", "u", "a", "e", "i", "o", "u"]
+let consonants = ["b", "c", "d", "f", "g", "h", "l", "m", "n", "p", "r", "s", "t", "v", "z", "ch", "sh"]
 
 let emojis = ["🖌️", "✏️", "🛠️", "⚒️", "⛏️", "🔨", "🗝️", "🔑", "🌀", "📡", "⚖️", "⚜️", "🔱", "🔆", "⚕️", "💠", "✳️", "✴️", "❇️"]
 let textConsole = getid("textConsole")
@@ -13,19 +13,28 @@ function fillASentence() {
     mySentence = ""
     for (let i = 0; i < words; i++) {
         let wordlength = randomInt(1, 3)
-        let probabilidad = randomInt(1, 3)
-        let probabilidadComa = randomInt(1, 10)
-        let probabilidadSigno = randomInt(1, 10)
+        let probabilidad
+        let probabilidadComa 
+        let probabilidadSigno
 
         for (let j = 0; j < wordlength; j++) {
 
+            probabilidad = randomInt(1, 3)
+            probabilidadComa = randomInt(1, 10)
+            probabilidadSigno = randomInt(1, 10)
+
             switch (probabilidad) {
                 case 1:
-                    if (wordlength == 1)
+                    if (wordlength == 1) {
+
                         mySentence += vowels[randomInt(0, vowels.length - 1)]
+
+                    }
                     else {
+
                         mySentence += vowels[randomInt(0, vowels.length - 1)]
                         mySentence += consonants[randomInt(0, consonants.length - 1)]
+
                     }
                     break;
 
