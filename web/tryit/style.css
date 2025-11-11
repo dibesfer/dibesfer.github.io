@@ -29,7 +29,7 @@ header {
 #script,
 #result {
     flex: 1;
-    border: 1px solid rgb(77, 255, 0);
+    border: 3px solid rgb(77, 255, 0);
     overflow: auto;
 }
 

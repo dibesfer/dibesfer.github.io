@@ -42,7 +42,7 @@ function run() {
 function save() {
     let fileName = "index.html";
     let fileContent = myTextArea.value;
-    let myFile = new Blob([fileContent], { type: 'text/plain' });
+    let myFile = new Blob([fileContent], { type: 'text/html' });
 
     window.URL = window.URL || window.webkitURL;
     
