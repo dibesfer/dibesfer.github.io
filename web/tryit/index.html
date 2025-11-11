@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>dbf - try it</title>
+
+    <style>
+        * {
+            margin: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            height: 100dvh;
+            font-family: sans-serif;
+            line-height: 0;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px;
+            line-height: 1.5;
+            color: white;
+            background-color: gray;
+            height: 5%;
+        }
+
+        .flexo { 
+            display: flex;
+            flex-direction: column;
+            height: 95%;
+        }
+        #script,
+        #result {
+            flex: 1;
+            border: 1px solid rgb(77, 255, 0);
+            overflow: auto;
+        }
+
+        #myTextArea {
+            resize: none;
+            width: 100%;
+            height: 100%;
+            border: none;
+            font-size: larger;
+            color: white;
+            background-color: black;
+        }
+
+        #myIframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        button {
+            font: unset;
+            border: 1px solid black;
+            background-color: yellow;
+            cursor: pointer;
+        }
+
+        a {
+            all: unset;
+        }
+
+        @media only screen and (min-width: 1000px) {
+            .flexo {
+                flex-direction: row;
+            }
+        }
+    </style>
+
+</head>
+
+<body>
+    <header>
+        <p>dibesfer - try it</p>
+        <div>
+            <button id="saveBtn" style="text-align: right;" onclick="save()"><a id="saveLink">save</a> </button>
+            <button style="text-align: right;" onclick="run()">run</button>
+        </div>
+
+    </header>
+
+    <div class="flexo">
+        <div id="result">
+            <iframe id="myIframe" src="" frameborder="0"></iframe>
+        </div>
+
+        <div id="script">
+
+            <textarea autocorrect="off" id="myTextArea" name="" id=""></textarea>
+        </div>
+
+    </div>
+
+
+
+
+    <script src="script.js"></script>
+</body>
+
+</html>
