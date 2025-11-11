@@ -33,6 +33,8 @@ header {
     overflow: auto;
 }
 
+
+
 #myTextArea {
     resize: none;
     width: 100%;
@@ -41,12 +43,14 @@ header {
     font-size: larger;
     color: white;
     background-color: black;
+    
 }
 
 #myIframe {
     width: 100%;
     height: 100%;
     border: none;
+    
 }
 
 button {
@@ -64,4 +68,6 @@ a {
     .flexo {
         flex-direction: row;
     }
+    #script {order: 1;}
+    #result {order: 2;}
 }
