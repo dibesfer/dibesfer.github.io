@@ -6,7 +6,7 @@ let consonants = ["b", "c", "d", "f", "g", "h", "l", "m", "n", "p", "r", "s", "t
 
 let emojis = ["🖌️", "✏️", "🛠️", "⚒️", "⛏️", "🔨", "🗝️", "🔑", "🌀", "📡", "⚖️", "⚜️", "🔱", "🔆", "⚕️", "💠", "✳️", "✴️", "❇️"]
 let textConsole = getid("textConsole")
-let words = 17
+let words = 13
 let mySentence = ""
 
 function fillASentence() {
