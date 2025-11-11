@@ -52,7 +52,7 @@ header {
 button {
     font: unset;
     border: 1px solid black;
-    background-color: yellow;
+    
     cursor: pointer;
 }
 
