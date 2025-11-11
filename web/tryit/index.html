@@ -11,7 +11,7 @@
 
 <body>
     <header>
-        <p>dibesfer - try it</p>
+        <p><a href="https://dibesfer.github.io">dibesfer</a> - try it</p>
         <div>
             <button id="saveBtn" style="background-color: green; color: white;" onclick="save()"><a id="saveLink">save</a> </button>
             <button style="background-color: yellow;" onclick="run()">run</button>
@@ -26,7 +26,7 @@
 
         <div id="script">
             <!-- https://stackoverflow.com/questions/67865463/disable-tabbing-out-of-textarea -->
-            <textarea spellcheck="false" id="myTextArea" name="" id="" onkeydown="handleKeyDown.call(this, event)"></textarea>
+            <textarea spellcheck="false" id="myTextArea" name="" id="" onkeydown="handleTab.call(this, event)"></textarea>
         </div>
 
     </div>

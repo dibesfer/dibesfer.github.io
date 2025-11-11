@@ -50,8 +50,9 @@ function save() {
     saveLink.setAttribute("download", fileName);
     //console.log("save")
 }
+    //https://stackoverflow.com/questions/67865463/disable-tabbing-out-of-textarea
 
-function handleKeyDown(e) {
+function handleTab(e) {
   if (e.key == "Tab") {
     e.preventDefault();
 
