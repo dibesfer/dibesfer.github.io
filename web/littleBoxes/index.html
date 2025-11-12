@@ -6,26 +6,42 @@
     <title>Little Boxes</title>
     <style>
 
+* {
+    margin: 0;
+    box-sizing: border-box;
+}
         body {
             font-family: Verdana, Geneva, Tahoma, sans-serif;
+            line-height: 2;
         }
         img {
             max-width: 100%;
+        }
+
+        .flex {
+            display: flex;
+            flex-wrap: wrap;
+        }
+        .box-outer {
+            padding: 5px;
         }
 
         .box {
             aspect-ratio: 1;
             width: 400px;
             border: 3px solid gray;
-            border-radius: 50px;
+            border-radius: 12px;
             box-shadow:  5px 5px 0px rgba(0, 0, 0, 0.5);
             padding: 5px;
         }
 
         .panoramic {
             aspect-ratio: 16/9;
-            height: 100%;
+            object-fit: cover;
+            overflow: hidden;
+            /* height: 100%; */
             width: 100%;
+            border: solid 3px red;
         }
 
     </style>
@@ -35,15 +51,75 @@
         <h1>Little Boxes</h1>
     </header>
     
-    <main>
-
+    <main class="flex">
+        <div class="box-outer">
         <div class="box">
 
             <h2>Title</h2>
             <img class="panoramic" src="/assets/branding/fer-logo.png" alt="">
-            <p>Description: </p>
+            <p>Description: It shows a shadow of the lines of the face and hair of Fer,</p>
+        </div>
         </div>
 
+        <div class="box-outer">
+        <div class="box">
+
+            <h2>Title</h2>
+            <img class="panoramic" src="/assets/branding/fer-logo.png" alt="">
+            <p>Description: It shows a shadow of the lines of the face and hair of Fer,</p>
+        </div>
+        </div>
+        <div class="box-outer">
+        <div class="box">
+
+            <h2>Title</h2>
+            <img class="panoramic" src="/assets/branding/fer-logo.png" alt="">
+            <p>Description: It shows a shadow of the lines of the face and hair of Fer,</p>
+        </div>
+        </div>
+
+        <div class="box-outer">
+        <div class="box">
+
+            <h2>Title</h2>
+            <img class="panoramic" src="/assets/branding/fer-logo.png" alt="">
+            <p>Description: It shows a shadow of the lines of the face and hair of Fer,</p>
+        </div>
+        </div>
+        <div class="box-outer">
+        <div class="box">
+
+            <h2>Title</h2>
+            <img class="panoramic" src="/assets/branding/fer-logo.png" alt="">
+            <p>Description: It shows a shadow of the lines of the face and hair of Fer,</p>
+        </div>
+        </div>
+
+        <div class="box-outer">
+        <div class="box">
+
+            <h2>Title</h2>
+            <img class="panoramic" src="/assets/branding/fer-logo.png" alt="">
+            <p>Description: It shows a shadow of the lines of the face and hair of Fer,</p>
+        </div>
+        </div>
+        <div class="box-outer">
+        <div class="box">
+
+            <h2>Title</h2>
+            <img class="panoramic" src="/assets/branding/fer-logo.png" alt="">
+            <p>Description: It shows a shadow of the lines of the face and hair of Fer,</p>
+        </div>
+        </div>
+
+        <div class="box-outer">
+        <div class="box">
+
+            <h2>Title</h2>
+            <img class="panoramic" src="/assets/branding/fer-logo.png" alt="">
+            <p>Description: It shows a shadow of the lines of the face and hair of Fer,</p>
+        </div>
+        </div>
     </main>
 
     <footer>
