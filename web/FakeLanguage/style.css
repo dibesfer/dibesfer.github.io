@@ -4,11 +4,9 @@
 
 body {
     font-family: Verdana, Geneva, Tahoma, sans-serif;
-    font-size: larger;
     margin: auto;
     max-width: 600px;
     background-color: green;
-
 }
 
 h1 {
@@ -27,9 +25,6 @@ h1 {
 a {
     text-decoration: none;
     color: rgb(124, 255, 124);
-
-
-
 }
 
 #flBtn {
