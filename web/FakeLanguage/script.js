@@ -14,46 +14,13 @@ function fillASentence(words) {
     mySentence = ""
     for (let i = 0; i < words; i++) {
         let wordlength = randomInt(1, 3)
-        
-        let probabilidadComa
-        let probabilidadSigno
 
-        for (let j = 0; j < wordlength; j++) {
+        let probabilidadComa = randomInt(1, 10)
+        let probabilidadSigno = randomInt(1, 10)
 
-            let probabilidad = randomInt(1, 3)
-            probabilidadComa = randomInt(1, 10)
-            probabilidadSigno = randomInt(1, 10)
+        mySentence += generateWord()
 
-            switch (probabilidad) {
-                case 1:
-                    if (wordlength == 1) {
 
-                        mySentence += vowels[randomInt(0, vowels.length - 1)]
-
-                    }
-                    else {
-
-                        mySentence += vowels[randomInt(0, vowels.length - 1)]
-                        mySentence += consonants[randomInt(0, consonants.length - 1)]
-
-                    }
-                    break;
-
-                case 2:
-                    mySentence += vowels[randomInt(0, vowels.length - 1)]
-                    mySentence += consonants[randomInt(0, consonants.length - 1)]
-                    break;
-
-                case 3:
-                    mySentence += consonants[randomInt(0, consonants.length - 1)]
-                    mySentence += vowels[randomInt(0, vowels.length - 1)]
-                    break;
-
-                default:
-                    break;
-            }
-
-        }
         if (i < words - 1) {
             if (probabilidadComa < 10) {
                 mySentence += " "
@@ -100,7 +67,7 @@ function generate() {
 
         case "word":
             textConsole.textContent = generateWord(8)
-        break;
+            break;
 
         default:
             break;
@@ -127,7 +94,7 @@ function poetry() {
     mySentence = ""
     for (let i = 0; i < words; i++) {
         let wordlength = randomInt(1, 3)
-        
+
         let probabilidadComa
         let probabilidadSigno
 
@@ -141,9 +108,9 @@ function poetry() {
                 case 1:
                     mySentence += vowels[randomInt(0, vowels.length - 1)]
                     mySentence += consonants[randomInt(0, consonants.length - 1)]
-                    
-                    
-                    
+
+
+
                     break;
 
                 case 2:
@@ -178,9 +145,9 @@ function poetry() {
 
             // lets take the two last vowels
             mySentence = strip(mySentence)
-            for (let i = mySentence.length-1; i > 0 && poetry_last_two_vowels_1.length < 2; i--) {
-                
-                if (vowels.includes(mySentence[i])){
+            for (let i = mySentence.length - 1; i > 0 && poetry_last_two_vowels_1.length < 2; i--) {
+
+                if (vowels.includes(mySentence[i])) {
                     mySentence += "<br>" + mySentence[i] + "<br>"
                     poetry_last_two_vowels_1 += mySentence[i]
                 }
@@ -194,7 +161,7 @@ function poetry() {
     mySentence = ""
     for (let i = 0; i < words; i++) {
         let wordlength = randomInt(1, 3)
-        
+
         let probabilidadComa
         let probabilidadSigno
 
@@ -242,9 +209,9 @@ function poetry() {
 
             // lets take the two last vowels
             mySentence = strip(mySentence)
-            for (let i = mySentence.length-1; i > 0 && poetry_last_two_vowels_2.length < 2; i--) {
-                
-                if (vowels.includes(mySentence[i])){
+            for (let i = mySentence.length - 1; i > 0 && poetry_last_two_vowels_2.length < 2; i--) {
+
+                if (vowels.includes(mySentence[i])) {
                     mySentence += "<br>" + mySentence[i] + "<br>"
                     poetry_last_two_vowels_2 += mySentence[i]
                 }
@@ -256,44 +223,42 @@ function poetry() {
 }
 changeLanguageMode()
 function changeLanguageMode() {
-          let x = document.getElementById("mySelect").value;
-          languageMode = x
-          generate()
+    let x = document.getElementById("mySelect").value;
+    languageMode = x
+    generate()
 }
 
 function strip(html) {
     return html.replace(/<\s*[^>]*>/gi, '');
 }
 
-function generateWord(length){
-    if (length == null){
-        length = randomInt(1,8)
+function generateWord(length) {
+    if (length == null) {
+        length = randomInt(1, 7)
     }
     if (length == 1) return randomVowel()
     return randomSequence(length)
-        
-
 }
 
-function randomVowel(){
-    return vowels[randomInt(0,vowels.length-1)]
+function randomVowel() {
+    return vowels[randomInt(0, vowels.length - 1)]
 }
 
-function randomConsonant(){
-    return consonants[randomInt(0,consonants.length-1)] 
+function randomConsonant() {
+    return consonants[randomInt(0, consonants.length - 1)]
 }
 
-function randomSequence(length){
+function randomSequence(length) {
     let sequence = ""
-    let bool = randomInt(0,1)
+    let bool = randomInt(0, 1)
     let lever = true
     if (bool) {
         for (let i = 0; i < length; i++) {
-            if (lever){
+            if (lever) {
                 sequence += randomVowel()
                 lever = false
-            } 
-            else if (!lever){
+            }
+            else if (!lever) {
                 sequence += randomConsonant()
                 lever = true
             }
@@ -301,11 +266,11 @@ function randomSequence(length){
     }
     else {
         for (let i = 0; i < length; i++) {
-            if (lever){
+            if (lever) {
                 sequence += randomConsonant()
                 lever = false
-            } 
-            else if (!lever){
+            }
+            else if (!lever) {
                 sequence += randomVowel()
                 lever = true
             }
@@ -313,3 +278,43 @@ function randomSequence(length){
     }
     return sequence
 }
+
+/*     OLD GENERATOR
+for (let j = 0; j < wordlength; j++) {
+
+    let probabilidad = randomInt(1, 3)
+    probabilidadComa = randomInt(1, 10)
+    probabilidadSigno = randomInt(1, 10)
+
+
+    switch (probabilidad) {
+        case 1:
+            if (wordlength == 1) {
+
+                mySentence += vowels[randomInt(0, vowels.length - 1)]
+
+            }
+            else {
+
+                mySentence += vowels[randomInt(0, vowels.length - 1)]
+                mySentence += consonants[randomInt(0, consonants.length - 1)]
+
+            }
+            break;
+
+        case 2:
+            mySentence += vowels[randomInt(0, vowels.length - 1)]
+            mySentence += consonants[randomInt(0, consonants.length - 1)]
+            break;
+
+        case 3:
+            mySentence += consonants[randomInt(0, consonants.length - 1)]
+            mySentence += vowels[randomInt(0, vowels.length - 1)]
+            break;
+
+        default:
+            break;
+    }
+
+}
+            */
