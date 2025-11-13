@@ -7,6 +7,19 @@
     <title>The Bible</title>
 
     <style>
+        *{
+            margin: 0;
+            box-sizing: border-box;
+        }
+        header , footer {
+            background-color: orange;
+            padding: 20px;
+            text-align: center;
+        }
+        main {
+            max-width: 800px;
+            margin: auto;
+        }
         #displayer > details > summary {
             font-size: larger;
         }
@@ -35,25 +48,11 @@
         let books = []
         let chapters = []
         let counter = 1
-        fetch("asv.json")
+        fetch("simple-asv.json")
             .then(x => x.json())
             .then(y => {
                 
-                for (let i = 0; i < y.verses.length; i++) {
-                    const verse = y.verses[i];
-                    const book = verse.book_name;
-                    const chapter = verse.chapter;
-                    const text = verse.text;
-                    console.log(book)
-                    if (!bible[book]){
-                        bible[book] = {}
-                    }
-                    if (!bible[book][chapter]){
-                        bible[book][chapter] = []
-                    }
-                    bible[book][chapter].push(text)
-                }
-
+                bible = y
                 for (const key in bible) {
                                         
                     const element = bible[key];
@@ -69,7 +68,7 @@
                         for (let i = 0; i < bible[key][key2].length; i++) {
                             const element = bible[key][key2][i];
 
-                            html += "<p>" + element + "</p>"
+                            html += "<p>" + (i+1)+ ". " + element + "</p>"
 
                             
                         }
@@ -83,6 +82,7 @@
                     
                 }
                 displayer.innerHTML = html
+                //document.write(JSON.stringify(bible))
             
                 information.textContent = `is a compendium of ${Object.keys(bible).length} books, according to Protestantism` 
             });
@@ -118,6 +118,37 @@
 //         function sleep(ms) {
 //   return new Promise(resolve => setTimeout(resolve, ms));
 // }
+
+
+
+
+
+// HOW I BUILT THE JSON
+
+// fetch("asv.json")
+//             .then(x => x.json())
+//             .then(y => {
+                
+//                 for (let i = 0; i < y.verses.length; i++) {
+//                     const verse = y.verses[i];
+//                     const book = verse.book_name;
+//                     const chapter = verse.chapter;
+//                     const text = verse.text;
+//                     console.log(book)
+//                     if (!bible[book]){
+//                         bible[book] = {}
+//                     }
+//                     if (!bible[book][chapter]){
+//                         bible[book][chapter] = []
+//                     }
+//                     bible[book][chapter].push(text)
+//                 }
+
+
+
+
+
+
     </script>
 </body>
 
