@@ -44,9 +44,13 @@
         }
 
         .JC {
-            color: rgb(196, 0, 0);
+            color: rgb(184, 43, 0);
         }
         
+        .devil {
+            color: red;
+            font-weight: bold;
+        }
         .verseNumber {
             color: rgb(69, 69, 69);
             font-size: small;
@@ -162,6 +166,12 @@
                 newtext = newtext.replaceAll("Israel", "<span class='Israel'>Israel</span>")
                 newtext = newtext.replaceAll("Jesus", "<span class='JC'>Jesus</span>")
                 newtext = newtext.replaceAll("Christ", "<span class='JC'>Christ</span>")
+                newtext = newtext.replaceAll("devil", "<span class='devil'>devil</span>")
+                newtext = newtext.replaceAll("Satan", "<span class='devil'>Satan</span>")
+                newtext = newtext.replaceAll("demons", "<span class='devil'>demons</span>")
+                newtext = newtext.replaceAll("demon", "<span class='devil'>demon</span>")
+
+
                 return newtext
             }
 
