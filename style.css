@@ -5,19 +5,14 @@
 
 @font-face {
   font-family: Jost;
-  src: url(assets/fonts/Jost-VariableFont_wght.ttf);
-}
-
-body {
-  font-family: Verdana, Geneva, Tahoma, sans-serif;
-
+  src: url(/assets/fonts/Jost-VariableFont_wght.ttf);
 }
 
 body {
   background-color: black;
   color: white;
-  /*   font-family: Verdana, sans-serif;
- */
+  font-family: Jost, sans-serif;
+  font-size: 1.2rem;
   line-height: 2;
 
 }
