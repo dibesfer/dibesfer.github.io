@@ -52,16 +52,17 @@
 <body>
     <header>
         <h1><a href="index.html">&#128366;The Bible</a></h1>
-        <div id="information"></div>
+        <h3>according to Protestantism, is a compendium of 66 books</h3>
+        <h3>and 31102 verses</h3>
         <p>American Standard Version</p>
     </header>
     <main>
 
         <div id="randomVerseContainer">
 
-            <h2>Random verse</h2>
+            
             <div id="displayRandomVerse">
-
+                <h2>Loading content...</h2>
             </div>
 
         </div>
@@ -128,10 +129,7 @@
                 displayer.innerHTML = cuthtml
                 //document.write(JSON.stringify(bible))
             
-                information.innerHTML = `
-                <h3> according to Protestantism, is a compendium of ${Object.keys(bible).length} books
-                </h3>
-                <h3>and ${verseCounter} verses</h3>` 
+               
                 randomVerse()
             });
 
@@ -143,10 +141,10 @@
                 
                 let randomVerse = randomInt(0,bible[chaptersIndex[randomBook]][randomChapter].length-1)
                 displayRandomVerse.innerHTML = `
-                
+                    <h2>Random verse</h2>
                     <h1>${randomBook+1}: ${chaptersIndex[randomBook]}</h1>
                     <h3>Chapter ${randomChapter} </h3>
-                    <p>Verse ${randomVerse+1} : ${bible[chaptersIndex[randomBook]][randomChapter][randomVerse]}</p>
+                    <p>Verse ${randomVerse+1}: ${bible[chaptersIndex[randomBook]][randomChapter][randomVerse]}</p>
                     <br>
                 
                 `
