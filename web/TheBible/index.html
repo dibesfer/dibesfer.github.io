@@ -34,6 +34,14 @@
             font-weight: bold;
             font-variant: small-caps;
         }
+
+        .Israel {
+            color: blue;
+        }
+
+        .JC {
+            color: rgb(196, 0, 0);
+        }
         
         .verseNumber {
             color: rgb(69, 69, 69);
@@ -119,11 +127,7 @@
 
 
 
-                let cuthtml = html.replaceAll("God ", "<span class='godName'>God</span> ")
-                cuthtml = cuthtml.replaceAll("God.", "<span class='godName'>God</span>.")
-                cuthtml = cuthtml.replaceAll("God,", "<span class='godName'>God</span>,")
-
-                cuthtml = cuthtml.replaceAll("Jehovah", "<span class='godName'>Jehovah</span>")
+                let cuthtml = beautifyWords(html)
 
                 
                 displayer.innerHTML = cuthtml
@@ -132,6 +136,17 @@
                
                 randomVerse()
             });
+
+            function beautifyWords(text){
+                let newtext = text.replaceAll("God ", "<span class='godName'>God</span> ")
+                newtext = newtext.replaceAll("God.", "<span class='godName'>God</span>.")
+                newtext = newtext.replaceAll("God,", "<span class='godName'>God</span>,")
+                newtext = newtext.replaceAll("Jehovah", "<span class='godName'>Jehovah</span>")
+                newtext = newtext.replaceAll("Israel", "<span class='Israel'>Israel</span>")
+                newtext = newtext.replaceAll("Jesus", "<span class='JC'>Jesus</span>")
+                newtext = newtext.replaceAll("Christ", "<span class='JC'>Christ</span>")
+                return newtext
+            }
 
 
             function randomVerse(){
@@ -144,7 +159,7 @@
                     <h2>Random verse</h2>
                     <h1>${randomBook+1}: ${chaptersIndex[randomBook]}</h1>
                     <h3>Chapter ${randomChapter} </h3>
-                    <p>Verse ${randomVerse+1}: ${bible[chaptersIndex[randomBook]][randomChapter][randomVerse]}</p>
+                    <p>Verse ${randomVerse+1}: ${beautifyWords(bible[chaptersIndex[randomBook]][randomChapter][randomVerse])}</p>
                     <br>
                 
                 `
