@@ -52,16 +52,16 @@ function save() {
 }
     //https://stackoverflow.com/questions/67865463/disable-tabbing-out-of-textarea
 
-function handleTab(e) {
-  if (e.key == "Tab") {
-    e.preventDefault();
+// function handleTab(e) {
+//   if (e.key == "Tab") {
+//     e.preventDefault();
 
-    const start = this.selectionStart;
-    const end = this.selectionEnd;
+//     const start = this.selectionStart;
+//     const end = this.selectionEnd;
 
-    this.value =
-      this.value.substring(0, start) + "\t" + this.value.substring(end);
+//     this.value =
+//       this.value.substring(0, start) + "\t" + this.value.substring(end);
 
-    this.selectionStart = this.selectionEnd = start + 1;
-  }
-}
+//     this.selectionStart = this.selectionEnd = start + 1;
+//   }
+// }
