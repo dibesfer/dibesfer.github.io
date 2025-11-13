@@ -30,6 +30,10 @@
             font-size: larger;
         }
 
+        .flex {
+            display: flex;
+            justify-content: space-between;
+        }
         .godName {
             font-weight: bold;
             font-variant: small-caps;
@@ -49,6 +53,14 @@
         }
         #randomVerseContainer{
             border-bottom: 3px solid rgb(255, 123, 0);
+        }
+        button {
+            font: unset;
+            border: solid 3px brown;
+            background-color: rgb(204, 132, 0);
+        }
+        button:active {
+            background-color: orange;
         }
     </style>
 
@@ -156,7 +168,11 @@
                 
                 let randomVerse = randomInt(0,bible[chaptersIndex[randomBook]][randomChapter].length-1)
                 displayRandomVerse.innerHTML = `
-                    <h2>Random verse</h2>
+                    <div class="flex">
+                        <h2>Random verse</h2>
+                        <button onclick="randomVerse()">New</button>
+                    </div>
+                    
                     <h1>${randomBook+1}: ${chaptersIndex[randomBook]}</h1>
                     <h3>Chapter ${randomChapter} </h3>
                     <p>Verse ${randomVerse+1}: ${beautifyWords(bible[chaptersIndex[randomBook]][randomChapter][randomVerse])}</p>
