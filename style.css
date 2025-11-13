@@ -10,14 +10,15 @@
 
 body {
   font-family: Verdana, Geneva, Tahoma, sans-serif;
-  
+
 }
 
 body {
   background-color: black;
   color: white;
-/*   font-family: Verdana, sans-serif;
- */  line-height: 2;
+  /*   font-family: Verdana, sans-serif;
+ */
+  line-height: 2;
 
 }
 
@@ -30,11 +31,12 @@ header {
   z-index: 1;
   line-height: 0;
   padding: 5px; */
-  
+
 }
 
-header a, footer a {
-    color: unset;
+header a,
+footer a {
+  color: unset;
 }
 
 header,
@@ -46,15 +48,13 @@ footer {
 h2 {
   font-variant: small-caps;
 }
+
 #headerflex {
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
-footer {
-/*   padding: 40px;
- */}
 
 a {
   text-decoration: none;
@@ -71,7 +71,10 @@ img {
   max-width: 100%;
 }
 
-hr { border: solid 1px white;}
+hr {
+  border: solid 1px white;
+}
+
 .flexgrid {
 
   display: flex;
@@ -92,9 +95,9 @@ hr { border: solid 1px white;}
   padding: 5px;
 }
 
-.flexgriditem > div {
+.flexgriditem>div {
   border: solid 1px white;
-  
+
   padding: 10px;
 }
 
@@ -111,6 +114,11 @@ hr { border: solid 1px white;}
 
   .notForMobile {
     display: none;
+  }
+
+  header,
+  footer {
+    padding: 20px;
   }
 
 }
@@ -151,8 +159,9 @@ hr { border: solid 1px white;}
 /* ANIMATIONS */
 
 #dibesfer-logo {
-  transition: 1s ;
+  transition: 1s;
 }
+
 #dibesfer-logo:hover {
   transform: rotate(360deg);
 }
@@ -160,6 +169,7 @@ hr { border: solid 1px white;}
 #fer-logo {
   transition: 1s;
 }
+
 #fer-logo:hover {
   transform: rotate(-360deg);
 }
@@ -169,15 +179,16 @@ hr { border: solid 1px white;}
 }
 
 #dibesfer-title:hover {
-  filter: invert(1) drop-shadow( 0 0 10px white);
+  filter: invert(1) drop-shadow(0 0 10px white);
 }
 
 #mainBody {
   max-width: 800px;
   margin: auto;
   padding: 10px;
-  border: solid 1px white;;
-  
+  border: solid 1px white;
+  ;
+
 }
 
 @media only screen and (max-width: 600px) {
