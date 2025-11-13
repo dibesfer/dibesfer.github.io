@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+
+    <style>
+        body {
+            background-color: darkslategray;
+            color: white;
+            font-family: sans-serif;
+        }
+
+        a {
+            text-decoration: none;
+            color: cyan;
+        }
+        img {
+            max-width: 100%;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>Mastodon API</h1>
+    </header>
+    <main>
+        <div id="displayer">
+
+        </div>
+    </main>
+
+    <script>
+        let html = ""
+        // 1) get account info (lookup -> returns account JSON with "id")
+        const instance = "mastodon.social";
+        const acct = "dibesfer@mastodon.social";
+
+        async function getAccountId() {
+            const url = `https://${instance}/api/v1/accounts/lookup?acct=${encodeURIComponent(acct)}`;
+            const res = await fetch(url);
+            if (!res.ok) throw new Error("Lookup failed: " + res.status);
+            return (await res.json()).id; // string id
+        }
+
+        // 2) get statuses by id
+        async function getStatusesByAcct() {
+            const id = await getAccountId();
+            const url = `https://${instance}/api/v1/accounts/${id}/statuses`;
+            const res = await fetch(url);
+            if (!res.ok) throw new Error("Statuses fetch failed: " + res.status);
+            return await res.json(); // array of status objects
+        }
+
+        // usage
+        getStatusesByAcct().then(statuses => {
+            console.log("Got", statuses.length, "statuses");
+            statuses.forEach(s => {
+                html += `
+                <div>
+                
+                    <p>${s.created_at}</p>
+                    <div>
+                        ${s.content}
+                    </div>`
+
+                if (s.media_attachments.length > 0){
+                    for (let i = 0; i < s.media_attachments.length; i++) {
+                        const element = s.media_attachments[i];
+                        html += `<img src="${element.url}">`
+                    }
+                }
+
+                html +=
+                    `
+                    <p><a href="${s.url}">Link</a></p>
+                </div>
+                `
+                console.log(s);
+            })
+            displayer.innerHTML = html
+        }).catch(console.error);
+
+    </script>
+</body>
+
+</html>
