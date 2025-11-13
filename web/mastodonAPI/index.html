@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>🦣Mastodon API</title>
 
     <style>
         body {
@@ -17,6 +17,7 @@
             text-decoration: none;
             color: cyan;
         }
+
         img {
             max-width: 100%;
         }
@@ -25,7 +26,7 @@
 
 <body>
     <header>
-        <h1>Mastodon API</h1>
+        <h1>🦣Mastodon API</h1>
     </header>
     <main>
         <div id="displayer">
@@ -56,6 +57,8 @@
         }
 
         // usage
+
+        /*
         getStatusesByAcct().then(statuses => {
             console.log("Got", statuses.length, "statuses");
             statuses.forEach(s => {
@@ -83,7 +86,65 @@
             })
             displayer.innerHTML = html
         }).catch(console.error);
+                */
+            
+        async function getAllStatuses() {
+            let html = ""
+            const instance = "mastodon.social";
+            const acct = "dibesfer@mastodon.social";
 
+            // Paso 1: obtener el ID del usuario
+            const lookup = await fetch(`https://${instance}/api/v1/accounts/lookup?acct=${acct}`);
+            const user = await lookup.json();
+            const id = user.id;
+
+            // Paso 2: preparar la primera URL
+            let nextUrl = `https://${instance}/api/v1/accounts/${id}/statuses?limit=40`;
+            let posts = [];
+
+            // Paso 3: mientras haya más páginas, seguir pidiendo
+            while (nextUrl) {
+                const res = await fetch(nextUrl);
+                const data = await res.json();
+                posts = posts.concat(data);
+
+                // Leer el header "link" para saber si hay siguiente página
+                const link = res.headers.get("link");
+                const match = link && link.match(/<([^>]+)>;\s*rel="next"/);
+                nextUrl = match ? match[1] : null;
+            }
+
+            // Paso 4: mostrar resultados
+            posts.forEach(s => {
+
+        
+                    html += `
+                <div>
+                
+                    <p>${s.created_at}</p>
+                    <div>
+                        ${s.content}
+                    </div>`
+
+                    if (s.media_attachments.length > 0) {
+                        for (let i = 0; i < s.media_attachments.length; i++) {
+                            const element = s.media_attachments[i];
+                            html += `<img src="${element.url}">`
+                        }
+                    }
+
+                    html +=
+                        `
+                    <p><a href="${s.url}">Link</a></p>
+                </div>
+                `
+                    console.log(s);
+            });
+            displayer.innerHTML = html
+            displayer.innerHTML +=`Total posts: ${posts.length}`;
+        }
+        getAllStatuses()
+        // With chatgpt help
     </script>
 </body>
 
