@@ -21,16 +21,25 @@
         img {
             max-width: 100%;
         }
+
+        header > h1 > a {
+            text-decoration:underline;
+            color: rgb(183, 255, 255);
+        }
+        .datep {
+            color: rgb(200, 200, 200);
+            font-style: italic;
+        }
     </style>
 </head>
 
 <body>
     <header>
-        <h1>🦣Mastodon API</h1>
+        <h1><a href="index.html">🦣Mastodon API</a></h1>
     </header>
     <main>
         <div id="displayer">
-
+            <p>Loading content...</p>
         </div>
     </main>
 
@@ -121,7 +130,7 @@
                     html += `
                 <div>
                 
-                    <p>${s.created_at}</p>
+                    <p class="datep">${s.created_at}</p>
                     <div>
                         ${s.content}
                     </div>`
