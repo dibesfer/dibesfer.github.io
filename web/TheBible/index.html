@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Bible</title>
+    <script src="https://dibesfer.github.io/ferscript.js"></script>
 
     <style>
         *{
@@ -28,7 +29,22 @@
         #displayer > details > summary {
             font-size: larger;
         }
+
+        .godName {
+            font-weight: bold;
+            font-variant: small-caps;
+        }
+        
+        .verseNumber {
+            color: rgb(69, 69, 69);
+            font-size: small;
+        }
+        #randomVerseContainer{
+            border-bottom: 3px solid rgb(255, 123, 0);
+        }
     </style>
+
+
 </head>
 
 
@@ -36,10 +52,20 @@
 <body>
     <header>
         <h1><a href="index.html">The Bible</a></h1>
-        <h3 id="information"></h3>
+        <div id="information"></div>
         <p>American Standard Version</p>
     </header>
     <main>
+
+        <div id="randomVerseContainer">
+
+            <h2>Random verse</h2>
+            <div id="displayRandomVerse">
+
+            </div>
+
+        </div>
+
         <div id="displayer">
 
         </div>
@@ -54,11 +80,13 @@
         let books = []
         let chapters = []
         let counter = 1
+        let verseCounter = 0
         fetch("simple-asv.json")
             .then(x => x.json())
             .then(y => {
                 
                 bible = y
+                html += "<br>"
                 for (const key in bible) {
                                         
                     const element = bible[key];
@@ -67,15 +95,15 @@
                     for (const key2 in bible[key]){
                         html += `
                         
-                        <details><summary>Chapter ${key2}</summary>
+                        <details><summary>Chapter ${key2}</summary><br>
 
                         `
 
                         for (let i = 0; i < bible[key][key2].length; i++) {
                             const element = bible[key][key2][i];
 
-                            html += "<p>" + (i+1)+ ". " + element + "</p>"
-
+                            html += "<p><span class='verseNumber'>" + (i+1)+ "</span>. " + element + "</p><br>"
+                            verseCounter++
                             
                         }
 
@@ -87,12 +115,45 @@
                     
                     
                 }
-                displayer.innerHTML = html
+
+
+
+                let cuthtml = html.replaceAll("God ", "<span class='godName'>God</span> ")
+                cuthtml = cuthtml.replaceAll("God.", "<span class='godName'>God</span>.")
+                cuthtml = cuthtml.replaceAll("God,", "<span class='godName'>God</span>,")
+
+                cuthtml = cuthtml.replaceAll("Jehovah", "<span class='godName'>Jehovah</span>")
+
+                
+                displayer.innerHTML = cuthtml
                 //document.write(JSON.stringify(bible))
             
-                information.textContent = `is a compendium of ${Object.keys(bible).length} books, according to Protestantism` 
+                information.innerHTML = `
+                <h3> according to Protestantism, is a compendium of ${Object.keys(bible).length} books
+                </h3>
+                <h3>and ${verseCounter} verses</h3>` 
+                randomVerse()
             });
 
+
+            function randomVerse(){
+                let chaptersIndex = Object.keys(bible)
+                let randomBook = randomInt(0,Object.keys(bible).length-1)
+                let randomChapter = randomInt(1,Object.keys(bible[chaptersIndex[randomBook]]).length-1)
+                
+                let randomVerse = randomInt(0,bible[chaptersIndex[randomBook]][randomChapter].length-1)
+                displayRandomVerse.innerHTML = `
+                
+                    <h1>${randomBook+1}: ${chaptersIndex[randomBook]}</h1>
+                    <h3>Chapter ${randomChapter} </h3>
+                    <p>Verse ${randomVerse+1} : ${bible[chaptersIndex[randomBook]][randomChapter][randomVerse]}</p>
+                    <br>
+                
+                `
+                
+                //console.log(bible[chaptersIndex[randomBook]])
+
+            }
 
 //         fetch("https://bible-api.com/data/web")
 //             .then(res => res.json())
