@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🕮La Biblia</title>
+    <script src="https://dibesfer.github.io/ferscript.js"></script>
+
+    <style>
+        *{
+            margin: 0;
+            box-sizing: border-box;
+        }
+        a {
+            text-decoration: none;
+            color: rgb(98, 14, 14);
+        }
+        header , footer {
+            background-color: orange;
+            padding: 20px;
+            text-align: center;
+        }
+        main {
+            max-width: 800px;
+            margin: auto;
+            padding: 15px;
+        }
+        #displayer > details > summary {
+            font-size: larger;
+        }
+
+        .flex {
+            display: flex;
+            justify-content: space-between;
+        }
+        .godName {
+            font-weight: bold;
+            font-variant: small-caps;
+        }
+
+        .Israel {
+            color: blue;
+        }
+
+        .JC {
+            color: rgb(184, 43, 0);
+        }
+        
+        .devil {
+            color: red;
+            font-weight: bold;
+        }
+        .verseNumber {
+            color: rgb(69, 69, 69);
+            font-size: small;
+        }
+        #randomVerseContainer{
+            border-bottom: 3px solid rgb(255, 123, 0);
+        }
+        button {
+            font: unset;
+            border: solid 3px brown;
+            background-color: rgb(204, 132, 0);
+            cursor: pointer;
+        }
+        button:active {
+            background-color: orange;
+        }
+
+        ::selection{
+            background-color: rgb(255, 193, 78);
+            color: rgb(102, 24, 24);
+        }
+    </style>
+
+
+</head>
+
+
+
+<body>
+    <header>
+        <h1><a href="index.html">&#128366;La Biblia</a></h1>
+        <h3>según el protestantismo, es un compendio de 66 libros</h3>
+        <h3>y 31102 versos</h3>
+        <p>Reina Valera Gómez</p>
+    </header>
+    <main>
+
+        <div id="randomVerseContainer">
+
+            
+            <div id="displayRandomVerse">
+                <h2>Cargando contenido...</h2>
+            </div>
+
+        </div>
+
+        <div id="displayer">
+
+        </div>
+    </main>
+    <footer>
+        <p>por <a href="https://dibesfer.github.io">dibesfer</a> con <a href="https://www.biblesupersearch.com/">biblesupersearch</a></p>
+    </footer>
+    <script>
+
+        let html = ""
+        let bible = {}
+        let books = []
+        let chapters = []
+        let counter = 1
+        let verseCounter = 0
+        fetch("simple-rgv.json")
+            .then(x => x.json())
+            .then(y => {
+                
+                bible = y
+                html += "<br>"
+                for (const key in bible) {
+                                        
+                    const element = bible[key];
+                    html += `<details><summary>${counter++}. ${key}</summary>`;
+
+                    for (const key2 in bible[key]){
+                        html += `
+                        
+                        <details><summary>Capítulo ${key2}</summary><br>
+
+                        `
+
+                        for (let i = 0; i < bible[key][key2].length; i++) {
+                            const element = bible[key][key2][i];
+
+                            html += "<p><span class='verseNumber'>" + (i+1)+ "</span>. " + element + "</p><br>"
+                            verseCounter++
+                            
+                        }
+
+                        html += "</details>"
+
+                    }
+                    
+                    html += "</details>"
+                    
+                    
+                }
+
+
+
+                let cuthtml = beautifyWords(html)
+
+                
+                displayer.innerHTML = cuthtml
+                //document.write(JSON.stringify(bible))
+            
+               
+                randomVerse()
+            });
+
+            function beautifyWords(text){
+                let newtext = text.replaceAll("Dios ", "<span class='godName'>Dios</span> ")
+                newtext = newtext.replaceAll("Dios.", "<span class='godName'>Dios</span>.")
+                newtext = newtext.replaceAll("Dios,", "<span class='godName'>Dios</span>,")
+                newtext = newtext.replaceAll("Jehová", "<span class='godName'>Jehová</span>")
+                newtext = newtext.replaceAll("Israel", "<span class='Israel'>Israel</span>")
+                newtext = newtext.replaceAll("Jesús", "<span class='JC'>Jesús</span>")
+                newtext = newtext.replaceAll("Jesucristo", "<span class='JC'>Jesucristo</span>")
+                newtext = newtext.replaceAll("JESÚS", "<span class='JC'>JESÚS</span>")
+                newtext = newtext.replaceAll("Cristo", "<span class='JC'>Cristo</span>")
+                newtext = newtext.replaceAll("diablo", "<span class='devil'>diablo</span>")
+                newtext = newtext.replaceAll("Satanás", "<span class='devil'>Satanás</span>")
+                newtext = newtext.replaceAll("demonios", "<span class='devil'>demonios</span>")
+                newtext = newtext.replaceAll("demonio", "<span class='devil'>demonio</span>")
+
+
+                return newtext
+            }
+
+
+            function randomVerse(){
+                let chaptersIndex = Object.keys(bible)
+                let randomBook = randomInt(0,Object.keys(bible).length-1)
+                let randomChapter = randomInt(1,Object.keys(bible[chaptersIndex[randomBook]]).length-1)
+                
+                let randomVerse = randomInt(0,bible[chaptersIndex[randomBook]][randomChapter].length-1)
+                displayRandomVerse.innerHTML = `
+                    <div class="flex">
+                        <h2>Verso aleatorio</h2>
+                        <button onclick="randomVerse()">Nuevo</button>
+                    </div>
+                    
+                    <h1>${randomBook+1}: ${chaptersIndex[randomBook]}</h1>
+                    <h3>Capítulo ${randomChapter} </h3>
+                    <p>Verso ${randomVerse+1}: ${beautifyWords(bible[chaptersIndex[randomBook]][randomChapter][randomVerse])}</p>
+                    <br>
+                
+                `
+                
+                //console.log(bible[chaptersIndex[randomBook]])
+
+            }
+
+//         fetch("https://bible-api.com/data/web")
+//             .then(res => res.json())
+//             .then(async y => {
+//                 let books = y.books;
+//                 information.textContent = "is a compendium of " + books.length + " books.";
+
+//                 for (let i = 0; i < books.length; i++) {
+//                     const book = books[i];
+//                     displayer.innerHTML += `<details><summary>${i + 1}. ${book.name}</summary>`;
+
+//                     await getChapters(book.id); // ✅ pasamos solo el id
+
+//                     displayer.innerHTML += "</details>";
+//                 }
+//             });
+
+//         async function getChapters(id) {
+//             const link = `https://bible-api.com/data/web/${id}`;
+//             console.log(link);
+
+//             const x = await fetch(link);
+//             const y = await x.json();
+
+//             displayer.innerHTML += `Chapters: ${y.chapters.length}`;
+//             await sleep(1000);
+//         }
+
+//         function sleep(ms) {
+//   return new Promise(resolve => setTimeout(resolve, ms));
+// }
+
+
+
+
+
+// HOW I BUILT THE JSON
+
+// fetch("asv.json")
+//             .then(x => x.json())
+//             .then(y => {
+                
+//                 for (let i = 0; i < y.verses.length; i++) {
+//                     const verse = y.verses[i];
+//                     const book = verse.book_name;
+//                     const chapter = verse.chapter;
+//                     const text = verse.text;
+//                     console.log(book)
+//                     if (!bible[book]){
+//                         bible[book] = {}
+//                     }
+//                     if (!bible[book][chapter]){
+//                         bible[book][chapter] = []
+//                     }
+//                     bible[book][chapter].push(text)
+//                 }
+
+
+
+
+
+
+    </script>
+</body>
+
+</html>
