@@ -60,7 +60,7 @@
         }
 
         textarea {
-           
+
             width: 100%;
             height: 250px;
             border: 3px white solid;
@@ -69,7 +69,7 @@
             padding: 10px;
             line-height: 2;
             display: none;
-            
+
         }
     </style>
 </head>
@@ -85,7 +85,7 @@
 Lorem ipsum, dolor sit amet consectetur adipisicing elit. Nobis neque ea molestiae reiciendis a, exercitationem ab dolores, quidem blanditiis debitis illo! Magnam itaque aliquam suscipit odio in fugiat, libero mollitia?
 
 </pre>
-<textarea name="" id="userDescriptionTextarea" spellcheck="false" ></textarea>
+    <textarea name="" id="userDescriptionTextarea" spellcheck="false"></textarea>
 
 
     <br>
@@ -125,14 +125,14 @@ Lorem ipsum, dolor sit amet consectetur adipisicing elit. Nobis neque ea molesti
 
             let userUrl = url.split("###")[1]
             document.write("welcome to " + userUrl + " profile")
-            
+
             getUserTable(userUrl)
 
         }
 
-        
-            getUser()
-        
+
+        getUser()
+
 
 
         async function getUser() {
@@ -143,7 +143,7 @@ Lorem ipsum, dolor sit amet consectetur adipisicing elit. Nobis neque ea molesti
                 //userNameDisplay.textContent = user.email.split("@")[0]
                 //signInDiv.style.display = "none"
                 myUser = user
-                
+
                 console.log(myUser)
                 fillProfile()
                 return user
@@ -151,7 +151,7 @@ Lorem ipsum, dolor sit amet consectetur adipisicing elit. Nobis neque ea molesti
 
             else {
                 console.log("no user logged in")
-                
+
                 //logOutBtn.style.display = "none"
                 return null
             }
@@ -198,28 +198,29 @@ Lorem ipsum, dolor sit amet consectetur adipisicing elit. Nobis neque ea molesti
 
         async function fillProfile() {
 
-            userEmail.textContent = myUser.email
-
-
-            const res = await database.from("users").select("*").eq('email', myUser.email)//.range(3000,5000)
-            //console.log(res.data[0].dibesfer)
-            let result = res.data
-
-            if (result.length > 0) {
-                userUsername.textContent = res.data[0].username
-                profilePicture.src = res.data[0].profilepicture
-                userDescription.textContent = res.data[0].description
-                userOptions.style.display = "flex"
-                //userDescription.textContent = "Example desc"
-                userDescriptionTextarea.textContent = res.data[0].description
-            }
-            else {
+            let url = window.location.href
+            if (url.includes("###") &&
+                url.split("###")[1] == myUser.email.split("@")[0] ){
                 
 
+                userEmail.textContent = myUser.email
+                const res = await database.from("users").select("*").eq('email', myUser.email)//.range(3000,5000)
+                //console.log(res.data[0].dibesfer)
+                let result = res.data
+
+                if (result.length > 0) {
+                    userUsername.textContent = res.data[0].username
+                    profilePicture.src = res.data[0].profilepicture
+                    userDescription.textContent = res.data[0].description
+                    userOptions.style.display = "flex"
+                    //userDescription.textContent = "Example desc"
+                    userDescriptionTextarea.textContent = res.data[0].description
+                }
+
+                console.log(result)
             }
 
 
-            console.log(result)
 
         }
 
@@ -235,16 +236,16 @@ Lorem ipsum, dolor sit amet consectetur adipisicing elit. Nobis neque ea molesti
 
         function editMode() {
 
-            if (!editModeStatus){
-                userDescription.style.display ="none"
-                userDescriptionTextarea.style.display ="block"
+            if (!editModeStatus) {
+                userDescription.style.display = "none"
+                userDescriptionTextarea.style.display = "block"
                 editModeStatus = true
             }
             else {
                 changeDescription()
-                
+
             }
-            
+
         }
 
         async function changeProfilePicture() {
@@ -252,7 +253,7 @@ Lorem ipsum, dolor sit amet consectetur adipisicing elit. Nobis neque ea molesti
             if (myUser) {
                 let newSrc = prompt("Insert your new profile image url:")
                 if (newSrc == null) {
-                    
+
                     return
                 }
                 myEmail = myUser.email
@@ -279,7 +280,7 @@ Lorem ipsum, dolor sit amet consectetur adipisicing elit. Nobis neque ea molesti
         }
 
         async function changeDescription() {
-            
+
             if (myUser) {
                 console.log("Hay usuario")
                 myEmail = myUser.email
@@ -305,7 +306,7 @@ Lorem ipsum, dolor sit amet consectetur adipisicing elit. Nobis neque ea molesti
 
         }
 
-        
+
 
     </script>
 </body>

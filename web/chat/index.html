@@ -180,14 +180,15 @@
     <!-- TITLE BAR / HEADER -->
     <div id="header" class="flex3">
         <p><a href="members/">monochat</a></p>
-        <div style="display: flex;align-items: center;">
-            <div>
-                <p><a href="user/">profile</a></p>
-            </div>
-            <div>
+        <div>
 
                 <p id="userNameDisplay">Anonymous </p>
             </div>
+        <div style="display: flex;align-items: center;">
+            <!-- <div>
+                <p><a href="user/">profile</a></p>
+            </div> -->
+            
             <div>
                 <p id="logOutBtn" style="color: rgb(221, 58, 58);">⮨Log Out⏻</p>
             </div>
@@ -318,7 +319,7 @@
                 usernameString = user.email.split("@")[0]
                 console.log(user.email)
                 signInAdvice.textContent = "You are logged as " + usernameString
-                userNameDisplay.textContent = usernameString
+                userNameDisplay.innerHTML = `<a href="user/###${usernameString}">${usernameString}</a>`
                 signInDiv.style.display = "none"
                 myUser = user
                 console.log(myUser)
