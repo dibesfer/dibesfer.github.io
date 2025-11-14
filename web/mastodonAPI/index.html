@@ -22,6 +22,13 @@
             max-width: 100%;
         }
 
+        header, footer {
+            text-align: center;
+        }
+        main {
+            max-width: 800px;
+            margin: auto;
+        }
         header > h1 > a {
             text-decoration:underline;
             color: rgb(183, 255, 255);
@@ -29,6 +36,23 @@
         .datep {
             color: rgb(200, 200, 200);
             font-style: italic;
+        }
+        .post {
+            border: solid 1.5px white;
+            border-radius: 15px;
+            padding: 10px;
+            margin-bottom: 10px;
+            background-color: rgb(25, 42, 42);
+        }
+
+        .link {
+            text-align: right;
+        }
+        .link a{
+            border: solid 1.5px white;
+            border-radius: 15px;
+            padding: 10px;
+            background-color: rgb(55, 93, 93);
         }
     </style>
 </head>
@@ -125,12 +149,13 @@
 
             // Paso 4: mostrar resultados
             posts.forEach(s => {
-
+                let formattedDate = s.created_at.split("T")[0] + " " + 
+                s.created_at.split("T")[1].split(".")[0]
         
                     html += `
-                <div>
+                <div class="post">
                 
-                    <p class="datep">${s.created_at}</p>
+                    <p class="datep">${formattedDate}</p>
                     <div>
                         ${s.content}
                     </div>`
@@ -144,7 +169,7 @@
 
                     html +=
                         `
-                    <p><a href="${s.url}">Link</a></p>
+                    <p class="link"><a href="${s.url}">Link</a></p>
                 </div>
                 `
                     console.log(s);
