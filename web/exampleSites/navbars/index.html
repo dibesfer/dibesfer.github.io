@@ -98,6 +98,7 @@
 
         window.onpopstate = (event) => {
         const page = event.state?.page || "Home";
+        console.log(event.state)
         changePage(page)
         };
 
@@ -151,7 +152,7 @@
             }
             history.pushState({ page: page }, "", "#" + page);
         }
-
+        console.log(history)
     </script>
 </body>
 
