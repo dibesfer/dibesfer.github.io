@@ -96,6 +96,11 @@
 
     <script>
 
+        window.onpopstate = (event) => {
+        const page = event.state?.page || "Home";
+        changePage(page)
+        };
+
         let main = document.getElementsByTagName("main")[0]
         function changePage(page, button) {
             switch (page) {
@@ -114,6 +119,7 @@
 
                     break;
                 case "Chat":
+                    
                     main.innerHTML = `
                     <div class="maxWidth">
                     <h2>Chat</h2>
@@ -143,6 +149,7 @@
                 default:
                     break;
             }
+            history.pushState({ page: page }, "page " + page, "#" + page);
         }
 
     </script>
