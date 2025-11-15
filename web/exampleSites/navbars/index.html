@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,12 +10,14 @@
             margin: 0;
             box-sizing: border-box;
         }
+
         body {
             height: 100dvh;
             display: flex;
             flex-direction: column;
             font-family: sans-serif;
         }
+
         main {
             flex: 1;
             line-height: 2;
@@ -22,7 +25,8 @@
             padding: 10px;
         }
 
-        header , footer {
+        header,
+        footer {
             text-align: center;
             padding: 15px;
             background-color: rgb(85, 85, 85);
@@ -37,47 +41,51 @@
             border-top: 2px solid black;
             font-size: x-large;
             text-shadow: 2px -2px 0 black;
+            display: flex;
+            justify-content: space-evenly;
+        }
+
+        .footer-icon {
+            background-color: rgb(55, 55, 55);
+            border-radius: 50%;
+            aspect-ratio: 1;
+            padding: 7px;
+            cursor: pointer;
+            border: solid 1px white;
+        }
+        .maxWidth {
+            max-width: 800px;
+            margin: auto;
         }
     </style>
 </head>
+
 <body>
     <header>
         <h1>navbars</h1>
     </header>
     <main>
-        <h2>Home</h2>
-        <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Nisi at saepe eos nostrum cum minima numquam adipisci eius possimus delectus corrupti dolorum magni doloremque accusamus, beatae atque? Doloremque, rerum dolor!</p>
-        <h2>Content</h2>
-        <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Nisi at saepe eos nostrum cum minima numquam adipisci eius possimus delectus corrupti dolorum magni doloremque accusamus, beatae atque? Doloremque, rerum dolor!</p>
-        <h2>Content</h2>
-        <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Nisi at saepe eos nostrum cum minima numquam adipisci eius possimus delectus corrupti dolorum magni doloremque accusamus, beatae atque? Doloremque, rerum dolor!</p>
-        <h2>Content</h2>
-        <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Nisi at saepe eos nostrum cum minima numquam adipisci eius possimus delectus corrupti dolorum magni doloremque accusamus, beatae atque? Doloremque, rerum dolor!</p>
-        <h2>Content</h2>
-        <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Nisi at saepe eos nostrum cum minima numquam adipisci eius possimus delectus corrupti dolorum magni doloremque accusamus, beatae atque? Doloremque, rerum dolor!</p>
-        <h2>Content</h2>
-        <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Nisi at saepe eos nostrum cum minima numquam adipisci eius possimus delectus corrupti dolorum magni doloremque accusamus, beatae atque? Doloremque, rerum dolor!</p>
-        <h2>Content</h2>
-        <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Nisi at saepe eos nostrum cum minima numquam adipisci eius possimus delectus corrupti dolorum magni doloremque accusamus, beatae atque? Doloremque, rerum dolor!</p>
-                <h2>Content</h2>
-        <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Nisi at saepe eos nostrum cum minima numquam adipisci eius possimus delectus corrupti dolorum magni doloremque accusamus, beatae atque? Doloremque, rerum dolor!</p>
-        <h2>Content</h2>
-        <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Nisi at saepe eos nostrum cum minima numquam adipisci eius possimus delectus corrupti dolorum magni doloremque accusamus, beatae atque? Doloremque, rerum dolor!</p>
-        <h2>Content</h2>
-        <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Nisi at saepe eos nostrum cum minima numquam adipisci eius possimus delectus corrupti dolorum magni doloremque accusamus, beatae atque? Doloremque, rerum dolor!</p>
-        <h2>Content</h2>
-        <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Nisi at saepe eos nostrum cum minima numquam adipisci eius possimus delectus corrupti dolorum magni doloremque accusamus, beatae atque? Doloremque, rerum dolor!</p>
-        <h2>Content</h2>
-        <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Nisi at saepe eos nostrum cum minima numquam adipisci eius possimus delectus corrupti dolorum magni doloremque accusamus, beatae atque? Doloremque, rerum dolor!</p>
-        <h2>Content</h2>
-        <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Nisi at saepe eos nostrum cum minima numquam adipisci eius possimus delectus corrupti dolorum magni doloremque accusamus, beatae atque? Doloremque, rerum dolor!</p>
-        <h2>Content</h2>
-        <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Nisi at saepe eos nostrum cum minima numquam adipisci eius possimus delectus corrupti dolorum magni doloremque accusamus, beatae atque? Doloremque, rerum dolor!</p>
-        <p>by <a href="https://dibesfer.github.io">dibesfer</a></p>
+        <div class="maxWidth">
+            <h2>Home</h2>
+            <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Nisi at saepe eos nostrum cum minima numquam
+                adipisci eius possimus delectus corrupti dolorum magni doloremque accusamus, beatae atque? Doloremque,
+                rerum dolor!</p>
+
+        </div>
+
 
     </main>
     <footer>
-        <p>📍 | ⬅️ | 🏠 | ➡️ | ❤️</p>
+        <p>
+        <div class="footer-icon">◲</div>
+        <div class="footer-icon">📍</div>
+        <div class="footer-icon">⭐</div>
+        <div class="footer-icon">🏠</div>
+        <div class="footer-icon">💬</div>
+        <div class="footer-icon">❤️</div>
+        <div class="footer-icon">▼</div>
+        </p>
     </footer>
 </body>
+
 </html>
