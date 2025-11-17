@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rickydex</title>
+    <script src="/ferscript.js"></script>
+    <style>
+        * {
+            margin: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            line-height: 2;
+            font-family: sans-serif;
+        }
+
+        img {
+            max-width: 100%;
+        }
+
+        header,
+        footer {
+            background-color: rgb(75, 151, 0);
+            color: gold;
+            text-align: center;
+            padding: 20px;
+        }
+
+        a {
+            text-decoration: none;
+            color: lightskyblue;
+        }
+
+        main {
+            background-color: gray;
+        }
+
+        .flex {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+        }
+
+        .box-outer {
+            padding: 10px;
+            flex: 1;
+            min-width: 250px;
+
+        }
+
+        .box {
+            border-radius: 15px;
+            box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.569);
+            border: solid 3px rgb(157, 134, 0);
+            padding: 10px;
+            line-height: 2;
+            text-align: center;
+            flex: 1;
+            aspect-ratio: 6/8;
+            background-image: radial-gradient(rgb(249, 255, 130), rgb(199, 185, 0));
+        }
+
+        .box>h3 {
+            font-variant: small-caps;
+        }
+
+        .box>img {
+            aspect-ratio: 1;
+            object-fit: contain;
+            width: 100%;
+            border: solid 3px rgb(157, 134, 0);
+
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>Rickydex</h1>
+        <h3 id="information"></h3>
+    </header>
+    <main>
+        <h2>Random character</h2>
+        <div style="max-width: 33.33%;border: solid 3px white;">
+            <h2 id="randomName">Testy</h2>
+            <img id="randomImage" src="" alt="">
+        </div>
+        <p><span>Prev</span> | <span>1/42</span> | <span id="nextButton">Next</span></p>
+        <div id="displayer" class="flex">
+
+        </div>
+
+    </main>
+    <footer>by <a href="https://dibesfer.github.io">dibesfer</a> with <a href="https://rickandmortyapi.com/">Rick and Morty
+            Api</a></footer>
+
+    <script>
+
+        let apiLink= "https://rickandmortyapi.com/api/character"
+        function getResults(api) {
+            fetch(api)
+                .then(x => x.json())
+                .then(y => {
+                    information.textContent = y.info.count + " characters!"
+                    console.log(y)
+                    let randomPage = randomInt(0,y.info.pages)
+
+                    fetch("https://rickandmortyapi.com/api/character?page=" + randomPage)
+                    .then(x => x.json())
+                    .then(y => {
+                        let randomChar = randomInt(0,y.results.length-1)
+                        randomName.textContent = y.results[randomChar].id + ". " + y.results[randomChar].name
+                        randomImage.src = y.results[randomChar].image
+                    })
+                    
+                    nextButton.onclick = ()=>{getResults(y.info.next)}
+                    displayer.innerHTML = ""
+                    for (let i = 0; i < y.results.length; i++) {
+                        const element = y.results[i];
+                        
+                        displayer.innerHTML += `
+                    
+                    <div class="box-outer">
+                        <div class="box">
+                            <h3>${element.id}. ${element.name}</h3>
+                            <img src="${element.image}">
+                            <p>${element.species}</p>
+                        </div>
+                    </div>
+                    
+                    `
+
+                    }
+                });
+        }
+        getResults(apiLink)
+
+    </script>
+
+</body>
+
+</html>
