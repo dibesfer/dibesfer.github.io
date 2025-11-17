@@ -94,33 +94,35 @@
         </div>
 
     </main>
-    <footer>by <a href="https://dibesfer.github.io">dibesfer</a> with <a href="https://rickandmortyapi.com/">Rick and Morty
+    <footer>by <a href="https://dibesfer.github.io">dibesfer</a> with <a href="https://rickandmortyapi.com/">Rick and
+            Morty
             Api</a></footer>
 
     <script>
-
-        let apiLink= "https://rickandmortyapi.com/api/character"
-        function getResults(api) {
+        let completeJson = []
+        let apiLink = "https://rickandmortyapi.com/api/character"
+        let nextUrl = ""
+        async function getResults(api) {
             fetch(api)
                 .then(x => x.json())
                 .then(y => {
                     information.textContent = y.info.count + " characters!"
                     console.log(y)
-                    let randomPage = randomInt(0,y.info.pages)
+                    let randomPage = randomInt(0, y.info.pages)
 
                     fetch("https://rickandmortyapi.com/api/character?page=" + randomPage)
-                    .then(x => x.json())
-                    .then(y => {
-                        let randomChar = randomInt(0,y.results.length-1)
-                        randomName.textContent = y.results[randomChar].id + ". " + y.results[randomChar].name
-                        randomImage.src = y.results[randomChar].image
-                    })
-                    
-                    nextButton.onclick = ()=>{getResults(y.info.next)}
+                        .then(x => x.json())
+                        .then(y => {
+                            let randomChar = randomInt(0, y.results.length - 1)
+                            randomName.textContent = y.results[randomChar].id + ". " + y.results[randomChar].name
+                            randomImage.src = y.results[randomChar].image
+                        })
+
+                    nextButton.onclick = () => { getResults(y.info.next) }
                     displayer.innerHTML = ""
                     for (let i = 0; i < y.results.length; i++) {
                         const element = y.results[i];
-                        
+
                         displayer.innerHTML += `
                     
                     <div class="box-outer">
@@ -132,11 +134,33 @@
                     </div>
                     
                     `
-
                     }
+
+
+                    if (completeJson.length == 0){
+                        completeJson.push(y.results)
+                    }
+
+                    nextUrl = y.info.next
+                    
+                    getAll()
                 });
         }
         getResults(apiLink)
+
+        async function getAll() {
+            while (nextUrl != null) {
+                const res = await fetch(nextUrl)
+                const data = await res.json()
+
+                completeJson.push(data.results)
+
+                nextUrl = data.info.next
+                
+            }
+            console.log(completeJson)
+        }
+
 
     </script>
 
