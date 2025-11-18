@@ -78,6 +78,10 @@ hr {
   overflow: auto;
 }
 
+.ad > p {
+  margin: 10px;
+}
+
 .flexgrid {
 
   display: flex;
