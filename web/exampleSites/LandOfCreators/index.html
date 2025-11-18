@@ -18,8 +18,14 @@
         body {
             font-family: Arial, Helvetica, sans-serif;
         }
+        img {
+            max-width: 100%;
+        }
         header {
-            line-height: 18pt;
+            line-height: 1;
+        }
+        header > h1 {
+            margin: 0
         }
         header , footer {
             text-align: center;
@@ -35,6 +41,10 @@
             text-shadow: 2px 2px 1px rgb(104, 104, 104);
             font-size: 6rem;
         }
+
+        h2::before{
+            content: "☙ ";
+        }
     </style>
 
 </head>
@@ -43,12 +53,13 @@
     <header>
         <h1 class="ms-madi-regular"><span style="color: rgb(28, 198, 28);">Land</span> <span
                 style="color: red;">of</span> <span style="color: blue;">Creators</span></h1>
-        <h3>is for Creators</h3>
+        <h3>◆ is for Creators ◆</h3>
     </header>
 
     <main>
         <h2>Welcome</h2>
         <p>Land of Creators is a place for <b>creating</b>. We do what we can to preserve harmony and the perfect environment for keeping and stimulating <b>creativity</b>.</p>
+        <img src="assets/ChatGPT Image Nov 18, 2025, 07_38_12 PM.png" alt="">
         <p>We accept curious visitors who demonstrate respect or admiration for the work and process of our <b>creators</b>.</p>
         <h2>Are you a creator?</h2>
         <p>In LOC we will grant you a personal space where you can build freely.</p>
