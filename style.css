@@ -75,7 +75,6 @@ hr {
   width: 800px;
   max-width: 100%;
   padding: 10px;
-  margin: 10px;
   border: solid 1px white;
   overflow: auto;
 }
@@ -204,6 +203,10 @@ hr {
 
   #mainBody {
     margin: 0 10px;
+  }
+
+  .ad {
+    margin: 10px;
   }
 }
 
