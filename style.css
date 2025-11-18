@@ -72,8 +72,8 @@ hr {
 
 .ad {
   margin: auto;
-  width: 810px;
-  
+  max-width: 800px;
+  padding: 10px;
   border: solid 1px white;
 }
 
