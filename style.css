@@ -70,6 +70,17 @@ hr {
   border: solid 1px white;
 }
 
+.ad {
+  margin: auto;
+  width: 810px;
+  height: 100px;
+  border: solid 1px white;
+}
+
+.ad::before {
+  content: "Ad";
+}
+
 .flexgrid {
 
   display: flex;
