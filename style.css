@@ -12,7 +12,7 @@ body {
   background-color: black;
   color: white;
   font-family: Jost, sans-serif;
-  font-size: 1.1rem;
+  
   line-height: 2;
 
 }
@@ -74,13 +74,8 @@ hr {
   margin: auto;
   width: 800px;
   max-width: 100%;
-  padding: 10px;
   border: solid 1px white;
   overflow: auto;
-}
-
-.ad::before {
-  content: "Ad";
 }
 
 .flexgrid {
@@ -107,6 +102,14 @@ hr {
   border: solid 1px white;
 
   padding: 10px;
+}
+
+@media only screen and (min-width: 600px) {
+
+  .notForDesktop {
+    display: none;
+  }
+
 }
 
 @media only screen and (max-width: 900px) {
