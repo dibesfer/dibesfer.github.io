@@ -72,10 +72,11 @@ hr {
 
 .ad {
   margin: auto;
-  min-width: 800px;
+  width: 800px;
   max-width: 100%;
   padding: 10px;
   border: solid 1px white;
+  overflow: auto;
 }
 
 .ad::before {
