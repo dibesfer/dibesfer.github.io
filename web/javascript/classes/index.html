@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JS Classes</title>
+</head>
+<body>
+    <div id="demo">demo</div>
+    <script>
+
+        class Robot {
+            constructor(name) {
+                this.name = name
+                this.model = "741"
+            }
+
+            greet(){
+                return "Hi my name is " + this.name
+            }
+        }
+
+        let bender = new Robot("Bender")
+
+        demo.textContent = bender.greet()
+
+    </script>
+</body>
+</html>
