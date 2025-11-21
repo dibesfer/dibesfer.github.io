@@ -22,11 +22,12 @@
             height: 10%;
             border: solid 3px black;
         }
+
         #consola {
             height: 10%;
             overflow: auto;
             padding: 5px;
-            
+
             word-break: break-all;
             border: solid 3px black;
         }
@@ -96,13 +97,13 @@
     </div>
     <input value="" placeholder="0" type="text" name="calculatorInput" id="calculatorInput">
     <div class="grid">
-        
+
         <div title="Memory Clear" onclick="memoryClear()">MC</div>
         <div title="Memory Recovery" onclick="memoryRecovery()">MR</div>
         <div title="Memory Save" onclick="memorySave()">MS</div>
         <div id="keyCE" onclick="functionCE()" class="red">CE</div>
         <div id="keyC" onclick="functionC()" class="red">C</div>
-        
+
         <div id="key7" onclick="insertNumber(7)">7</div>
         <div id="key8" onclick="insertNumber(8)">8</div>
         <div id="key9" onclick="insertNumber(9)">9</div>
@@ -120,9 +121,9 @@
         <div id="key," onclick="insertComma()">,</div>
         <!-- style="grid-column: span 2;" -->
         <div id="" onclick="insertNumber()"></div>
-        
+
         <!-- <div id="" onclick="insertNumber()"></div> -->
-        
+
         <div></div>
         <div></div>
         <div id="keyBack" onclick="back()">←</div>
@@ -130,7 +131,7 @@
     </div>
 
     <script>
-        
+
         let firstNumber = null
         let secondNumber = null
         let equalsMemory = null
@@ -143,6 +144,20 @@
         calculatorInput.value = null
 
         currentOperation = "none"
+
+        function reset() {
+            firstNumber = null
+            secondNumber = null
+            equalsMemory = null
+            awaitingInput = true
+            isFloat = false
+            memory = null
+            result = null
+            stringInput = ""
+            floatInput = 0.0
+            calculatorInput.value = null
+            currentOperation = "none"
+        }
 
         // Adds keyPressed class to buttons and takes the class 100 miliseconds after
         function aestheticPressButton(button) {
@@ -161,11 +176,11 @@
             consola.innerHTML += number
             consola.scrollTop = consola.scrollHeight;
 
-            if (firstNumber == null){
-                superConsolaFirstNumber.textContent += number 
+            if (firstNumber == null) {
+                superConsolaFirstNumber.textContent += number
             }
             else {
-                superConsolaSecondNumber.textContent += number 
+                superConsolaSecondNumber.textContent += number
             }
 
             if (awaitingInput && firstNumber) {
@@ -180,7 +195,7 @@
             floatInput = parseFloat(stringInput)
 
             calculatorInput.value = stringInput
-            calculatorInput.scrollLeft = calculatorInput.scrollWidth; 
+            calculatorInput.scrollLeft = calculatorInput.scrollWidth;
         }
 
         function insertComma() {
@@ -189,9 +204,9 @@
                 aestheticPressButton(",")
                 calculatorInput.value += "."
                 consola.innerHTML += "."
-                if (firstNumber == null){
-                superConsolaFirstNumber.textContent += "."
-            }
+                if (firstNumber == null) {
+                    superConsolaFirstNumber.textContent += "."
+                }
                 else {
                     superConsolaSecondNumber.textContent += "."
                 }
@@ -202,7 +217,7 @@
 
         // This function saves firstnumber and secondnumber
         //is called by all operations
-        function saveValues(){
+        function saveValues() {
             // MEMORY
             if (firstNumber == null) {
                 firstNumber = calculatorInput.value
@@ -210,7 +225,7 @@
             else {
                 secondNumber = calculatorInput.value
             }
-            if (result != null){
+            if (result != null) {
                 firstNumber = result
                 secondNumber = null
                 superConsolaFirstNumber.textContent = firstNumber
@@ -362,13 +377,15 @@
             aestheticPressButton("C")
             calculatorInput.value = null
             isFloat = false
+            reset()
         }
-        
+
         function functionCE() {
             aestheticPressButton("CE")
             calculatorInput.value = null
             isFloat = false
             consola.innerHTML = "CONSOLA <br>"
+            reset()
         }
 
         document.onkeydown = function (e) {
@@ -459,15 +476,15 @@
 
         // MEMORY
 
-        function memorySave(){
+        function memorySave() {
             memory = calculatorInput.value
         }
 
-        function memoryClear(){
+        function memoryClear() {
             memory = 0.0
         }
 
-        function memoryRecovery(){
+        function memoryRecovery() {
             calculatorInput.value = memory
         }
     </script>

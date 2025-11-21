@@ -21,20 +21,26 @@
         main {
             flex: 1;
             line-height: 2;
-            
+
             background-color: rgb(0, 0, 85);
+        }
+
+        a {
+            text-decoration: none;
+            color: unset;
         }
 
         header,
         footer {
             text-align: center;
-            padding: 15px;
+           
             background-color: rgb(85, 85, 85);
             color: white;
         }
 
         header {
             border-bottom: 2px solid black;
+             padding: 15px;
         }
 
         footer {
@@ -48,19 +54,24 @@
             right: 0;
             left: 0;
             height: 80px;
+            overflow: auto;
         }
 
         .footer-spacer {
             height: 80px;
         }
+
         .footer-icon {
             background-color: rgb(55, 55, 55);
             border-radius: 50%;
-           
             aspect-ratio: 1;
             padding: 7px;
             cursor: pointer;
             border: solid 1px white;
+            margin: 10px 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
         .footer-icon:hover {
@@ -75,11 +86,11 @@
             padding: 10px;
         }
 
-         iframe {
+        iframe {
             width: 800px;
             max-width: 100%;
             margin: auto;
-            background-color: lightblue;
+            background-color: white;
             min-height: 100%;
             display: block;
         }
@@ -88,10 +99,10 @@
 
 <body>
     <header>
-        <h1>navbars</h1>
+        <h1><a href="index.html">navbars</a></h1>
     </header>
     <main>
-        <iframe src="/assets/books/ipsauri/" frameborder="0"></iframe>
+        <iframe id="myIframe" src="/assets/books/ipsauri/" frameborder="0"></iframe>
         <!-- <div class="maxWidth">
             <h2>Home</h2>
             <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Nisi at saepe eos nostrum cum minima numquam
@@ -126,23 +137,26 @@
         <div class="footer-icon" onclick="changePage('Home', this)">🏠</div>
         <div class="footer-icon" onclick="changePage('Chat',this)">💬</div>
         <div class="footer-icon" onclick="changePage('Love', this)">❤️</div>
-        <div class="footer-icon" onclick="changePage('Home')">▼</div>
+        <div class="footer-icon" onclick="scrollDown()">▼</div>
         </p>
     </footer>
 
     <script>
 
-        window.onpopstate = (event) => {
-        const page = event.state?.page || "Home";
-        console.log(event.state)
-        changePage(page)
-        };
+        /*window.onpopstate = (event) => {
+            const page = event.state?.page || "Home";
+            console.log(event.state)
+            changePage(page)
+        };*/
 
         let main = document.getElementsByTagName("main")[0]
         function changePage(page, button) {
             switch (page) {
                 case "Home":
-                    main.innerHTML = `
+                
+                myIframe.src = "/assets/books/ipsauri/"
+                
+                /*main.innerHTML = `
                     
                     <div class="maxWidth">
                         <h2>Home</h2>
@@ -152,22 +166,23 @@
 
                     </div>
 
-                    `
-
+                    `*/
                     break;
                 case "Chat":
-                    
-                    main.innerHTML = `
+                    myIframe.src = "/assets/books/Ladeio"
+                    /*main.innerHTML = `
                     <div class="maxWidth">
                     <h2>Chat</h2>
                     <p>Blah blih bloh bluh.</p>
                     </div>
                     `
                     button.style = "background-color: red"
+                    */
                     break;
 
                 case "Love":
-                    
+                    myIframe.src = "/web/exampleSites/reddia"
+                    /*
                     main.innerHTML = `
                     <div class="maxWidth">
                     <h2>Love</h2>
@@ -175,9 +190,11 @@
                     </div>
                     `
                     button.style = "background-color: red"
+                    */
                     break;
                 case "Favorite":
-                    
+                    myIframe.src = "/web/exampleSites/amarila"
+                    /*
                     main.innerHTML = `
                     <div class="maxWidth">
                     <h2>Favorite</h2>
@@ -185,10 +202,12 @@
                     </div>
                     `
                     button.style = "background-color: red"
+                    */
                     break;
 
                 case "Location":
-                    
+                    myIframe.src = "/web/javascript/privacy"
+                    /*
                     main.innerHTML = `
                     <div class="maxWidth">
                     <h2>Location</h2>
@@ -196,6 +215,7 @@
                     </div>
                     `
                     button.style = "background-color: red"
+                    */
                     break;
                 case value:
 
@@ -206,9 +226,18 @@
                 default:
                     break;
             }
-            history.pushState({ page: page }, "", "#" + page);
+            //history.pushState({ page: page }, "", "#" + page);
         }
-        console.log(history)
+        /*myIframe.onload = function () {
+        
+        //console.log(myIframe.scrollHeight)
+        //myIframe.contentWindow.scrollTo(0,myIframe.scrollHeight);
+        }*/
+
+        function scrollDown(){
+            myIframe.contentWindow.scrollTo(0,myIframe.scrollHeight);
+        }
+        //console.log(history)
     </script>
 </body>
 
