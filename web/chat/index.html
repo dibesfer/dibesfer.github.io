@@ -535,7 +535,7 @@
         //REALTIME 
         // Create a function to handle inserts
         const handleInserts = (payload) => {
-            //console.log('Change received!', payload)
+            console.log('Change received!', payload)
             getOnlyLastMessage(payload.new)
             //getOnlyResources("chat", "dibesfer")
         }
@@ -687,7 +687,7 @@
                             //email: param1,
                             //username: param1.split("@")[0]
                         },
-                    ]).select()
+                    ])//.select()
 
                     console.log(error)
 
