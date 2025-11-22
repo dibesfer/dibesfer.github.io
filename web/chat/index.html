@@ -366,7 +366,7 @@
                 //EMAIL ALREADY REGISTERED, LOG IN
                 myUserTable = result
                 console.log(result)
-                getFullTable("chat")
+                getFullTable("chat_public")
             }
 
         }
@@ -673,12 +673,14 @@
             if (myUser) myAuthor = myUser.email.split("@")[0]
             let myMessage = userInput.value
 
+            
             if (myAuthor && myMessage) {
 
                 const { data, error } = await database
                     .from("chat")
                     .insert([
                         {
+                            user_id : null,
                             author: myAuthor,
                             message: myMessage
                             //url: window.location.href
@@ -686,6 +688,8 @@
                             //username: param1.split("@")[0]
                         },
                     ]).select()
+
+                    console.log(error)
 
                 userInput.value = ""
             }
