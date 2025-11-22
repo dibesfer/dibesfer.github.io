@@ -680,7 +680,7 @@
                     .from("chat")
                     .insert([
                         {
-                            user_id : null,
+                            user_id : myUser?myUser.id:null,
                             author: myAuthor,
                             message: myMessage
                             //url: window.location.href
