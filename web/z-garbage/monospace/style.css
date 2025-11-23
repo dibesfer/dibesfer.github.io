@@ -1,0 +1,50 @@
+* {
+    margin: 0;
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: monospace;
+    font-size: x-large;
+    line-height: 2;
+}
+
+header , footer {
+    text-align: center;
+    background-color: black;
+    color: white;
+    padding: 40px;
+}
+
+main {
+    margin: 15px auto;
+    max-width: 800px;
+}
+
+a {color:unset}
+
+.container {
+    border: solid 3px black;
+    padding: 15px;
+    border-radius: 15px;
+
+}
+
+img {
+    max-width: 100%;
+    width: 100%;
+    aspect-ratio: 16/9;
+    object-fit: cover;
+    border-radius: 15px;
+    border: solid 3px black;
+    box-shadow: 0 0 15px gray;
+}
+
+::selection {
+    background-color: gray;
+    color: white;
+}

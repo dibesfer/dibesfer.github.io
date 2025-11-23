@@ -1,0 +1,35 @@
+* {
+    margin: 0;
+    box-sizing: border-box;
+}
+
+main {
+    display: flex;
+    justify-content: space-between;
+    height: 100vh;
+}
+
+#servers {
+    border: solid 3px black;
+}
+
+.server_icon {
+    width: 60px;
+    height: 60px;
+    border: solid 3px black;
+    border-radius: 50%;
+}
+
+#server_inside {
+    border: solid 3px black;
+    padding: 15px;
+}
+
+#chat {
+    border: solid 3px black;
+    flex: 1;
+}
+
+#member_list {
+    border: solid 3px black;
+}
