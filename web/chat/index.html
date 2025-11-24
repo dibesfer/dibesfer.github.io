@@ -184,7 +184,7 @@
 
             <p id="userNameDisplay">Anonymous </p>
         </div>
-        <div style="display: flex;align-items: center;">
+        <div id="logOutBtnWrapper">
             <!-- <div>
                 <p><a href="user/">profile</a></p>
             </div> -->
@@ -351,6 +351,7 @@
             else {
                 console.log("no user logged in")
                 logOutBtn.style.display = "none"
+                logOutBtnWrapper.style.display = "none"
                 return null
             }
         }
@@ -430,7 +431,7 @@
             localVisitsDisplay.textContent = localVisits
         }
 
-
+        // Registro de nuevo usuario
         async function signUp() {
             let { data, error } = await database.auth.signUp({
                 email: userEmail.value,
@@ -439,6 +440,8 @@
             })
             console.log("---SIGNUP---")
             console.log(data)
+            const newUser = data.user
+            
             if (error) {
                 console.log(error)
                 signInAdvice.style.color = "red"
@@ -446,10 +449,12 @@
             } else {
 
                 console.log("We're gonna create a user profile")
+                
                 const { data, error } = await database
                     .from("users")
                     .insert([
                         {
+                            user_id : newUser.id,
                             email: userEmail.value,
                             username: userEmail.value.split("@")[0],
                             profilepicture: "https://upload.wikimedia.org/wikipedia/commons/4/40/Anonymous_mask.svg"
@@ -460,7 +465,7 @@
                     .select()
                 if (!error) signInAdvice.textContent = "We sent a confirmation url to your email."
                 else {
-
+                    console.log(error.message)
                 }
             }
 
