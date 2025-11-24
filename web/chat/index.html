@@ -79,6 +79,7 @@
 
         ::selection {
             background-color: rgb(0, 153, 255);
+            color: rgb(255, 255, 255);
         }
 
 
@@ -221,26 +222,32 @@
     <div id="signInDiv" class="minWidth">
 
         <div id="signInAdvice">You are anonymous</div>
-        <div id="signInMain" style="display: none;">
+        <form id="loginForm">
+            <div id="signInMain" style="display: none;">
 
-            <div>
-                <div class="miniFlex">
-                    <label for="userEmail">
-                        Email
-                    </label>
-                    <input required type="email" name="userEmail" id="userEmail"><br>
+                <div>
+
+
+
+                    <div class="miniFlex">
+                        <label for="userEmail">
+                            Email
+                        </label>
+                        <input required type="email" name="userEmail" id="userEmail"><br>
+                    </div>
+                    <div class="miniFlex">
+                        <label for="userPass">Password</label>
+                        <input required autocomplete="off" type="password" name="userPass" id="userPass"><br>
+                    </div>
+
                 </div>
-                <div class="miniFlex">
-                    <label for="userPass">Password</label>
-                    <input required autocomplete="off" type="password" name="userPass" id="userPass"><br>
-                </div>
-            </div>
-            <p>We will send a confirmation url to your email.</p>
-            <!-- <input type="button" value="Sign up" id="signUpBtn">
+                <p>We will send a confirmation url to your email.</p>
+                <!-- <input type="button" value="Sign up" id="signUpBtn">
             <input type="button" value="Check in" id="checkIn"> -->
 
-        </div>
-        <input id="identifyBtn" type="button" style="background-color: blue; color: white" value="IDENTIFY">
+            </div>
+            <input id="identifyBtn" type="submit" style="background-color: blue; color: white" value="IDENTIFY">
+        </form>
         <br>
 
 
@@ -441,7 +448,7 @@
             console.log("---SIGNUP---")
             console.log(data)
             const newUser = data.user
-            
+
             if (error) {
                 console.log(error)
                 signInAdvice.style.color = "red"
@@ -449,12 +456,12 @@
             } else {
 
                 console.log("We're gonna create a user profile")
-                
+
                 const { data, error } = await database
                     .from("users")
                     .insert([
                         {
-                            user_id : newUser.id,
+                            user_id: newUser.id,
                             email: userEmail.value,
                             username: userEmail.value.split("@")[0],
                             profilepicture: "https://upload.wikimedia.org/wikipedia/commons/4/40/Anonymous_mask.svg"
@@ -670,6 +677,7 @@
 
         if (checkIn) checkIn.addEventListener("click", signLogIn)
         chatForm.addEventListener("submit", sendMessage)
+        loginForm.addEventListener("submit", toggleSignInMain)
 
         async function sendMessage(e) {
 
