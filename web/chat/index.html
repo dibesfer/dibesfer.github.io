@@ -228,7 +228,7 @@
 
         <div id="signInAdvice">You are anonymous</div>
         
-        <form id="loginForm">
+        <form id="loginForm" method="GET"> 
             <div id="signInMain" style="display: none;">
 
                 <div>
@@ -295,8 +295,9 @@
 
         identifyBtn.addEventListener("click", toggleSignInMain)
 
-        function toggleSignInMain() {
+        function toggleSignInMain(e) {
 
+            e.preventDefault()
             if (signInMain.style.display == "none") {
 
                 // SHOW SIGN IN MAIN
