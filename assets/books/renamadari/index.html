@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Renamadari</title>
+    <style>
+
+        * {
+            margin: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: sans-serif;
+            background-color: rgb(46, 46, 46);
+            line-height: 2;
+        }
+
+
+        a {
+            text-decoration: none;
+            color: rgb(0, 72, 255);
+        }
+
+        header , footer {
+            text-align: center;
+            padding: 20px;
+            background-color: rgb(80, 80, 80);
+            color: white;
+        }
+        main {
+            max-width: 800px;
+            margin: auto;
+        }
+        .container {
+            padding: 10px;
+            border: solid 2px gray;
+            margin: 10px 0;
+            border-radius: 15px;
+            box-shadow: 5px 5px 0 rgb(74, 74, 74);
+            background-color: rgb(193, 193, 193);
+        }
+
+        @media only screen and (max-width: 800px) {
+            main {
+                margin: 10px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>Renamadari</h1>
+        <h3>Ico surant enama sali dari.</h3>
+        <p>Acilo | Sereno | Uposont</p>
+    </header>
+    <main>
+
+    </main>
+    <footer>
+        <p>arauda <a href="https://dibesfer.github.io">dibesfer</a></p>
+    </footer>
+    <script>
+        let main = document.getElementsByTagName("main")[0]
+
+        fetch("con.json")
+            .then(x => x.json())
+            .then(y => {
+                for (let i = 0; i < y.length; i++) {
+                    const element = y[i];
+                    main.innerHTML += `
+                    <div class="container">
+                        <h2>${i+1}. ${element.title}</h2>
+                        <p>${element.text}</p>
+                    </div>
+                `
+
+                    
+
+                }
+            })
+    </script>
+</body>
+
+</html>
