@@ -52,7 +52,7 @@
 
 
 
-            const res = await database.from("users").select("*").eq("confirmed", true)
+            const res = await database.from("users").select("*").eq("confirmed", true).order('created_at', { ascending: true })
             let result = res.data
 
             if (result.length > 0) {
