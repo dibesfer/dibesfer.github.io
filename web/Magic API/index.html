@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digimon-dex</title>
+    <script src="/ferscript.js"></script>
+    <style>
+        * {
+            margin: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            line-height: 2;
+            font-family: serif;
+        }
+
+        img {
+            max-width: 100%;
+        }
+
+        header,
+        footer {
+            background-color: rgb(63, 53, 47);
+            color: gold;
+            text-align: center;
+            padding: 20px;
+        }
+
+        a {
+            text-decoration: none;
+            color: lightskyblue;
+        }
+
+        main {
+            background-color: rgb(35, 49, 80);
+        }
+
+        .flex {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+        }
+
+        .box-outer {
+            padding: 10px;
+            flex: 1;
+            min-width: 250px;
+
+        }
+
+        .box {
+            line-height: 0;
+            text-align: center;
+            flex: 1;
+        
+        }
+
+        .box>h3 {
+            font-variant: small-caps;
+        }
+
+        .box > img {
+            box-shadow: 0 0 5px white;
+        }
+        
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>Magic The Gathering API</h1>
+        <h3 id="information"></h3>
+    </header>
+    <main>
+
+        <div id="displayer" class="flex">
+
+        </div>
+
+    </main>
+    <footer>by <a href="https://dibesfer.github.io">dibesfer</a> with <a href="https://docs.magicthegathering.io/">MTG
+            Api</a></footer>
+
+    <script>
+        //937 pages
+        let magicapi = "https://api.magicthegathering.io/v1/cards" // ?page=60
+
+        let randomPage = randomInt(0,937)
+
+        information.textContent = 937 + " pages! " + ((936*100)+43) + " cards. Page number " + randomPage 
+
+        fetch(magicapi + "?page=" + randomPage)
+            .then(x => x.json())
+            .then(y => {
+                
+                console.log(y)
+                for (let i = 0; i < y.cards.length; i++) {
+                    const element = y.cards[i];
+
+                    if (element.imageUrl) {
+                        displayer.innerHTML += `
+                    
+                    <div class="box-outer">
+                        <div class="box">
+                            
+                            <img src="${element.imageUrl}">
+                            
+                        </div>
+                    </div>
+                    
+                    `
+                    }
+
+                }
+            });
+
+    </script>
+
+</body>
+
+</html>
