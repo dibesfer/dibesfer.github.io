@@ -10,7 +10,7 @@ let mySentence = ""
 
 let languageMode = "alien"
 
-function fillASentence(words) {
+function fillASentence(words, wordLength) {
     mySentence = ""
     for (let i = 0; i < words; i++) {
         let wordlength = randomInt(1, 3)
@@ -18,7 +18,7 @@ function fillASentence(words) {
         let probabilidadComa = randomInt(1, 10)
         let probabilidadSigno = randomInt(1, 10)
 
-        mySentence += generateWord()
+        mySentence += generateWord(wordLength)
 
 
         if (i < words - 1) {
@@ -63,6 +63,17 @@ function generate() {
 
         case "poetry":
             poetry()
+            break;
+
+        case "africanus":
+
+            fillASentence(10,4)
+
+            fillASentence(10,4)
+
+            fillASentence(10,4)
+
+
             break;
 
         case "word":
