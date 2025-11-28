@@ -52,7 +52,7 @@ function capitalizeFirstLetter(val) {
 }
 
 function generate() {
-    textConsole.innerHTML = ""
+    textConsole.innerHTML = "<br>"
 
     switch (languageMode) {
         case "alien":
@@ -77,7 +77,13 @@ function generate() {
             break;
 
         case "word":
-            textConsole.textContent = generateWord(8)
+            textConsole.innerHTML = `
+            <h2 style="text-align: center">${generateWord(8)}</h2>
+            <h2 style="text-align: center">${generateWord(8)}</h2>
+            <h2 style="text-align: center">${generateWord(8)}</h2>
+            
+            `
+
             break;
 
         default:
