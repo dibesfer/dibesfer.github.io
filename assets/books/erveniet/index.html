@@ -7,18 +7,35 @@
 
     <title>Erveniet</title>
     <style>
+        * {
+            margin: 0;
+            box-sizing: border-box;
+        }
         body {
             font-family: monospace;
             background-color: black;
             color: white;
             font-size: 1rem;
+            line-height: 2;
+        }
+
+        a {
+            text-decoration: none;
+        }
+        footer , header {
+            text-align: center;
+            padding: 40px;
+        }
+        main {
+            max-width: 800px;
+            margin: auto;
         }
         .red {
             color: red;
         }
 
         .green {
-            color: greenyellow;
+            color: rgb(128, 255, 24);
         }
 
         .blue {
@@ -30,7 +47,12 @@
         }
 
         .purple {
-            color: purple;
+            color: rgb(205, 0, 205);
+        }
+        .container {
+            border-left: solid 10px;
+            padding: 10px;
+            margin: 10px 0;
         }
     </style>
     
@@ -38,31 +60,37 @@
 <body>
     <header>
         <h1>Erveniet</h1>
+        <p>Isocat arinomi isi lori</p>
     </header>
     <main>
-        <div class="red">
+        <div class="container red">
             <h2>Urumaci</h2>
             <p>Eiso teio ranu darum</p>
         </div>
 
-        <div class="green">
+        <div class="container green">
             <h2>Alidori</h2>
             <p>Episont unumaci isaridei pelos oranita utarali elaridai sai pet unumanna.</p>
         </div>
 
-        <div class="blue">
+        <div class="container blue">
             <h2>Upo Not Acoras</h2>
             <p>Ipofoso lalont orenit aurment.</p>
         </div>
 
-        <div class="yellow">
+        <div class="container yellow">
             <h2>Ifnamara asada</h2>
             <p>Olope orote manuti isandi erapindona larinnae sarisae.</p>
         </div>
 
-        <div class="purple">
+        <div class="container purple">
             <h2>Oranidami asi satsi</h2>
             <p>Norad ugu in etab bus sevupe nap gig oc, of i olemug u vezopa.</p>
+        </div>
+
+        <div class="container green">
+            <h2>Aciro Goti</h2>
+            <p>Narama ladi sari teni ocosunt sineianta anada lapma aconesei.</p>
         </div>
     </main>
     <footer>
