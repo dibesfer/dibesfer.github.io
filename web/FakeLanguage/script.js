@@ -78,9 +78,9 @@ function generate() {
 
         case "word":
             textConsole.innerHTML = `
-            <h2 style="text-align: center">${generateWord(8)}</h2>
-            <h2 style="text-align: center">${generateWord(8)}</h2>
-            <h2 style="text-align: center">${generateWord(8)}</h2>
+            <h2 style="text-align: center">${capitalizeFirstLetter(generateWord(8))}</h2>
+            <h2 style="text-align: center">${capitalizeFirstLetter(generateWord(8))}</h2>
+            <h2 style="text-align: center">${capitalizeFirstLetter(generateWord(8))}</h2>
             
             `
 
