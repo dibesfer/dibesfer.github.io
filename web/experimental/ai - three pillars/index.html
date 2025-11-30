@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Mis valores — Humildad · Creatividad · Imperio</title>
+  <style>
+    :root{--bg:#0f1724;--card:#0b1220;--muted:#9aa4b2;--accent:#7c3aed;--glass:rgba(255,255,255,0.03)}
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial; background:linear-gradient(180deg,#081025 0%,#071623 100%);color:#e6eef8}
+    .wrap{min-height:100%;display:flex;flex-direction:column;align-items:center;padding:48px 20px}
+    header{width:100%;max-width:980px;display:flex;justify-content:space-between;align-items:center;margin-bottom:26px}
+    h1{font-size:20px;margin:0;letter-spacing:-0.4px}
+    p.lead{margin:6px 0 0;color:var(--muted);font-size:13px}
+    .controls{display:flex;gap:10px;align-items:center}
+    .btn{background:var(--glass);border:1px solid rgba(255,255,255,0.03);padding:8px 12px;border-radius:10px;color:inherit;font-size:13px;cursor:pointer}
+    main{width:100%;max-width:980px}
+
+    /* Grid / Cards */
+    .grid{display:flex;flex-wrap:wrap;gap:18px}
+    .card{flex:1 1 300px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:14px;padding:18px;border:1px solid rgba(255,255,255,0.03);backdrop-filter: blur(6px);min-width:260px}
+    .card-head{display:flex;align-items:center;gap:14px}
+    .icon{width:56px;height:56px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:26px;background:linear-gradient(135deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));box-shadow:0 6px 18px rgba(2,6,23,0.6)}
+    .title{font-weight:700;font-size:16px}
+    .tag{font-size:12px;color:var(--muted);margin-top:4px}
+    .desc{margin:12px 0 14px;color:var(--muted);font-size:14px;line-height:1.45}
+    .meta{display:flex;gap:8px;align-items:center}
+    .pill{font-size:12px;padding:7px 10px;border-radius:999px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.02)}
+
+    /* Small touches */
+    .accent{color:var(--accent)}
+    footer{width:100%;max-width:980px;margin-top:28px;color:var(--muted);font-size:13px;text-align:center}
+
+    /* Responsive */
+    @media (max-width:720px){header{flex-direction:column;align-items:flex-start;gap:10px} .grid{flex-direction:column}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>Lo que más importa ✨</h1>
+        <p class="lead">Tres pilares sencillos pero potentes que moldean tu vida y tu obra.</p>
+      </div>
+      <div class="controls">
+        <button class="btn" onclick="toggleTheme()">Cambiar tema</button>
+        <button class="btn" onclick="downloadHTML()">Descargar código</button>
+      </div>
+    </header>
+
+    <main>
+      <section class="grid" aria-label="Valores principales">
+
+        <article class="card" id="humildad" role="article">
+          <div class="card-head">
+            <div class="icon">🕊️</div>
+            <div>
+              <div class="title">Humildad</div>
+              <div class="tag">Reconocer sin rubor</div>
+            </div>
+          </div>
+          <p class="desc">Aceptar los propios límites y aprender de los demás. La humildad abre puertas, mejora la escucha y afina el juicio creativo.</p>
+          <div class="meta">
+            <div class="pill">Práctica: Reflexión diaria</div>
+            <div class="pill">Resultado: Confianza real</div>
+          </div>
+        </article>
+
+        <article class="card" id="creatividad" role="article">
+          <div class="card-head">
+            <div class="icon">🎨</div>
+            <div>
+              <div class="title">Creatividad</div>
+              <div class="tag">Riesgo con sentido</div>
+            </div>
+          </div>
+          <p class="desc">Inventar, romper y recomponer. La creatividad transforma lo cotidiano en extrañamente bello y te da opciones cuando todo parece igual.</p>
+          <div class="meta">
+            <div class="pill">Práctica: Experimentar</div>
+            <div class="pill">Resultado: Obras que hablan</div>
+          </div>
+        </article>
+
+        <article class="card" id="imperio" role="article">
+          <div class="card-head">
+            <div class="icon">👑</div>
+            <div>
+              <div class="title">Imperio</div>
+              <div class="tag">Ambición con estructura</div>
+            </div>
+          </div>
+          <p class="desc">Construir algo duradero: un cuerpo de trabajo, una comunidad, una marca. El Imperio no es dominio vacío, es legado organizado.</p>
+          <div class="meta">
+            <div class="pill">Práctica: Sistemas y disciplina</div>
+            <div class="pill">Resultado: Impacto sostenido</div>
+          </div>
+        </article>
+
+      </section>
+    </main>
+
+    <footer>
+      Hecho con intención. Si quieres más tarjetas, animaciones o exportar a PDF, dime qué quieres añadir.
+    </footer>
+  </div>
+
+  <script>
+    function toggleTheme(){
+      const root = document.documentElement;
+      if(root.style.getPropertyValue('--bg') === '#0f1724'){
+        // light-ish theme
+        root.style.setProperty('--bg','#f7fafc');
+        root.style.setProperty('--card','#ffffff');
+        root.style.setProperty('--muted','#6b7280');
+        root.style.setProperty('--accent','#0ea5e9');
+        document.body.style.background='linear-gradient(180deg,#f8fafc,#eef2ff)';
+        document.body.style.color='#071233';
+      } else {
+        root.style.setProperty('--bg','#0f1724');
+        root.style.setProperty('--card','#0b1220');
+        root.style.setProperty('--muted','#9aa4b2');
+        root.style.setProperty('--accent','#7c3aed');
+        document.body.style.background='linear-gradient(180deg,#081025 0%,#071623 100%)';
+        document.body.style.color='#e6eef8';
+      }
+    }
+
+    function downloadHTML(){
+      const blob = new Blob([document.documentElement.outerHTML], {type:'text/html;charset=utf-8'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'valores_de_vida.html';
+      document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(url);
+    }
+  </script>
+</body>
+</html>
