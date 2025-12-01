@@ -26,12 +26,12 @@
 
         .userDisplayerOuter {
             width: 175px;
-            padding: 5px;
-            flex: 1;
+            padding: 3px;
+            
         }
 
         .userDisplayer {
-            border: solid 3px black;
+            border: solid 1.5px black;
             
             text-align: center;
             border-radius: 8px;
@@ -57,6 +57,37 @@
         <p>by <a href="https://dibesfer.github.io">dibesfer</a> with <a href="https://dicebear.com">dicebear.com</a></p>
     </footer>
     <script>
+
+        cities = [
+            "New York",
+            "Madrid",
+            "Barcelona",
+            "London",
+            "Roma",
+            "Lisboa",
+            "Paris",
+            "Berlin",
+            "Munich",
+            "Moscou",
+            "Athens",
+            "Buenos Aires",
+            "Istambul",
+            "Dublin",
+            "Can Berra",
+            "Brasilia",
+            "Oslo",
+            "Copenhaguen",
+            "Washington D.C.",
+            "Mexico D.F.",
+            "Bogotá",
+            "Lima",
+            "Caracas",
+            "Honduras",
+            "Tokio",
+            "Beijing",
+            
+        ]
+
         function createUser() {
             let randomUsername = generateWord(8)
             displayer.innerHTML += `
@@ -64,6 +95,7 @@
         <div class="userDisplayer">
             <img width="100%" src="https://api.dicebear.com/9.x/pixel-art/svg?seed=${randomUsername}" alt="avatar">
             <h2>@${randomUsername}</h2>
+            <p>📍${cities[randomInt(0,cities.length-1)]}</p>
             <p>${randomInt(18,80)} years old</p>
             <p>${randomUsername}@gmail.com</p>
         </div>
