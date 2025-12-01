@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>REST Countries</title>
+    <style>
+        * {
+            margin: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: monospace;
+            font-size: 1rem;
+            line-height: 2;
+        }
+
+        .displayer-flex-item {
+            display: flex;
+            border: solid 3px black;
+            height: 100px;
+            overflow-x: auto;
+            
+        }
+
+        .flagdisplay>img {
+            height: 100%;
+            width: 200px;
+            object-fit: contain;
+            background-image: radial-gradient( gray, black);
+        }
+
+        .namedisplay {
+            flex: 1;
+            height: 100%;
+            overflow-y: auto;
+        }
+
+        .coatdisplay>img {
+            height: 100%;
+            width: 200px;
+            object-fit: contain;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Countries of the World</h1>
+    <div id="displayer">
+
+    </div>
+    <p>Thanks to https://restcountries.com/#fields-mandatory</p>
+    <script>
+
+        fetch("https://restcountries.com/v3.1/all?fields=name,population,flags,coatOfArms")
+            .then(x => x.json())
+            .then(y => {
+                y.sort(function (a, b) { return b.population - a.population });
+                for (let i = 0; i < y.length - 1; i++) {
+                    const element = y[i];
+
+                    if (element.population > 0) {
+                        displayer.innerHTML += `
+                        
+                        <div class="displayer-flex-item">
+
+                        <div class="flagdisplay">
+                        <img src="${element.flags.png}" alt="${element.name.common}'s' flag">
+                        </div>
+
+                        <div class="namedisplay">
+                        <h2>${i + 1}. ${element.name.common}, ${element.population}</h2>
+                        <p>${element.name.official}</p>
+                        </div>
+                        
+                        <div class="coatdisplay">
+                        <img src="${element.coatOfArms.png}" alt="Coat of Arms of ${element.name.common}">
+                        </div>
+                            
+
+                        </div>
+
+                        `
+                    }
+                    console.log(element)
+
+                }
+            })
+
+    </script>
+</body>
+
+</html>
