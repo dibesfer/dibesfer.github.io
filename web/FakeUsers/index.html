@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>👤FakeUsers</title>
+    <script src="/ferscript.js"></script>
+    <script src="/web/FakeLanguage/script.js"></script>
+    <style>
+
+        *{
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: sans-serif;
+            background-color: gray;
+        }
+
+        #displayer {
+            display: flex;
+            flex-wrap: wrap;
+            
+        }
+
+        .userDisplayerOuter {
+            width: 175px;
+            padding: 5px;
+            flex: 1;
+        }
+
+        .userDisplayer {
+            border: solid 3px black;
+            
+            text-align: center;
+            border-radius: 8px;
+            overflow: auto;
+            background-color: rgb(228, 228, 228);
+        }
+
+        @media screen and (max-width:800px){
+            .userDisplayerOuter {
+                flex: 50%;
+                width: 50%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <h1>👤Fake Users</h1>
+    <div id="displayer">
+
+    </div>
+    <footer>
+        <p>by <a href="https://dibesfer.github.io">dibesfer</a> with <a href="https://dicebear.com">dicebear.com</a></p>
+    </footer>
+    <script>
+        function createUser() {
+            let randomUsername = generateWord(8)
+            displayer.innerHTML += `
+        <div class="userDisplayerOuter">
+        <div class="userDisplayer">
+            <img width="100%" src="https://api.dicebear.com/9.x/pixel-art/svg?seed=${randomUsername}" alt="avatar">
+            <h2>@${randomUsername}</h2>
+            <p>${randomInt(18,80)} years old</p>
+            <p>${randomUsername}@gmail.com</p>
+        </div>
+        </div>
+        `
+        }
+        
+        for (let i = 0; i < 10; i++) {
+            createUser()
+        }
+
+    </script>
+</body>
+
+</html>

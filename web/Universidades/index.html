@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Universidades</title>
+</head>
+<body>
+    <h1>Universidades</h1>
+    <div id="displayer">
+
+    </div>
+    
+    <script>
+
+        fetch("https://analisi.transparenciacatalunya.cat/api/views/hej4-mujh/rows.json?accessType=DOWNLOAD")
+        .then(x => x.json())
+        .then(y => {
+            displayer.innerHTML = y
+            console.log(y)
+        })
+
+    </script>
+
+</body>
+</html>
