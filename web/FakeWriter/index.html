@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="/ferscript.js"></script>
+    <script src="/web/FakeLanguage/script.js"></script>
+    <style>
+        header , footer {
+            text-align: center;
+        }
+
+        main {
+            max-width: 800px;
+            margin: auto;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>FakeWriter</h1>
+    </header>
+    <main>
+        <div id="displayer">
+
+        </div>
+    </main>
+    <footer>
+        <p>by <a href="https://dibesfer.github.io">dibesfer</a> </p>
+    </footer>
+    <script>
+        typeWrite(generateWord(8),displayer,200)
+        
+    </script>
+</body>
+</html>
