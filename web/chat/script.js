@@ -400,6 +400,8 @@ async function sendMessage(e) {
     if (myUser) myAuthor = myUser.email.split("@")[0]
     let myMessage = userInput.value
 
+    if (myMessage.trim() === "") return
+
     if (myAuthor && myMessage) {
 
         const { data, error } = await database
@@ -472,10 +474,19 @@ async function getFullTable(tableName) {
 
     //RECIEVED DATA SUPER IMPORTANT
     //console.log(result)
+    let oldTime = new Date(result[0].created_at)
 
     result.forEach(element => {
         let myTime = new Date(element.created_at)
+        if (oldTime.getDate() != myTime.getDate()){
+            let myDate = document.createElement("p")
+            myDate.textContent = "---" + myTime.getFullYear() + "/" + needsazero(myTime.getMonth()) + "/" + needsazero(myTime.getDate()) + "---"
+            myDate.classList = "displayTime"
+
+            chatScreen.appendChild(myDate)
+        }
         createMsg(myTime, element.author, element.message)
+        oldTime = myTime
     });
 
     chatScreen.scrollTo(0, chatScreen.scrollHeight)
