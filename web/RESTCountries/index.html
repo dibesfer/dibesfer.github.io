@@ -21,7 +21,7 @@
             display: flex;
             border: solid 3px black;
             height: 100px;
-            overflow-x: auto;
+            
             
         }
 
@@ -47,21 +47,22 @@
 </head>
 
 <body>
-    <h1>Countries of the World</h1>
+    <h1>🗺Countries of the World</h1>
+    <h3>Ordered by descending population 👥</h3>
     <div id="displayer">
 
     </div>
     <p>Thanks to https://restcountries.com/#fields-mandatory</p>
     <script>
-
-        fetch("https://restcountries.com/v3.1/all?fields=name,population,flags,coatOfArms")
+        let counter = 1
+        fetch("https://restcountries.com/v3.1/all?fields=name,population,flags,coatOfArms,independent")
             .then(x => x.json())
             .then(y => {
                 y.sort(function (a, b) { return b.population - a.population });
                 for (let i = 0; i < y.length - 1; i++) {
                     const element = y[i];
 
-                    if (element.population > 0) {
+                    if (element.population > 0 && element.independent==true) {
                         displayer.innerHTML += `
                         
                         <div class="displayer-flex-item">
@@ -71,7 +72,7 @@
                         </div>
 
                         <div class="namedisplay">
-                        <h2>${i + 1}. ${element.name.common}, ${element.population}</h2>
+                        <h2>${counter}. ${element.name.common}, ${element.population}</h2>
                         <p>${element.name.official}</p>
                         </div>
                         
@@ -83,6 +84,7 @@
                         </div>
 
                         `
+                        counter++
                     }
                     console.log(element)
 
