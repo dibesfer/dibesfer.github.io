@@ -13,13 +13,10 @@ let languageMode = "alien"
 function fillASentence(words, wordLength) {
     mySentence = ""
     for (let i = 0; i < words; i++) {
-        let wordlength = randomInt(1, 3)
-
         let probabilidadComa = randomInt(1, 10)
         let probabilidadSigno = randomInt(1, 10)
 
         mySentence += generateWord(wordLength)
-
 
         if (i < words - 1) {
             if (probabilidadComa < 10) {
@@ -38,9 +35,13 @@ function fillASentence(words, wordLength) {
                 mySentence += "?"
             }
             //mySentence += " " + emojis[randomInt(0,emojis.length-1)]
-            mySentence += "<br><br>"
+            
             mySentence = capitalizeFirstLetter(mySentence)
-            textConsole.innerHTML += mySentence
+            if (textConsole){
+                mySentence += "<br><br>"
+                textConsole.innerHTML += mySentence
+            }
+            return mySentence
         }
     }
 }

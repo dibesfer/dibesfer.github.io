@@ -1,13 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>🪶FakeWriter</title>
     <script src="/ferscript.js"></script>
     <script src="/web/FakeLanguage/script.js"></script>
     <style>
-        header , footer {
+        header,
+        footer {
             text-align: center;
         }
 
@@ -15,23 +17,55 @@
             max-width: 800px;
             margin: auto;
         }
+
+        a {
+            text-decoration: none;
+        }
     </style>
 </head>
+
 <body>
     <header>
-        <h1>FakeWriter</h1>
+        <h1>🪶FakeWriter</h1>
+        <p>📝 I write random text! ✍️</p>
     </header>
     <main>
+        <hr>
         <div id="displayer">
-
+            <br>
         </div>
+        <hr>
     </main>
     <footer>
-        <p>by <a href="https://dibesfer.github.io">dibesfer</a> </p>
+        <p>by <a href="https://dibesfer.github.io">dibesfer</a> 👨🏻‍💻</p>
     </footer>
     <script>
-        typeWrite(generateWord(8),displayer,200)
+
+        let myLongText = []
+
+        for (let i = 0; i < 10; i++) {
+            myLongText.push((i+1)+ "- " + fillASentence(14))
+        }
+
+        async function typeWriter(text, el, delay = 10) {
+            for (let ch of text) {
+                el.innerHTML += ch;
+                await new Promise(r => setTimeout(r, delay));
+            }
+        }
+
+        async function writeSequence(el, frases) {
+            for (let f of frases) {
+                await typeWriter(f, el);
+                displayer.innerHTML += "<br><br>";
+            }
+        }
+
+        writeSequence(displayer, myLongText);
+
         
+
     </script>
 </body>
+
 </html>
