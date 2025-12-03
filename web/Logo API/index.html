@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logo API</title>
+    <script src="/ferscript.js"></script>
+    <style>
+        body {
+            background-color: gray;
+            font-family: sans-serif;
+        }
+        #displayer {
+            display: flex;
+            flex-wrap: wrap;
+        }
+        .logoBox-outer{
+            padding: 5px;
+        }
+        .logoBox {
+            border: solid 3px black;
+            line-height: 0;
+            background-color: rgb(228, 228, 228);
+        }
+
+        .logoBox > p {
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+
+        <h1>Logo API</h1>
+        <p>Logos from different companies</p>
+    </header>
+
+    <main>
+        <div id="displayer">
+            
+        </div>
+    </main>
+
+    <footer>
+
+        <p>by <a href="https://dibesfer.github.io">dibesfer</a> with <a href="https://www.logo.dev">logo.dev</a></p>
+
+    </footer>
+
+    <script>
+
+        let mainURL = "https://img.logo.dev/"
+        let publishablekey = "pk_XhqGe7XUSgiAyJ-gXgAghw"
+
+        let brands = [
+            "wikipedia",
+            "wordpress",
+            "react",
+            "chatgpt",
+            "paypal",
+            "blogger",
+            "w3schools",
+            "tesla",
+            "mcdonalds",
+            "apple",
+            "stripe",
+            "shopify",
+            "seat",
+            "nike",
+            "linkedin",
+            "microsoft",
+            "telefonica",
+            "burgerking",
+            "xiaomi",
+            "debian",
+            "caixabank",
+            "ing",
+            "instagram",
+            "meta",
+            "google",
+            "amazon",
+            "mozilla",
+            "firefox",
+            "samsung",
+            "ferrari",
+            "tinder",
+            "badoo",
+            "hp",
+            "wechat",
+            "whatsapp",
+            "minecraft",
+            "roblox",
+            "unity",
+            "epicgames",
+            "chevrolet",
+            "JEEP",
+            "RollsRoyce"
+        ]
+
+        brands = shuffle(brands)
+
+        brands.forEach((brand)=>{
+            displayer.innerHTML += `
+            
+            <div class="logoBox-outer">
+                <div class="logoBox">
+                    <p>${brand}</p>
+                    <img src="${mainURL}${brand}.com?token=${publishablekey}&format=png" alt="${brand} logo" />
+                </div>
+            </div>
+
+            `
+        })
+
+    </script>
+</body>
+
+</html>

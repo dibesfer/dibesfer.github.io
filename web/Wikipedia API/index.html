@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wikipedia API</title>
+</head>
+
+<body>
+    <header>
+        <h1>Wikipedia API</h1>
+        <p>Knowledge by Demand</p>
+    </header>
+    <hr>
+    <main>
+
+        <h2>Leer un artículo:</h2>
+        <details>
+            <summary>Papaver_rhoeas</summary>
+            <div id="displayer">
+
+            </div>
+        </details>
+
+        <h2>Buscar "flores"</h2>
+        <details>
+            <summary>Búsqueda</summary>
+            <div id="displayerSearch">
+
+            </div>
+        </details>
+
+    </main>
+    <hr>
+    <footer>
+        <p>by dibesfer with wikipedia</p>
+    </footer>
+
+    <script>
+
+        async function getWikiPage(title) {
+
+
+            //Only text
+            //const url = `https://es.wikipedia.org/w/api.php?action=query&prop=extracts&explaintext=1&titles=${encodeURIComponent(title)}&format=json&origin=*`;
+
+            const url = `https://en.wikipedia.org/w/api.php?action=query&format=json&prop=extracts|info|pageimages&inprop=url&piprop=thumbnail&pithumbsize=600&explaintext=1&titles=${encodeURIComponent(title)}&origin=*`;
+
+
+            const res = await fetch(url);
+            const data = await res.json();
+            //console.log(data)
+            const page = Object.values(data.query.pages)[0];
+            return page.extract; // Aquí tienes TODO el contenido
+        }
+
+        getWikiPage("Papaver_rhoeas").then(text => {
+            displayer.innerHTML = text;
+        });
+
+        async function searchWiki(q) {
+            const url = `https://es.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(q)}&format=json&origin=*`;
+
+            const res = await fetch(url);
+            const data = await res.json();
+            //console.log(data)
+            return data.query.search; // Lista de artículos
+        }
+
+        searchWiki("flores").then((result) => {
+            //console.log(result)
+            result.forEach(element => {
+                displayerSearch.innerHTML += `
+                
+                <h3>${element.title}</h3>
+                <p>${element.snippet}</p>
+                
+                `
+            });
+        });
+
+        
+        async function getCategoryMembers(cat) {
+            const url = `https://es.wikipedia.org/w/api.php?action=query&list=categorymembers&cmtitle=Categoría:${encodeURIComponent(cat)}&format=json&origin=*`;
+
+            const res = await fetch(url);
+            const data = await res.json();
+            return data.query.categorymembers;
+        }
+
+        getCategoryMembers("Open-source games").then(console.log);
+        
+
+        
+        async function listCategories(prefix) {
+            const url = `https://en.wikipedia.org/w/api.php?action=query&list=allcategories&acprefix=${encodeURIComponent(prefix)}&format=json&origin=*`;
+
+            const res = await fetch(url);
+            const data = await res.json();
+            return data.query.allcategories; // lista de categorías
+        }
+
+        listCategories("open-source").then(console.log);
+        
+
+    </script>
+
+</body>
+
+</html>
