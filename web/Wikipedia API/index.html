@@ -31,6 +31,22 @@
             </div>
         </details>
 
+        <h2>Buscar categorías por "open source"</h2>
+        <details>
+            <summary>Búsqueda</summary>
+            <div id="displayerCategorySearch">
+
+            </div>
+        </details>
+
+        <h2>Buscar artículos por categoría "Open source games"</h2>
+        <details>
+            <summary>Búsqueda</summary>
+            <div id="displayerCategoryArticleSearch">
+
+            </div>
+        </details>
+
     </main>
     <hr>
     <footer>
@@ -80,19 +96,7 @@
             });
         });
 
-        
-        async function getCategoryMembers(cat) {
-            const url = `https://es.wikipedia.org/w/api.php?action=query&list=categorymembers&cmtitle=Categoría:${encodeURIComponent(cat)}&format=json&origin=*`;
 
-            const res = await fetch(url);
-            const data = await res.json();
-            return data.query.categorymembers;
-        }
-
-        getCategoryMembers("Open-source games").then(console.log);
-        
-
-        
         async function listCategories(prefix) {
             const url = `https://en.wikipedia.org/w/api.php?action=query&list=allcategories&acprefix=${encodeURIComponent(prefix)}&format=json&origin=*`;
 
@@ -101,8 +105,55 @@
             return data.query.allcategories; // lista de categorías
         }
 
-        listCategories("open-source").then(console.log);
-        
+        listCategories("open source").then((result) => {
+            result.forEach(element => {
+
+
+                displayerCategorySearch.innerHTML += `
+                
+                <h3>${element["*"]}</h3>
+                
+                
+                `
+            });
+        });
+
+
+        async function getCategoryMembers(cat) {
+            const url = `https://en.wikipedia.org/w/api.php?action=query&list=categorymembers&cmtitle=Category:${encodeURIComponent(cat)}&format=json&origin=*`;
+
+            const res = await fetch(url);
+            const data = await res.json();
+            return data.query.categorymembers;
+        }
+
+        getCategoryMembers("Open-source games").then((result) => {
+            result.forEach(element => {
+
+
+                displayerCategoryArticleSearch.innerHTML += `
+                
+                <h3>${element.title}</h3>
+                
+                
+                `
+            });
+
+        });
+
+        async function getArticlesFromCategoryEN(cat) {
+            const url = `https://en.wikipedia.org/w/api.php?action=query&list=categorymembers&cmtitle=Category:${encodeURIComponent(cat)}&format=json&origin=*`;
+
+            const res = await fetch(url);
+            const data = await res.json();
+            return data.query.categorymembers;
+        }
+
+        getArticlesFromCategoryEN("Open source mobile phones").then(console.log);
+
+
+
+
 
     </script>
 
