@@ -47,7 +47,7 @@
             myLongText.push((i+1)+ "- " + fillASentence(14))
         }
 
-        async function typeWriter(text, el, delay = 10) {
+        async function typeWriter(text, el, delay = 50) {
             for (let ch of text) {
                 el.innerHTML += ch;
                 await new Promise(r => setTimeout(r, delay));
