@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=ç, initial-scale=1.0">
+    <title>Adveniat</title>
+
+    <!-- SUPABASE CDN -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+</head>
+
+<body>
+    <script>
+        const supabaseUrl = 'https://kalidybwmoxhcwlfeftc.supabase.co'
+        const supabaseKey = 'sb_publishable__jr8YglR8G9zZQQfLPLzqw_GxL2RA-A'
+        const database = supabase.createClient(supabaseUrl, supabaseKey)
+
+        async function readContent() {
+            let { data: pages, error } = await database
+                .from('pages')
+                .select('content')
+            document.write(pages[0].content)
+        }
+        readContent()
+    </script>
+</body>
+
+</html>

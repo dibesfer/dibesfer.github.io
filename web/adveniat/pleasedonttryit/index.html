@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>dbf - PDTI</title>
+    <link rel="stylesheet" href="style.css">
+<!-- SUPABASE CDN -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+
+</head>
+
+<body>
+    <header>
+        <p><a href="https://dibesfer.github.io">dibesfer</a> - please don't try it</p>
+        <div>
+            <button onclick="logIn()">Log in</button>
+            <button id="saveBtn" style="background-color: green; color: white;" onclick="save()"><a id="saveLink">save</a> </button>
+            <button style="background-color: yellow;" onclick="run()">run</button>
+        </div>
+
+    </header>
+
+    <div class="flexo">
+        <div id="result">
+            <iframe id="myIframe" src="" frameborder="0"></iframe>
+        </div>
+
+        <div id="script">
+            <!-- https://stackoverflow.com/questions/67865463/disable-tabbing-out-of-textarea : onkeydown="handleTab.call(this, event)" -->
+            <textarea spellcheck="false" id="myTextArea" name="" ></textarea>
+        </div>
+
+    </div>
+
+
+
+
+    <script src="script.js"></script>
+</body>
+
+</html>
