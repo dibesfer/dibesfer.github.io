@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>dibesfer Web School</title>
+    <style>
+        body {
+            font-family: sans-serif;
+        }
+
+        pre {
+            font: unset;
+        }
+
+        header,
+        footer {
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <h1>dibesfer Web School</h1>
+        <p>Learn how to make a website</p>
+        <p>HTML, CSS and Javascript</p>
+    </header>
+
+    <hr>
+    <main>
+        
+        <h2>1. HTML</h2>
+        <p>HyperText Markup Language</p>
+        <p>HTML builds the skeletal structure of a website</p>
+        <pre id="_1html"></pre>
+
+        <script>
+            _1html.textContent = `The most basic element of a web site is a <tag>
+        
+A tag is an element surrounded by < and > like <tag>, it usually contains content and it's closed with a pairing </tag>
+
+The most common tag you'll see is <p></p> which means a paragraph.
+
+Very common tags are h1, h2, h3 (titles), hr (a bar), div (a container), a (link)
+        `
+        </script>
+
+        <pre class="prettyprint" lang-html>
+
+        <div>
+            <div></div>
+        </div>
+
+    </pre>
+
+<h2>2. CSS</h2>
+<p>Cascade Style Sheet applies style to your html content</p>
+
+<p style="color:red">I am a styled paragraph!</p>
+
+
+<h2>3. Javascript</h2>
+<p>Javascript adds functionality to your website</p>
+<p id="clockDisplay"></p>
+
+<p>Most common input used to trigger javascript functions is the button</p>
+<button>Say something random</button>
+
+    </main>
+
+    <hr>
+    <footer>
+        <p>by <a href="https://dibesfer.github.io">dibesfer</a></p>
+    </footer>
+
+    <script
+        src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js?lang=html&amp;skin=sunburst"></script>
+
+    <script>
+function clockCount(){
+            let time = new Date()
+            clockDisplay.textContent = time
+        }
+
+        clockCount()
+
+        let clockInterval = setInterval(clockCount,1000)
+
+        
+    </script>
+</body>
+
+</html>
