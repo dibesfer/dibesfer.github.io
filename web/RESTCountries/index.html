@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>REST Countries</title>
+    <title>🗺REST Countries</title>
     <style>
         * {
             margin: 0;
@@ -21,8 +21,8 @@
             display: flex;
             border: solid 3px black;
             height: 100px;
-            
-            
+            width: 100%;
+            min-width: max-content
         }
 
         .flagdisplay>img {
@@ -35,12 +35,16 @@
         .namedisplay {
             flex: 1;
             height: 100%;
-            overflow-y: auto;
+            overflow: auto;
+            width: 400px;
+            padding-left: 10px;
         }
 
         .coatdisplay>img {
             height: 100%;
-            width: 200px;
+            width: 150px;
+            display: block;
+            overflow: auto;
             object-fit: contain;
         }
     </style>
@@ -54,8 +58,9 @@
     </div>
     <p>Thanks to https://restcountries.com/#fields-mandatory</p>
     <script>
+        
         let counter = 1
-        fetch("https://restcountries.com/v3.1/all?fields=name,population,flags,coatOfArms,independent")
+        fetch("https://restcountries.com/v3.1/all?fields=name,population,flags,coatOfArms,independent,capital")
             .then(x => x.json())
             .then(y => {
                 y.sort(function (a, b) { return b.population - a.population });
@@ -72,9 +77,10 @@
                         </div>
 
                         <div class="namedisplay">
-                        <h2>${counter}. ${element.name.common}, ${element.population}</h2>
-                        <p>${element.name.official}</p>
+                        <h2>${counter}. ${element.name.common}, ${thousandDot(element.population)}</h2>
+                        <p>${element.name.official}, ${element.capital}</p>
                         </div>
+                        
                         
                         <div class="coatdisplay">
                         <img src="${element.coatOfArms.png}" alt="Coat of Arms of ${element.name.common}">
@@ -90,6 +96,33 @@
 
                 }
             })
+
+            function thousandDot(number){
+                let dotCounter = 0
+                let newNumberString =""
+
+                if (typeof number != "string")
+                    number = number.toString()
+
+                for (let i = number.length-1; i >= 0; i--) {
+                    const element = number[i];
+
+                    if (dotCounter!=0 && dotCounter%3==0){
+                        //console.log(dotCounter + "dot")
+                        newNumberString += "."
+                    }
+                    dotCounter++
+                    //console.log(element, i)
+                    newNumberString += element
+                    
+                }
+
+                newNumberString = newNumberString.split('').reverse().join('');
+                //console.log(newNumberString)
+                return newNumberString
+                
+            }
+            
 
     </script>
 </body>
