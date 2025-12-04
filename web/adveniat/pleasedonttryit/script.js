@@ -6,6 +6,8 @@ async function getUser() {
     const { data: { user } } = await database.auth.getUser()
     if (user) {
         alert("Youre logged")
+        buttonLogOut.style = "display: inline-block"
+        buttonLogIn.style = "display: none"
     }
 }
 getUser()
@@ -24,6 +26,23 @@ async function readContent() {
 readContent()
 
 async function logIn() {
+
+    let myPassword = prompt("What's your password?")
+
+    let { data, error } = await database.auth.signInWithPassword({
+        email: 'dibesfer@gmail.com',
+        password: myPassword
+    })
+
+    if (!error) {
+        location.reload()
+    }
+
+    else {
+        alert(error.message, myPassword)
+    }
+
+    /*
     let { data, error } = await database.auth.signInWithOtp({
         email: 'dibesfer@gmail.com'
 
@@ -31,6 +50,19 @@ async function logIn() {
 
     if (!error) {
         alert("We sent a confirmation link")
+    }
+        */
+}
+
+async function logOut() {
+    let { error } = await database.auth.signOut()
+
+    if (!error) {
+        alert("You logged out")
+        location.reload()
+    }
+    else {
+        alert(error.message)
     }
 }
 
@@ -46,9 +78,13 @@ async function updateContent() {
         .update({ content: myTextArea.value })
         .eq('id', '1')
         .select()
-    if (!error){
+    if (data.length > 0) {
+        console.log(data.length, error)
         alert("Changes uploaded!")
         location.reload()
+    }
+    else {
+        alert("You gotta first log in")
     }
 }
 
