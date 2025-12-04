@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>guestbook</title>
+    <title>🪶Guestbook</title>
 
     <!-- FERSCRIPT.JS -->
     <script src="/ferscript.js"></script>
@@ -15,7 +15,7 @@
     <style>
 
         #guestbookMessages {
-            height: 120px;
+            height: 320px;
             border: solid 3px black;
             overflow: auto;
             padding: 5px;
@@ -35,7 +35,7 @@
 
 <body>
     <header>
-        <h1>Guestbook</h1>
+        <h1>🪶Guestbook</h1>
     </header>
     <main>
         <div id="guestbookMessages">
@@ -71,10 +71,19 @@
                 guestbookMessages.innerHTML = "" 
                 res.data.forEach(element => {
                     let myDate = new Date(element.created_at)
+                    let timeP = document.createElement("p")
+                    timeP.classList.add("displayDate")
+                    timeP.textContent = `${formatDate(myDate)} (${element.timezone})`
+                    let messageP = document.createElement("p")
+                    messageP.textContent = element.message
+                    guestbookMessages.appendChild(timeP)
+                    guestbookMessages.appendChild(messageP)
+                    /*
                     guestbookMessages.innerHTML += 
                     `
                     <p class="displayDate">${formatDate(myDate)} (${element.timezone})</p>
                     <p> ${element.message}</p>`
+                    */
                 });
                 guestbookMessages.scrollTop = guestbookMessages.scrollHeight
             }
