@@ -48,6 +48,7 @@ async function updateContent() {
         .select()
     if (!error){
         alert("Changes uploaded!")
+        location.reload()
     }
 }
 
