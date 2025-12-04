@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>dibesfer Web School</title>
+    <script src="/ferscript.js"></script>
     <style>
         body {
             font-family: sans-serif;
@@ -18,6 +19,17 @@
         footer {
             text-align: center;
         }
+        
+        main {
+            max-width: 800px;
+            margin: auto;
+        }
+
+        textarea {
+            resize: none;
+            height: 200px;
+        }
+
     </style>
 </head>
 
@@ -31,7 +43,7 @@
 
     <hr>
     <main>
-        
+
         <h2>1. HTML</h2>
         <p>HyperText Markup Language</p>
         <p>HTML builds the skeletal structure of a website</p>
@@ -45,29 +57,41 @@ A tag is an element surrounded by < and > like <tag>, it usually contains conten
 The most common tag you'll see is <p></p> which means a paragraph.
 
 Very common tags are h1, h2, h3 (titles), hr (a bar), div (a container), a (link)
-        `
+
+The basic HTML structure of a website looks like this:
+`
         </script>
 
-        <pre class="prettyprint" lang-html>
+<textarea name="" id="htmlTA" spellcheck="false">
 
-        <div>
-            <div></div>
-        </div>
+    
+</textarea>
 
-    </pre>
+<script>
 
-<h2>2. CSS</h2>
-<p>Cascade Style Sheet applies style to your html content</p>
+</script>
+        
+        <!-- <pre class="prettyprint" lang-html>
 
-<p style="color:red">I am a styled paragraph!</p>
+            <div>
+                <div></div>
+            </div>
+
+        </pre> -->
+
+        <h2>2. CSS</h2>
+        <p>Cascade Style Sheet applies style to your html content</p>
+
+        <p style="color:red">I am a styled paragraph!</p>
 
 
-<h2>3. Javascript</h2>
-<p>Javascript adds functionality to your website</p>
-<p id="clockDisplay"></p>
+        <h2>3. Javascript</h2>
+        <p>Javascript adds functionality to your website</p>
+        <p id="clockDisplay"></p>
 
-<p>Most common input used to trigger javascript functions is the button</p>
-<button>Say something random</button>
+        <p>Most common input used to trigger javascript functions is the button</p>
+        <p id="randomDisplay">Click the button below!</p>
+        <button onclick="randomMessage()">Say something random</button>
 
     </main>
 
@@ -76,20 +100,47 @@ Very common tags are h1, h2, h3 (titles), hr (a bar), div (a container), a (link
         <p>by <a href="https://dibesfer.github.io">dibesfer</a></p>
     </footer>
 
-    <script
-        src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js?lang=html&amp;skin=sunburst"></script>
+    <!-- <script
+        src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js?lang=html&amp;skin=sunburst"></script> -->
 
     <script>
-function clockCount(){
+
+    htmlTA.value = `<!DOCTYPE html>
+<html>
+<head>
+</head>
+<body>
+    <h1>Hello World!</h2>
+</body>
+</html>`
+
+        function clockCount() {
             let time = new Date()
             clockDisplay.textContent = time
         }
 
         clockCount()
 
-        let clockInterval = setInterval(clockCount,1000)
+        let clockInterval = setInterval(clockCount, 1000)
 
-        
+        let messages = [
+            "Hi!",
+            "Hello",
+            "What's up?",
+            "How are you?",
+            "Wassup?",
+            "How are you doing?",
+            "Click the button below!",
+            "Internet is powerful",
+            "Share your knowledge!",
+            "Life's meaning is 42",
+            "Let's all be good one to another"
+        ]
+
+        function randomMessage(){
+            randomDisplay.textContent = messages[randomInt(0,messages.length-1)]
+        }
+
     </script>
 </body>
 
