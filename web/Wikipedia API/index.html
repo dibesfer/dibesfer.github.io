@@ -5,6 +5,31 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Wikipedia API</title>
+
+    <style>
+        body {
+            max-width: 800px;
+            margin: auto;
+        }
+
+        @media screen and (max-width:800px) {
+            body {
+                margin: 10px
+            }
+        }
+
+        .displayer {
+            height: 200px;
+            border: 1px solid black;
+            overflow: auto;
+        }
+
+        input,
+        button {
+            font: unset;
+            border: solid 1px black;
+        }
+    </style>
 </head>
 
 <body>
@@ -15,37 +40,28 @@
     <hr>
     <main>
 
-        <h2>Leer un artículo:</h2>
-        <details>
-            <summary>Papaver_rhoeas</summary>
-            <div id="displayer">
+        <h2>Read an article</h2>
+        <input id="inputRead" type="text"><button onclick="wikiRead()">Search</button>
+        <div id="displayRead" class="displayer"></div>
 
-            </div>
-        </details>
+        <h2>Search by name</h2>
+        <input id="inputSearch" type="text"><button onclick="wikiSearch()">Search</button>
+        <div id="displaySearch" class="displayer"></div>
 
-        <h2>Buscar "flores"</h2>
-        <details>
-            <summary>Búsqueda</summary>
-            <div id="displayerSearch">
+        <h2>Search categories</h2>
+        <input id="inputCategory" type="text"><button onclick="wikiCategories()">Search</button>
+        <div id="displayCategories" class="displayer"></div>
 
-            </div>
-        </details>
+        <h2>Search articles by category</h2>
+        <input id="inputCatArt" type="text"><button onclick="wikiCatArt()">Search</button>
+        <div id="displayCatArt" class="displayer"></div>
 
-        <h2>Buscar categorías por "open source"</h2>
-        <details>
-            <summary>Búsqueda</summary>
-            <div id="displayerCategorySearch">
+        <h1>Wikimedia API</h1>
+        <h2>Search images by category</h2>
+        <input id="inputWikimediaImages" type="text"><button onclick="wikimediaImages()">Search</button>
+        <div id="displayWikimediaImages" class="displayer"></div>
 
-            </div>
-        </details>
 
-        <h2>Buscar artículos por categoría "Open source games"</h2>
-        <details>
-            <summary>Búsqueda</summary>
-            <div id="displayerCategoryArticleSearch">
-
-            </div>
-        </details>
 
     </main>
     <hr>
@@ -55,13 +71,15 @@
 
     <script>
 
-        async function getWikiPage(title) {
+        async function wikiRead(title) {
 
 
             //Only text
             //const url = `https://es.wikipedia.org/w/api.php?action=query&prop=extracts&explaintext=1&titles=${encodeURIComponent(title)}&format=json&origin=*`;
 
-            const url = `https://en.wikipedia.org/w/api.php?action=query&format=json&prop=extracts|info|pageimages&inprop=url&piprop=thumbnail&pithumbsize=600&explaintext=1&titles=${encodeURIComponent(title)}&origin=*`;
+            if (!title) title = inputRead.value
+
+            const url = `https://en.wikipedia.org/w/api.php?action=query&format=json&prop=extracts|info|pageimages&inprop=url&piprop=thumbnail&pithumbsize=600&explaintext=1&titles=${encodeURIComponent(title)}&origin=*&exintro=1`;
 
             /*
 
@@ -75,22 +93,42 @@
             &explaintext=1
             &titles=${encodeURIComponent(title)}
             &origin=*
+            &exintro=1 IT GETS THE FIRST SECTION
 
             */
 
             const res = await fetch(url);
             const data = await res.json();
-            console.log("getWikiPage: ", data)
             const page = Object.values(data.query.pages)[0];
+
+            console.log(page)
+            displayRead.innerHTML = ""
+            displayRead.innerHTML = `
+            
+            <h2>${page.title}</h2>`
+
+            if (page.thumbnail) {
+                displayRead.innerHTML += `
+                <img width="100px" src="${page.thumbnail.source}">
+                `
+            }
+            displayRead.innerHTML += `
+            <p>${page.extract}</p>
+            
+            `
+
             return page.extract; // Aquí tienes TODO el contenido
         }
 
-        getWikiPage("Papaver_rhoeas").then(text => {
-            displayer.innerHTML = text;
-        });
+        async function wikiSearch(q) {
 
-        async function searchWiki(q) {
-            const url = `https://es.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(q)}&format=json&origin=*`;
+            if (!q) q = inputSearch.value
+
+            // action = opensearch
+            //const url = `https://es.wikipedia.org/w/api.php?origin=*&action=opensearch&search=${encodeURIComponent(q)}&limit=50&format=json`;
+
+
+            const url = `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(q)}&format=json&origin=*`;
 
             /*
             
@@ -105,25 +143,27 @@
 
             const res = await fetch(url);
             const data = await res.json();
-            //console.log(data)
-            return data.query.search; // Lista de artículos
-        }
-
-        searchWiki("flores").then((result) => {
-            //console.log(result)
-            result.forEach(element => {
-                displayerSearch.innerHTML += `
+            displaySearch.innerHTML = ""
+            data.query.search.forEach(element => {
+                displaySearch.innerHTML += `
                 
                 <h3>${element.title}</h3>
                 <p>${element.snippet}</p>
                 
                 `
             });
-        });
 
+            return data.query.search; // Lista de artículos
+        }
 
-        async function listCategories(prefix) {
-            const url = `https://en.wikipedia.org/w/api.php?action=query&list=allcategories&acprefix=${encodeURIComponent(prefix)}&format=json&origin=*`;
+        async function wikiCategories(category) {
+
+            if (!category) category = inputCategory.value
+
+            // prop = categories
+            //  const url = `https://es.wikipedia.org/w/api.php?origin=*&action=query&format=json&prop=categories&titles=${encodeURIComponent(title)}`;
+
+            const url = `https://en.wikipedia.org/w/api.php?action=query&list=allcategories&acprefix=${encodeURIComponent(category)}&format=json&origin=*`;
 
             /*
             https://en.wikipedia.org/w/api.php
@@ -136,24 +176,26 @@
 
             const res = await fetch(url);
             const data = await res.json();
-            return data.query.allcategories; // lista de categorías
-        }
 
-        listCategories("open source").then((result) => {
-            result.forEach(element => {
+            displayCategories.innerHTML = ""
+            data.query.allcategories.forEach(element => {
 
 
-                displayerCategorySearch.innerHTML += `
+                displayCategories.innerHTML += `
                 
                 <h3>${element["*"]}</h3>
                 
                 
                 `
             });
-        });
 
+            return data.query.allcategories; // lista de categorías
+        }
 
-        async function getCategoryMembers(cat) {
+        async function wikiCatArt(cat) {
+
+            if (!cat) cat = inputCatArt.value
+
             const url = `https://en.wikipedia.org/w/api.php?action=query&list=categorymembers&cmtitle=Category:${encodeURIComponent(cat)}&format=json&origin=*`;
 
             /*
@@ -169,14 +211,11 @@
 
             const res = await fetch(url);
             const data = await res.json();
-            return data.query.categorymembers;
-        }
-
-        getCategoryMembers("Open-source games").then((result) => {
-            result.forEach(element => {
+            displayCatArt.innerHTML = ""
+            data.query.categorymembers.forEach(element => {
 
 
-                displayerCategoryArticleSearch.innerHTML += `
+                displayCatArt.innerHTML += `
                 
                 <h3>${element.title}</h3>
                 
@@ -184,32 +223,34 @@
                 `
             });
 
-        });
-
-        async function getArticlesFromCategoryEN(cat) {
-            const url = `https://en.wikipedia.org/w/api.php?action=query&list=categorymembers&cmtitle=Category:${encodeURIComponent(cat)}&format=json&origin=*`;
-
-            /*
-
-            https://en.wikipedia.org/w/api.php
-            ?action=query
-            &list=categorymembers
-            &cmtitle=Category:${encodeURIComponent(cat)}
-            &format=json
-            &origin=*
-
-            */
-
-            const res = await fetch(url);
-            const data = await res.json();
             return data.query.categorymembers;
         }
 
-        getArticlesFromCategoryEN("Open source mobile phones").then(console.log);
+        // WIKIMEDIA API
 
+        async function wikimediaImages(category) {
 
+            if (!category) category = inputWikimediaImages.value
 
+            const url = `https://commons.wikimedia.org/w/api.php?origin=*&action=query&format=json&generator=categorymembers&gcmtitle=Category:${encodeURIComponent(category)}&gcmtype=file&gcmlimit=10&prop=imageinfo&iiprop=url`;
 
+            const res = await fetch(url);
+            const data = await res.json();
+            const pages = data.query.pages;
+
+            const urls = Object.values(pages).map(p => p.imageinfo[0].url);
+            
+            displayWikimediaImages.innerHTML = ""
+            urls.forEach(element => {
+                displayWikimediaImages.innerHTML += `
+                <img height="100%"" src="${element}">
+                `
+            });
+           
+            return urls;
+        }
+
+        wikimediaImages('Robots');
 
     </script>
 
