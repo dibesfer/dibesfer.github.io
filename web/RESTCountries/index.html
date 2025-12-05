@@ -55,7 +55,8 @@
     <h1>🗺Countries of the World</h1>
     <h3>Ordered by descending population 👥</h3>
     <div id="displayer">
-
+        <h2>Loading content...</h2>
+        <img src="https://upload.wikimedia.org/wikipedia/commons/b/b1/Loading_icon.gif" alt="Loading Spinning Image">
     </div>
     <p>Thanks to https://restcountries.com/#fields-mandatory</p>
     <script>
@@ -65,6 +66,9 @@
             .then(x => x.json())
             .then(y => {
                 y.sort(function (a, b) { return b.population - a.population });
+                
+                displayer.innerHTML = ""
+
                 for (let i = 0; i < y.length - 1; i++) {
                     const element = y[i];
 
