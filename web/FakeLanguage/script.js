@@ -90,9 +90,14 @@ function generate() {
         case "emojis":
 
             getAllEmojis().then((emojis) => {
+                emojis = emojis.split(" ")
                 textConsole.innerHTML = ""
-                console.log(emojis)
-                textConsole.textContent = emojis
+                
+                for (let i = 0; i < 200; i++) {
+                    textConsole.textContent += emojis[randomInt(0,emojis.length-1)]
+                    
+                }
+                
             })
 
 

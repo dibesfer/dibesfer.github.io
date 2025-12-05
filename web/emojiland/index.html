@@ -26,6 +26,7 @@
     <script>
         getAllEmojis().then(all => {
     displayer.textContent = all;
+    all = all.split(" ")
     emojiCounter.textContent = all.length
     // all es un string con *todos* los emojis, uno tras otro.
 }).catch(console.error);

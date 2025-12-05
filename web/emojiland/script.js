@@ -25,7 +25,7 @@ async function getAllEmojis() {
         }
     }
 
-    return emojis.join('');
+    return emojis.join(' ');
 }
 
 
