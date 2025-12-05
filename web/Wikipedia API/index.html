@@ -40,28 +40,38 @@
     <hr>
     <main>
 
-        <h2>Read an article</h2>
-        <input id="inputRead" type="text"><button onclick="wikiRead()">Search</button>
+
+        <h2>Read an article extract </h2>
+        <input id="inputRead" type="text" value="Darth Vader"><button onclick="wikiRead()">Search</button>
         <div id="displayRead" class="displayer"></div>
 
+        <h2>Read all article html</h2>
+        <input id="inputReadAll" type="text" value="List of Spanish flags"><button
+            onclick="wikiReadAll()">Search</button>
+        <div id="displayReadAll" class="displayer"></div>
+
         <h2>Search by name</h2>
-        <input id="inputSearch" type="text"><button onclick="wikiSearch()">Search</button>
+        <input id="inputSearch" type="text" value="Open Source"><button onclick="wikiSearch()">Search</button>
         <div id="displaySearch" class="displayer"></div>
 
         <h2>Search categories</h2>
-        <input id="inputCategory" type="text"><button onclick="wikiCategories()">Search</button>
+        <input id="inputCategory" type="text" value="programming"><button onclick="wikiCategories()">Search</button>
         <div id="displayCategories" class="displayer"></div>
 
         <h2>Search articles by category</h2>
-        <input id="inputCatArt" type="text"><button onclick="wikiCatArt()">Search</button>
+        <input id="inputCatArt" type="text" value="programming language"><button onclick="wikiCatArt()">Search</button>
         <div id="displayCatArt" class="displayer"></div>
 
         <h1>Wikimedia API</h1>
         <h2>Search images by category</h2>
-        <input id="inputWikimediaImages" type="text"><button onclick="wikimediaImages()">Search</button>
+        <input id="inputWikimediaImages" type="text" value="flowers"><button onclick="wikimediaImages()">Search</button>
         <div id="displayWikimediaImages" class="displayer"></div>
 
-
+        <br>
+        <details>
+            <summary>Documentation</summary>
+            <p>All api calls go to <code>https://en.wikipedia.org/w/api.php</code></p>
+        </details>
 
     </main>
     <hr>
@@ -239,18 +249,41 @@
             const pages = data.query.pages;
 
             const urls = Object.values(pages).map(p => p.imageinfo[0].url);
-            
+
             displayWikimediaImages.innerHTML = ""
             urls.forEach(element => {
                 displayWikimediaImages.innerHTML += `
                 <img height="100%"" src="${element}">
                 `
             });
-           
+
             return urls;
         }
 
+        async function wikiReadAll() {
 
+            let name = inputReadAll.value
+            const url = `https://en.wikipedia.org/w/api.php?action=parse&page=${name}&format=json&origin=*`;
+
+            fetch(url)
+                .then(res => res.json())
+                .then(data => {
+                    const html = data.parse.text["*"];
+                    displayReadAll.innerHTML = "<h1>" + data.parse.title + "</h1>" + html // Todo el HTML de la página
+                })
+                .catch(err => console.error(err));
+        }
+
+
+        function main() {
+            wikiRead()
+            wikiReadAll()
+            wikiSearch()
+            wikiCategories()
+            wikiCatArt()
+            wikimediaImages()
+        }
+        main()
     </script>
 
 </body>
