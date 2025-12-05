@@ -36,3 +36,29 @@ function typeWrite(what, where, speed) {
   }
 
 }
+
+function thousandDot(number) {
+  let dotCounter = 0
+  let newNumberString = ""
+
+  if (typeof number != "string")
+    number = BigInt(number).toString()
+
+  for (let i = number.length - 1; i >= 0; i--) {
+    const element = number[i];
+
+    if (dotCounter != 0 && dotCounter % 3 == 0) {
+      //console.log(dotCounter + "dot")
+      newNumberString += "."
+    }
+    dotCounter++
+    //console.log(element, i)
+    newNumberString += element
+
+  }
+
+  newNumberString = newNumberString.split('').reverse().join('');
+  //console.log(newNumberString)
+  return newNumberString
+
+}

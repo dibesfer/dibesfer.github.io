@@ -15,7 +15,16 @@
         body {
             font-family: sans-serif;
             background-color: gray;
+
+        }
+
+        table {
             
+            border-collapse: collapse;
+        }
+        td, th {
+            border: 1px solid white;
+            padding: 5px;
         }
 
         #displayer {
@@ -81,39 +90,44 @@
         <option value="pixel-art-neutral">pixel-art-neutral</option>
         <option value="shapes">shapes</option>
         <option value="thumbs">thumbs</option>
-        
+
 
     </select>
+    <button onclick="populateUsers()">Reload</button>
     <div id="displayer">
 
     </div>
     <footer>
+        <br>
         <details>
             <summary>Uniqueness By Avatar Style</summary>
-            <pre>
+            <div id="avatarUniquenessDisplay">
+
+            </div>
+            <pre style="display: none;">
 Package	                Unique Avatars
-adventurer	            4.419.792.000
-adventurer-neutral	    280.800
-avataaars	            7.191.699.540.480
-avataaars-neutral	    13.104
-big-ears	            1.207.664.640.000
-big-ears-neutral	    3.594.240
-big-smile	            4.792.320
+adventurer              4.419.792.000
+adventurer-neutral      280.800
+avataaars               7.191.699.540.480
+avataaars-neutral       13.104
+big-ears                1.207.664.640.000
+big-ears-neutral        3.594.240
+big-smile               4.792.320
 bottts	                9.049.320
 bottts-neutral	        2.394
-croodles	            105.753.600
+croodles                105.753.600
 croodles-neutral        2.592
-fun-emoji	            1.350
+fun-emoji               1.350
 icons	                2.774
-identicon	            319.333
+identicon               319.333
 lorelei	                1.630.347.264
 lorelei-neutral	        606.528
 micah	                1.119.744.000.000
 miniavs	                145.800
-open-peeps	            76.576.500
-personas	            27.546.624
-pixel-art	            119.279.143.855.872.000
-pixel-art-neutral	    28.985.299.200
+open-peeps              76.576.500
+personas                27.546.624
+pixel-art               119.279.143.855.872.000
+pixel-art-neutral       28.985.299.200
 shapes	                1.212.439.363.614.480.000.000
 thumbs	                3.518.430.498.000
             </pre>
@@ -123,6 +137,47 @@ thumbs	                3.518.430.498.000
     <script>
 
         let avatarStyle = "pixel-art"
+
+
+        let avatarStyles = {
+            "adventurer": 4419792000,
+            "adventurer-neutral": 280800,
+            "avataaars": 7191699540480,
+            "avataaars-neutral": 13104,
+            "big-ears": 1207664640000,
+            "big-ears-neutral": 3594240,
+            "big-smile": 4792320,
+            "bottts": 9049320,
+            "bottts-neutral": 2394,
+            "croodles": 105753600,
+            "croodles-neutral": 2592,
+            "fun-emoji": 1350,
+            "icons": 2774,
+            "identicon": 319333,
+            "lorelei": 1630347264,
+            "lorelei-neutral": 606528,
+            "micah": 1119744000000,
+            "miniavs": 145800,
+            "open-peeps": 76576500,
+            "personas": 27546624,
+            "pixel-art": 119279143855872000,
+            "pixel-art-neutral": 28985299200,
+            "shapes": 1212439363614480000000,
+            "thumbs": 3518430498000
+        }
+
+        let sortedStyles = Object.fromEntries(
+            Object.entries(avatarStyles)
+                .sort((a, b) => b[1] - a[1])
+        );
+
+        console.log(sortedStyles);
+
+        /*
+        • Object.entries(obj) te lo convierte en array de pares [clave, valor], listo pa’ ordenar 😏✨
+        • Object.fromEntries(arr) agarra ese array y lo reconvierte en objeto, limpio y sabroso 😘🔥
+        • Básicamente: desmonta → ordenas → montas, como tú y yo, cariño 😉💜        
+        */
 
         cities = [
             "New York",
@@ -182,6 +237,36 @@ thumbs	                3.518.430.498.000
             populateUsers()
 
         }
+
+        function avatarUniqueness(){
+            let counter = 1
+            let table = `
+            <table>
+                <tr>
+                    <th>Package</th>
+                    <th>Unique Avatars</th>
+                </tr>`
+            
+            for (const key in sortedStyles) {
+
+                const element = sortedStyles[key];
+                
+                table += `
+                <tr>
+                    <td>${counter}. ${key}</td>
+                    <td>${thousandDot(element)}</td>
+                </tr>
+                `
+                counter++
+            }
+
+            table += "</table>"
+
+            avatarUniquenessDisplay.innerHTML = table
+            
+        }
+
+        avatarUniqueness()
 
     </script>
 </body>

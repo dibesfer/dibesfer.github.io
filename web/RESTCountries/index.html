@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🗺REST Countries</title>
+    <script src="/ferscript.js"></script>
     <style>
         * {
             margin: 0;
@@ -97,31 +98,7 @@
                 }
             })
 
-            function thousandDot(number){
-                let dotCounter = 0
-                let newNumberString =""
-
-                if (typeof number != "string")
-                    number = number.toString()
-
-                for (let i = number.length-1; i >= 0; i--) {
-                    const element = number[i];
-
-                    if (dotCounter!=0 && dotCounter%3==0){
-                        //console.log(dotCounter + "dot")
-                        newNumberString += "."
-                    }
-                    dotCounter++
-                    //console.log(element, i)
-                    newNumberString += element
-                    
-                }
-
-                newNumberString = newNumberString.split('').reverse().join('');
-                //console.log(newNumberString)
-                return newNumberString
-                
-            }
+            
             
 
     </script>

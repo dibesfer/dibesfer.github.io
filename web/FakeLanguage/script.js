@@ -35,9 +35,9 @@ function fillASentence(words, wordLength) {
                 mySentence += "?"
             }
             //mySentence += " " + emojis[randomInt(0,emojis.length-1)]
-            
+
             mySentence = capitalizeFirstLetter(mySentence)
-            if (textConsole){
+            if (textConsole) {
                 mySentence += "<br><br>"
                 textConsole.innerHTML += mySentence
             }
@@ -53,7 +53,7 @@ function capitalizeFirstLetter(val) {
 }
 
 function generate() {
-    textConsole.innerHTML = "<br>"
+    if (textConsole) textConsole.innerHTML = "<br>"
 
     switch (languageMode) {
         case "alien":
@@ -68,11 +68,11 @@ function generate() {
 
         case "africanus":
 
-            fillASentence(10,4)
+            fillASentence(10, 4)
 
-            fillASentence(10,4)
+            fillASentence(10, 4)
 
-            fillASentence(10,4)
+            fillASentence(10, 4)
 
 
             break;
@@ -239,11 +239,14 @@ function poetry() {
         }
     }
 }
+
 changeLanguageMode()
 function changeLanguageMode() {
-    let x = document.getElementById("mySelect").value;
-    languageMode = x
-    generate()
+    if (document.getElementById("mySelect")) {
+        let x = document.getElementById("mySelect").value;
+        languageMode = x
+        generate()
+    }
 }
 
 function strip(html) {
