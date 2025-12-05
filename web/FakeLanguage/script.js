@@ -87,6 +87,17 @@ function generate() {
 
             break;
 
+        case "emojis":
+
+            getAllEmojis().then((emojis) => {
+                textConsole.innerHTML = ""
+                console.log(emojis)
+                textConsole.textContent = emojis
+            })
+
+
+            break;
+
         default:
             break;
     }

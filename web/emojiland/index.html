@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <header>
+        <h1>Emojiland</h1>
+        <p>The land of <span id="emojiCounter"></span> emojis!</p>
+    </header>
+    <main>
+
+        <div id="displayer">
+
+        </div>
+
+    </main>
+    <footer>
+
+    </footer>
+    <script src="script.js"></script>
+    <script>
+        getAllEmojis().then(all => {
+    displayer.textContent = all;
+    emojiCounter.textContent = all.length
+    // all es un string con *todos* los emojis, uno tras otro.
+}).catch(console.error);
+    </script>
+</body>
+
+</html>
