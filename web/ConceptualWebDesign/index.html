@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ConceptualWebDesign</title>
+    <style>
+        * {
+            margin: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: sans-serif;
+
+            background-color: blueviolet;
+        }
+
+        pre {
+            font: unset;
+        }
+
+        .box-outer {
+            padding: 5px;
+            max-width: 100%;
+        }
+
+        .box {
+            border: 0.5px solid black;
+            border-radius: 10px;
+            background-color: gray;
+            padding: 5px;
+            max-width: max-content;
+            width: 100%;
+            display: flex;
+            gap: 5px;
+        }
+
+        .stylebox > .box-content {
+            background-color: violet;
+        }
+
+        .scriptbox > .box-content {
+            background-color: darkblue;
+            color: white;
+        }
+
+        .box-title {
+            display: inline-block;
+            background-color: white;
+            border-radius: 10px;
+            padding: 5px;
+            height: max-content;
+        }
+
+        .box-content {
+            display: flex;
+            background-color: lightblue;
+            border-radius: 10px;
+            padding: 5px;
+            max-width: 100%;
+        }
+    </style>
+</head>
+
+<body>
+
+
+    <div class="box-outer">
+        <div class="box stylebox">
+            <div class="box-title">
+                style
+            </div>
+            <div class="box-content">
+                <pre>
+body {
+    background-color: violet;
+}</pre>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="box-outer">
+        <div class="box">
+            <div class="box-title">
+                h1
+            </div>
+            <div class="box-content">
+                Conceptual Web Design
+            </div>
+        </div>
+    </div>
+
+    <div class="box-outer">
+        <div class="box">
+            <div class="box-title">
+                h3
+            </div>
+            <div class="box-content">
+                Design websites with conceptual boxes
+            </div>
+        </div>
+    </div>
+
+    <div class="box-outer">
+        <div class="box">
+            <div class="box-title">
+                hr
+            </div>
+            <div class="box-content">
+                - - - - -
+            </div>
+        </div>
+    </div>
+
+    <div class="box-outer">
+        <div class="box">
+            <div class="box-title">
+                h2
+            </div>
+            <div class="box-content">
+                Section Title
+            </div>
+        </div>
+    </div>
+
+    <div class="box-outer">
+        <div class="box">
+            <div class="box-title">
+                p
+            </div>
+            <div class="box-content">
+                Lorem ipsum dolor sit amet consectetur, adipisicing elit. Modi incidunt rerum dolores cumque enim?
+                Consectetur, aliquam deleniti. Quidem facere, eius aspernatur, deserunt nostrum soluta vitae aliquam hic
+                natus nemo nulla?
+
+            </div>
+        </div>
+    </div>
+
+    <div class="box-outer">
+        <div class="box">
+            <div class="box-title">
+                div
+            </div>
+            <div class="box-content">
+                I am a container div
+            </div>
+        </div>
+    </div>
+
+    <div class="box-outer">
+        <div class="box">
+            <div class="box-title">
+                img
+            </div>
+            <div class="box-content">
+                https://dibesfer.com/image.png
+            </div>
+        </div>
+    </div>
+
+    <div class="box-outer">
+        <div class="box">
+            <div class="box-title">
+                hr
+            </div>
+            <div class="box-content">
+                - - - - -
+            </div>
+        </div>
+    </div>
+
+    <div class="box-outer">
+        <div class="box">
+            <div class="box-title">
+                p
+            </div>
+            <div class="box-content">
+                by
+
+                <div class="box-outer">
+                    <div class="box">
+                        <div class="box-title">
+                            a
+                        </div>
+                        <div class="box-content">
+                            https://dibesfer.github.io
+                        </div>
+                    </div>
+                </div>
+
+
+            </div>
+        </div>
+    </div>
+
+    <div class="box-outer">
+        <div class="box scriptbox">
+            <div class="box-title">
+                script
+            </div>
+            <div class="box-content">
+<pre>
+alert("Hello world!")
+</pre>
+            </div>
+        </div>
+    </div>
+
+    <div class="box-outer">
+        <div class="box">
+            <div class="box-title">
+                create new element +
+            </div>
+            
+        </div>
+    </div>
+
+</body>
+
+</html>
