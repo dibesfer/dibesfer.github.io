@@ -18,14 +18,21 @@
             line-height: 2;
         }
 
+        #displayer {
+            overflow: auto;
+        }
         .displayer-flex-item {
             display: flex;
-            border: solid 3px black;
+            border: solid 1px black;
             height: 100px;
             width: 100%;
             min-width: max-content
         }
 
+        .flagdisplay {
+            background-image: radial-gradient( gray, black);
+
+        }
         .flagdisplay>img {
             height: 100%;
             width: 200px;
@@ -47,6 +54,8 @@
             display: block;
             overflow: auto;
             object-fit: contain;
+            background-color: rgb(200, 200, 200);
+
         }
     </style>
 </head>
