@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Wikipedia API</title>
-
+<link rel="stylesheet" href="https://en.wikipedia.org/w/load.php?modules=mediawiki.skinning.content&only=styles">
     <style>
         body {
             max-width: 800px;
@@ -42,29 +42,40 @@
 
 
         <h2>Read an article extract </h2>
-        <input id="inputRead" type="text" value="Darth Vader"><button onclick="wikiRead()">Search</button>
+        <input autocomplete="off" id="inputRead" type="text" value="Darth Vader"><button
+            onclick="wikiRead()">Search</button>
         <div id="displayRead" class="displayer"></div>
 
         <h2>Read all article html</h2>
-        <input id="inputReadAll" type="text" value="List of Spanish flags"><button
-            onclick="wikiReadAll()">Search</button>
+        <input autocomplete="off" id="inputReadAll" type="text" value="List of Spanish flags"><button
+            onclick="wikiReadHTML()">Search</button>
         <div id="displayReadAll" class="displayer"></div>
 
         <h2>Search by name</h2>
-        <input id="inputSearch" type="text" value="Open Source"><button onclick="wikiSearch()">Search</button>
+        <input autocomplete="off" id="inputSearch" type="text" value="Open Source"><button
+            onclick="wikiSearch()">Search</button>
         <div id="displaySearch" class="displayer"></div>
 
         <h2>Search categories</h2>
-        <input id="inputCategory" type="text" value="programming"><button onclick="wikiCategories()">Search</button>
+        <input autocomplete="off" id="inputCategory" type="text" value="programming"><button
+            onclick="wikiCategories()">Search</button>
         <div id="displayCategories" class="displayer"></div>
 
         <h2>Search articles by category</h2>
-        <input id="inputCatArt" type="text" value="programming language"><button onclick="wikiCatArt()">Search</button>
+        <input autocomplete="off" id="inputCatArt" type="text" value="programming language"><button
+            onclick="wikiCatArt()">Search</button>
         <div id="displayCatArt" class="displayer"></div>
 
         <h1>Wikimedia API</h1>
+
+        <h2>Read HTML</h2>
+        <input autocomplete="off" id="inputWikimediaHTML" type="text" value="Gallery of armed forces flags"><button
+            onclick="wikimediaHTML()">Search</button>
+        <div id="displayWikimediaHTML" class="displayer"></div>
+
         <h2>Search images by category</h2>
-        <input id="inputWikimediaImages" type="text" value="flowers"><button onclick="wikimediaImages()">Search</button>
+        <input autocomplete="off" id="inputWikimediaImages" type="text" value="flowers"><button
+            onclick="wikimediaImages()">Search</button>
         <div id="displayWikimediaImages" class="displayer"></div>
 
         <br>
@@ -128,6 +139,27 @@
             `
 
             return page.extract; // Aquí tienes TODO el contenido
+        }
+
+        async function wikiReadHTML() {
+
+            let name = inputReadAll.value
+            const url = `https://en.wikipedia.org/w/api.php?action=parse&page=${name}&format=json&origin=*`;
+
+            fetch(url)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.parse) {
+                        const html = data.parse.text["*"];
+                        displayReadAll.innerHTML = "<h1>" + data.parse.title + "</h1>" + html // Todo el HTML de la página
+                    }
+                    else {
+                        displayReadAll.innerHTML = data.error.code + ": " + data.error.info
+                    }
+                })
+                .catch(err => {
+                    displayReadAll.innerHTML = err
+                });
         }
 
         async function wikiSearch(q) {
@@ -238,6 +270,15 @@
 
         // WIKIMEDIA API
 
+        async function wikimediaHTML() {
+            fetch("https://commons.wikimedia.org/w/api.php?action=parse&page=Gallery_of_armed_forces_flags&prop=text&format=json&origin=*")
+                .then(r => r.json())
+                .then(d => {
+                    displayWikimediaHTML.innerHTML = d.parse.text["*"]
+                    
+                });
+        }
+
         async function wikimediaImages(category) {
 
             if (!category) category = inputWikimediaImages.value
@@ -260,24 +301,12 @@
             return urls;
         }
 
-        async function wikiReadAll() {
 
-            let name = inputReadAll.value
-            const url = `https://en.wikipedia.org/w/api.php?action=parse&page=${name}&format=json&origin=*`;
-
-            fetch(url)
-                .then(res => res.json())
-                .then(data => {
-                    const html = data.parse.text["*"];
-                    displayReadAll.innerHTML = "<h1>" + data.parse.title + "</h1>" + html // Todo el HTML de la página
-                })
-                .catch(err => console.error(err));
-        }
 
 
         function main() {
             wikiRead()
-            wikiReadAll()
+            wikiReadHTML()
             wikiSearch()
             wikiCategories()
             wikiCatArt()

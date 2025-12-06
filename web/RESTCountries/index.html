@@ -18,9 +18,15 @@
             line-height: 2;
         }
 
-        #displayer {
-            overflow: auto;
+        header , footer {
+            text-align: center;
         }
+
+        #displayer {
+            overflow-x: auto;
+            overflow-y: hidden;
+        }
+
         .displayer-flex-item {
             display: flex;
             border: solid 1px black;
@@ -30,14 +36,15 @@
         }
 
         .flagdisplay {
-            background-image: radial-gradient( gray, black);
+            background-image: radial-gradient(gray, black);
 
         }
+
         .flagdisplay>img {
             height: 100%;
             width: 200px;
             object-fit: contain;
-            background-image: radial-gradient( gray, black);
+            background-image: radial-gradient(gray, black);
         }
 
         .namedisplay {
@@ -61,27 +68,47 @@
 </head>
 
 <body>
-    <h1>🗺Countries of the World</h1>
-    <h3>Ordered by descending population 👥</h3>
+    <header>
+        <h1>🗺Countries of the World</h1>
+        <h3>Ordered by descending population 👥</h3>
+
+    </header>
+    <div style="display: flex;justify-content: space-around; height:100px; padding: 10px;">
+        <img height="100%"
+            src="https://upload.wikimedia.org/wikipedia/commons/7/7f/Rotating_earth_animated_transparent.gif"
+            alt="Rotating World Globe">
+        <img height="100%" src="https://upload.wikimedia.org/wikipedia/commons/d/d7/Flag-globe-2.gif"
+            alt="World Spinning with Flags">
+        <img height="100%"
+            src="https://upload.wikimedia.org/wikipedia/commons/8/8d/Flags_of_the_World_%28WFB_2018%29.gif"
+            alt="World Flags">
+
+    </div>
+
     <div id="displayer">
         <h2>Loading content...</h2>
         <img src="https://upload.wikimedia.org/wikipedia/commons/b/b1/Loading_icon.gif" alt="Loading Spinning Image">
     </div>
-    <p>Thanks to https://restcountries.com/#fields-mandatory</p>
+
+    <footer>
+        <p>Thanks to https://restcountries.com/#fields-mandatory</p>
+
+    </footer>
+
     <script>
-        
+
         let counter = 1
         fetch("https://restcountries.com/v3.1/all?fields=name,population,flags,coatOfArms,independent,capital")
             .then(x => x.json())
             .then(y => {
                 y.sort(function (a, b) { return b.population - a.population });
-                
+
                 displayer.innerHTML = ""
 
                 for (let i = 0; i < y.length - 1; i++) {
                     const element = y[i];
 
-                    if (element.population > 0 && element.independent==true) {
+                    if (element.population > 0 && element.independent == true) {
                         displayer.innerHTML += `
                         
                         <div class="displayer-flex-item">
@@ -111,8 +138,8 @@
                 }
             })
 
-            
-            
+
+
 
     </script>
 </body>
