@@ -42,7 +42,7 @@
 
         .flagdisplay>img {
             height: 100%;
-            width: 200px;
+            width: 150px;
             object-fit: contain;
             background-image: radial-gradient(gray, black);
         }
@@ -73,6 +73,7 @@
         <h3>Ordered by descending population 👥</h3>
 
     </header>
+
     <div style="display: flex;justify-content: space-around; height:100px; padding: 10px;">
         <img height="100%"
             src="https://upload.wikimedia.org/wikipedia/commons/7/7f/Rotating_earth_animated_transparent.gif"
@@ -85,20 +86,29 @@
 
     </div>
 
+    <div id="displayerInfo">
+
+    </div>
+
     <div id="displayer">
         <h2>Loading content...</h2>
         <img src="https://upload.wikimedia.org/wikipedia/commons/b/b1/Loading_icon.gif" alt="Loading Spinning Image">
     </div>
 
+
+
     <footer>
         <p>Thanks to https://restcountries.com/#fields-mandatory</p>
-
     </footer>
 
     <script>
 
         let counter = 1
-        fetch("https://restcountries.com/v3.1/all?fields=name,population,flags,coatOfArms,independent,capital")
+        
+        async function loadCountries(){
+
+            let totalPopulation = 0
+            fetch("https://restcountries.com/v3.1/all?fields=name,population,flags,coatOfArms,independent,capital")
             .then(x => x.json())
             .then(y => {
                 y.sort(function (a, b) { return b.population - a.population });
@@ -107,6 +117,8 @@
 
                 for (let i = 0; i < y.length - 1; i++) {
                     const element = y[i];
+
+                    totalPopulation += element.population
 
                     if (element.population > 0 && element.independent == true) {
                         displayer.innerHTML += `
@@ -133,12 +145,24 @@
                         `
                         counter++
                     }
-                    console.log(element)
+                    //console.log(element)
 
                 }
+            
+                displayerInfo.textContent = "World population: " + thousandDot(totalPopulation)
+
+                return y
             })
+            .then(z => {
+
+                
+
+            })
+        }
 
 
+
+        loadCountries()
 
 
     </script>
