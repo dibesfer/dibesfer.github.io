@@ -18,13 +18,18 @@
             line-height: 2;
         }
 
-        header , footer {
+        header,
+        footer {
             text-align: center;
         }
 
         #displayer {
             overflow-x: auto;
             overflow-y: hidden;
+        }
+
+        #displayerInfo {
+            text-align: center;
         }
 
         .displayer-flex-item {
@@ -64,6 +69,10 @@
             background-color: rgb(200, 200, 200);
 
         }
+        .percentageShow {
+            font-size: smaller;
+            color: gray;
+        }
     </style>
 </head>
 
@@ -75,11 +84,14 @@
     </header>
 
     <div style="display: flex;justify-content: space-around; height:100px; padding: 10px;">
+
+        <img height="100%" src="https://upload.wikimedia.org/wikipedia/commons/d/d7/Flag-globe-2.gif"
+            alt="World Spinning with Flags">
+
         <img height="100%"
             src="https://upload.wikimedia.org/wikipedia/commons/7/7f/Rotating_earth_animated_transparent.gif"
             alt="Rotating World Globe">
-        <img height="100%" src="https://upload.wikimedia.org/wikipedia/commons/d/d7/Flag-globe-2.gif"
-            alt="World Spinning with Flags">
+        
         <img height="100%"
             src="https://upload.wikimedia.org/wikipedia/commons/8/8d/Flags_of_the_World_%28WFB_2018%29.gif"
             alt="World Flags">
@@ -104,24 +116,44 @@
     <script>
 
         let counter = 1
-        
-        async function loadCountries(){
+
+        async function loadCountries() {
 
             let totalPopulation = 0
             fetch("https://restcountries.com/v3.1/all?fields=name,population,flags,coatOfArms,independent,capital")
-            .then(x => x.json())
-            .then(y => {
-                y.sort(function (a, b) { return b.population - a.population });
+                .then(x => x.json())
+                .then(y => {
+                    y.sort(function (a, b) { return b.population - a.population });
 
-                displayer.innerHTML = ""
+                    displayer.innerHTML = ""
 
-                for (let i = 0; i < y.length - 1; i++) {
-                    const element = y[i];
+                    for (let i = 0; i < y.length - 1; i++) {
+                        const element = y[i];
 
-                    totalPopulation += element.population
+                        totalPopulation += element.population
 
-                    if (element.population > 0 && element.independent == true) {
-                        displayer.innerHTML += `
+
+                        //console.log(element)
+
+                    }
+
+                    displayerInfo.textContent = "World population: " + thousandDot(totalPopulation)
+
+                    for (let i = 0; i < y.length - 1; i++) {
+                        const element = y[i];
+
+                        let percentage = element.population*100/totalPopulation
+                        percentage = decimalTwo(percentage)
+                        
+                        if (percentage >= 0.01){
+                            percentage = "<span class='percentageShow'>(" + percentage + "%)</span>"
+                        }
+                        else {
+                            percentage = ""
+                        }
+
+                        if (element.population > 0 && element.independent == true) {
+                            displayer.innerHTML += `
                         
                         <div class="displayer-flex-item">
 
@@ -130,10 +162,9 @@
                         </div>
 
                         <div class="namedisplay">
-                        <h2>${counter}. ${element.name.common}, ${thousandDot(element.population)}</h2>
+                        <h2>${counter}. ${element.name.common}, ${thousandDot(element.population)} ${percentage}</h2>
                         <p>${element.name.official}, ${element.capital}</p>
                         </div>
-                        
                         
                         <div class="coatdisplay">
                         <img src="${element.coatOfArms.png}" alt="Coat of Arms of ${element.name.common}">
@@ -143,21 +174,27 @@
                         </div>
 
                         `
-                        counter++
+                            counter++
+                        }
+
+                        //console.log(element)
+
                     }
-                    //console.log(element)
 
-                }
-            
-                displayerInfo.textContent = "World population: " + thousandDot(totalPopulation)
 
-                return y
-            })
-            .then(z => {
 
-                
 
-            })
+
+
+
+
+                    return y
+                })
+                .then(z => {
+
+
+
+                })
         }
 
 

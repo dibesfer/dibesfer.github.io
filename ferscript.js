@@ -18,6 +18,9 @@ function shuffle(array) {
   return array.sort(() => Math.random() - 0.5);
 }
 
+function decimalTwo(num){
+  return (Math.round(num * 100) / 100).toFixed(2);
+}
 let typeWriteCount = 0
 
 function typeWrite(what, where, speed) {
