@@ -5,8 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Wikipedia API</title>
-<link rel="stylesheet" href="https://en.wikipedia.org/w/load.php?modules=mediawiki.skinning.content&only=styles">
-    <style>
+<!-- <link rel="stylesheet" href="https://en.wikipedia.org/w/load.php?modules=mediawiki.skinning.content&only=styles"> -->
+<!-- <link rel="stylesheet" href="/w/load.php?lang=es&amp;modules=ext.uls.interlanguage%7Cext.visualEditor.desktopArticleTarget.noscript%7Cext.wikimediamessages.styles%7Cskins.vector.icons%2Cstyles%7Cskins.vector.search.codex.styles%7Cwikibase.client.init&amp;only=styles&amp;skin=vector-2022"> -->
+<style>
         body {
             max-width: 800px;
             margin: auto;
@@ -62,7 +63,7 @@
         <div id="displayCategories" class="displayer"></div>
 
         <h2>Search articles by category</h2>
-        <input autocomplete="off" id="inputCatArt" type="text" value="programming language"><button
+        <input autocomplete="off" id="inputCatArt" type="text" value="programming games"><button
             onclick="wikiCatArt()">Search</button>
         <div id="displayCatArt" class="displayer"></div>
 
@@ -254,7 +255,8 @@
             const res = await fetch(url);
             const data = await res.json();
             displayCatArt.innerHTML = ""
-            data.query.categorymembers.forEach(element => {
+            if (data.query.categorymembers.length > 0){
+data.query.categorymembers.forEach(element => {
 
 
                 displayCatArt.innerHTML += `
@@ -264,6 +266,11 @@
                 
                 `
             });
+            }
+            else {
+                displayCatArt.innerHTML = "Not found"
+            }
+            
 
             return data.query.categorymembers;
         }
