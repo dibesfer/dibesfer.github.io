@@ -114,8 +114,12 @@ a {
     color: rgb(230, 65, 213);
 }
 
-img , iframe {
+img , iframe , pre {
     max-width: 100%;
+}
+
+pre {
+    white-space: pre-wrap;
 }
 
 .rounded {
