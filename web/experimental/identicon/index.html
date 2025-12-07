@@ -15,6 +15,7 @@
             height: 100dvh;
             font-family: system-ui, Segoe UI, Roboto, 'Helvetica Neue', Arial;
             background: #eee;
+            
         }
 
         .wrap {
@@ -49,13 +50,14 @@
 </head>
 
 <body>
-
     <div class="wrap">
-
-        <h1 style="margin-top: 30px;">Identicon Generator</h1>
+        <h1 style="margin-top:20px;">Identicon Generator</h1>
         <canvas id="c" width="15" height="15"></canvas>
-        <button id="regen">Generar</button>
-        <label class="meta">15px^2 • Simetría perfecta • Menos densidad • Paleta 100% aleatoria</label>
+        <div style="display:flex;gap:10px;">
+            <button id="regen">Generar</button>
+            <button id="export">Exportar 200px</button>
+        </div>
+        <label class="meta">15px² • Simetría perfecta • Menos densidad • Paleta aleatoria</label>
         <p>by dibesfer's prompt and chatgpt development</p>
     </div>
 
@@ -66,6 +68,7 @@
             const W = canvas.width;
             const H = canvas.height;
             const regenBtn = document.getElementById('regen');
+            const exportBtn = document.getElementById('export');
 
             const rnd = (min, max) => Math.random() * (max - min) + min;
 
@@ -94,23 +97,20 @@
             function generate() {
                 const palette = randomPalette();
                 clear('#fff');
-
                 const density = 0.16 + Math.random() * 0.10;
-                const half = Math.floor(W / 2); // asegura columna central separada
+                const half = Math.floor(W / 2);
 
                 for (let x = 0; x < half; x++) {
                     for (let y = 0; y < H; y++) {
                         if (Math.random() < density) {
                             const color = palette[Math.floor(Math.random() * palette.length)];
                             const pat = patterns[Math.floor(Math.random() * patterns.length)];
-
                             pat.forEach(([dx, dy]) => {
                                 const pxX = x + dx;
                                 const pxY = y + dy;
-
                                 if (pxX < half && pxY < H) {
                                     px(pxX, pxY, color);
-                                    const mx = W - 1 - pxX; // espejo calculado exacto
+                                    const mx = W - 1 - pxX;
                                     px(mx, pxY, color);
                                 }
                             });
@@ -118,18 +118,32 @@
                     }
                 }
 
-                // columna central (si W es impar: 15 → sí)
                 const center = Math.floor(W / 2);
-
                 for (let y = 0; y < H; y++) {
-                    if (Math.random() < density * 0.65) { // menos densa
+                    if (Math.random() < density * 0.65) {
                         const color = palette[Math.floor(Math.random() * palette.length)];
                         px(center, y, color);
                     }
                 }
             }
 
+            // EXPORTAR A 200px → crear canvas temporal escalado
+            function exportScaled() {
+                const out = document.createElement('canvas');
+                out.width = 200;
+                out.height = 200;
+                const octx = out.getContext('2d');
+                octx.imageSmoothingEnabled = false;
+                octx.drawImage(canvas, 0, 0, 200, 200);
+
+                const link = document.createElement('a');
+                link.download = 'identicon.png';
+                link.href = out.toDataURL('image/png');
+                link.click();
+            }
+
             regenBtn.addEventListener('click', generate);
+            exportBtn.addEventListener('click', exportScaled);
             generate();
         })();
     </script>
