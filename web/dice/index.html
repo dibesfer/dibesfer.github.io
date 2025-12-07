@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎲 Dice</title>
+    <script src="/ferscript.js"></script>
+    <style>
+        #icon {
+            font-size: 60px;
+        }
+
+        button {
+            font: unset;
+            border: solid 3px black;
+            background-color: unset;
+        }
+        
+    </style>
+</head>
+<body>
+    <header>
+        <h1>🎲 Dice</h1>
+    </header>
+    <main>
+        <div id="display">
+
+            <div id="icon">
+
+            </div>
+            <div id="info">
+
+            </div>
+
+        </div>
+        <button onclick="rollDice()">Roll the dice</button>
+    </main>
+    <footer>
+        <p>by <a href="https://dibesfer.github.io">dibesfer</a></p>
+    </footer>
+    <script>
+        let dice = [
+            "⚀",
+            "⚁",
+            "⚂",
+            "⚃",
+            "⚄",
+            "⚅"
+        ]
+
+        function rollDice(){
+            let randomNumber = randomInt(0,dice.length-1)
+            icon.textContent = dice[randomNumber]
+            info.textContent = "Value " + (randomNumber+1)
+        
+        
+        }
+
+        rollDice()
+    </script>
+</body>
+</html>
