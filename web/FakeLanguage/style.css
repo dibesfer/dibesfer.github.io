@@ -20,6 +20,7 @@ h1 {
     background-color: rgb(255, 255, 255);
     height: 250px;
     overflow: auto;
+    word-break: break-all;
 }
 
 a {

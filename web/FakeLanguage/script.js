@@ -3,7 +3,7 @@
 
 let vowels = ["a", "e", "i", "o", "u"]
 let consonants = ["b", "c", "d", "f", "g", "l", "m", "n", "p", "r", "s", "t", "v", "z"]
-
+let greek = "ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩ"
 let emojis = ["🖌️", "✏️", "🛠️", "⚒️", "⛏️", "🔨", "🗝️", "🔑", "🌀", "📡", "⚖️", "⚜️", "🔱", "🔆", "⚕️", "💠", "✳️", "✴️", "❇️"]
 let textConsole = getid("textConsole")
 let mySentence = ""
@@ -99,6 +99,10 @@ function generate() {
                 }
                 
             })
+
+        case "greek":
+
+            generateGreek()
 
 
             break;
@@ -316,6 +320,17 @@ function randomSequence(length) {
     return sequence
 }
 
+function generateGreek(){
+    let sentence = ""
+
+    for (let i = 0; i < 400; i++) {
+        
+        sentence += greek[randomInt(0,greek.length-1)]
+        
+    }
+
+    textConsole.textContent = sentence
+}
 /*     OLD GENERATOR
 for (let j = 0; j < wordlength; j++) {
 
