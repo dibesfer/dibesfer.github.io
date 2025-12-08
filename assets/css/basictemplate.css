@@ -1,0 +1,32 @@
+body {
+    font-family: sans-serif;
+}
+
+header , footer {
+    text-align: center;
+}
+
+main {
+    max-width: 800px;
+    margin: auto;
+}
+
+h1 , h2 {
+    font-variant: small-caps;
+}
+
+/* MOBILE */
+@media screen and (max-width: 800px) {
+      
+}
+
+/* DARK MODE */
+@media (prefers-color-scheme: dark) {
+  body {
+    background-color: black;
+    color: white;
+  }
+  hr {
+    color: white;
+  }
+}
