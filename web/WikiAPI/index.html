@@ -309,8 +309,14 @@
 
             const res = await fetch(url);
             const data = await res.json();
-            const pages = data.query.pages;
+            
+            
 
+            if (data.query == undefined){
+                displayWikimediaImages.innerHTML = "Not found"
+                return
+            }
+        const pages = data.query.pages;
             const urls = Object.values(pages).map(p => p.imageinfo[0].url);
 
             displayWikimediaImages.innerHTML = ""
