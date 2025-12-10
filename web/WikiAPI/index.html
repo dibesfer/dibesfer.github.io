@@ -4,10 +4,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wikipedia API</title>
-<!-- <link rel="stylesheet" href="https://en.wikipedia.org/w/load.php?modules=mediawiki.skinning.content&only=styles"> -->
-<!-- <link rel="stylesheet" href="/w/load.php?lang=es&amp;modules=ext.uls.interlanguage%7Cext.visualEditor.desktopArticleTarget.noscript%7Cext.wikimediamessages.styles%7Cskins.vector.icons%2Cstyles%7Cskins.vector.search.codex.styles%7Cwikibase.client.init&amp;only=styles&amp;skin=vector-2022"> -->
-<style>
+    <title>🦉 Wiki API</title>
+    <!-- <link rel="stylesheet" href="https://en.wikipedia.org/w/load.php?modules=mediawiki.skinning.content&only=styles"> -->
+    <!-- <link rel="stylesheet" href="/w/load.php?lang=es&amp;modules=ext.uls.interlanguage%7Cext.visualEditor.desktopArticleTarget.noscript%7Cext.wikimediamessages.styles%7Cskins.vector.icons%2Cstyles%7Cskins.vector.search.codex.styles%7Cwikibase.client.init&amp;only=styles&amp;skin=vector-2022"> -->
+    <style>
         body {
             max-width: 800px;
             margin: auto;
@@ -35,12 +35,15 @@
 
 <body>
     <header>
-        <h1>Wikipedia API</h1>
+        <h1>🦉 Wiki API</h1>
         <p>Knowledge by Demand</p>
+        <p><a href="#Wikipedia">Wikipedia</a> | <a href="#Wikimedia">Wikimedia</a> | <a href="#Wiktionary">Wiktionary</a></p>
     </header>
     <hr>
     <main>
 
+
+        <h1 id="Wikipedia">Wikipedia</h1>
 
         <h2>Read an article extract </h2>
         <input autocomplete="off" id="inputRead" type="text" value="Darth Vader"><button
@@ -67,7 +70,7 @@
             onclick="wikiCatArt()">Search</button>
         <div id="displayCatArt" class="displayer"></div>
 
-        <h1>Wikimedia API</h1>
+        <h1 id="Wikimedia">Wikimedia</h1>
 
         <h2>Read HTML</h2>
         <input autocomplete="off" id="inputWikimediaHTML" type="text" value="Gallery of armed forces flags"><button
@@ -78,6 +81,18 @@
         <input autocomplete="off" id="inputWikimediaImages" type="text" value="flowers"><button
             onclick="wikimediaImages()">Search</button>
         <div id="displayWikimediaImages" class="displayer"></div>
+
+        <h1 id="Wiktionary">Wiktionary</h1>
+
+        <h2>Search</h2>
+        <input autocomplete="off" id="inputWiktionary" type="text" value="Pokémon"><button
+            onclick="wiktionary()">Search</button>
+        <div id="displayWiktionary" class="displayer"></div>
+
+        <h2>Find</h2>
+        <input autocomplete="off" id="inputWiktionaryFind" type="text" value="humility"><button
+            onclick="wiktionaryFind()">Search</button>
+        <div id="displayWiktionaryFind" class="displayer"></div>
 
         <br>
         <details>
@@ -123,7 +138,7 @@
             const data = await res.json();
             const page = Object.values(data.query.pages)[0];
 
-            console.log(page)
+            //console.log(page)
             displayRead.innerHTML = ""
             displayRead.innerHTML = `
             
@@ -255,22 +270,22 @@
             const res = await fetch(url);
             const data = await res.json();
             displayCatArt.innerHTML = ""
-            if (data.query.categorymembers.length > 0){
-data.query.categorymembers.forEach(element => {
+            if (data.query.categorymembers.length > 0) {
+                data.query.categorymembers.forEach(element => {
 
 
-                displayCatArt.innerHTML += `
+                    displayCatArt.innerHTML += `
                 
                 <h3>${element.title}</h3>
                 
                 
                 `
-            });
+                });
             }
             else {
                 displayCatArt.innerHTML = "Not found"
             }
-            
+
 
             return data.query.categorymembers;
         }
@@ -282,7 +297,7 @@ data.query.categorymembers.forEach(element => {
                 .then(r => r.json())
                 .then(d => {
                     displayWikimediaHTML.innerHTML = d.parse.text["*"]
-                    
+
                 });
         }
 
@@ -308,7 +323,51 @@ data.query.categorymembers.forEach(element => {
             return urls;
         }
 
+        async function wiktionary() {
+            const word =  inputWiktionary.value;
+            const url = `https://en.wiktionary.org/w/api.php?action=query&list=search&srsearch=${word}&format=json&origin=*`;
 
+            fetch(url)
+                .then(res => res.json())
+                .then(data => {
+                    //console.log(data.query.search);
+                    let words = data.query.search
+
+                    displayWiktionary.innerHTML = ""
+
+
+                    words.forEach((element) => {
+                        displayWiktionary.innerHTML += `
+                        <h3>${element.title}</h3>
+                        <p>${element.snippet}<p>
+                        `
+                    })
+
+                })
+                .catch(err => console.error(err));
+        }
+
+        async function wiktionaryFind() {
+            const word =  inputWiktionaryFind.value;
+            const url = `https://en.wiktionary.org/w/api.php?action=parse&page=${word}&format=json&origin=*`;
+
+            fetch(url)
+                .then(res => res.json())
+                .then(data => {
+
+                    let result = data.parse
+                    console.log(result)
+                    displayWiktionaryFind.innerHTML = ""
+
+                    displayWiktionaryFind.innerHTML = `
+                    
+                    <h1>${result.title}</h1>
+                    ${result.text["*"]}
+
+                    `
+                })
+                .catch(err => console.error(err));
+        }
 
 
         function main() {
@@ -319,6 +378,8 @@ data.query.categorymembers.forEach(element => {
             wikiCatArt()
             wikimediaHTML()
             wikimediaImages()
+            wiktionary()
+            wiktionaryFind()
         }
         main()
     </script>
