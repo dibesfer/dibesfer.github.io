@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>🪙 Crypto API</title>
+<style>
+  body { font-family: sans-serif; background: #111; color: #eee; padding: 20px; }
+  h1 { color: #ff69b4; }
+  ul { list-style: none; padding: 0; }
+  li { margin: 5px 0; }
+  #crypto-list > div {
+    height: 75px;
+    display: flex;
+    align-items: center;
+    margin: 15px 0;
+  }
+  #crypto-list > div > img {
+    height: 100%;
+  }
+</style>
+</head>
+<body>
+<h1>🪙 Crypto price (USD)</h1>
+<p>Ordered by price descending. Updated every 10 seconds.</p>
+<div id="crypto-list">
+
+
+</div>
+
+<footer>
+    <p>by <a href="https://dibesfer.github.io">dibesfer</a> and <a href="https://chatgpt.com">ChatGPT</a></p>
+</footer>
+
+<script>
+async function fetchCryptos() {
+    try {
+        const res = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=10&page=1&sparkline=false');
+        const data = await res.json();
+
+        // Ordenamos de más cara a más barata
+        data.sort((a, b) => b.current_price - a.current_price);
+
+        const list = document.getElementById('crypto-list');
+        list.innerHTML = '';
+        data.forEach(coin => {
+            const li = document.createElement('div');
+            li.innerHTML = `
+            <img src="${coin.image}">
+            <div style="margin: 0 5px"></div>(${coin.symbol}) ${coin.name}: $${coin.current_price.toLocaleString()}`;
+            list.appendChild(li);
+        });
+    } catch (err) {
+        console.error('Error fetching crypto:', err);
+    }
+}
+
+// Actualiza cada 10 segundos
+fetchCryptos();
+setInterval(fetchCryptos, 10000);
+</script>
+</body>
+</html>
