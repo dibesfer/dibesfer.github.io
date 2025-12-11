@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Today</title>
+    <link rel="stylesheet" href="/ferstyle.css">
+    <link rel="stylesheet" href="/assets/css/basictemplate.css">
+    <script src="/ferscript.js"></script>
+    <style>
+        #clock {
+            font-family: monospace;
+            font-size: 1rem;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div id="titleDate"></div>
+    </header>
+    <hr>
+    <main>
+        <div id="clock"></div>
+
+        <h2>let date = new Date()</h2>
+        <p id="displayDate"></p>
+
+        <h2>date.toUTCString()</h2>
+        <p id="displayUTC"></p>
+
+        <h2>date.toISOString()</h2>
+        <p id="displayISO"></p>
+
+        <h2>date.toLocaleString()</h2>
+        <p id="displayLocale"></p>
+
+        <h2>Time Zone</h2>
+        <p id="displayTimezone"></p>
+
+        <h3>Questions</h3>
+        <p>What are you going to do today?</p>
+        <p>What did you do yesterday?</p>
+        <p>What will you do tomorrow?</p>
+        <p>How old are you? When were you born?</p>
+        <input type="date" name="" id="">
+        <p>What solar zodiac sign are you?</p>
+        <p>What's the horoscope prediction for today?</p>
+    </main>
+    <hr>
+    <footer>
+        <p>by <a href="https://dibesfer.github.io">dibesfer</a></p>
+    </footer>
+    <script>
+
+        let date = new Date()
+        let year = date.getFullYear()
+        let month = date.getMonth()
+        let monthName = date.toLocaleDateString("en", { month: "long" })
+        let weekDay = date.toLocaleDateString("en", { weekday: "long" })
+        let day = date.getDate()
+        let TimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
+
+        // Clock
+
+        let hours = date.getHours()
+        let minutes = date.getMinutes()
+        let seconds = date.getSeconds()
+
+        displayDate.textContent = date
+        displayUTC.textContent = date.toUTCString()
+        displayISO.textContent = date.toISOString()
+        displayLocale.textContent = date.toLocaleDateString()
+        displayTimezone.textContent = TimeZone
+
+        titleDate.innerHTML = `
+        <h1>☀️ ${year}
+            ${monthName}
+            ${day} 🌙
+            </h1>
+            <h2>${weekDay}</h2>
+        
+        `
+
+        clock.innerHTML = `
+        
+        <h3>${needsazero(hours)}:${needsazero(minutes)}:${needsazero(seconds)}</h3>
+
+        `
+
+        function updateClock() {
+            let date = new Date()
+            let hours = date.getHours()
+            let minutes = date.getMinutes()
+            let seconds = date.getSeconds()
+            clock.innerHTML = `
+        
+        <h3>${needsazero(hours)}:${needsazero(minutes)}:${needsazero(seconds)}</h3>
+
+        `
+        }
+
+        let myInterval = setInterval(updateClock, 1000)
+    </script>
+
+</body>
+
+</html>

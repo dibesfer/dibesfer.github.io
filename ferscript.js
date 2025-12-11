@@ -18,6 +18,16 @@ function shuffle(array) {
   return array.sort(() => Math.random() - 0.5);
 }
 
+function needsazero(number) {
+    let result
+
+    if (number < 10) {
+        result = "0" + number
+        return result
+    }
+    return number
+}
+
 function decimalTwo(num){
   return (Math.round(num * 100) / 100).toFixed(2);
 }
