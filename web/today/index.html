@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Today</title>
+    <title>⏰Today</title>
     <link rel="stylesheet" href="/ferstyle.css">
     <link rel="stylesheet" href="/assets/css/basictemplate.css">
     <script src="/ferscript.js"></script>
@@ -48,9 +48,27 @@
         <input type="date" name="" id="">
         <p>What solar zodiac sign are you?</p>
         <p>What's the horoscope prediction for today?</p>
+    
+        <h3>Time quotes</h3>
+        <p>Time, it needs time, to win back your love again (The Scorpions - Still Loving You)</p>
+        <p>You can't hurry love, you just have to wait (Phil Collins - You Can't Hurry Love)</p>
+        <p>Who can say where the road goes? Only time (Enya - Only Time)</p>
+
+        <h3>Time you spent here</h3>
+        <p id="displaySeconds"></p>
+
+        <h3>Concepts</h3>
+        <p>Past | Present | Future</p>
+        <p>Memory | Consciousness | Imagination</p>
+        <p>History | Analysis | Prediction</p>
+        <p>Short | Medium | Long</p>
+        <p>Patience | Impatience</p>
+        <p>Wait | Last | Decay</p>
+
     </main>
     <hr>
     <footer>
+        <p>created the 2025 Dec 11</p>
         <p>by <a href="https://dibesfer.github.io">dibesfer</a></p>
     </footer>
     <script>
@@ -62,7 +80,10 @@
         let weekDay = date.toLocaleDateString("en", { weekday: "long" })
         let day = date.getDate()
         let TimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
-
+        let secondsCounter = localStorage.getItem("today_secondsCounter")
+        if (secondsCounter == null){
+            secondsCounter = 0
+        }
         // Clock
 
         let hours = date.getHours()
@@ -100,6 +121,9 @@
         <h3>${needsazero(hours)}:${needsazero(minutes)}:${needsazero(seconds)}</h3>
 
         `
+            secondsCounter++
+            localStorage.setItem("today_secondsCounter", secondsCounter)
+            displaySeconds.innerHTML = secondsCounter + " seconds"
         }
 
         let myInterval = setInterval(updateClock, 1000)
