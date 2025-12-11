@@ -480,7 +480,7 @@ async function getFullTable(tableName) {
         let myTime = new Date(element.created_at)
         if (oldTime.getDate() != myTime.getDate()){
             let myDate = document.createElement("p")
-            myDate.textContent = "---" + myTime.getFullYear() + "/" + needsazero(myTime.getMonth()) + "/" + needsazero(myTime.getDate()) + "---"
+            myDate.textContent = "---" + myTime.getFullYear() + "/" + needsazero(myTime.getMonth()+1) + "/" + needsazero(myTime.getDate()) + "---"
             myDate.classList = "displayTime"
 
             chatScreen.appendChild(myDate)
