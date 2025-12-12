@@ -17,6 +17,17 @@
         document.write("<p><b>Href</b>: " + window.location.href + "</p>")
         document.write("<p><b>UserAgent</b>: " + navigator.userAgent + "</p>")
         document.write("<p><b>Language</b>: " + (navigator.language || navigator.userLanguage) + "</p>")
+        let userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
+        document.write("<p><b>Timezone</b>: " + userTimeZone + "</p>")
+        let newDate = new Date()
+        document.write("<p><b>Date</b>: " + newDate + "</p>")
+        let colorTheme = "light"
+if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    colorTheme = "dark"
+}
+
+document.write("<p><b>System color therme:</b> " + colorTheme + "</p>")
+
     </script>
 </body>
 </html>
