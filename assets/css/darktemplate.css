@@ -1,0 +1,23 @@
+/* DARK MODE */
+@media (prefers-color-scheme: dark) {
+    body {
+        background-color: black;
+        color: white;
+    }
+
+    hr {
+        color: white;
+    }
+
+    a {
+        color: gold;
+    }
+
+    a:hover {
+        color: goldenrod;
+    }
+
+    .post-title.entry-title {
+        border-bottom: solid 3px white;
+    }
+}
