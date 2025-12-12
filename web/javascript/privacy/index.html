@@ -1,18 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Javascript Privacy</title>
     <style>
         body {
             font-family: sans-serif;
         }
     </style>
 </head>
+
 <body>
     <h1>Javascript Privacy</h1>
-    <h3>What does javascript know about you?</h3>
+    <h2>What does javascript know about you?</h2>
     <script>
         document.write("<p><b>Href</b>: " + window.location.href + "</p>")
         document.write("<p><b>UserAgent</b>: " + navigator.userAgent + "</p>")
@@ -22,12 +24,27 @@
         let newDate = new Date()
         document.write("<p><b>Date</b>: " + newDate + "</p>")
         let colorTheme = "light"
-if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-    colorTheme = "dark"
-}
+        let screenHeight = screen.height
+        let screenWidth = screen.width
 
-document.write("<p><b>System color therme:</b> " + colorTheme + "</p>")
+        document.write("<p><b>Screen width</b>: " + screenWidth + "px </p>")
+        document.write("<p><b>Screen height</b>: " + screenHeight + "px </p>")
+
+        let w = window.innerWidth;
+        let h = window.innerHeight;
+
+        document.write("<p><b>Window width</b>: " + w + "px </p>")
+        document.write("<p><b>Window height</b>: " + h + "px </p>")
+
+        if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            colorTheme = "dark"
+        }
+
+        document.write("<p><b>System color therme:</b> " + colorTheme + "</p>")
+
+        
 
     </script>
 </body>
+
 </html>
