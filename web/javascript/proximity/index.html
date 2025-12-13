@@ -5,6 +5,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Proximity</title>
+    <link rel="stylesheet" href="/ferstyle.css">
+    <script src="/ferscript.js"></script>
+    <style>
+        input {
+            width: 150px;
+            text-align: center;
+        }
+    </style>
 </head>
 
 <body>
@@ -12,13 +20,16 @@
     <h1>Places by proximity</h1>
     <h2>From specific latitude and longitude</h2>
     <p>Check latitude distance</p>
-    <input id="inputLat" type="text" name="" id="">
+    <input id="inputLat" type="number" min="-90" max="90" name="" value="0">
     <p>Check longitude distance</p>
-    <input id="inputLon" type="text" name="" id="">
+    <input id="inputLon" type="number" min="-180" max="180" name="" value="0">
     <br><button onclick="checkDistance()">Check</button>
     <p>Keep the lowest values first</p>
     <hr>
     <div id="display"></div>
+    <hr>
+    <p>by <a href="https://dibesfer.github.io">dibesfer</a> and <a href="https://chatgpt.com">ChatGPT</a>
+    </p>
     <script>
 
         // TODO haversine
@@ -32,7 +43,7 @@
         function fillData() {
             let lat = Math.random() * 180 - 90
             let lon = Math.random() * 360 - 180
-            let name = "place " + counter
+            let name = "Place Nº" + counter
 
             places.push({
                 "name": name,
@@ -42,8 +53,8 @@
 
             display.innerHTML += `
                 <p>${name}</p>
-                <p>Latitude: ${places[counter-1].lat}</p>
-                <p>Longitude: ${places[counter-1].lon}</p>
+                <p>Latitude: ${places[counter - 1].lat}</p>
+                <p>Longitude: ${places[counter - 1].lon}</p>
             `
             counter++
         }
@@ -59,37 +70,42 @@
             const dLat = a.lat - b.lat;
             const dLon = a.lon - b.lon;
             //const proximity = Math.sqrt(dLat * dLat + dLon * dLon)
-            const proximity = Math.abs( dLat + dLon)
+            const proximity = Math.abs(dLat + dLon)
             console.log(proximity)
             return proximity; // simple proximity
         }
 
-        
-
-        function checkDistance(){
+        function checkDistance() {
             const ref0 = {
-                lat : Number(inputLat.value),
-                lon : Number(inputLon.value)
+                lat: Number(inputLat.value),
+                lon: Number(inputLon.value)
             }
 
+            /*
             let ordered = [...places]
-            
-            ordered.sort((a, b) => 
+
+            ordered.sort((a, b) =>
                 distance(a, ref0) - distance(b, ref0)
             );
 
             ordered.forEach(element => {
-                element["distance"] = distance(element,ref0)
+                element["distance"] = distance(element, ref0)
             });
-
+*/
+            const ordered = places
+                .map(p => ({
+                    ...p,
+                    distance: haversine(ref0, p)
+                }))
+                .sort((a, b) => a.distance - b.distance);
             display.innerHTML = ""
-            ordered.forEach((ele)=>{
-                
+            ordered.forEach((ele) => {
+
                 display.innerHTML += `
                 <p>${ele.name}</p>
                 <p>Latitude: ${ele.lat}</p>
                 <p>Longitude: ${ele.lon}</p>
-                <p>Distance: ${ele.distance}</p>
+                <p>Distance: ${decimalTwo(ele.distance)}km</p>
                 <hr>
             `
             })
@@ -97,6 +113,34 @@
             console.log(ordered)
 
         }
+
+        function haversine(a, b) {
+            const R = 6371;
+            const dLat = (b.lat - a.lat) * Math.PI / 180;
+            const dLon = (b.lon - a.lon) * Math.PI / 180;
+
+            const lat1 = a.lat * Math.PI / 180;
+            const lat2 = b.lat * Math.PI / 180;
+
+            const x = Math.sin(dLat / 2) ** 2 +
+                Math.cos(lat1) * Math.cos(lat2) *
+                Math.sin(dLon / 2) ** 2;
+
+            return 2 * R * Math.asin(Math.sqrt(x));
+        }
+
+        let barcelona = {
+            "lat": 41.3825,
+            "lon": 2.176944
+        }
+
+        let madrid = {
+            "lat": 40.416944,
+            "lon": -3.703333
+        }
+
+        console.log("Distancia entre Madrid y Barcelona:" + haversine(barcelona, madrid))
+
 
     </script>
 </body>
