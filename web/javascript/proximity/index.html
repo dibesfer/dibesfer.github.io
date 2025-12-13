@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Proximity</title>
+</head>
+<body>
+
+    <h1>Places by proximity</h1>
+    <h2>From specific latitude and longitude</h2>
+    <p>Check latitude distance</p>
+    <p>Check longitude distance</p>
+    <p>Keep the lowest values first</p>
+    <hr>
+    <div id="display"></div>
+    <script>
+
+        //RANGE
+        // LATITUDE -90 to 90
+        // Longitude -180 to 180
+
+        let places = []
+        let counter = 0
+        function fillData(){
+            let lat = Math.random()*180-90
+            let lon = Math.random()*360-180
+            let name = "place " + counter
+            places.push({name : {
+                "lat" : lat,
+                "lon" : lon
+            }})
+            
+            display.innerHTML += `
+                <p>${name}</p>
+                <p>Latitude: ${places[counter].name.lat}</p>
+                <p>Longitude: ${places[counter].name.lon}</p>
+            `
+            counter++
+        }
+        
+        for (let i = 0; i < 10; i++) {
+            fillData()
+        }
+        console.log(places)
+    </script>
+</body>
+</html>
