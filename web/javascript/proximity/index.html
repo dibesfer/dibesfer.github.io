@@ -1,48 +1,104 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Proximity</title>
 </head>
+
 <body>
 
     <h1>Places by proximity</h1>
     <h2>From specific latitude and longitude</h2>
     <p>Check latitude distance</p>
+    <input id="inputLat" type="text" name="" id="">
     <p>Check longitude distance</p>
+    <input id="inputLon" type="text" name="" id="">
+    <br><button onclick="checkDistance()">Check</button>
     <p>Keep the lowest values first</p>
     <hr>
     <div id="display"></div>
     <script>
+
+        // TODO haversine
 
         //RANGE
         // LATITUDE -90 to 90
         // Longitude -180 to 180
 
         let places = []
-        let counter = 0
-        function fillData(){
-            let lat = Math.random()*180-90
-            let lon = Math.random()*360-180
+        let counter = 1
+        function fillData() {
+            let lat = Math.random() * 180 - 90
+            let lon = Math.random() * 360 - 180
             let name = "place " + counter
-            places.push({name : {
-                "lat" : lat,
-                "lon" : lon
-            }})
-            
+
+            places.push({
+                "name": name,
+                "lat": lat,
+                "lon": lon
+            })
+
             display.innerHTML += `
                 <p>${name}</p>
-                <p>Latitude: ${places[counter].name.lat}</p>
-                <p>Longitude: ${places[counter].name.lon}</p>
+                <p>Latitude: ${places[counter-1].lat}</p>
+                <p>Longitude: ${places[counter-1].lon}</p>
             `
             counter++
         }
-        
+
         for (let i = 0; i < 10; i++) {
             fillData()
         }
         console.log(places)
+
+        const ref = { lat: 41.3874, lon: 2.1686 }; // reference point
+
+        function distance(a, b) {
+            const dLat = a.lat - b.lat;
+            const dLon = a.lon - b.lon;
+            //const proximity = Math.sqrt(dLat * dLat + dLon * dLon)
+            const proximity = Math.abs( dLat + dLon)
+            console.log(proximity)
+            return proximity; // simple proximity
+        }
+
+        
+
+        function checkDistance(){
+            const ref0 = {
+                lat : Number(inputLat.value),
+                lon : Number(inputLon.value)
+            }
+
+            let ordered = [...places]
+            
+            ordered.sort((a, b) => 
+                distance(a, ref0) - distance(b, ref0)
+            );
+
+            ordered.forEach(element => {
+                element["distance"] = distance(element,ref0)
+            });
+
+            display.innerHTML = ""
+            ordered.forEach((ele)=>{
+                
+                display.innerHTML += `
+                <p>${ele.name}</p>
+                <p>Latitude: ${ele.lat}</p>
+                <p>Longitude: ${ele.lon}</p>
+                <p>Distance: ${ele.distance}</p>
+                <hr>
+            `
+            })
+
+            console.log(ordered)
+
+        }
+
     </script>
 </body>
+
 </html>
