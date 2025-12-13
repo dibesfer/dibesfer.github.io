@@ -20,23 +20,37 @@
         body {
             font-family: sans-serif;
             max-width: 400px;
-            margin: auto;
-            margin-top: 20px;
+            margin: 40px auto;
+            
             text-align: center;
             border: 1px solid black;
             background-color: rgba(245, 222, 179, 0.555);
-            border-radius: 15px;
+            border-radius: 20px;
+            box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.3);
         }
 
-        main > a {
+        @media screen and (max-width: 400px) {
+            body {
+                margin: auto;
+            }
+        }
+
+        main > a , .linkless{
             display: block;
             border: solid 1px black;
-            border-radius: 15px;
+            border-radius: 20px;
             padding: 10px;
             margin: 10px;
             color: unset;
             background-color: goldenrod;
             transition: 0.2s;
+            box-shadow: inset 0 0 25px rgba(255, 255, 255, 0.3);
+        }
+
+        .linkless {
+            
+            background-color: rgb(194, 255, 72);
+            
         }
 
         main > a:hover {
@@ -118,6 +132,14 @@
                 mastodon
             </div>
         </a>
+        <div class="linkless">
+            discord user <b>dibesfer</b>
+        </div>
+        <a href="https://discord.gg/tUHBS9eERn">
+            <div>
+                discord server
+            </div>
+        </a>
 
         <h2>Donate</h2>
         <a href="https://liberapay.com/dibesfer">Liberapay</a>
@@ -127,7 +149,12 @@
         <h2>Email</h2>
         <a href="mailto:dibesfer@gmail.com">dibesfer@gmail.com</a>
 
+        <br><hr><br>
+        <img width="110px" src="/assets/branding/fer-logo.png" alt="">
+        <br>
+        <br>
     </main>
+    
 </body>
 
 </html>
