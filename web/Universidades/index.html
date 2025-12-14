@@ -16,8 +16,13 @@
         fetch("https://analisi.transparenciacatalunya.cat/api/views/hej4-mujh/rows.json?accessType=DOWNLOAD")
         .then(x => x.json())
         .then(y => {
-            displayer.innerHTML = y
+            
             console.log(y)
+            y.data.forEach(element => {
+                displayer.innerHTML += `
+                <p>${element[12]}</p>
+                `
+            });
         })
 
     </script>
