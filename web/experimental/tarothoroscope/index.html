@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>🔮 Daily Tarot Horoscope</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body {
+      margin: 0;
+      font-family: "Georgia", serif;
+      background: radial-gradient(circle at top, #1b2735, #090a0f);
+      color: #f5f5f5;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .app {
+      max-width: 480px;
+      width: 100%;
+      background: rgba(0, 0, 0, 0.65);
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 0 40px rgba(138, 43, 226, 0.4);
+      text-align: center;
+    }
+
+    h1 {
+      margin-bottom: 8px;
+      font-size: 28px;
+      letter-spacing: 1px;
+    }
+
+    .subtitle {
+      font-size: 14px;
+      opacity: 0.8;
+      margin-bottom: 20px;
+    }
+
+    select {
+      width: 100%;
+      padding: 12px;
+      border-radius: 8px;
+      border: none;
+      font-size: 16px;
+      margin-bottom: 16px;
+      background: #222;
+      color: #fff;
+    }
+
+    .day-buttons {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .day-buttons button {
+      flex: 1;
+      padding: 10px;
+      border-radius: 8px;
+      border: none;
+      background: #3a3a55;
+      color: #fff;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .day-buttons button.active,
+    .day-buttons button:hover {
+      background: #8a2be2;
+    }
+
+    .reading {
+      margin-top: 20px;
+      padding: 16px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      line-height: 1.6;
+      font-size: 16px;
+      animation: fadeIn 0.6s ease;
+    }
+
+    .tarot-card {
+      font-weight: bold;
+      color: #dda0ff;
+      margin-bottom: 8px;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    footer {
+      margin-top: 20px;
+      font-size: 12px;
+      opacity: 0.6;
+    }
+  </style>
+</head>
+<body>
+
+<div class="app">
+  <h1>🔮 Tarot Horoscope</h1>
+  <div class="subtitle">Your destiny, written in the stars</div>
+
+  <select id="zodiac">
+    <option value="">Select your zodiac sign</option>
+    <option>Aries</option>
+    <option>Taurus</option>
+    <option>Gemini</option>
+    <option>Cancer</option>
+    <option>Leo</option>
+    <option>Virgo</option>
+    <option>Libra</option>
+    <option>Scorpio</option>
+    <option>Sagittarius</option>
+    <option>Capricorn</option>
+    <option>Aquarius</option>
+    <option>Pisces</option>
+  </select>
+
+  <div class="day-buttons">
+    <button data-day="-1">Yesterday</button>
+    <button data-day="0" class="active">Today</button>
+    <button data-day="1">Tomorrow</button>
+  </div>
+
+  <div id="reading" class="reading">
+    Select a zodiac sign to receive your reading.
+  </div>
+
+  <footer>✨ Readings change daily ✨</footer>
+</div>
+
+<script>
+  const zodiacSelect = document.getElementById("zodiac");
+  const readingEl = document.getElementById("reading");
+  const buttons = document.querySelectorAll(".day-buttons button");
+
+  let selectedDayOffset = 0;
+
+  const tarotCards = [
+    "The Fool", "The Magician", "The High Priestess", "The Empress",
+    "The Emperor", "The Hierophant", "The Lovers", "The Chariot",
+    "Strength", "The Hermit", "Wheel of Fortune", "Justice",
+    "The Hanged Man", "Death", "Temperance", "The Devil",
+    "The Tower", "The Star", "The Moon", "The Sun",
+    "Judgement", "The World"
+  ];
+
+  const messages = [
+    "A new opportunity is forming quietly behind the scenes.",
+    "Trust your intuition — it is unusually sharp today.",
+    "An emotional truth reveals itself through patience.",
+    "Something you feared may turn into a blessing.",
+    "Focus on balance and avoid impulsive decisions.",
+    "Your energy attracts attention — use it wisely.",
+    "Let go of what no longer aligns with your path.",
+    "A conversation today shifts your perspective.",
+    "Creativity flows when you stop forcing results.",
+    "Small steps lead to meaningful progress."
+  ];
+
+  function getReading(zodiac, offset) {
+    const date = new Date();
+    date.setDate(date.getDate() + offset);
+
+    const seed =
+      zodiac.length * 97 +
+      date.getFullYear() +
+      date.getMonth() * 31 +
+      date.getDate() * 13;
+
+    const tarot = tarotCards[seed % tarotCards.length];
+    const message = messages[seed % messages.length];
+
+    return `
+      <div class="tarot-card">🃏 Tarot Card: ${tarot}</div>
+      <div>
+        <strong>${zodiac}</strong>, ${message}
+        The influence of <em>${tarot}</em> suggests reflection,
+        subtle change, and awareness of hidden patterns today.
+      </div>
+    `;
+  }
+
+  function updateReading() {
+    const zodiac = zodiacSelect.value;
+    if (!zodiac) {
+      readingEl.innerHTML = "Select a zodiac sign to receive your reading.";
+      return;
+    }
+    readingEl.innerHTML = getReading(zodiac, selectedDayOffset);
+  }
+
+  zodiacSelect.addEventListener("change", updateReading);
+
+  buttons.forEach(btn => {
+    btn.addEventListener("click", () => {
+      buttons.forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      selectedDayOffset = parseInt(btn.dataset.day);
+      updateReading();
+    });
+  });
+</script>
+
+</body>
+</html>

@@ -25,6 +25,9 @@
     <main>
         <div id="clock"></div>
 
+        <h2>Day of the year</h2>
+        <p id="displayDayOfYear"></p>
+
         <h2>let date = new Date()</h2>
         <p id="displayDate"></p>
 
@@ -48,7 +51,7 @@
         <input type="date" name="" id="">
         <p>What solar zodiac sign are you?</p>
         <p>What's the horoscope prediction for today?</p>
-    
+
         <h3>Time quotes</h3>
         <p>Time, it needs time, to win back your love again (The Scorpions - Still Loving You)</p>
         <p>You can't hurry love, you just have to wait (Phil Collins - You Can't Hurry Love)</p>
@@ -86,7 +89,7 @@
         let day = date.getDate()
         let TimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
         let secondsCounter = localStorage.getItem("today_secondsCounter")
-        if (secondsCounter == null){
+        if (secondsCounter == null) {
             secondsCounter = 0
         }
         // Clock
@@ -102,11 +105,11 @@
         displayTimezone.textContent = TimeZone
 
         titleDate.innerHTML = `
-        <h1>☀️ ${year}
+        <h1>${year}
             ${monthName}
-            ${day} 🌙
+            ${day}
             </h1>
-            <h2>${weekDay}</h2>
+            <h2>☀️ ${weekDay} 🌙</h2>
         
         `
 
@@ -132,6 +135,40 @@
         }
 
         let myInterval = setInterval(updateClock, 1000)
+
+        /* DAY OF THE YEAR X/365*/
+
+        function isLeapYear(year) {
+            return (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0);
+        }
+
+        function dayOfYear(date) {
+            const year = date.getFullYear();
+            const monthDays = [31, isLeapYear(year) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+
+            let day = date.getDate();
+            for (let i = 0; i < date.getMonth(); i++) {
+                day += monthDays[i];
+            }
+            return day; // 1–365/366
+        }
+
+        let yearDays = 365
+        if (isLeapYear(date.getFullYear())){
+            yearDays = 366
+        }
+        // testing
+        // const d = new Date("2022-03-25");
+        let dayYear = dayOfYear(date)
+
+
+        let percentage = dayYear*100/yearDays
+        percentage = decimalTwo(percentage)
+
+        displayDayOfYear.textContent = dayYear + "/" + yearDays + " " + percentage + "%"
+
+
+
     </script>
 
 </body>
