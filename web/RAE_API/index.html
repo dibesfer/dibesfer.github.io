@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAE API</title>
+    <link rel="stylesheet" href="/ferstyle.css">
+    <link rel="stylesheet" href="/assets/css/basictemplate.css">
+</head>
+<body>
+    <header>
+        <h1>RAE API</h1>
+        <p>Real Academia Española - Application Programming Interface</p>
+    </header>
+    <main>
+        <h2>Palabra aleatoria</h2>
+        <p id="palabraAleatoria"></p>
+        <p>Shit there is a problem with CORS</p>
+    </main>
+    <footer>
+
+        <p>by dibesfer and rae-api.com</p>
+
+    </footer>
+    <script>
+
+        fetch("https://rae-api.com/api/words/filisteo")
+        .then(x => {
+            console.log(x)
+        })
+        .then(y => {
+            console.log(y)
+        })
+
+    </script>
+</body>
+</html>
