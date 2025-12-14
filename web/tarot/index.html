@@ -6,7 +6,7 @@
     <title>Tarot</title>
     <link rel="stylesheet" href="/ferstyle.css">
     <link rel="stylesheet" href="/assets/css/basictemplate.css">
-
+    <script src="/ferscript.js"></script>
     <style>
 
         table {
@@ -40,6 +40,10 @@
     </header>
 
     <main>
+
+        <h2>Little prediction</h2>
+        <div id="displayPrediction"></div>
+
         <h2>Zodiac Signs</h2>
         <table>
 
@@ -133,7 +137,35 @@
         <img src="https://upload.wikimedia.org/wikipedia/commons/e/e0/Jean_Dodal_Tarot_trump_01.jpg" alt="">
         <img src="https://upload.wikimedia.org/wikipedia/commons/9/92/Jean_Dodal_Tarot_trump_02.jpg" alt="">
         </div>
+
+        
     </main>
+
+
+    <script>
+
+        let predictions1 = [
+            "Today you will"
+        ]
+        let predictions2 = [
+            "remember an old friend",
+            "receive a call",
+            "meet a possible lover",
+            "lose something important",
+            "learn something new",
+            "discover a nice spot"
+        ]
+        let predictions3 = [
+            "that will make you happy",
+            "that will make you upset",
+            "that will make you serene"
+        ]
+
+        let prediction = randomFromArray(predictions1) + " " + randomFromArray(predictions2) + " " + randomFromArray(predictions3)
+
+        displayPrediction.textContent = prediction
+
+    </script>
 
 </body>
 </html>
