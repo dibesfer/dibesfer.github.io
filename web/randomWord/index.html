@@ -7,22 +7,27 @@
     <title>Random Word</title>
     <link rel="stylesheet" href="/ferstyle.css">
     <link rel="stylesheet" href="/assets/css/basictemplate.css">
+    <style>
+        pre {
+            font: unset;
+        }
+    </style>
 </head>
 
 <body>
     <header>
         <h1>Random Word</h1>
-        <p>random-word-api and wiktionary </p>
+        <p>with wiktionary </p>
     </header>
     <main>
-        
 
-        <h2>Random word in English:</h2>
-        <p id="randomWordEnglish"></p>
+
+        <!-- <h2>Random word in English:</h2>
+        <p id="randomWordEnglish"></p> -->
 
         <h2>Random word in a Random Language</h2>
         <p id="randomWord"></p>
-        <div id="randomWordDefinition"></div>
+        <pre id="randomWordDefinition"></pre>
     </main>
     <footer>
 
@@ -30,32 +35,45 @@
 
     </footer>
     <script>
-        
+
+/*
         fetch("https://random-word-api.herokuapp.com/word?number=1")
             .then(r => r.json())
             .then(d => {
                 randomWordEnglish.textContent = d[0]
 
                 fetch("")
-                .then(a => {
+                    .then(a => {
 
-                })
-                .then(b => {
+                    })
+                    .then(b => {
 
-                })
+                    })
 
             })
-        
+*/
 
         fetch("https://en.wiktionary.org/w/api.php?action=query&list=random&rnnamespace=0&rnlimit=1&format=json&origin=*")
             .then(r => r.json())
-            .then(d => randomWord.textContent = d.query.random[0].title)
+            .then(d => {
+                let word = d.query.random[0].title
+                randomWord.textContent = word
 
-            /*
-        fetch("https://en.wiktionary.org/w/api.php?action=parse&page=WORD&prop=wikitext&format=json&origin=*")
-            .then(r => r.json())
-            .then(d => console.log(d.parse.wikitext["*"]))
-            */
+                fetch("https://en.wiktionary.org/w/api.php?action=parse&page=" + word + "&prop=wikitext&format=json&origin=*")
+                    .then(r => r.json())
+                    .then(d => {
+                        randomWordDefinition.textContent = d.parse.wikitext["*"]
+                        console.log(d)
+                    })
+
+            }
+            )
+
+        /*
+    fetch("https://en.wiktionary.org/w/api.php?action=parse&page=WORD&prop=wikitext&format=json&origin=*")
+        .then(r => r.json())
+        .then(d => console.log(d.parse.wikitext["*"]))
+        */
 
     </script>
 </body>
