@@ -2,6 +2,7 @@
 // let consonants = ["b", "c", "d", "f", "g", "h", "l", "m", "n", "p", "r", "s", "t", "v", "x", "z", "þ", "ch", "sh",]
 
 let vowels = ["a", "e", "i", "o", "u"]
+let semivowels = ["y", "w" , "h", " "," "," "," "," "," "," "]
 let consonants = ["b", "c", "d", "f", "g", "l", "m", "n", "p", "r", "s", "t", "v", "z"]
 let greek = "ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩ"
 let emojis = ["🖌️", "✏️", "🛠️", "⚒️", "⛏️", "🔨", "🗝️", "🔑", "🌀", "📡", "⚖️", "⚜️", "🔱", "🔆", "⚕️", "💠", "✳️", "✴️", "❇️"]
@@ -106,6 +107,12 @@ function generate() {
 
 
             break;
+
+        case "vowelio":
+
+            generateVowelio()
+
+        break;
 
         default:
             break;
@@ -331,6 +338,24 @@ function generateGreek(){
 
     textConsole.textContent = sentence
 }
+
+function generateVowelio(){
+ 
+    let vowelio = vowels.concat(semivowels)
+    console.log(vowelio)
+    let sentence = ""
+
+    for (let i = 0; i < 400; i++) {
+        
+        sentence += vowelio[randomInt(0,vowelio.length-1)]
+        
+    }
+
+    textConsole.textContent = sentence
+
+}
+
+
 /*     OLD GENERATOR
 for (let j = 0; j < wordlength; j++) {
 
