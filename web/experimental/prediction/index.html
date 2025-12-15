@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Generador de Predicciones</title>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      background: linear-gradient(135deg, #1e1e2f, #2b2b40);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.08);
+      padding: 2rem;
+      border-radius: 16px;
+      max-width: 520px;
+      width: 100%;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 1.6rem;
+      margin-bottom: 1rem;
+    }
+
+    .prediction {
+      font-size: 1.1rem;
+      margin: 1.5rem 0;
+      min-height: 4em;
+    }
+
+    button {
+      background: #7c7cff;
+      border: none;
+      border-radius: 999px;
+      padding: 0.7rem 1.5rem;
+      font-size: 1rem;
+      cursor: pointer;
+      color: #fff;
+    }
+
+    button:hover {
+      background: #9a9aff;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>🔮 Predicción del día</h1>
+    <div id="prediction" class="prediction">Pulsa el botón para revelar tu destino.</div>
+    <button onclick="generarPrediccion()">Generar predicción</button>
+  </div>
+
+  <script>
+    const prediccion1 = [
+      "Hoy es un gran día para",
+      "Este es el momento perfecto para",
+      "La energía de hoy favorece",
+      "Tu intuición te empuja a",
+      "El universo conspira para",
+      "Las circunstancias te invitan a",
+      "Una señal inesperada te anima a",
+      "La suerte sonríe cuando decides",
+      "Tu mente está especialmente clara para",
+      "Hoy todo se alinea para"
+    ];
+
+    const prediccion2 = [
+      "hablar con un viejo amigo",
+      "tomar una decisión importante",
+      "retomar una idea olvidada",
+      "escuchar más que hablar",
+      "arriesgarte con algo nuevo",
+      "cerrar un ciclo pendiente",
+      "decir lo que llevas guardando",
+      "cambiar una pequeña rutina",
+      "confiar en alguien cercano",
+      "dar el primer paso"
+    ];
+
+    const prediccion3 = [
+      "sobre un proyecto empresarial",
+      "que puede cambiar tu rumbo",
+      "aunque te genere dudas",
+      "y descubrir algo valioso",
+      "con resultados inesperados",
+      "que traerá claridad",
+      "y fortalecer un vínculo",
+      "que llevaba tiempo esperando",
+      "con consecuencias positivas",
+      "que te hará crecer"
+    ];
+
+    function randomItem(arr) {
+      return arr[Math.floor(Math.random() * arr.length)];
+    }
+
+    function generarPrediccion() {
+      const texto = `${randomItem(prediccion1)} ${randomItem(prediccion2)} ${randomItem(prediccion3)}.`;
+      document.getElementById("prediction").textContent = texto;
+    }
+  </script>
+</body>
+</html>
