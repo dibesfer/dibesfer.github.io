@@ -24,11 +24,13 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            position: sticky;
+            position: absolute;
             top: 0;
+            right: 0;
+            left: 0;
             backdrop-filter: blur(10px);
             padding: 20px;
-            height: 70px;
+            height: 50px;
         }
 
         .mockUpBox {
@@ -39,6 +41,19 @@
         .maxWidth {
             margin: auto;
             max-width: 800px;
+        }
+
+        #bottomBar{
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+        }
+        .spacing {
+            height: 80px;
         }
     </style>
 </head>
@@ -52,6 +67,7 @@
 
     </header>
     <main class="maxWidth">
+        <div class="spacing"></div>
         <p class="textCenter">Dibujos y escritos de Fer</p>
 
         <div class="mockUpBox"></div>
@@ -68,18 +84,7 @@
             Eveniet esse odit, reiciendis autem excepturi eius exercitationem, sunt natus temporibus quidem, eos debitis
             nemo totam.</p>
 
-        <h2>Gallery</h2>
-        <p>Lorem ipsum dolor sit, amet consectetur adipisicing elit. Earum reprehenderit provident aspernatur beatae
-            laboriosam doloribus suscipit harum iste consequuntur sunt animi, laudantium odit cum alias magnam quo
-            maiores eum delectus!</p>
-        <h2>Games</h2>
-        <p>Lorem, ipsum dolor sit amet consectetur adipisicing elit. Praesentium sapiente, corrupti amet eveniet laborum
-            animi sed molestias, natus quidem odio maxime. Quis eaque recusandae commodi! Incidunt velit porro vero
-            unde.</p>
-        <h2>Web</h2>
-        <p>Lorem ipsum dolor sit amet consectetur, adipisicing elit. Dolores iste quisquam eveniet assumenda illo.
-            Eveniet esse odit, reiciendis autem excepturi eius exercitationem, sunt natus temporibus quidem, eos debitis
-            nemo totam.</p>
+        
 
         <div class="mockUpBox"></div>
     </main>
@@ -88,6 +93,10 @@
         <p>contact dibesfer@gmail.com</p>
 
     </footer>
+    <div id="bottomBar">
+        <p>Full</p>
+        <p>Go up</p>
+    </div>
 </body>
 
 </html>
