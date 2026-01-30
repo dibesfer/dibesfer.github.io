@@ -24,7 +24,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            position: absolute;
+            position: fixed;
             top: 0;
             right: 0;
             left: 0;
@@ -47,10 +47,24 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            position: absolute;
+            position: fixed;
             bottom: 0;
             left: 0;
             right: 0;
+        }
+        #menuBar{
+            position: fixed;
+            top: 50px;
+            width: 300px;
+            background-color: yellow;
+            bottom: 50px;
+            left: 0;
+            transition: 0.4s all;
+            padding: 15px;
+        }
+
+        .closedMenuBar{
+            left: -300px !important;
         }
         .spacing {
             height: 80px;
@@ -61,11 +75,28 @@
 <body>
     <header>
 
-        <p>Menu</p>
-        <h1>dibesfer</h1>
+        <div id="menuBtn"><p>Menu</p></div>
+       
+        <a href="index.html"><h1>dibesfer</h1></a>
         <p>About</p>
 
     </header>
+
+    <div id="menuBar" class="closedMenuBar">
+            <a href="#"><p>enlace ejemplo</p></a>
+            <a href="#"><p>enlace ejemplo</p></a>
+            <a href="#"><p>enlace ejemplo</p></a>
+            <a href="#"><p>enlace ejemplo</p></a>
+            <a href="#"><p>enlace ejemplo</p></a>
+            <a href="#"><p>enlace ejemplo</p></a>
+            <a href="#"><p>enlace ejemplo</p></a>
+            <a href="#"><p>enlace ejemplo</p></a>
+            <a href="#"><p>enlace ejemplo</p></a>
+            <a href="#"><p>enlace ejemplo</p></a>
+            <a href="#"><p>enlace ejemplo</p></a>
+            <a href="#"><p>enlace ejemplo</p></a>
+    </div>
+
     <main class="maxWidth">
         <div class="spacing"></div>
         <p class="textCenter">Dibujos y escritos de Fer</p>
@@ -84,6 +115,8 @@
             Eveniet esse odit, reiciendis autem excepturi eius exercitationem, sunt natus temporibus quidem, eos debitis
             nemo totam.</p>
 
+           
+
         
 
         <div class="mockUpBox"></div>
@@ -97,6 +130,23 @@
         <p>Full</p>
         <p>Go up</p>
     </div>
+
+    <script>
+
+        let menuBar = document.getElementById("menuBar")
+
+        let menuBtn = document.getElementById("menuBtn")
+
+        function openMenuBar(){
+            menuBar.classList.toggle("closedMenuBar")
+        }
+
+        menuBtn.onclick = openMenuBar
+
+
+
+
+    </script>
 </body>
 
 </html>
