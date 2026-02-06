@@ -31,6 +31,23 @@
             backdrop-filter: blur(10px);
             padding: 20px;
             height: 50px;
+            /* background-color: rgba(128, 0, 128, 0.307); */
+        }
+
+        .superTitle {
+
+            text-align: center;
+            position: sticky;
+            top: 0;
+            /* background-color: rgba(255, 255, 0, 0.36); */
+            height: 50px;
+            line-height: 1.5;
+
+
+        }
+
+        .superTitle a {
+            color: unset;
         }
 
         .mockUpBox {
@@ -43,7 +60,7 @@
             max-width: 800px;
         }
 
-        #bottomBar{
+        #bottomBar {
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -51,8 +68,13 @@
             bottom: 0;
             left: 0;
             right: 0;
+            padding: 20px;
+            height: 50px;
+            backdrop-filter: blur(10px);
+
         }
-        #menuBar{
+
+        #menuBar {
             position: fixed;
             top: 50px;
             width: 300px;
@@ -63,11 +85,23 @@
             padding: 15px;
         }
 
-        .closedMenuBar{
+        .closedMenuBar {
             left: -300px !important;
         }
+
         .spacing {
             height: 80px;
+        }
+
+
+        /* ON MOBILE*/
+
+        @media only screen and (max-width: 800px) {
+
+            main {
+                padding: 15px;
+            }
+
         }
     </style>
 </head>
@@ -75,55 +109,88 @@
 <body>
     <header>
 
-        <div id="menuBtn"><p>Menu</p></div>
-       
-        <a href="index.html"><h1>dibesfer</h1></a>
+        <div id="menuBtn">
+            <p>Menu</p>
+        </div>
+
+
         <p>About</p>
 
     </header>
 
+    <div class="spacing"></div>
+
+    <div class="superTitle">
+
+        <p><a href="index.html">
+                <h1>dibesfer</h1>
+            </a></p>
+
+    </div>
+
     <div id="menuBar" class="closedMenuBar">
-            <a href="#"><p>enlace ejemplo</p></a>
-            <a href="#"><p>enlace ejemplo</p></a>
-            <a href="#"><p>enlace ejemplo</p></a>
-            <a href="#"><p>enlace ejemplo</p></a>
-            <a href="#"><p>enlace ejemplo</p></a>
-            <a href="#"><p>enlace ejemplo</p></a>
-            <a href="#"><p>enlace ejemplo</p></a>
-            <a href="#"><p>enlace ejemplo</p></a>
-            <a href="#"><p>enlace ejemplo</p></a>
-            <a href="#"><p>enlace ejemplo</p></a>
-            <a href="#"><p>enlace ejemplo</p></a>
-            <a href="#"><p>enlace ejemplo</p></a>
+        <a href="#">
+            <p>enlace ejemplo</p>
+        </a>
+        <a href="#">
+            <p>enlace ejemplo</p>
+        </a>
+        <a href="#">
+            <p>enlace ejemplo</p>
+        </a>
+        <a href="#">
+            <p>enlace ejemplo</p>
+        </a>
+        <a href="#">
+            <p>enlace ejemplo</p>
+        </a>
+        <a href="#">
+            <p>enlace ejemplo</p>
+        </a>
+        <a href="#">
+            <p>enlace ejemplo</p>
+        </a>
+        <a href="#">
+            <p>enlace ejemplo</p>
+        </a>
+        <a href="#">
+            <p>enlace ejemplo</p>
+        </a>
+        <a href="#">
+            <p>enlace ejemplo</p>
+        </a>
+        <a href="#">
+            <p>enlace ejemplo</p>
+        </a>
+        <a href="#">
+            <p>enlace ejemplo</p>
+        </a>
     </div>
 
     <main class="maxWidth">
-        <div class="spacing"></div>
+        <!-- <div class="spacing"></div> -->
         <p class="textCenter">Dibujos y escritos de Fer</p>
-
+        <br>
         <div class="mockUpBox"></div>
         <h2>Gallery</h2>
-        <p>Lorem ipsum dolor sit, amet consectetur adipisicing elit. Earum reprehenderit provident aspernatur beatae
-            laboriosam doloribus suscipit harum iste consequuntur sunt animi, laudantium odit cum alias magnam quo
-            maiores eum delectus!</p>
+        <p>Ore waa! Kino masaki sunari otopelo irisidoi onnomoraki uronita!</p>
         <h2>Games</h2>
-        <p>Lorem, ipsum dolor sit amet consectetur adipisicing elit. Praesentium sapiente, corrupti amet eveniet laborum
-            animi sed molestias, natus quidem odio maxime. Quis eaque recusandae commodi! Incidunt velit porro vero
-            unde.</p>
+        <p>Kino marusati oropenodois</p>
         <h2>Web</h2>
-        <p>Lorem ipsum dolor sit amet consectetur, adipisicing elit. Dolores iste quisquam eveniet assumenda illo.
-            Eveniet esse odit, reiciendis autem excepturi eius exercitationem, sunt natus temporibus quidem, eos debitis
-            nemo totam.</p>
+        <p>Aavva ava vaavaAA. Avvavava, ava. Aavva ava vaavaAA. Avvavava, ava. Aavva ava vaavaAA. Avvavava, ava. Aavva ava vaavaAA. Avvavava, ava. Aavva ava vaavaAA. Avvavava, ava. Aavva ava vaavaAA. Avvavava, ava. Aavva ava vaavaAA. Avvavava, ava. Aavva ava vaavaAA. Avvavava, ava. Aavva ava vaavaAA. Avvavava, ava. </p>
 
-           
 
-        
+
+
 
         <div class="mockUpBox"></div>
     </main>
     <footer class="textCenter">
+            <div class="spacing"></div>
+
         <p>by dibesfer</p>
         <p>contact dibesfer@gmail.com</p>
+            <div class="spacing"></div>
 
     </footer>
     <div id="bottomBar">
@@ -137,7 +204,7 @@
 
         let menuBtn = document.getElementById("menuBtn")
 
-        function openMenuBar(){
+        function openMenuBar() {
             menuBar.classList.toggle("closedMenuBar")
         }
 
