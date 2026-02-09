@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>dibesfer</title>
     <link rel="stylesheet" href="/ferstyle.css">
+    <script src="/ferscript.js"></script>
 
     <style>
         * {
@@ -29,9 +30,9 @@
             right: 0;
             left: 0;
             backdrop-filter: blur(10px);
-            padding: 20px;
+            padding: 0 20px;
             height: 50px;
-            /* background-color: rgba(128, 0, 128, 0.307); */
+            background-color: rgba(128, 0, 128, 0.307);
         }
 
         a {
@@ -39,7 +40,7 @@
         }
 
         .superTitle {
-margin: auto;
+            margin: auto;
             width: max-content;
             text-align: center;
             position: sticky;
@@ -57,7 +58,19 @@ margin: auto;
 
         .mockUpBox {
             background-color: gray;
+
+            border-radius: 15px;
+            box-shadow: inset 0 0 20px rgb(0, 0, 0);
+            display: flex;
+            justify-content: center;
             height: 80px;
+            padding: 10px;
+
+        }
+
+        .mockUpBox>img {
+            height: 100%;
+            object-fit: contain;
         }
 
         .maxWidth {
@@ -73,7 +86,7 @@ margin: auto;
             bottom: 0;
             left: 0;
             right: 0;
-            padding: 20px;
+            padding: 0 20px;
             height: 50px;
             backdrop-filter: blur(10px);
 
@@ -96,6 +109,23 @@ margin: auto;
             left: -300px !important;
         }
 
+        #menuAbout {
+            position: fixed;
+            top: 50px;
+            width: 300px;
+            background-color: rgba(103, 65, 255, 0.563);
+            bottom: 50px;
+            right: 0px;
+            transition: 0.4s all;
+            padding: 15px;
+            backdrop-filter: blur(10px);
+            overflow: auto;
+        }
+
+        .closedMenuAbout {
+            right: -300px !important;
+        }
+
         .spacing {
             height: 80px;
         }
@@ -116,12 +146,14 @@ margin: auto;
 <body>
     <header>
 
-        <div id="menuBtn">
-            <p>Menu</p>
+        <div id="menuBtn" style="height:100%; padding: 2px; ">
+            <img style="height:100%; filter: invert(1);" src="/assets/branding/dibesfer-logo.png" alt="">
         </div>
 
 
-        <p>About</p>
+        <div id="menuBtnAbout" style="height:100%;padding: 2px;">
+            <img style="height:100%; filter: invert(1);" src="/assets/branding/fer-logo.png" alt="">
+        </div>
 
     </header>
 
@@ -129,9 +161,9 @@ margin: auto;
 
     <div class="superTitle">
 
-        <p><a href="index.html">
-                <h1>dibesfer</h1>
-            </a></p>
+        <a href="index.html">
+            <img style="height: 100%; filter: invert(1);" src="/assets/branding/dibesfer-title.png" alt="">
+        </a>
 
     </div>
 
@@ -174,52 +206,141 @@ margin: auto;
         </a>
     </div>
 
+    <div id="menuAbout" class="closedMenuAbout">
+        <a href="#">
+            <p>enlace ejemplo</p>
+        </a>
+        <a href="#">
+            <p>enlace ejemplo</p>
+        </a>
+        <a href="#">
+            <p>enlace ejemplo</p>
+        </a>
+        <a href="#">
+            <p>enlace ejemplo</p>
+        </a>
+        <a href="#">
+            <p>enlace ejemplo</p>
+        </a>
+        <a href="#">
+            <p>enlace ejemplo</p>
+        </a>
+
+    </div>
+
     <main class="maxWidth">
         <!-- <div class="spacing"></div> -->
         <p class="textCenter">Dibujos y escritos de Fer</p>
         <br>
-        <div class="mockUpBox"></div>
+
+
+        <div class="mockUpBox">
+
+            <img class="franja" src="/assets/deco/franja3.png" alt="">
+
+        </div>
+
+
         <h2>Gallery</h2>
         <p>Ore waa! Kino masaki sunari otopelo irisidoi onnomoraki uronita!</p>
         <h2>Games</h2>
         <p>Kino marusati oropenodois</p>
         <h2>Web</h2>
-        <p>Aavva ava vaavaAA. Avvavava, ava. Aavva ava vaavaAA. Avvavava, ava. Aavva ava vaavaAA. Avvavava, ava. Aavva ava vaavaAA. Avvavava, ava. Aavva ava vaavaAA. Avvavava, ava. Aavva ava vaavaAA. Avvavava, ava. Aavva ava vaavaAA. Avvavava, ava. Aavva ava vaavaAA. Avvavava, ava. Aavva ava vaavaAA. Avvavava, ava. </p>
+        <p>Aavva ava vaavaAA. Avvavava, ava. Aavva ava vaavaAA. Avvavava, ava. Aavva ava vaavaAA. Avvavava, ava. Aavva
+            ava vaavaAA. Avvavava, ava. Aavva ava vaavaAA. Avvavava, ava. Aavva ava vaavaAA. Avvavava, ava. Aavva ava
+            vaavaAA. Avvavava, ava. Aavva ava vaavaAA. Avvavava, ava. Aavva ava vaavaAA. Avvavava, ava. </p>
+
+        <p>text text text text text text text text text text text text text text text text text text text text text text
+            text text text text text text text text text text text text text text text text text text text text text
+            text text text text text text text text text text text text text text text text text text text text text
+            text text text text text text text text text text text text text text text text text text text text text
+            text text text text text text text text text text text text text text text text text text text text text
+            text text text text text text text text text text text text text text text text text text text text text
+            text text text text text text text text text text text text text text text text text text text text text
+            text text text text text text text text .</p>
+
+        <p>text text text text text text text text text text text text text text text text text text text text text text
+            text text text text text text text text text text text text text text text text text text text text text
+            text text text text text text text text text text text text text text text text text text text text text
+            text text text text text text text text text text text text text text text text text text text text text
+            text text text text text text text text text text text text text text text text text text text text text
+            text text text text text text text text text text text text text text text text text text text text text
+            text text text text text text text text text text text text text text text text text text text text text
+            text text text text text text text text .</p>
+
+        <br>
+
+        <div class="mockUpBox">
+
+            <img class="franja" src="/assets/deco/franja3.png" alt="">
 
 
-
-
-
-        <div class="mockUpBox"></div>
+        </div>
     </main>
     <footer class="textCenter">
-            <div class="spacing"></div>
+        <div class="spacing"></div>
 
         <p>by dibesfer</p>
-        <p>contact <a href="mailto:dibesfer@gmail.com">dibesfer@gmail.com</a></p>
-            <div class="spacing"></div>
+
+        <div class="spacing"></div>
 
     </footer>
     <div id="bottomBar">
         <p>Full</p>
-                <p>contact <a href="mailto:dibesfer@gmail.com">dibesfer@gmail.com</a></p>
+        <p>contact <a href="mailto:dibesfer@gmail.com">dibesfer@gmail.com</a></p>
 
-        <p>Go up</p>
+        
+
+        <!-- transform: rotate(180deg) -->
+        <img style="height: 100%; filter: invert(1); " src="https://icons.veryicon.com/png/o/miscellaneous/arrows/arrow-down-4-1.png" alt="">
     </div>
 
     <script>
 
         let menuBar = document.getElementById("menuBar")
 
+        let menuAbout = document.getElementById("menuAbout")
+
         let menuBtn = document.getElementById("menuBtn")
+
+        let menuBtnAbout = document.getElementById("menuBtnAbout")
 
         function openMenuBar() {
             menuBar.classList.toggle("closedMenuBar")
         }
 
+        function openMenuAbout() {
+            menuAbout.classList.toggle("closedMenuAbout")
+        }
+
+
         menuBtn.onclick = openMenuBar
+        menuBtnAbout.onclick = openMenuAbout
 
 
+        // LOAD DECORATIVE BAR IMAGES "FRANJA"
+        let arrayFranjas = [
+            "/assets/deco/franja.png",
+            "/assets/deco/franja1.png",
+            "/assets/deco/franja2.png",
+            "/assets/deco/franja3.png",
+            "/assets/deco/franja4.png",
+            "/assets/deco/franja5.png",
+            "/assets/deco/franja6.png",
+            "/assets/deco/franja7.png",
+            "/assets/deco/franja8.png",
+            "/assets/deco/franja9.png",
+            "/assets/deco/franja10.png",
+            "/assets/deco/franja11.png",
+        ]
+
+        let imgFranjas = getclass("franja")
+        //console.log(imgFranjas)
+        let franja
+        arrayFranjas = shuffle(arrayFranjas)
+        for (let i = 0; i < imgFranjas.length; i++) {
+            imgFranjas[i].src = arrayFranjas[i]
+        }
 
 
     </script>
