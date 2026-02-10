@@ -136,11 +136,25 @@
         .shadowIcon {
             transition: 0.2s;
             filter: invert(1) drop-shadow(0 0 0px white) !important;
-            
+
         }
 
         .shadowIcon:hover {
             filter: invert(1) drop-shadow(0 0 7px white) !important;
+            cursor: pointer;
+        }
+
+        .rotateRight {
+            transform: rotate(180deg);
+        }
+
+        .rotateLeft {
+            transform: rotate(-180deg);
+        }
+
+        #menuBtn,
+        #menuBtnAbout {
+            transition: 0.2s;
         }
 
         /* ON MOBILE*/
@@ -167,12 +181,13 @@
     <header>
 
         <div id="menuBtn" style="height:100%; padding: 2px; ">
-            <img class="shadowIcon" style="height:100%; filter: invert(1);" src="/assets/branding/dibesfer-logo.png" alt="">
+            <img class="shadowIcon" style="height:100%; filter: invert(1);" src="/assets/branding/dibesfer-logo.png"
+                alt="">
         </div>
 
 
         <div id="menuBtnAbout" style="height:100%;padding: 2px;">
-            <img  class="shadowIcon" style="height:100%; filter: invert(1);" src="/assets/branding/fer-logo.png" alt="">
+            <img class="shadowIcon" style="height:100%; filter: invert(1);" src="/assets/branding/fer-logo.png" alt="">
         </div>
 
     </header>
@@ -182,7 +197,8 @@
     <div class="superTitle">
 
         <a href="index.html">
-            <img class="shadowIcon" style="height: 100%; filter: invert(1);" src="/assets/branding/dibesfer-title.png" alt="">
+            <img class="shadowIcon" style="height: 100%; filter: invert(1);" src="/assets/branding/dibesfer-title.png"
+                alt="">
         </a>
 
     </div>
@@ -263,8 +279,16 @@
 
         <h2>Gallery</h2>
         <p>Ore waa! Kino masaki sunari otopelo irisidoi onnomoraki uronita!</p>
+        <div style="text-align: center;">
+            <img style="filter: invert(1);" width="400px"
+                src="/assets/books/aliusus/ChatGPT Image Dec 1, 2025, 11_48_03 AM.png" alt="">
+        </div>
+
         <h2>Games</h2>
         <p>Kino marusati oropenodois</p>
+
+        <img src="https://content.luanti.org/uploads/4e6235eec4.png" alt="">
+
         <h2>Web</h2>
         <p>Aavva ava vaavaAA. Avvavava, ava. Aavva ava vaavaAA. Avvavava, ava. Aavva ava vaavaAA. Avvavava, ava. Aavva
             ava vaavaAA. Avvavava, ava. Aavva ava vaavaAA. Avvavava, ava. Aavva ava vaavaAA. Avvavava, ava. Aavva ava
@@ -306,13 +330,14 @@
 
     </footer>
     <div id="bottomBar">
-        <p>Full</p>
+        <p id="toggleFull" onclick="toggleFullscreen()">Full</p>
         <p>🖂 <a style="color: unset;" href="mailto:dibesfer@gmail.com">dibesfer@gmail.com</a></p>
 
-        
+
 
         <!-- transform: rotate(180deg) -->
-        <img style="height: 100%; filter: invert(1); " src="https://icons.veryicon.com/png/o/miscellaneous/arrows/arrow-down-4-1.png" alt="">
+        <img style="height: 100%; filter: invert(1); "
+            src="https://icons.veryicon.com/png/o/miscellaneous/arrows/arrow-down-4-1.png" alt="">
     </div>
 
     <script>
@@ -327,10 +352,12 @@
 
         function openMenuBar() {
             menuBar.classList.toggle("closedMenuBar")
+            menuBtn.classList.toggle("rotateRight")
         }
 
         function openMenuAbout() {
             menuAbout.classList.toggle("closedMenuAbout")
+            menuBtnAbout.classList.toggle("rotateLeft")
         }
 
 
