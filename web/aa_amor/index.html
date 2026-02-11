@@ -9,9 +9,18 @@
     <script src="/ferscript.js"></script>
 
     <style>
+
+        :root {
+            --TopBottomHeight: 55px
+        }
+
         * {
             margin: 0;
             box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
         }
 
         body {
@@ -30,10 +39,25 @@
             right: 0;
             left: 0;
             backdrop-filter: blur(10px);
-            padding: 0 20px;
-            height: 50px;
+            padding: 5px 20px;
+            height: var(--TopBottomHeight);
             background-color: rgba(128, 0, 128, 0.307);
             z-index: 1;
+        }
+
+        #bottomBar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 5px 20px;
+            height: var(--TopBottomHeight);
+            backdrop-filter: blur(10px);
+            background-color: rgba(0, 255, 255, 0.341);
+
         }
 
         a {
@@ -47,7 +71,8 @@
             position: sticky;
             top: 0;
             /* background-color: rgba(255, 255, 0, 0.36); */
-            height: 50px;
+            height: var(--TopBottomHeight);
+            padding: 5px;
             line-height: 1.5;
             z-index: 2;
 
@@ -79,32 +104,20 @@
             max-width: 800px;
         }
 
-        #bottomBar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            padding: 0 20px;
-            height: 50px;
-            backdrop-filter: blur(10px);
-
-        }
+        
 
         #menuBar {
             position: fixed;
-            top: 50px;
+            top: var(--TopBottomHeight);
             width: 300px;
             background-color: rgba(255, 255, 65, 0.563);
-            bottom: 50px;
+            bottom: var(--TopBottomHeight);
             left: 0;
             transition: 0.4s all;
             padding: 15px;
             backdrop-filter: blur(10px);
             overflow: auto;
-            z-index: 1;
+            z-index: 2;
         }
 
         .closedMenuBar {
@@ -113,16 +126,16 @@
 
         #menuAbout {
             position: fixed;
-            top: 50px;
+            top: var(--TopBottomHeight);
             width: 300px;
             background-color: rgba(103, 65, 255, 0.563);
-            bottom: 50px;
+            bottom: var(--TopBottomHeight);
             right: 0px;
             transition: 0.4s all;
             padding: 15px;
             backdrop-filter: blur(10px);
             overflow: auto;
-            z-index: 1;
+            z-index: 2;
         }
 
         .closedMenuAbout {
@@ -153,15 +166,21 @@
         }
 
         #menuBtn,
-        #menuBtnAbout {
+        #menuBtnAbout,
+        #scrollBottom {
             transition: 0.2s;
+        }
+
+
+        .rotated180 {
+            transform: rotate(180deg);
         }
 
         /* ON MOBILE*/
 
         @media only screen and (max-width: 800px) {
 
-            main {
+            .maxWidth {
                 padding: 15px;
             }
 
@@ -264,62 +283,54 @@
 
     </div>
 
-    <main class="maxWidth">
-        <!-- <div class="spacing"></div> -->
-        <p class="textCenter">Dibujos y escritos de Fer</p>
-        <br>
+    <main>
+        <div class="maxWidth">
 
 
-        <div class="mockUpBox">
-
-            <img class="franja" src="/assets/deco/franja3.png" alt="">
-
-        </div>
+            <!-- <div class="spacing"></div> -->
+            <p class="textCenter">Dibujos y escritos de Fer</p>
+            <br>
 
 
-        <h2>Gallery</h2>
-        <p>Ore waa! Kino masaki sunari otopelo irisidoi onnomoraki uronita!</p>
-        <div style="text-align: center;">
-            <img style="filter: invert(1);" width="400px"
-                src="/assets/books/aliusus/ChatGPT Image Dec 1, 2025, 11_48_03 AM.png" alt="">
-        </div>
+            <div class="mockUpBox">
 
-        <h2>Games</h2>
-        <p>Kino marusati oropenodois</p>
+                <img class="franja" src="/assets/deco/franja3.png" alt="">
 
-        <img src="https://content.luanti.org/uploads/4e6235eec4.png" alt="">
+            </div>
 
-        <h2>Web</h2>
-        <p>Aavva ava vaavaAA. Avvavava, ava. Aavva ava vaavaAA. Avvavava, ava. Aavva ava vaavaAA. Avvavava, ava. Aavva
-            ava vaavaAA. Avvavava, ava. Aavva ava vaavaAA. Avvavava, ava. Aavva ava vaavaAA. Avvavava, ava. Aavva ava
-            vaavaAA. Avvavava, ava. Aavva ava vaavaAA. Avvavava, ava. Aavva ava vaavaAA. Avvavava, ava. </p>
 
-        <p>text text text text text text text text text text text text text text text text text text text text text text
-            text text text text text text text text text text text text text text text text text text text text text
-            text text text text text text text text text text text text text text text text text text text text text
-            text text text text text text text text text text text text text text text text text text text text text
-            text text text text text text text text text text text text text text text text text text text text text
-            text text text text text text text text text text text text text text text text text text text text text
-            text text text text text text text text text text text text text text text text text text text text text
-            text text text text text text text text .</p>
+            <h2>Gallery</h2>
+            <p>Ore waa! Kino masaki sunari otopelo irisidoi onnomoraki uronita!</p>
+            <div style="text-align: center;">
+                <img style="filter: invert(1);" width="400px"
+                    src="/assets/books/aliusus/ChatGPT Image Dec 1, 2025, 11_48_03 AM.png" alt="">
+            </div>
 
-        <p>text text text text text text text text text text text text text text text text text text text text text text
-            text text text text text text text text text text text text text text text text text text text text text
-            text text text text text text text text text text text text text text text text text text text text text
-            text text text text text text text text text text text text text text text text text text text text text
-            text text text text text text text text text text text text text text text text text text text text text
-            text text text text text text text text text text text text text text text text text text text text text
-            text text text text text text text text text text text text text text text text text text text text text
-            text text text text text text text text .</p>
+            
+            <h2>Web</h2>
 
-        <br>
 
-        <div class="mockUpBox">
+            <br>
 
-            <img class="franja" src="/assets/deco/franja3.png" alt="">
+            <div class="mockUpBox">
 
+                <img class="franja" src="/assets/deco/franja3.png" alt="">
+
+
+            </div>
+
+            <h2>Games</h2>
+            <p>Kino marusati oropenodois</p>
+            <p>Datatest Full-screen image</p>
 
         </div>
+
+
+        
+
+            <img src="https://content.luanti.org/uploads/4e6235eec4.png" alt="">
+
+
     </main>
     <footer class="textCenter">
         <div class="spacing"></div>
@@ -336,7 +347,7 @@
 
 
         <!-- transform: rotate(180deg) -->
-        <img style="height: 100%; filter: invert(1); "
+        <img id="scrollBottom" onclick="scrollToBottom()" style="height: 100%; filter: invert(1); "
             src="https://icons.veryicon.com/png/o/miscellaneous/arrows/arrow-down-4-1.png" alt="">
     </div>
 
@@ -388,6 +399,33 @@
         for (let i = 0; i < imgFranjas.length; i++) {
             imgFranjas[i].src = arrayFranjas[i]
         }
+
+        let scrollBottom = getid("scrollBottom")
+
+        function scrollToBottom() {
+
+            if (scrollBottom.classList.contains("rotated180")) {
+                window.scrollTo(0, 0);
+            }
+            else {
+                window.scrollTo(0, document.body.scrollHeight);
+            }
+
+        }
+
+        document.body.onscroll = function () { scrollFunction() }
+
+        function scrollFunction() {
+            if (document.documentElement.scrollTop > 100) {
+
+                scrollBottom.classList.add("rotated180")
+
+            } else {
+                scrollBottom.classList.remove("rotated180")
+            }
+            console.log(document.documentElement.scrollTop)
+        }
+
 
 
     </script>
