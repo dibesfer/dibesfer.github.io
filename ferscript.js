@@ -95,7 +95,7 @@ else {
   //toggleFull.textContent = "Full"
 }
 
-function toggleFullscreen() {
+function toggleFullscreen(toggleFull) {
 
   console.log("clicked")
 
@@ -105,12 +105,14 @@ function toggleFullscreen() {
 
   if (fullmode) {
     closeFullscreen()
-    //toggleFull.textContent = "Full"
+    if (toggleFull)
+    toggleFull.textContent = "Full"
   }
   else {
     console.log("no full")
     openFullscreen()
-    //toggleFull.textContent = "No Full"
+    if (toggleFull)
+    toggleFull.textContent = "No Full"
 
   }
 

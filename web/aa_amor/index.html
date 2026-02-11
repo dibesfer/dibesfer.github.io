@@ -158,17 +158,17 @@
         }
 
         .rotateRight {
-            transform: rotate(180deg);
+            transform: rotate(360deg);
         }
 
         .rotateLeft {
-            transform: rotate(-180deg);
+            transform: rotate(-360deg);
         }
 
         #menuBtn,
         #menuBtnAbout,
         #scrollBottom {
-            transition: 0.2s;
+            transition: 0.4s;
         }
 
 
@@ -341,13 +341,13 @@
 
     </footer>
     <div id="bottomBar">
-        <p id="toggleFull" onclick="toggleFullscreen()">Full</p>
+        <p id="toggleFull" onclick="toggleFullscreen(this)">Full</p>
         <p>🖂 <a style="color: unset;" href="mailto:dibesfer@gmail.com">dibesfer@gmail.com</a></p>
 
 
 
         <!-- transform: rotate(180deg) -->
-        <img id="scrollBottom" onclick="scrollToBottom()" style="height: 100%; filter: invert(1); "
+        <img id="scrollBottom" class="shadowIcon" onclick="scrollToBottom()" style="height: 100%; filter: invert(1); "
             src="https://icons.veryicon.com/png/o/miscellaneous/arrows/arrow-down-4-1.png" alt="">
     </div>
 
@@ -423,7 +423,7 @@
             } else {
                 scrollBottom.classList.remove("rotated180")
             }
-            console.log(document.documentElement.scrollTop)
+            //console.log(document.documentElement.scrollTop)
         }
 
 
