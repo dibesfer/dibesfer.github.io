@@ -9,6 +9,10 @@
     <script src="/ferscript.js"></script>
 
     <style>
+        @font-face {
+            font-family: Jost;
+            src: url(/assets/fonts/Jost-VariableFont_wght.ttf);
+        }
 
         :root {
             --TopBottomHeight: 55px
@@ -26,7 +30,8 @@
         body {
             background-color: black;
             color: white;
-            font-family: sans-serif;
+            font-family: Jost, sans-serif;
+            font-size: 1.2rem;
             line-height: 2;
         }
 
@@ -41,7 +46,7 @@
             backdrop-filter: blur(10px);
             padding: 5px 20px;
             height: var(--TopBottomHeight);
-            background-color: rgba(128, 0, 128, 0.307);
+            /* background-color: rgba(128, 0, 128, 0.307); */
             z-index: 1;
         }
 
@@ -56,7 +61,7 @@
             padding: 5px 20px;
             height: var(--TopBottomHeight);
             backdrop-filter: blur(10px);
-            background-color: rgba(0, 255, 255, 0.341);
+            /* background-color: rgba(0, 255, 255, 0.341); */
 
         }
 
@@ -78,12 +83,14 @@
 
         }
 
-        .superTitle a {
+        .superTitle a,
+        #menuBar a,
+        #menuAbout a {
             color: unset;
         }
 
         .mockUpBox {
-            background-color: rgb(66, 66, 66);
+            /* background-color: rgb(66, 66, 66); */
 
             border-radius: 15px;
             box-shadow: inset 0 0 20px rgb(0, 0, 0);
@@ -104,13 +111,13 @@
             max-width: 800px;
         }
 
-        
+
 
         #menuBar {
             position: fixed;
             top: var(--TopBottomHeight);
             width: 300px;
-            background-color: rgba(255, 255, 65, 0.563);
+            /* background-color: rgba(255, 255, 65, 0.563); */
             bottom: var(--TopBottomHeight);
             left: 0;
             transition: 0.4s all;
@@ -128,7 +135,7 @@
             position: fixed;
             top: var(--TopBottomHeight);
             width: 300px;
-            background-color: rgba(103, 65, 255, 0.563);
+            /* background-color: rgba(103, 65, 255, 0.563); */
             bottom: var(--TopBottomHeight);
             right: 0px;
             transition: 0.4s all;
@@ -174,6 +181,68 @@
 
         .rotated180 {
             transform: rotate(180deg);
+        }
+
+        .flexgrid {
+
+            display: flex;
+            align-items: baseline;
+            justify-content: space-around;
+            flex-wrap: wrap;
+        }
+
+        .flexgrid a {
+            color: unset;
+        }
+
+        .flexgriditem {
+            flex: 33.33%;
+            width: 33.33%;
+            max-width: 400px;
+            overflow: hidden;
+            padding: 5px;
+        }
+
+        .flexgriditem img {
+            /* aspect-ratio: 16/9; */
+        }
+
+        .flexgriditem>div {
+            border: solid 1px white;
+
+            padding: 10px;
+        }
+
+        @media only screen and (max-width: 900px) {
+            .flexgriditem {
+                flex: 50%;
+            }
+        }
+
+        @media only screen and (max-width: 600px) {
+
+            .flexgriditem {
+                flex: 100%;
+            }
+        }
+
+        .zoomableimage {
+            max-width: 100%;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            aspect-ratio: 16/9;
+            background-color: rgb(78, 78, 78);
+        }
+
+        .zoomableimage img {
+            transition: 1s;
+        }
+
+        .zoomableimage img:hover {
+            transform: scale(1.5);
+
         }
 
         /* ON MOBILE*/
@@ -289,8 +358,6 @@
 
             <!-- <div class="spacing"></div> -->
             <p class="textCenter">Dibujos y escritos de Fer</p>
-            <br>
-
 
             <div class="mockUpBox">
 
@@ -298,6 +365,53 @@
 
             </div>
 
+        </div>
+
+        <div class="flexgrid">
+            <div class="flexgriditem">
+                <div>
+                    <a href="/gallery/">
+                        <h2>🖌️Gallery</h2>
+                        <div class="zoomableimage">
+                            <img width="100%" src="/gallery/assets/Alan Moore - 2019Ja23.jpg">
+                        </div>
+                        <p>Drawings I do in paper and in digital.</p>
+
+                    </a>
+                </div>
+
+            </div>
+            <div class="flexgriditem">
+                <div>
+                    <a href="/games/index.html">
+                        <h2>🎮Games</h2>
+                        <div class="zoomableimage">
+                            <img height="100%" width="100%" src="/games/assets/colorlandia-spawn.png">
+                        </div>
+                        <p>Games I code in javascript, Luanti (Lua) and Godot.</p>
+
+                    </a>
+                </div>
+
+            </div>
+            <div class="flexgriditem">
+                <div>
+                    <a href="web/">
+                        <h2>🌐Web</h2>
+                        <div class="zoomableimage">
+                            <img width="100%" src="/assets/images/web.png">
+                        </div>
+                        <p>Webs I program in HTML, CSS and Javascript.</p>
+
+                    </a>
+                </div>
+
+            </div>
+
+
+        </div>
+
+        <div class="maxWidth">
 
             <h2>Gallery</h2>
             <p>Ore waa! Kino masaki sunari otopelo irisidoi onnomoraki uronita!</p>
@@ -306,18 +420,13 @@
                     src="/assets/books/aliusus/ChatGPT Image Dec 1, 2025, 11_48_03 AM.png" alt="">
             </div>
 
-            
+
             <h2>Web</h2>
 
 
             <br>
 
-            <div class="mockUpBox">
 
-                <img class="franja" src="/assets/deco/franja3.png" alt="">
-
-
-            </div>
 
             <h2>Games</h2>
             <p>Kino marusati oropenodois</p>
@@ -326,10 +435,19 @@
         </div>
 
 
-        
 
-            <img src="https://content.luanti.org/uploads/4e6235eec4.png" alt="">
 
+        <img src="https://content.luanti.org/uploads/4e6235eec4.png" alt="">
+
+
+        <div class="maxWidth">
+            <div class="mockUpBox">
+
+                <img class="franja" src="/assets/deco/franja3.png" alt="">
+
+
+            </div>
+        </div>
 
     </main>
     <footer class="textCenter">
