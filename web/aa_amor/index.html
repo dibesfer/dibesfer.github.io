@@ -77,11 +77,16 @@
             position: sticky;
             top: 0;
             /* background-color: rgba(255, 255, 0, 0.36); */
-            height: var(--TopBottomHeight);
+            height: 70px;
             padding: 5px;
             line-height: 1.5;
             z-index: 2;
+            transition: 0.2s;
 
+        }
+
+        .superTitleShrink {
+            height: var(--TopBottomHeight);
         }
 
         .superTitle a,
@@ -455,7 +460,7 @@
     <footer class="textCenter">
         <div class="spacing"></div>
 
-        
+
         <p>by dibesfer</p>
 
         <div class="spacing"></div>
@@ -547,7 +552,15 @@
             //console.log(document.documentElement.scrollTop)
         }
 
+        let header = getclass("superTitle")[0]
 
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 60) {
+                header.classList.add('superTitleShrink');
+            } else {
+                header.classList.remove('superTitleShrink');
+            }
+        });
 
     </script>
 </body>
