@@ -363,7 +363,7 @@
 
 
             <!-- <div class="spacing"></div> -->
-            <p class="textCenter">Dibujos y escritos de Fer</p>
+            <p id="description" class="textCenter">Dibujos y escritos de Fer</p>
 
             <div class="mockUpBox">
 
@@ -402,7 +402,7 @@
             </div>
             <div class="flexgriditem">
                 <div>
-                    <a href="web/">
+                    <a href="/web/">
                         <h2>🌐Web</h2>
                         <div class="zoomableimage">
                             <img width="100%" src="/assets/images/web.png">
@@ -561,6 +561,26 @@
                 header.classList.remove('superTitleShrink');
             }
         });
+
+        let description = getid("description")
+        let descriptions = [
+            "<<<---··· /// wOwOw \\\ ###--->>>",
+            "<b>Dib</b>ujos y <i>es</i>critos de <u>Fer</u>",
+            "<b>Dev</b> <i>Illustr</i><u>author</u>",
+            "No <b>space</b> is <i>limited</i> if <u>ideas</u> fit in.",
+            "What I enjoy the <b>most</b> and do <u>the best</u> is <i>creating</i>",
+            "Creer o crear, tú eliges",
+            "No es la <b>forma</b> ni el <i>mensaje</i>, es el <u>tono</u>",
+            "It is not the <b>shape</b>, nor the <u>message</u>, it is the <i>tone</i>"
+            //"Be <b class='red'>aggresive</b> defending your <i>quality</i> of <u>existing</u>. For <b>you</b>, for <i>us</i>",
+        ]
+
+    
+        function changeDescription() {
+            let random = randomInt(0, descriptions.length - 1);
+            description.innerHTML = descriptions[random]
+        }
+        changeDescription()
 
     </script>
 </body>
