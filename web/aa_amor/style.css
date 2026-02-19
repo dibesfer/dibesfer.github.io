@@ -144,7 +144,7 @@ a {
 }
 
 .spacing {
-    height: 80px;
+    height: 60px;
 }
 
 .shadowIcon {
@@ -244,15 +244,16 @@ a {
 @media only screen and (max-width: 800px) {
 
     .maxWidth {
-        padding: 15px;
+        padding: 10px;
     }
 
     .mockUpBox {
         height: unset;
+        padding: unset;
     }
 
     header {
-        padding: 2px 10px;
+        padding: 5px 10px;
     }
 
 }
