@@ -7,7 +7,7 @@
     <title>monochat</title>
     <!-- SUPABASE cdn -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-
+    <link rel="stylesheet" href="/web/chat/style.css">
     <style>
         * {
             margin: 0;
@@ -17,28 +17,55 @@
         body {
             background-color: black;
             color: white;
-            font-family: monospace;
+            font-family: UbuntuMono, monospace;
 
+
+            line-height: 2;
+
+        }
+
+        .maxWidth {
+            padding: 10px;
             max-width: 800px;
             margin: auto;
-            line-height: 2;
-            padding: 10px;
         }
     </style>
 
 </head>
 
 <body>
-    <h1>members</h1>
-    <h3>of monochat</h3>
-    <p>By date:</p>
-    <ol id="dbfMembersList">
 
-        <li></li>
-        <li></li>
-        <li></li>
+    <div id="header" class="flex3">
+        <p><a href="/web/chat/">monochat</a></p>
+        <div>
 
-    </ol>
+            <p id="userNameDisplay">Anonymous</p>
+        </div>
+        <div id="logOutBtnWrapper">
+            <!-- <div>
+                <p><a href="user/">profile</a></p>
+            </div> -->
+
+            <div>
+                <p id="logOutBtn" style="color: rgb(221, 58, 58);">⮨Log Out⏻</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="maxWidth">
+
+        <h1>members</h1>
+        <h3>of monochat</h3>
+        <p>By date:</p>
+        <ol id="dbfMembersList">
+
+            <li></li>
+            <li></li>
+            <li></li>
+
+        </ol>
+
+    </div>
 
     <script>
         const supabaseUrl = 'https://qugihsopwjemzakhrbvw.supabase.co'
