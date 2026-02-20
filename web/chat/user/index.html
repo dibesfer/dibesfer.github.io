@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>dbf monochat - user</title>
+    <title>monochat</title>
     <!-- SUPABASE cdn -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 
@@ -26,12 +26,12 @@
         }
 
         #profilePicture {
-            background-color: white;
-            border: 3px solid white;
+            /* background-color: white; */
+            /* border: 1px solid white; */
             width: 150px;
             aspect-ratio: 1;
             object-fit: cover;
-            border-radius: 50%;
+            /* border-radius: 50%; */
 
         }
 
@@ -113,17 +113,17 @@ Lorem ipsum, dolor sit amet consectetur adipisicing elit. Nobis neque ea molesti
         const userDescriptionTextarea = document.getElementById("userDescriptionTextarea")
         const EditSaveBtn = document.getElementById("EditSaveBtn")
 
-        deleteButton.addEventListener("click", deleteAccount)
-        profilePicture.addEventListener("click", changeProfilePicture)
-        EditSaveBtn.addEventListener("click", editMode)
+        
 
         let url = window.location.href
 
         let myUser
         let myUserTable
+        let userUrl
+
         if (url.includes("###")) {
 
-            let userUrl = url.split("###")[1]
+            userUrl = url.split("###")[1]
             document.write("welcome to " + userUrl + " profile")
 
             getUserTable(userUrl)
@@ -146,6 +146,13 @@ Lorem ipsum, dolor sit amet consectetur adipisicing elit. Nobis neque ea molesti
 
                 console.log(myUser)
                 fillProfile()
+
+                if (userUrl == user.email.split("@")[0]){
+                    deleteButton.addEventListener("click", deleteAccount)
+        profilePicture.addEventListener("click", changeProfilePicture)
+        EditSaveBtn.addEventListener("click", editMode)
+                }
+
                 return user
             }
 

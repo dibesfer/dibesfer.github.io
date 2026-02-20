@@ -299,10 +299,10 @@ function createMsg(time, author, message) {
     myProfilePicture.style = `
             width: 1rem;
             height: 1rem;
-            background-color: white;
-            border-radius: 50%;
+            // background-color: white;
+            // border-radius: 50%;
             object-fit: cover;
-            border: solid 1px white;
+            // border: solid 1px white;
             margin: 0 5px;
             `
     let myAuthor = document.createElement("span")
@@ -312,6 +312,7 @@ function createMsg(time, author, message) {
     let myMessage = document.createElement("span")
     myMessage.textContent = ": " + message
     parahraphMsg.appendChild(myTime)
+    // parahraphMsg.innerHTML += "<br>"
     parahraphMsg.appendChild(myProfilePicture)
     parahraphMsg.appendChild(myAuthor)
     parahraphMsg.appendChild(myMessage)
