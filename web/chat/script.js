@@ -43,6 +43,30 @@ function toggleSignInMain(e) {
     console.log(signInMain.style)
 }
 
+function showSignUpDiv() {
+
+    let isVisible = false
+
+    signInDiv.classList.remove("invisible")
+    console.log("hi")
+    window.addEventListener('click', myfunc(e))
+}
+
+function myfunc (e) {
+
+    if (document.getElementById('signInDiv').contains(e.target)) {
+        //alert("Clicked in Box");
+    } else {
+        alert("Clicked outside Box");
+        window.removeEventListener("click", myfunc())
+        console.log("heeey")
+
+    }
+}
+
+
+
+
 let myUser
 async function getUser() {
     const { data: { user } } = await database.auth.getUser()
@@ -52,6 +76,7 @@ async function getUser() {
         console.log(user.email)
         signInAdvice.textContent = "You are logged as " + usernameString
         userNameDisplay.innerHTML = `<a href="user/###${usernameString}">${usernameString}</a>`
+
         signInDiv.style.display = "none"
         myUser = user
         console.log(myUser)
@@ -84,6 +109,7 @@ async function getUser() {
         console.log("no user logged in")
         logOutBtn.style.display = "none"
         logOutBtnWrapper.style.display = "none"
+        userNameDisplay.addEventListener("click", showSignUpDiv)
         return null
     }
 }
@@ -479,9 +505,9 @@ async function getFullTable(tableName) {
 
     result.forEach(element => {
         let myTime = new Date(element.created_at)
-        if (oldTime.getDate() != myTime.getDate()){
+        if (oldTime.getDate() != myTime.getDate()) {
             let myDate = document.createElement("p")
-            myDate.textContent = "---" + myTime.getFullYear() + "/" + needsazero(myTime.getMonth()+1) + "/" + needsazero(myTime.getDate()) + "---"
+            myDate.textContent = "---" + myTime.getFullYear() + "/" + needsazero(myTime.getMonth() + 1) + "/" + needsazero(myTime.getDate()) + "---"
             myDate.classList = "displayTime"
 
             chatScreen.appendChild(myDate)

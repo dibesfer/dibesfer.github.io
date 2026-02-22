@@ -125,6 +125,14 @@ input:hover {
     width: 100%;
     max-width: 400px;
     overflow: auto;
+    position: fixed;
+    top: 50%;
+left: 50%;
+transform: translate(-50%, -50%);
+}
+
+.invisible {
+    display: none !important;
 }
 
 .displayTime {
