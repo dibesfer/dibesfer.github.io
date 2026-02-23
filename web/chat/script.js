@@ -339,7 +339,7 @@ function createMsg(time, author, message) {
     
     parahraphMsg.appendChild(myProfilePicture)
     parahraphMsg.appendChild(myAuthor)
-    /parahraphMsg.innerHTML += "<br>"
+    //parahraphMsg.innerHTML += "<br>"
     parahraphMsg.appendChild(myMessage)
     chatScreen.appendChild(parahraphMsg)
 }
