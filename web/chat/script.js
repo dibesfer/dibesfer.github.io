@@ -14,6 +14,7 @@ const signInMain = document.getElementById("signInMain")
 const checkIn = document.getElementById("checkIn")
 let usernameString
 let myUserTable
+let usersOnline = document.getElementById("usersOnline")
 
 // IMPORTANT
 identifyBtn.addEventListener("click", toggleSignInMain)
@@ -54,7 +55,7 @@ function showSignUpDiv() {
 
 function handleClick(event) {
     if (!document.getElementById('signInDiv').contains(event.target)) {
-        
+
         window.removeEventListener('click', handleClick)
         signInDiv.classList.add("invisible")
         console.log("heeey")
@@ -76,6 +77,29 @@ async function getUser() {
 
         signInDiv.style.display = "none"
         myUser = user
+
+        const channel = database.channel("online-users", {
+            config: {
+                presence: { key: myUser.id }
+            }
+        })
+
+        channel
+            .on("presence", { event: "sync" }, () => {
+                const state = channel.presenceState()
+                console.log("Online users:", state)
+                const count = Object.keys(channel.presenceState()).length
+                usersOnline.textContent = count
+            })
+            .subscribe(async (status) => {
+                if (status === "SUBSCRIBED") {
+                    await channel.track({
+                        user_id: myUser.id,
+                        username: myUser.email
+                    })
+                }
+            })
+
         console.log(myUser)
         let myEmail = user.email
         const res = await database.from("users").select("*").eq('email', myEmail)//.range(3000,5000)
@@ -336,7 +360,7 @@ function createMsg(time, author, message) {
     myAuthor.innerHTML += ": "
     myMessage.textContent = message
     parahraphMsg.appendChild(myTime)
-    
+
     parahraphMsg.appendChild(myProfilePicture)
     parahraphMsg.appendChild(myAuthor)
     //parahraphMsg.innerHTML += "<br>"
@@ -576,6 +600,10 @@ async function getOnlyResources(tableName, rowName) {
         totalVisitsCounter.textContent = res.data[0].dibesfer
     }
 }
+
+
+
+
 
 //let myNewStyle = document.createElement("style")
 
