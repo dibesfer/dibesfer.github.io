@@ -77,7 +77,7 @@ async function getUser() {
 
         signInDiv.style.display = "none"
         myUser = user
-       
+
         const channel = database.channel("online-users", {
             config: {
                 presence: { key: myUser.id }
@@ -100,7 +100,7 @@ async function getUser() {
                 }
             })
 
-        
+
         console.log(myUser)
         let myEmail = user.email
         const res = await database.from("users").select("*").eq('email', myEmail)//.range(3000,5000)
@@ -132,7 +132,7 @@ async function getUser() {
         logOutBtn.style.display = "none"
         logOutBtnWrapper.style.display = "none"
         userNameDisplay.addEventListener("click", showSignUpDiv)
-        
+
 
         const channel = database.channel("online-users", {
             config: {
@@ -150,12 +150,15 @@ async function getUser() {
             .subscribe(async (status) => {
                 if (status === "SUBSCRIBED") {
                     await channel.track({
-                        
+
+                        user_id: "ANON",
+                        username: "ANON"
+
                     })
                 }
             })
 
-        
+
         return null
     }
 }
