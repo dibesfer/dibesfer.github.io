@@ -333,7 +333,7 @@ function createMsg(time, author, message) {
     myAuthor.textContent = "" + author
     if (author != "Anonymous") myAuthor.innerHTML = "<a href='user/###" + author + "'>" + author + "</a>"
     let myMessage = document.createElement("span")
-    myAuthor.textContent += ": "
+    myAuthor.innerHTML += ": "
     myMessage.textContent = message
     parahraphMsg.appendChild(myTime)
     
