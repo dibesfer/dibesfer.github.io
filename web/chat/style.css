@@ -16,7 +16,7 @@ body {
     font-family: UbuntuMono, monospace;
     background-color: black;
     color: white;
-    height: 100vh;
+    height: 100dvh;
 
 }
 
@@ -36,8 +36,12 @@ body {
     height: 10%;
 }
 
+/* #chatForm {
+    height: 100%;
+} */
+
 #chatScreen {
-    height: 70%;
+    height: 80%;
 }
 
 input {
@@ -137,6 +141,7 @@ transform: translate(-50%, -50%);
 
 .displayTime {
     color: gray;
+    letter-spacing: -2px;
 }
 
 .miniFlex {
@@ -156,5 +161,7 @@ transform: translate(-50%, -50%);
     flex: 75%;
     width: 75%;
     max-width: 100%;
+    border-bottom: solid 1px rgb(255, 255, 255);
+    
 
 }

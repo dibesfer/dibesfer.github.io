@@ -45,22 +45,19 @@ function toggleSignInMain(e) {
 
 function showSignUpDiv() {
 
-    let isVisible = false
-
     signInDiv.classList.remove("invisible")
-    console.log("hi")
-    window.addEventListener('click', myfunc(e))
+
+    setTimeout(() => {
+        window.addEventListener('click', handleClick)
+    }, 1);
 }
 
-function myfunc (e) {
-
-    if (document.getElementById('signInDiv').contains(e.target)) {
-        //alert("Clicked in Box");
-    } else {
-        alert("Clicked outside Box");
-        window.removeEventListener("click", myfunc())
+function handleClick(event) {
+    if (!document.getElementById('signInDiv').contains(event.target)) {
+        
+        window.removeEventListener('click', handleClick)
+        signInDiv.classList.add("invisible")
         console.log("heeey")
-
     }
 }
 
@@ -336,11 +333,13 @@ function createMsg(time, author, message) {
     myAuthor.textContent = "" + author
     if (author != "Anonymous") myAuthor.innerHTML = "<a href='user/###" + author + "'>" + author + "</a>"
     let myMessage = document.createElement("span")
-    myMessage.textContent = ": " + message
+    myAuthor.textContent += ": "
+    myMessage.textContent = message
     parahraphMsg.appendChild(myTime)
-    // parahraphMsg.innerHTML += "<br>"
+    
     parahraphMsg.appendChild(myProfilePicture)
     parahraphMsg.appendChild(myAuthor)
+    /parahraphMsg.innerHTML += "<br>"
     parahraphMsg.appendChild(myMessage)
     chatScreen.appendChild(parahraphMsg)
 }
@@ -578,11 +577,12 @@ async function getOnlyResources(tableName, rowName) {
     }
 }
 
-let myNewStyle = document.createElement("style")
+//let myNewStyle = document.createElement("style")
 
+/*
 myNewStyle.innerHTML = `
 
-                /*
+                
                 @font-face {
                 font-family: UbuntuMono;
                 src: url(/assets/fonts/UbuntuMono-Regular.ttf);
@@ -593,6 +593,6 @@ myNewStyle.innerHTML = `
 
                 background-color: black;
                 color: white
-            }*/
+            }
         `
-document.head.appendChild(myNewStyle)
+document.head.appendChild(myNewStyle)`*/
