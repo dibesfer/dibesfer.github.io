@@ -90,12 +90,17 @@ label {
     padding: 5px;
 }
 
+#userNameDisplay {
+    cursor: pointer;
+}
+
 input {
     all: unset;
     border: solid 3px rgba(255, 255, 255, 0);
     padding: 5px;
     cursor: pointer;
     background-color: rgba(107, 107, 107, 0.42);
+    box-sizing: border-box;
     /* border-bottom-left-radius: 15px;        
             border-bottom-right-radius: 15px; */
 }
@@ -114,6 +119,7 @@ input:hover {
 }
 
 #identifyBtn {
+    
     width: 100%;
     text-align: center;
 }
@@ -131,8 +137,8 @@ input:hover {
     overflow: auto;
     position: fixed;
     top: 50%;
-left: 50%;
-transform: translate(-50%, -50%);
+    left: 50%;
+    transform: translate(-50%, -50%);
 }
 
 .invisible {
@@ -164,4 +170,11 @@ transform: translate(-50%, -50%);
     border-bottom: solid 1px rgb(255, 255, 255);
     
 
+}
+
+.error {
+    color: red;
+    background-color: rgb(33, 33, 33);
+    padding: 5px;
+    margin-bottom: 10px;
 }

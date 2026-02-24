@@ -26,12 +26,13 @@ function toggleSignInMain(e) {
 
         // SHOW SIGN IN MAIN
         signInMain.style.display = "block"
+        signInAdvice.textContent = "Fill both fields"
         identifyBtn.style.backgroundColor = "darkgray"
     }
     else {
 
         if (!userEmail.value || !userPass.value) {
-            signInAdvice.textContent = "Please fill both fields"
+            signInAdvice.textContent = "Fill both fields"
         }
         else {
             getUsersTable(userEmail.value)
@@ -46,19 +47,26 @@ function toggleSignInMain(e) {
 
 function showSignUpDiv() {
 
-    signInDiv.classList.remove("invisible")
+    if (signInDiv.classList.contains("invisible")) {
 
-    setTimeout(() => {
-        window.addEventListener('click', handleClick)
-    }, 1);
+        signInDiv.classList.remove("invisible")
+
+        setTimeout(() => {
+            window.addEventListener('click', handleClick)
+        }, 1);
+
+    }
+
+
 }
 
 function handleClick(event) {
     if (!document.getElementById('signInDiv').contains(event.target)) {
 
-        window.removeEventListener('click', handleClick)
+
         signInDiv.classList.add("invisible")
         console.log("heeey")
+        window.removeEventListener('click', handleClick)
     }
 }
 
@@ -252,7 +260,8 @@ async function signUp() {
 
     if (error) {
         console.log(error)
-        signInAdvice.style.color = "red"
+        
+        signInAdvice.classList.add("error")
         signInAdvice.textContent = error.message
     } else {
 
@@ -291,7 +300,8 @@ async function logIn() {
     console.log(data)
     console.log(error)
     if (error) {
-        signInAdvice.style.color = "red"
+        signInAdvice.classList.add("error")
+       
         signInAdvice.textContent = error.message
     }
     else {
