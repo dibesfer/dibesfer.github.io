@@ -260,7 +260,7 @@ async function signUp() {
 
     if (error) {
         console.log(error)
-        
+
         signInAdvice.classList.add("error")
         signInAdvice.textContent = error.message
     } else {
@@ -301,7 +301,7 @@ async function logIn() {
     console.log(error)
     if (error) {
         signInAdvice.classList.add("error")
-       
+
         signInAdvice.textContent = error.message
     }
     else {
