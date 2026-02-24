@@ -55,8 +55,9 @@
     <div class="maxWidth">
 
         <h1>members</h1>
-        <h3>of monochat</h3>
-        <p>By date:</p>
+        <br>
+        <p><span id="membersCount"></span> registered users</p>
+        <p><u>Oldest</u> / Newest</p>
         <ol id="dbfMembersList">
 
             <li></li>
@@ -88,11 +89,23 @@
                 //userDescription.textContent = "Example desc"
 
                 result.forEach(element => {
+
+                    const formatted = new Date(element.created_at)
+                    .toISOString()
+                    .slice(0, 19)
+                    .replace("T", " ");
+
                     dbfMembersList.innerHTML += `
-                    <li>${element.username}</li>
+                    <li><a href="https://dibesfer.com/web/chat/user/###${element.username}">${element.username}</a>
+                    
+                    Created at: ${formatted}
+                        
+                    </li>
                     
                     `
                 });
+
+                membersCount.textContent = result.length
 
             }
             else {
