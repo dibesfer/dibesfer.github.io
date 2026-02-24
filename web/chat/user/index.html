@@ -19,16 +19,21 @@
             background-color: black;
             color: white;
             font-family: UbuntuMono, monospace;
-            text-align: center;
-            
+
+
             line-height: 2;
-            
+
+        }
+
+        #mainContent {
+            text-align: center;
         }
 
         .maxWidth {
             max-width: 800px;
             margin: auto;
             padding: 10px;
+
         }
 
         #profilePicture {
@@ -89,12 +94,13 @@
 
 
     <div id="header" class="flex3">
-        <p><a href="/web/chat/">monochat</a></p>
+        <p><a href="/web/chat/">monochat</a> <span id="usersOnline"></span></p>
         <div>
 
             <p id="userNameDisplay">Anonymous</p>
         </div>
         <div id="logOutBtnWrapper">
+
             <!-- <div>
                 <p><a href="user/">profile</a></p>
             </div> -->
@@ -105,45 +111,83 @@
         </div>
     </div>
 
-    <div class="maxWidth">
+    <!-- SIGN IN / LOG IN DIV -->
+    <div id="signInDiv" class="minWidth invisible">
+
+        <div id="signInAdvice">You are anonymous</div>
+
+        <form id="loginForm" method="GET">
+            <div id="signInMain" style="display: none;">
+
+                <div>
+
+                    <div class="miniFlex">
+                        <label for="userEmail">
+                            Email
+                        </label>
+                        <input required type="email" name="userEmail" id="userEmail"><br>
+                    </div>
+                    <div class="miniFlex">
+                        <label for="userPass">Password</label>
+                        <input required autocomplete="off" type="password" name="userPass" id="userPass"><br>
+                    </div>
+
+                </div>
+                <p>We will send a confirmation url to your email.</p>
+
+            </div>
+            <input id="identifyBtn" type="submit" style="background-color: blue; color: white" value="IDENTIFY">
+        </form>
+        <br>
+
+    </div>
+
+        <div id="mainContent">
 
 
 
-        <img id="profilePicture"
-            src="https://static.euronews.com/articles/stories/08/05/80/38/1536x864_cmsv2_3a944929-598e-5ac2-95f5-76141156e444-8058038.jpg"
-            alt="">
-        <h1><span id="userUsername">sammy</span></h1>
-        <h3>✉ <span id="userEmail">samaltman@openai.com</span></h3>
-        <p>Description</p>
-        <pre id="userDescription">
+
+        <div class="maxWidth">
+
+
+
+            <img id="profilePicture"
+                src="https://static.euronews.com/articles/stories/08/05/80/38/1536x864_cmsv2_3a944929-598e-5ac2-95f5-76141156e444-8058038.jpg"
+                alt="">
+            <h1><span id="userUsername">sammy</span></h1>
+            <h3>✉ <span id="userEmail">samaltman@openai.com</span></h3>
+            <p>Description</p>
+            <pre id="userDescription">
 Lorem ipsum, dolor sit amet consectetur adipisicing elit. Nobis neque ea molestiae reiciendis a, exercitationem ab dolores, quidem blanditiis debitis illo! Magnam itaque aliquam suscipit odio in fugiat, libero mollitia?
 
 </pre>
-        <textarea name="" id="userDescriptionTextarea" spellcheck="false"></textarea>
+            <textarea name="" id="userDescriptionTextarea" spellcheck="false"></textarea>
 
 
-        <br>
-        <hr><br>
-        <div id="userOptions" class="userOptions">
-            <div id="EditSaveBtn">EDIT/SAVE</div>
-            <div></div>
-            <div id="deleteButton">DELETE</div>
+            <br>
+            <hr><br>
+            <div id="userOptions" class="userOptions">
+                <div id="EditSaveBtn">EDIT/SAVE</div>
+                <div></div>
+                <div id="deleteButton">DELETE</div>
+            </div>
+            <div id="interactions">
+                <p>
+                    <img src="https://www.freeiconspng.com/uploads/heart-symbol-12.png" alt="heart symbol"> |
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/2/22/Icon_Bubble.png"
+                        alt="bubble message symbol"> |
+                    <img src="https://static.vecteezy.com/system/resources/previews/022/133/469/non_2x/star-shape-star-icon-yellow-star-in-rating-symbol-free-png.png"
+                        alt="star symbol">
+                </p>
+                <p>
+                    10k | 148 | 15M
+                </p>
+
+
+            </div>
+
+
         </div>
-        <div id="interactions">
-            <p>
-                <img src="https://www.freeiconspng.com/uploads/heart-symbol-12.png" alt="heart symbol"> |
-                <img src="https://upload.wikimedia.org/wikipedia/commons/2/22/Icon_Bubble.png"
-                    alt="bubble message symbol"> |
-                <img src="https://static.vecteezy.com/system/resources/previews/022/133/469/non_2x/star-shape-star-icon-yellow-star-in-rating-symbol-free-png.png"
-                    alt="star symbol">
-            </p>
-            <p>
-                10k | 148 | 15M
-            </p>
-
-
-        </div>
-        
 
     </div>
 
@@ -175,18 +219,20 @@ Lorem ipsum, dolor sit amet consectetur adipisicing elit. Nobis neque ea molesti
         if (url.includes("###")) {
 
             userUrl = url.split("###")[1]
-            document.write("welcome to " + userUrl + " profile")
+            let myP = document.createElement("p")
+            myP.textContent = "welcome to " + userUrl + " profile"
+            mainContent.append(myP)
 
             getUserTable(userUrl)
 
         }
 
 
-        getUser()
+        getUserOwn()
 
 
 
-        async function getUser() {
+        async function getUserOwn() {
             const { data: { user } } = await database.auth.getUser()
             if (user) {
                 console.log(user.email)
@@ -364,6 +410,294 @@ Lorem ipsum, dolor sit amet consectetur adipisicing elit. Nobis neque ea molesti
 
         }
 
+
+        // HEADER FUNCTIONING
+
+        myUser = null
+        async function getUser() {
+            const { data: { user } } = await database.auth.getUser()
+            if (user) {
+
+                usernameString = user.email.split("@")[0]
+                console.log(user.email)
+                signInAdvice.textContent = "You are logged as " + usernameString
+                userNameDisplay.innerHTML = `<a href="/web/chat/user/###${usernameString}">${usernameString}</a>`
+
+                signInDiv.style.display = "none"
+                myUser = user
+
+                const channel = database.channel("online-users", {
+                    config: {
+                        presence: { key: myUser.id }
+                    }
+                })
+
+                channel
+                    .on("presence", { event: "sync" }, () => {
+                        const state = channel.presenceState()
+                        console.log("Online users:", state)
+                        const count = Object.keys(channel.presenceState()).length
+                        usersOnline.textContent = count
+                    })
+                    .subscribe(async (status) => {
+                        if (status === "SUBSCRIBED") {
+                            await channel.track({
+                                user_id: myUser.id,
+                                username: myUser.email
+                            })
+                        }
+                    })
+
+
+                console.log(myUser)
+                let myEmail = user.email
+                const res = await database.from("users").select("*").eq('email', myEmail)//.range(3000,5000)
+                //console.log(res.data[0].dibesfer)
+                let result = res.data
+
+                if (result.length > 0) {
+
+                    if (!res.data[0].confirmed) {
+
+                        const { data, error } = await database
+                            .from('users')
+                            .update({ confirmed: true })
+                            .eq('email', myEmail)
+                            .select()
+
+                        if (!error) {
+                            alert("Your account is now confirmed")
+                        }
+                    }
+                }
+
+                console.log(myUser.last_sign_in_at)
+                return user
+            }
+
+            else {
+                console.log("no user logged in")
+                logOutBtn.style.display = "none"
+                logOutBtnWrapper.style.display = "none"
+                userNameDisplay.addEventListener("click", showSignUpDiv)
+
+
+                const channel = database.channel("online-users", {
+                    config: {
+                        presence: { key: 0 }
+                    }
+                })
+
+                channel
+                    .on("presence", { event: "sync" }, () => {
+                        const state = channel.presenceState()
+                        console.log("Online users:", state)
+                        const count = Object.keys(channel.presenceState()).length
+                        usersOnline.textContent = count
+                    })
+                    .subscribe(async (status) => {
+                        if (status === "SUBSCRIBED") {
+                            await channel.track({
+
+                                user_id: "ANON",
+                                username: "ANON"
+
+                            })
+                        }
+                    })
+
+
+                return null
+            }
+        }
+
+        function toggleSignInMain(e) {
+
+            e.preventDefault()
+            if (signInMain.style.display == "none") {
+
+                // SHOW SIGN IN MAIN
+                signInMain.style.display = "block"
+                signInAdvice.textContent = "Fill both fields"
+                identifyBtn.style.backgroundColor = "darkgray"
+            }
+            else {
+
+                if (!userEmail.value || !userPass.value) {
+                    signInAdvice.textContent = "Fill both fields"
+                }
+                else {
+                    getUsersTable(userEmail.value)
+                }
+                // HIDE SIGN IN MAIN
+                //signInMain.style.display = "none"
+                //identifyBtn.style.backgroundColor = "blue"
+
+            }
+            console.log(signInMain.style)
+        }
+
+        function showSignUpDiv() {
+
+            if (signInDiv.classList.contains("invisible")) {
+
+                signInDiv.classList.remove("invisible")
+
+                setTimeout(() => {
+                    window.addEventListener('click', handleClick)
+                }, 1);
+
+            }
+
+
+        }
+
+        function handleClick(event) {
+            if (!document.getElementById('signInDiv').contains(event.target)) {
+
+
+                signInDiv.classList.add("invisible")
+                console.log("heeey")
+                window.removeEventListener('click', handleClick)
+            }
+        }
+
+        async function signUp() {
+            let { data, error } = await database.auth.signUp({
+                email: userEmail.value,
+                password: userPass.value,
+                // options: { redirectTo: "https://dibesfer.com/web/javascript/chat"  },
+            })
+            console.log("---SIGNUP---")
+            console.log(data)
+            const newUser = data.user
+
+            if (error) {
+                console.log(error)
+
+                signInAdvice.classList.add("error")
+                signInAdvice.textContent = error.message
+            } else {
+
+                console.log("We're gonna create a user profile")
+
+                const { data, error } = await database
+                    .from("users")
+                    .insert([
+                        {
+                            user_id: newUser.id,
+                            email: userEmail.value,
+                            username: userEmail.value.split("@")[0],
+                            profilepicture: "https://upload.wikimedia.org/wikipedia/commons/4/40/Anonymous_mask.svg"
+
+
+                        },
+                    ])
+                    .select()
+                if (!error) signInAdvice.textContent = "We sent a confirmation url to your email."
+                else {
+                    console.log(error.message)
+                }
+            }
+
+
+
+        }
+
+        //signUp()
+
+        async function logIn() {
+            let myEmail
+            let { data, error } = await database.auth.signInWithPassword({
+                email: userEmail.value,
+                password: userPass.value
+            })
+            console.log(data)
+            console.log(error)
+            if (error) {
+                signInAdvice.classList.add("error")
+
+                signInAdvice.textContent = error.message
+            }
+            else {
+                //getUser()
+                myEmail = data.user.email
+                const res = await database.from("users").select("*").eq('email', myEmail)//.range(3000,5000)
+                //console.log(res.data[0].dibesfer)
+                let result = res.data
+
+                if (result.length > 0) {
+
+                    if (!res.data[0].confirmed) {
+
+                        const { data, error } = await database
+                            .from('users')
+                            .update({ confirmed: true })
+                            .eq('email', myEmail)
+                            .select()
+
+                        if (!error) {
+                            alert("Your account is now confirmed")
+                            location.reload()
+                        }
+                    }
+                    else {
+                        location.reload()
+                    }
+                }
+                else {
+                    location.reload()
+
+                }
+            }
+        }
+
+        async function logOut() {
+            let { error } = await database.auth.signOut()
+            location.reload()
+        }
+
+        async function getUsersTable(myEmail) {
+
+            const res = await database.from("users").select("*").eq('email', myEmail)//.range(3000,5000)
+            //console.log(res.data[0].dibesfer)
+            let result = res.data
+
+            if (result.length > 0) {
+                //EMAIL ALREADY REGISTERED, LOG IN
+                logIn()
+            }
+            else {
+                //ELSE, SIGN IN
+
+                signUp()
+
+            }
+
+            console.log(result)
+            //RECIEVED DATA SUPER IMPORTANT
+            //console.log(result)
+
+            //result.forEach(element => {
+            //let myTime = new Date(element.created_at)
+            //createMsg(myTime, element.author, element.message)
+            //});
+
+            //chatScreen.scrollTo(0, chatScreen.scrollHeight)
+            // console.log(result)
+            // //currentVisits++
+            // //insertResources("visits")
+            // if (res.data[0] != undefined) {
+
+            //     chatScreen.textContent = result
+            // }
+        }
+
+        logOutBtn.addEventListener("click", logOut)
+
+        identifyBtn.addEventListener("click", toggleSignInMain)
+
+        getUser()
 
 
     </script>
