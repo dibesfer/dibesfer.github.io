@@ -145,6 +145,22 @@ input:hover {
     transform: translate(-50%, -50%);
 }
 
+.myProfilePicture {
+    width: 1rem;
+            height: 1rem;
+            background-color: white;
+            border-radius: 50%;
+            object-fit: cover;
+            border: solid 1px white;
+            margin: 0 5px;
+    transition: 0.2s;
+}
+
+.myProfilePicture:hover {
+    width: 2rem;
+    height: 2rem;
+}
+
 .invisible {
     display: none !important;
 }

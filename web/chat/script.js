@@ -383,15 +383,9 @@ function createMsg(time, author, message) {
         )
     }
 
-    myProfilePicture.style = `
-            width: 1rem;
-            height: 1rem;
-            // background-color: white;
-            // border-radius: 50%;
-            object-fit: cover;
-            // border: solid 1px white;
-            margin: 0 5px;
-            `
+    myProfilePicture.classList.add("myProfilePicture")
+    
+    
     let myAuthor = document.createElement("span")
     myAuthor.classList = "displayAuthor"
     myAuthor.textContent = "" + author
