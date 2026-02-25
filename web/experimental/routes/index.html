@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <nav>
+  <a href="/home" data-link>Home</a>
+  <a href="/about" data-link>About</a>
+</nav>
+
+<div id="app"></div>
+
+<script>
+const routes = {
+  "/home": "<h1>Home</h1><p>Welcome.</p>",
+  "/about": "<h1>About</h1><p>About page.</p>"
+};
+
+function render(path) {
+  if (!routes[path]) {
+    history.replaceState({}, "", "/home");
+    path = "/home";
+  }
+  document.getElementById("app").innerHTML = routes[path];
+}
+
+function navigate(path) {
+  history.pushState({}, "", path);
+  render(path);
+}
+
+document.addEventListener("click", e => {
+  if (e.target.matches("[data-link]")) {
+    e.preventDefault();
+    navigate(e.target.getAttribute("href"));
+  }
+});
+
+window.addEventListener("popstate", () => {
+  render(location.pathname);
+});
+
+// initial load
+render(location.pathname === "/" ? "/home" : location.pathname);
+</script>
+</body>
+</html>
