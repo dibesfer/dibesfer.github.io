@@ -366,6 +366,9 @@ function createMsg(time, author, message) {
     let parahraphMsg = document.createElement("p")
 
     let myTime = document.createElement("span")
+
+    parahraphMsg.classList.add("messageP")
+
     myTime.classList = "displayTime"
     myTime.textContent = clockFormat(time)
     myTime.title = time
@@ -391,7 +394,10 @@ function createMsg(time, author, message) {
     myAuthor.textContent = "" + author
     if (author != "Anonymous") myAuthor.innerHTML = "<a href='user/###" + author + "'>" + author + "</a>"
     let myMessage = document.createElement("span")
-    myAuthor.innerHTML += ": "
+
+    myMessage.classList.add("messageSpan")
+    myAuthor.innerHTML += ":"
+    myAuthor.style = "margin-right: 0.4rem"
     myMessage.textContent = message
     parahraphMsg.appendChild(myTime)
 
