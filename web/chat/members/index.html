@@ -31,6 +31,11 @@
             max-width: 800px;
             margin: auto;
         }
+
+        #historical2025 {
+            max-height: 300px;
+            overflow: auto;
+        }
     </style>
 
 </head>
@@ -103,7 +108,9 @@
         <h1>📖 Historical</h1>
         <h2>2025</h2>
 
-        <details>
+        <pre id="historical2025"></pre>
+
+        <!-- <details>
 
             <summary>January</summary>
 
@@ -124,12 +131,14 @@
 
         </details>
 
-        </details>
+        </details> -->
 
     </div>
 
 
     <script>
+
+
         const supabaseUrl = 'https://qugihsopwjemzakhrbvw.supabase.co'
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF1Z2loc29wd2plbXpha2hyYnZ3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE2OTg0OTQxMDksImV4cCI6MjAxNDA3MDEwOX0.1q5fBic1cjueaiP2-p6W19C68ye8FTPLFne2a-fKwZ8'
         const database = supabase.createClient(supabaseUrl, supabaseKey)
@@ -172,7 +181,7 @@
             }
 
 
-            console.log(result)
+            //console.log(result)
 
         }
         fillProfile()
@@ -183,7 +192,7 @@
             if (user) {
 
                 usernameString = user.email.split("@")[0]
-                console.log(user.email)
+                //console.log(user.email)
                 signInAdvice.textContent = "You are logged as " + usernameString
                 userNameDisplay.innerHTML = `<a href="/web/chat/user/###${usernameString}">${usernameString}</a>`
 
@@ -199,7 +208,7 @@
                 channel
                     .on("presence", { event: "sync" }, () => {
                         const state = channel.presenceState()
-                        console.log("Online users:", state)
+                        //console.log("Online users:", state)
                         const count = Object.keys(channel.presenceState()).length
                         usersOnline.textContent = count
                     })
@@ -211,9 +220,7 @@
                             })
                         }
                     })
-
-
-                console.log(myUser)
+                //console.log(myUser)
                 let myEmail = user.email
                 const res = await database.from("users").select("*").eq('email', myEmail)//.range(3000,5000)
                 //console.log(res.data[0].dibesfer)
@@ -235,7 +242,7 @@
                     }
                 }
 
-                console.log(myUser.last_sign_in_at)
+                //console.log(myUser.last_sign_in_at)
                 return user
             }
 
@@ -463,6 +470,27 @@
 
         getUser()
 
+
+        let historical
+        async function getText(file) {
+            let x = await fetch(file);
+            let y = await x.text();
+
+            
+            historical = y
+            //console.log(historical)
+
+            historical2025.textContent = y
+
+            return y
+        }
+        
+        
+        
+        
+        getText("../historical/2025.txt")
+        
+        
 
     </script>
 
