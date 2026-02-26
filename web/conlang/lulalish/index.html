@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lulalish</title>
+    <link rel="icon" type="image/x-icon" href="assets/alphabet/16.png">
+
+    <script src="/ferscript.js"></script>
+
+    <style>
+        body {
+            font-family: sans-serif
+        }
+
+        .letter {
+            image-rendering: pixelated;
+            width: 20px;
+            display: inline-block;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>Lulalish</h1>
+        <hr>
+    </header>
+
+    <main>
+        <h2>The alphabet</h2>
+
+        <div id="showAlphabet">
+
+        </div>
+
+        <h2>Lorem Ipsum</h2>
+
+        <div id="lorem">
+
+        </div>
+
+       
+
+    </main>
+
+    <footer>
+        <p>27 letter conscript made by dibesfer</p>
+        <p>Contact: dibesfer@gmail.com</p>
+    </footer>
+
+    <script>
+        let lulalish = []
+
+        for (let i = 0; i <= 26; i++) {
+            lulalish.push(i.toString())
+        }
+
+        for (let i = 0; i < lulalish.length; i++) {
+            let img = document.createElement("img")
+            img.src = "assets/alphabet/" + lulalish[i] + ".png"
+            img.classList.add("letter")
+            showAlphabet.append(img)
+        }
+
+        for (let i = 0; i < 256; i++) {
+
+            let rndNum = randomInt(0, 28)
+
+            if (rndNum < 26) {
+                let img = document.createElement("img")
+                img.src = "assets/alphabet/" + rndNum + ".png"
+                img.classList.add("letter")
+                lorem.append(img)
+            }
+
+            else {
+                let div = document.createElement("span")
+                div.classList.add("letter")
+                lorem.append(div)
+            }
+
+
+        }
+
+    </script>
+</body>
+
+</html>
