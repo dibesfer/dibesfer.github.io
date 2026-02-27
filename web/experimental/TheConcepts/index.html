@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>(+) The Concepts</title>
+    <script src="/ferscript.js"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            margin: 0;
+            box-sizing: border-box;
+        }
+
+        img,
+        iframe {
+            max-width: 100%;
+
+
+        }
+
+        body {
+            font-family: "Patrick Hand", cursive;
+            font-weight: 400;
+            font-style: normal;
+
+            line-height: 2;
+
+            background-color: black;
+            color: white;
+        }
+
+        header {
+            margin-top: 75px;
+        }
+
+        #logo {
+            filter: invert(1) contrast(0) brightness(3);
+            width: 60px;
+
+
+            animation-name: rotate;
+            animation-duration: 1s;
+            animation-timing-function: linear;
+            animation-iteration-count: infinite;
+        }
+
+        @keyframes rotate {
+            0% {
+                transform: rotate(0);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+
+        header,
+        footer {
+            text-align: center;
+
+        }
+
+        footer {
+            padding: 40px;
+        }
+
+        hr {
+            line-height: 0;
+            border: 1px solid white;
+        }
+
+        .concepts {
+            display: flex;
+            flex-wrap: wrap;
+            max-width: 900px;
+            margin: auto;
+        }
+
+        .concepts img {
+            display: block;
+        }
+
+        .concept-wrapper {
+            width: 33.33%;
+            padding: 10px;
+            aspect-ratio: 4/5;
+        }
+
+        .concept {
+            border: solid 1px;
+            border-radius: 12px;
+            padding: 15px;
+            box-shadow: 0 0 7.5px white;
+            transition: 0.2s;
+
+
+
+            height: 100%;
+            max-height: 100%;
+
+            display: flex;
+            flex-direction: column;
+
+
+        }
+
+        .concept:hover {
+            box-shadow: unset;
+            background-color: rgba(255, 255, 255, 0.03);
+        }
+
+        .concept img {
+
+            width: 100%;
+            aspect-ratio: 16/9;
+            object-fit: cover;
+        }
+
+        .concept-description {
+
+            /* border: solid 1px gray; */
+            flex: 1;
+            overflow: auto;
+
+
+            padding: 10px;
+        }
+
+        @media only screen and (max-width: 800px) {
+
+            .concept-wrapper {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <img id="logo" src="https://openclipart.org/image/800px/264760" alt="">
+        <h1>(+) The Concepts</h1>
+        <h3>Those little things</h3>
+
+        <hr>
+        <br>
+    </header>
+
+    <main>
+
+        <div class="concepts">
+            <div class="concept-wrapper">
+
+                <div class="concept">
+
+                    <h2>Concept 1</h2>
+
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/84/At_Sardinia_2025_010_-_Sardinia_Radio_Telescope.jpg/960px-At_Sardinia_2025_010_-_Sardinia_Radio_Telescope.jpg"
+                        alt="">
+
+                    <div class="concept-description">
+                        <p>Numaro, acetalo fodo nufadud vupoc om to aguve umilivu u afita ut o pudal.</p>
+                        <p>Tufege totitoc ugas azen milefos aluguc evifadi ufetuc ifimo pafaca, ozufedi lobovo futufu
+                            zebin.
+                        </p>
+                        <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Neque dolorumiieniet.</p>
+
+                    </div>
+                </div>
+            </div>
+            <div class="concept-wrapper">
+                <div class="concept">
+
+                    <h2>Concept 2</h2>
+
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/AT_119587_Jesuitenkirche_Wien_Innenansicht_9043.jpg/960px-AT_119587_Jesuitenkirche_Wien_Innenansicht_9043.jpg"
+                        alt="">
+                    <p>Dupo ezefan gi pudidu culo, onupoto cufos i emes u i obigi om pen.</p>
+                    <p>Uza am a, selozu ma itev evicug opusof i eb ema acadufe in tigunib.</p>
+
+                </div>
+            </div>
+
+            <div class="concept-wrapper">
+                <div class="concept">
+
+                    <h2>Concept 3</h2>
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/Glacial_lakes%2C_Bhutan.jpg/960px-Glacial_lakes%2C_Bhutan.jpg"
+                        alt="">
+
+                    <p>Lidic a afiv alud ibog came i itat ub atobaro zi nibiz lapi ifomul!</p>
+                    <p>O regoli gurupoz imefug i idimit zava mubases rotufo tic dur gupunir rirevo o.</p>
+
+                </div>
+            </div>
+        </div>
+
+
+
+
+        </div>
+
+    </main>
+    <br>
+    <hr>
+
+    <footer>
+        <p>contact: dibesfer@gmail.com</p>
+        <p>made by dibesfer</p>
+    </footer>
+
+    <script>
+
+
+        let concepts = getclass("concepts")[0]
+
+        for (let i = 0; i < 6; i++) {
+            createConceptWrapper()
+
+        }
+
+        function createConceptWrapper() {
+            let conceptWrapper = document.createElement("div")
+
+            conceptWrapper.classList.add("concept-wrapper")
+
+            let concept = document.createElement("div")
+
+            concept.classList.add("concept")
+
+            concept.innerHTML = `
+        
+            <h2>Title</h2>  
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/df/Bad_Wimpfen_-_LSG_Altenberg-Mittelberg_-_Streuobstwiese_mit_Raureif.jpg/960px-Bad_Wimpfen_-_LSG_Altenberg-Mittelberg_-_Streuobstwiese_mit_Raureif.jpg" alt>
+            <p>Acunumenor</p>
+            <p>Iro co caico sarunidiriti.</p>      
+        
+        `
+            conceptWrapper.append(concept)
+
+            concepts.append(conceptWrapper)
+        }
+
+
+
+
+
+    </script>
+
+</body>
+
+</html>
