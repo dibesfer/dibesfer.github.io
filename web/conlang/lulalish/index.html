@@ -11,7 +11,10 @@
 
     <style>
         body {
-            font-family: sans-serif
+            font-family: sans-serif;
+            max-width: 800px;
+            margin: auto;
+            padding: 10px;
         }
 
         .letter {
@@ -25,17 +28,19 @@
 <body>
     <header>
         <h1>Lulalish</h1>
+        <p>Simple, easy stroke constructed alphabet</p>
         <hr>
     </header>
 
     <main>
         <h2>The alphabet</h2>
 
+        <p>ABCDEFGHIJKLMNOPQRSTUVWXYZ</p>
         <div id="showAlphabet">
 
         </div>
 
-        <h2>Lorem Ipsum</h2>
+        <h2>Example text</h2>
 
         <div id="lorem">
 
@@ -64,7 +69,7 @@
             showAlphabet.append(img)
         }
 
-        for (let i = 0; i < 256; i++) {
+        for (let i = 0; i < 512; i++) {
 
             let rndNum = randomInt(0, 28)
 
