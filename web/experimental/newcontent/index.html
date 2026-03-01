@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>dbf - New content</title>
+    <style>
+        * {
+            margin: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: sans-serif;
+        }
+
+        #mainSquare {
+            display: flex;
+            border: solid 3px black;
+            flex-wrap: wrap;
+            user-select: none;
+        }
+
+        #mainSquare>div {
+            border: solid 3px black;
+            width: 10%;
+            aspect-ratio: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: 0.2s;
+            font-size: 3rem;
+        }
+
+        #mainSquare>div:hover {
+            background-color: blue !important;
+            color: white;
+        }
+
+        #mainSquare>div:active {
+            background-color: rgb(72, 255, 0);
+            color: white;
+        }
+
+        @media only screen and (max-width: 600px) {
+
+            #mainSquare>div {
+                border: solid 3px black;
+                width: 20%;
+                aspect-ratio: 1;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                transition: 0.2s;
+                font-size: 110%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>New content</h1>
+    </header>
+    <main>
+        <div id="mainSquare">
+
+        </div>
+    </main>
+    <script>
+
+        let width = 32
+        let height = 32
+
+        for (let i = 0; i < 50; i++) {
+
+            let div = document.createElement("div")
+            div.textContent = (i + 1)
+
+            if ((i + 1)%2==0){
+                div.style = "background-color: pink"
+            }
+
+            mainSquare.append(div)
+
+        }
+    </script>
+</body>
+
+</html>
