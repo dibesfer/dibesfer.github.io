@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Threejs</title>
 
 
@@ -28,7 +28,8 @@
             left: 0;
             width: 100%;
             height: 200px;
-            background-color: gray;
+            background-color: rgba(82, 82, 82, 0.391);
+            backdrop-filter: blur(10px);
             display: none;
             justify-content: space-around;
             align-items: center;
@@ -41,6 +42,7 @@
             border-radius: 50%;
             display: flex;
             justify-content: center;
+            background-color: gray;
             align-items: center;
         }
 
@@ -121,6 +123,7 @@
 
 
         function checkForJoysticks() {
+            
             if (windowWidth < 600 && menuInferior.classList.contains("invisible")) {
 
                 console.log("Joysticks Activated")
@@ -133,7 +136,7 @@
                 return true
 
             }
-            else if (windowWidth > 600 && !menuInferior.classList.contains("invisible")) {
+            else if (windowWidth > 600) {
                 console.log("Joysticks Deactivated")
                 menuInferior.classList.add("invisible")
                 menuInferior.classList.remove("flex")
@@ -145,6 +148,7 @@
         }
 
         checkForJoysticks()
+        
 
 
 
