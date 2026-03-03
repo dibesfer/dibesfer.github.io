@@ -91,7 +91,7 @@
         import * as THREE from 'three';
         import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
 
-
+        let mobileMode = false
         let windowWidth = window.innerWidth
 
         let windowHeight = window.innerHeight
@@ -126,7 +126,7 @@
                 console.log("Joysticks Activated")
                 menuInferior.classList.remove("invisible")
                 menuInferior.classList.add("flex")
-
+                mobileMode = true
                 document.removeEventListener('click', controlLocker);
 
 
@@ -137,7 +137,7 @@
                 console.log("Joysticks Deactivated")
                 menuInferior.classList.add("invisible")
                 menuInferior.classList.remove("flex")
-
+                mobileMode = false
                 document.addEventListener('click', controlLocker);
 
                 return false
@@ -304,82 +304,93 @@
 
             windowHeight = window.innerHeight
 
-
+            checkForJoysticks()
 
 
             renderer.setSize(window.innerWidth, window.innerHeight);
         });
 
+        let leftTouchId = null;
+        let rightTouchId = null;
+
         const leftJoy = document.querySelector("#menuInferiorLeft .joystick");
         const leftPad = leftJoy.querySelector(".pad");
 
-        let leftActive = false;
-
         leftJoy.addEventListener("touchstart", e => {
-            leftActive = true;
+            for (let t of e.changedTouches) {
+                leftTouchId = t.identifier;
+            }
         });
 
         leftJoy.addEventListener("touchend", e => {
-            leftActive = false;
-            moveForward = 0;
-            moveRight = 0;
-            leftPad.style.transform = "translate(0px,0px)";
+            for (let t of e.changedTouches) {
+                if (t.identifier === leftTouchId) {
+                    leftTouchId = null;
+                    moveForward = 0;
+                    moveRight = 0;
+                    leftPad.style.transform = "translate(0px,0px)";
+                }
+            }
         });
 
         leftJoy.addEventListener("touchmove", e => {
-            if (!leftActive) return;
+            for (let t of e.touches) {
+                if (t.identifier === leftTouchId) {
 
-            const rect = leftJoy.getBoundingClientRect();
-            const touch = e.touches[0];
+                    const rect = leftJoy.getBoundingClientRect();
+                    const x = t.clientX - rect.left - rect.width / 2;
+                    const y = t.clientY - rect.top - rect.height / 2;
 
-            const x = touch.clientX - rect.left - rect.width / 2;
-            const y = touch.clientY - rect.top - rect.height / 2;
+                    const max = 50;
+                    const dx = Math.max(-max, Math.min(max, x));
+                    const dy = Math.max(-max, Math.min(max, y));
 
-            const max = 50;
-            const dx = Math.max(-max, Math.min(max, x));
-            const dy = Math.max(-max, Math.min(max, y));
+                    leftPad.style.transform = `translate(${dx}px,${dy}px)`;
 
-            leftPad.style.transform = `translate(${dx}px,${dy}px)`;
-
-            moveForward = -dy / max;
-            moveRight = dx / max;
+                    moveForward = -dy / max;
+                    moveRight = dx / max;
+                }
+            }
         });
 
         const rightJoy = document.querySelector("#menuInferiorRight .joystick");
         const rightPad = rightJoy.querySelector(".pad");
 
-        let rightActive = false;
-
-        rightJoy.addEventListener("touchstart", () => {
-            rightActive = true;
+        rightJoy.addEventListener("touchstart", e => {
+            for (let t of e.changedTouches) {
+                rightTouchId = t.identifier;
+            }
         });
 
-        rightJoy.addEventListener("touchend", () => {
-            rightActive = false;
-            rightPad.style.transform = "translate(0px,0px)";
+        rightJoy.addEventListener("touchend", e => {
+            for (let t of e.changedTouches) {
+                if (t.identifier === rightTouchId) {
+                    rightTouchId = null;
+                    rightPad.style.transform = "translate(0px,0px)";
+                }
+            }
         });
 
         rightJoy.addEventListener("touchmove", e => {
-            if (!rightActive) return;
+            for (let t of e.touches) {
+                if (t.identifier === rightTouchId) {
 
-            const rect = rightJoy.getBoundingClientRect();
-            const touch = e.touches[0];
+                    const rect = rightJoy.getBoundingClientRect();
+                    const x = t.clientX - rect.left - rect.width / 2;
+                    const y = t.clientY - rect.top - rect.height / 2;
 
-            const x = touch.clientX - rect.left - rect.width / 2;
-            const y = touch.clientY - rect.top - rect.height / 2;
+                    const max = 50;
+                    const dx = Math.max(-max, Math.min(max, x));
+                    const dy = Math.max(-max, Math.min(max, y));
 
-            const max = 50;
-            const dx = Math.max(-max, Math.min(max, x));
-            const dy = Math.max(-max, Math.min(max, y));
+                    rightPad.style.transform = `translate(${dx}px,${dy}px)`;
 
-            rightPad.style.transform = `translate(${dx}px,${dy}px)`;
-
-            yaw -= dx * sensitivity;
-            pitch -= dy * sensitivity;
-
-            pitch = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, pitch));
+                    yaw -= dx * sensitivity;
+                    pitch -= dy * sensitivity;
+                    pitch = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, pitch));
+                }
+            }
         });
-
         // --------------------
         // MOBILE CONTROL VALUES
         // --------------------
@@ -410,10 +421,10 @@
 
             }
 
-            
-            
-                console.log("true")
-                
+
+            if (mobileMode) {
+                console.log("mobile mode true")
+
                 // Apply rotation
                 camera.rotation.order = "YXZ";
                 camera.rotation.y = yaw;
@@ -430,7 +441,7 @@
 
                 camera.position.addScaledVector(forward, moveForward * speed);
                 camera.position.addScaledVector(right, moveRight * speed);
-            
+            }
 
             renderer.render(scene, camera);
         });
