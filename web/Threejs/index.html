@@ -22,9 +22,11 @@
             box-sizing: border-box;
         }
 
+        html,
         body {
-            overscroll-behavior-y: contain;
+            overscroll-behavior: none;
         }
+
         #menuInferior {
             position: absolute;
             bottom: 0;
@@ -126,7 +128,7 @@
 
 
         function checkForJoysticks() {
-            
+
             if (windowWidth < 600 && menuInferior.classList.contains("invisible")) {
 
                 console.log("Joysticks Activated")
@@ -151,7 +153,7 @@
         }
 
         checkForJoysticks()
-        
+
 
 
 
