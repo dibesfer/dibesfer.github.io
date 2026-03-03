@@ -1,32 +1,186 @@
 import * as THREE from 'three';
+import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
 
-// import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-// import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-
-// const controls = new OrbitControls( camera, renderer.domElement );
-// const loader = new GLTFLoader();
-
-
+// --------------------
+// SCENE
+// --------------------
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
+scene.fog = new THREE.FogExp2(0x87CEEB, 0.002); // niebla azul cielo
 
-const renderer = new THREE.WebGLRenderer();
-renderer.setSize( window.innerWidth, window.innerHeight );
-renderer.setAnimationLoop( animate );
-document.body.appendChild( renderer.domElement );
+// --------------------
+// CAMERA
+// --------------------
+const camera = new THREE.PerspectiveCamera(
+  75,
+  window.innerWidth / window.innerHeight,
+  0.1,
+  3000
+);
+camera.position.set(0, 3, 10);
 
-const geometry = new THREE.BoxGeometry( 1, 1, 1 );
-const material = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
-const cube = new THREE.Mesh( geometry, material );
-scene.add( cube );
+// --------------------
+// RENDERER
+// --------------------
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setClearColor(0x87CEEB); // cielo azul
+renderer.shadowMap.enabled = true;
+document.body.appendChild(renderer.domElement);
 
-camera.position.z = 2;
+// --------------------
+// CONTROLS
+// --------------------
+const controls = new PointerLockControls(camera, document.body);
+document.addEventListener('click', () => controls.lock());
 
-function animate() {
+const keys = {};
+document.addEventListener('keydown', e => keys[e.code] = true);
+document.addEventListener('keyup', e => keys[e.code] = false);
+const speed = 0.25;
 
-  cube.rotation.x += 0.01;
-  cube.rotation.y += 0.01;
+// --------------------
+// LIGHTS
+// --------------------
+const hemi = new THREE.HemisphereLight(0xffffff, 0x888888, 1.5);
+scene.add(hemi);
 
-  renderer.render( scene, camera );
+const dir = new THREE.DirectionalLight(0xffffff, 1);
+dir.position.set(100, 200, 100);
+dir.castShadow = true;
+scene.add(dir);
 
+// --------------------
+// GROUND
+// --------------------
+const groundGeo = new THREE.PlaneGeometry(1000, 1000);
+const groundMat = new THREE.MeshStandardMaterial({ color: 0x444444 });
+const ground = new THREE.Mesh(groundGeo, groundMat);
+ground.rotation.x = -Math.PI / 2;
+ground.receiveShadow = true;
+scene.add(ground);
+
+// --------------------
+// NAME GENERATOR
+// --------------------
+const nameParts1 = ["Neo", "Cyber", "Quantum", "Nova", "Hyper", "Astra", "Meta"];
+const nameParts2 = ["Corp", "Tower", "Labs", "Systems", "Group", "Industries", "Center"];
+
+function randomName() {
+  return (
+    nameParts1[Math.floor(Math.random() * nameParts1.length)] +
+    " " +
+    nameParts2[Math.floor(Math.random() * nameParts2.length)]
+  );
 }
+
+// --------------------
+// WALL SIGN FUNCTION
+// --------------------
+function createWallSign(text) {
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
+
+  canvas.width = 512;
+  canvas.height = 128;
+
+  ctx.fillStyle = "#111";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.strokeStyle = "white";
+  ctx.lineWidth = 6;
+  ctx.strokeRect(0, 0, canvas.width, canvas.height);
+
+  ctx.fillStyle = "white";
+  ctx.font = "42px Arial";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(text, canvas.width / 2, canvas.height / 2);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  const material = new THREE.MeshBasicMaterial({ map: texture });
+  const geometry = new THREE.PlaneGeometry(3, 0.8);
+
+  return new THREE.Mesh(geometry, material);
+}
+
+// --------------------
+// CITY GENERATION
+// --------------------
+const buildingGeo = new THREE.BoxGeometry(1, 1, 1);
+const spacing = 10; // calles más anchas
+
+for (let x = -100; x <= 100; x += spacing) {
+  for (let z = -100; z <= 100; z += spacing) {
+
+    const height = Math.random() * 25 + 5;
+
+    // color completamente aleatorio
+    const buildingMat = new THREE.MeshStandardMaterial({
+      color: new THREE.Color(Math.random(), Math.random(), Math.random())
+    });
+
+    const building = new THREE.Mesh(buildingGeo, buildingMat);
+    building.scale.set(6, height, 6);
+    building.position.set(x, height / 2, z);
+    building.castShadow = true;
+    building.receiveShadow = true;
+    scene.add(building);
+
+    // --------------------
+    // RANDOM FACE SIGN
+    // --------------------
+    const sign = createWallSign(randomName());
+
+    const halfSize = 3; // building width / 2 (6 / 2)
+
+    const face = Math.floor(Math.random() * 4);
+
+    switch (face) {
+      case 0: // +Z
+        sign.position.set(x, 2, z + halfSize + 0.01);
+        break;
+      case 1: // -Z
+        sign.position.set(x, 2, z - halfSize - 0.01);
+        sign.rotation.y = Math.PI;
+        break;
+      case 2: // +X
+        sign.position.set(x + halfSize + 0.01, 2, z);
+        sign.rotation.y = -Math.PI / 2;
+        break;
+      case 3: // -X
+        sign.position.set(x - halfSize - 0.01, 2, z);
+        sign.rotation.y = Math.PI / 2;
+        break;
+    }
+
+    scene.add(sign);
+  }
+}
+
+// --------------------
+// RESIZE
+// --------------------
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// --------------------
+// ANIMATION LOOP
+// --------------------
+renderer.setAnimationLoop(() => {
+
+  if (controls.isLocked) {
+
+    if (keys['KeyW']) controls.moveForward(speed);
+    if (keys['KeyS']) controls.moveForward(-speed);
+    if (keys['KeyA']) controls.moveRight(-speed);
+    if (keys['KeyD']) controls.moveRight(speed);
+
+    if (keys['Space']) camera.position.y += speed;
+    if (keys['ShiftLeft'] || keys['ShiftRight']) camera.position.y -= speed;
+  }
+
+  renderer.render(scene, camera);
+});
