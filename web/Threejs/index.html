@@ -29,7 +29,7 @@
             width: 100%;
             height: 200px;
             background-color: gray;
-            display: flex;
+            display: none;
             justify-content: space-around;
             align-items: center;
         }
@@ -50,22 +50,23 @@
             width: 50px;
             height: 50px;
             border-radius: 50%;
-
         }
 
-        @media only screen and (min-width: 600px) {
-            #menuInferior {
-                display: none;
-            }
+
+        .invisible {
+            display: none;
         }
 
+        .flex {
+            display: flex !important;
+        }
     </style>
 
 </head>
 
 <body>
 
-    <div id="menuInferior">
+    <div id="menuInferior" class="invisible">
 
         <div id="menuInferiorLeft">
 
@@ -90,6 +91,11 @@
         import * as THREE from 'three';
         import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
 
+
+        let windowWidth = window.innerWidth
+
+        let windowHeight = window.innerHeight
+
         // --------------------
         // SCENE
         // --------------------
@@ -110,6 +116,38 @@
         // --------------------
         // RENDERER
         // --------------------
+
+        let menuInferior = document.getElementById("menuInferior")
+
+
+        function checkForJoysticks() {
+            if (windowWidth < 600 && menuInferior.classList.contains("invisible")) {
+
+                console.log("Joysticks Activated")
+                menuInferior.classList.remove("invisible")
+                menuInferior.classList.add("flex")
+
+                document.removeEventListener('click', controlLocker);
+
+
+                return true
+
+            }
+            else if (windowWidth > 600 && !menuInferior.classList.contains("invisible")) {
+                console.log("Joysticks Deactivated")
+                menuInferior.classList.add("invisible")
+                menuInferior.classList.remove("flex")
+
+                document.addEventListener('click', controlLocker);
+
+                return false
+            }
+        }
+
+        checkForJoysticks()
+
+
+
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setClearColor(0x87CEEB); // cielo azul
@@ -120,7 +158,15 @@
         // CONTROLS
         // --------------------
         const controls = new PointerLockControls(camera, document.body);
-        document.addEventListener('click', () => controls.lock());
+
+        function controlLocker() {
+
+
+            controls.lock()
+
+        }
+
+
 
         const keys = {};
         document.addEventListener('keydown', e => keys[e.code] = true);
@@ -142,7 +188,7 @@
         // GROUND
         // --------------------
         const groundGeo = new THREE.PlaneGeometry(1000, 1000);
-        const groundMat = new THREE.MeshStandardMaterial({ color: 0x444444 });
+        const groundMat = new THREE.MeshStandardMaterial({ color: 0x333333 });
         const ground = new THREE.Mesh(groundGeo, groundMat);
         ground.rotation.x = -Math.PI / 2;
         ground.receiveShadow = true;
@@ -252,8 +298,99 @@
         window.addEventListener('resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
+
+
+            windowWidth = window.innerWidth
+
+            windowHeight = window.innerHeight
+
+
+
+
             renderer.setSize(window.innerWidth, window.innerHeight);
         });
+
+        const leftJoy = document.querySelector("#menuInferiorLeft .joystick");
+        const leftPad = leftJoy.querySelector(".pad");
+
+        let leftActive = false;
+
+        leftJoy.addEventListener("touchstart", e => {
+            leftActive = true;
+        });
+
+        leftJoy.addEventListener("touchend", e => {
+            leftActive = false;
+            moveForward = 0;
+            moveRight = 0;
+            leftPad.style.transform = "translate(0px,0px)";
+        });
+
+        leftJoy.addEventListener("touchmove", e => {
+            if (!leftActive) return;
+
+            const rect = leftJoy.getBoundingClientRect();
+            const touch = e.touches[0];
+
+            const x = touch.clientX - rect.left - rect.width / 2;
+            const y = touch.clientY - rect.top - rect.height / 2;
+
+            const max = 50;
+            const dx = Math.max(-max, Math.min(max, x));
+            const dy = Math.max(-max, Math.min(max, y));
+
+            leftPad.style.transform = `translate(${dx}px,${dy}px)`;
+
+            moveForward = -dy / max;
+            moveRight = dx / max;
+        });
+
+        const rightJoy = document.querySelector("#menuInferiorRight .joystick");
+        const rightPad = rightJoy.querySelector(".pad");
+
+        let rightActive = false;
+
+        rightJoy.addEventListener("touchstart", () => {
+            rightActive = true;
+        });
+
+        rightJoy.addEventListener("touchend", () => {
+            rightActive = false;
+            rightPad.style.transform = "translate(0px,0px)";
+        });
+
+        rightJoy.addEventListener("touchmove", e => {
+            if (!rightActive) return;
+
+            const rect = rightJoy.getBoundingClientRect();
+            const touch = e.touches[0];
+
+            const x = touch.clientX - rect.left - rect.width / 2;
+            const y = touch.clientY - rect.top - rect.height / 2;
+
+            const max = 50;
+            const dx = Math.max(-max, Math.min(max, x));
+            const dy = Math.max(-max, Math.min(max, y));
+
+            rightPad.style.transform = `translate(${dx}px,${dy}px)`;
+
+            yaw -= dx * sensitivity;
+            pitch -= dy * sensitivity;
+
+            pitch = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, pitch));
+        });
+
+        // --------------------
+        // MOBILE CONTROL VALUES
+        // --------------------
+        let moveForward = 0;
+        let moveRight = 0;
+
+        let yaw = 0;
+        let pitch = 0;
+
+        const sensitivity = 0.002;
+
 
         // --------------------
         // ANIMATION LOOP
@@ -269,7 +406,31 @@
 
                 if (keys['Space']) camera.position.y += speed;
                 if (keys['ShiftLeft'] || keys['ShiftRight']) camera.position.y -= speed;
+
+
             }
+
+            
+            
+                console.log("true")
+                
+                // Apply rotation
+                camera.rotation.order = "YXZ";
+                camera.rotation.y = yaw;
+                camera.rotation.x = pitch;
+
+                // Apply movement relative to rotation
+                const forward = new THREE.Vector3();
+                camera.getWorldDirection(forward);
+                forward.y = 0;
+                forward.normalize();
+
+                const right = new THREE.Vector3();
+                right.crossVectors(forward, new THREE.Vector3(0, 1, 0)).normalize();
+
+                camera.position.addScaledVector(forward, moveForward * speed);
+                camera.position.addScaledVector(right, moveRight * speed);
+            
 
             renderer.render(scene, camera);
         });
