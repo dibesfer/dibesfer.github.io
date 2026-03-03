@@ -59,13 +59,65 @@
             border-radius: 50%;
         }
 
-
         .invisible {
             display: none;
         }
 
         .flex {
             display: flex !important;
+        }
+
+        #menuInferiorLeft {
+            background-color: rgba(255, 0, 0, 0.25);
+            position: relative;
+            height: 100%;
+            flex: 50%;
+        }
+
+        #menuInferiorRight {
+            background-color: rgba(0, 128, 0, 0.25);
+            position: relative;
+            flex: 50%;
+            height: 100%;
+        }
+
+        #menuInferiorLeft>.joystick ,
+        #menuInferiorRight>.joystick {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        #buttonDown {
+            position: absolute;
+            left: 5px;
+            bottom: 5px;
+            background-color: rgb(75, 75, 75);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        #buttonUp {
+            position: absolute;
+            right: 5px;
+            bottom: 5px;
+            background-color: rgb(75, 75, 75);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .button {
+            border: solid 3px white;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            user-select: none;
+
         }
     </style>
 
@@ -81,6 +133,12 @@
                 <div class="pad"></div>
             </div>
 
+            <div id="buttonDown" class="button">
+                down
+            </div>
+            <div id="buttonUp" class="button">
+                up
+            </div>
         </div>
 
         <div id="menuInferiorRight">
@@ -412,6 +470,25 @@
         const sensitivity = 0.002;
 
 
+        // fly
+        let flying = false
+        let descending = false
+        buttonUp.addEventListener("touchstart", e => {
+            flying = true
+        });
+
+        buttonUp.addEventListener("touchend", e => {
+            flying = false
+        });
+
+        buttonDown.addEventListener("touchstart", e => {
+            descending = true
+        });
+
+        buttonDown.addEventListener("touchend", e => {
+            descending = false
+        });
+
         // --------------------
         // ANIMATION LOOP
         // --------------------
@@ -450,6 +527,9 @@
 
                 camera.position.addScaledVector(forward, moveForward * speed);
                 camera.position.addScaledVector(right, moveRight * speed);
+
+                if (flying) camera.position.y += speed;
+                if (descending) camera.position.y -= speed;
             }
 
             renderer.render(scene, camera);
