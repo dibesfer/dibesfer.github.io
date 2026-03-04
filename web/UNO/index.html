@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UNO</title>
+    <style>
+        body {
+            font-family: sans-serif;
+        }
+
+        #table {}
+
+        .card {
+            width: 125px;
+            aspect-ratio: 6/8;
+            border: 2px solid black;
+            border-radius: 5px;
+            display: inline-block;
+
+            margin: 5px;
+            position: relative;
+        }
+
+        .card_sup_num {
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            font-weight: bold;
+        }
+
+        .card_sub_num {
+            position: absolute;
+            bottom: 5px;
+            right: 5px;
+            transform: rotate(180deg);
+            font-weight: bold;
+        }
+
+        .whiteEllipse {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            transform: rotate(30deg) scaleX(0.75);
+            background-color: rgb(255, 255, 255);
+        }
+
+        .bigNumber {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 4rem;
+            font-weight: bold;
+        }
+
+        .card_red {
+            color: white;
+            background-color: red;
+        }
+
+        .card_red>.bigNumber {
+            color: red;
+        }
+
+        .card_green {
+            color: white;
+            background-color: green;
+        }
+
+        .card_green>.bigNumber {
+            color: green;
+        }
+
+        .card_blue {
+            color: white;
+            background-color: blue;
+        }
+
+        .card_blue>.bigNumber {
+            color: blue;
+        }
+
+        .card_yellow {
+            color: white;
+            background-color: rgb(201, 164, 0);
+        }
+
+        .card_yellow>.bigNumber {
+            color: rgb(201, 164, 0);
+        }
+
+        .card_black {
+            color: white;
+            background-color: black;
+        }
+
+        .card_black>.bigNumber {
+            color: black;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>UNO</h1>
+    <div id="table">
+
+
+
+    </div>
+    <script>
+
+        function qq(i, card){
+            if (i < 10) {
+                card.innerHTML = `
+            <div class="whiteEllipse"></div>
+            <div class="card_sup_num">${i}</div>
+            <div class="bigNumber">${i}</div>
+            <div class="card_sub_num">${i}</div>
+            `
+            }
+            else if (i == 10) {
+                card.innerHTML = `
+            <div class="whiteEllipse"></div>
+            
+            <div class="card_sup_num">x2</div>
+            <div class="bigNumber">x2</div>
+            <div class="card_sub_num">x2</div>
+            
+            `
+            }
+            else if (i == 11) {
+                card.innerHTML = `
+            <div class="whiteEllipse"></div>
+            <div class="card_sup_num">🛇</div>
+            <div class="bigNumber">🛇</div>
+            <div class="card_sub_num">🛇</div>
+
+            
+            
+            `
+            }
+            else if (i == 12) {
+                card.innerHTML = `
+            <div class="whiteEllipse"></div>
+            <div class="card_sup_num">⇄</div>
+            <div class="bigNumber">⇄</div>
+            <div class="card_sub_num">⇄</div>
+
+            
+            
+            `
+            }
+        }
+
+        for (let i = 0; i <= 12; i++) {
+
+            let card = document.createElement("div")
+
+            card.classList.add("card")
+            card.classList.add("card_red")
+
+            
+            qq(i, card)
+
+
+            table.append(card)
+        }
+        table.innerHTML += "<br>"
+
+        for (let i = 0; i <= 12; i++) {
+
+            let card = document.createElement("div")
+
+            card.classList.add("card")
+            card.classList.add("card_green")
+
+            qq(i, card)
+            table.append(card)
+        }
+        table.innerHTML += "<br>"
+        for (let i = 0; i <= 12; i++) {
+
+            let card = document.createElement("div")
+
+            card.classList.add("card")
+            card.classList.add("card_blue")
+
+            qq(i, card)
+            table.append(card)
+        }
+        table.innerHTML += "<br>"
+        for (let i = 0; i <= 12; i++) {
+
+            let card = document.createElement("div")
+
+            card.classList.add("card")
+            card.classList.add("card_yellow")
+
+            qq(i, card)
+
+            table.append(card)
+        }
+
+        table.innerHTML += "<br>"
+        for (let i = 0; i < 2; i++) {
+            let card = document.createElement("div")
+
+            card.classList.add("card")
+            card.classList.add("card_black")
+
+            if (i < 10) {
+                card.innerHTML = `
+            <div class="whiteEllipse"></div>
+            
+            <div class="bigNumber">🌈</div>
+            
+            `
+            }
+
+            table.append(card)
+
+        }
+
+        for (let i = 0; i < 2; i++) {
+
+            let card = document.createElement("div")
+
+            card.classList.add("card")
+            card.classList.add("card_black")
+
+            if (i < 10) {
+                card.innerHTML = `
+            <div class="whiteEllipse"></div>
+            <div class="card_sup_num">+4</div>
+            <div class="bigNumber">🌈</div>
+            <div class="card_sub_num">+4</div>
+            `
+            }
+
+
+            table.append(card)
+        }
+
+
+
+
+    </script>
+</body>
+
+</html>
