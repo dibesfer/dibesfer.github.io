@@ -27,16 +27,41 @@
             overscroll-behavior: none;
         }
 
+        body {
+            font-family: sans-serif;
+        }
+
+        #consola {
+            position: absolute;
+            top: 0;
+            background-color: rgba(74, 74, 74, 0.426);
+            font-family: monospace;
+            font-size: 1rem;
+            padding: 5px;
+        }
+
+        #crossHair {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-weight: bold;
+            font-size: 2rem;
+        }
+
         #menuCentral {
+            line-height: 2;
             text-align: center;
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
             width: 400px;
-            height: 400px;
-            background-color: rgba(255, 255, 255, 0.7);
+
+            background-color: rgba(255, 255, 255, 0.8);
         }
+
         #menuInferior {
             position: absolute;
             bottom: 0;
@@ -91,7 +116,7 @@
             height: 100%;
         }
 
-        #menuInferiorLeft>.joystick ,
+        #menuInferiorLeft>.joystick,
         #menuInferiorRight>.joystick {
             position: absolute;
             top: 50%;
@@ -135,12 +160,22 @@
 
 <body>
 
+    <div id="consola">
+        <p>FPS: </p>
+    </div>
+
+    <div id="crossHair">+</div>
+
     <div id="menuCentral" class="invisible">
         <h2>Desktop Controllers</h2>
+        <hr>
+        <p>Click anywhere to lock your cursor and drive the camera with your mouse.</p>
         <p>Move with WASD</p>
         <p>Fly up with space and fly down with Shift</p>
-        <p>Lock up your cursor and drive the camera</p>
+
         <p>Press Escape to unlock your cursor</p>
+        <br>
+        <p>game made with Three.js by dibesfer</p>
     </div>
 
     <div id="menuInferior" class="invisible">
@@ -173,6 +208,7 @@
 
         import * as THREE from 'three';
         import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
+
 
         let mobileMode = false
         let windowWidth = window.innerWidth
@@ -251,13 +287,13 @@
 
             controls.lock()
             controls.addEventListener('unlock', () => {
-                 menuCentral.classList.remove("invisible")
+                menuCentral.classList.remove("invisible")
             });
             menuCentral.classList.add("invisible")
 
         }
 
-        
+
 
 
 
@@ -515,6 +551,28 @@
             descending = false
         });
 
+        const clock = new THREE.Clock()
+        let frames = 0;
+        let accTime = 0;
+        let fps = 0
+        function checkFPS() {
+            // Calculate the number of seconds passed since the last frame
+            const delta = clock.getDelta()
+            accTime += delta;
+            frames++;
+
+            if (accTime >= 1) {
+                fps = Math.round(frames / accTime);
+                consola.textContent = "FPS: " + fps;
+
+                frames = 0;
+                accTime = 0;
+            }
+            const { x, y, z } = camera.position;
+
+            consola.textContent = "FPS: " + fps + ` X: ${x.toFixed(2)} | Y: ${y.toFixed(2)} | Z: ${z.toFixed(2)}`;
+
+        }
         // --------------------
         // ANIMATION LOOP
         // --------------------
@@ -556,6 +614,11 @@
                 if (flying) camera.position.y += speed;
                 if (descending) camera.position.y -= speed;
             }
+
+
+
+            checkFPS()
+
 
             renderer.render(scene, camera);
         });
