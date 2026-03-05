@@ -1,0 +1,92 @@
+:root {
+  --bg: #0e1116;
+  --card: #171c24;
+  --text: #f5f7fb;
+  --muted: #a3aec2;
+  --accent: #66d9ef;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  background: radial-gradient(circle at top, #1b2536 0%, var(--bg) 55%);
+  color: var(--text);
+  min-height: 100vh;
+  padding: 2rem 1rem;
+}
+
+.wrap {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+h1 {
+  text-align: center;
+  margin-bottom: 0.5rem;
+  font-size: clamp(1.8rem, 3vw, 2.6rem);
+  letter-spacing: 0.04em;
+}
+
+p {
+  text-align: center;
+  color: var(--muted);
+  margin-bottom: 1.8rem;
+}
+
+.gallery {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.photo {
+  background: var(--card);
+  border: 1px solid #283142;
+  border-radius: 12px;
+  overflow: hidden;
+  width: calc(33.333% - 0.67rem);
+  min-width: 220px;
+  box-shadow: 0 8px 26px rgba(0, 0, 0, 0.35);
+  transition: transform 0.2s ease, border-color 0.2s ease, opacity 0.3s ease;
+  opacity: 0;
+}
+
+.photo:hover {
+  transform: translateY(-4px);
+  border-color: var(--accent);
+}
+
+.photo img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  display: block;
+}
+
+.photo figcaption {
+  padding: 0.7rem 0.9rem 0.9rem;
+  font-size: 0.95rem;
+  color: #d5dded;
+}
+
+.photo.is-visible {
+  opacity: 1;
+}
+
+@media (max-width: 740px) {
+  .photo {
+    width: calc(50% - 0.5rem);
+  }
+}
+
+@media (max-width: 480px) {
+  .photo {
+    width: 100%;
+  }
+}
