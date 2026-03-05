@@ -1,4 +1,4 @@
-// requires /ferscript.js
+// requires /ferscript.js and /assets/scripts/supabase.js
 // it takes header and footer and fills them with html content
 let header = gettag("header")
 let footer = gettag("footer")
@@ -28,10 +28,6 @@ async function getalluseragents(tableName, rowName) {
 
 // we already have a visitsCounter id element
 //let currentVisits = 0
-
-
-
-
 
 async function setVisits() {
     const { data, error } = await database

@@ -76,25 +76,10 @@ async function insertResources(tableName) {
             },
         ]).eq("id" , 1)
         .select()
-    
-    //getResources("visits", "dibesfer")
 }
 
-
-
-/* .from('visits')
-.update({ other_column: 'otherValue' })
-
-.select()
- */
-
-
-
-
-
-//insertResources("visits")
-//getResources("visits", "dibesfer")
 var currentVisits = 0
+
 async function getResources(tableName, rowName) {
     const res = await database.from(tableName).select(rowName )
     //console.log(res.data[0].dibesfer)
@@ -102,7 +87,6 @@ async function getResources(tableName, rowName) {
     currentVisits++
     insertResources("visits")
     if (res.data[0] != undefined) {
-        
         totalVisitsCounter.textContent = currentVisits
     }
 }

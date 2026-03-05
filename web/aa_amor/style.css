@@ -32,11 +32,16 @@ header {
     top: 0;
     right: 0;
     left: 0;
-    backdrop-filter: blur(10px);
+    
     padding: 5px 20px;
     height: var(--TopBottomHeight);
-    /* background-color: rgba(128, 0, 128, 0.307); */
+    
     z-index: 1;
+}
+
+header , #bottomBar , #menuBar , #menuAbout {
+    backdrop-filter: blur(20px);
+    background-color: rgba(49, 49, 49, 0.307);
 }
 
 #bottomBar {
@@ -49,8 +54,6 @@ header {
     right: 0;
     padding: 5px 20px;
     height: var(--TopBottomHeight);
-    backdrop-filter: blur(10px);
-    /* background-color: rgba(0, 255, 255, 0.341); */
 
 }
 
@@ -111,12 +114,10 @@ a {
     position: fixed;
     top: var(--TopBottomHeight);
     width: 300px;
-    /* background-color: rgba(255, 255, 65, 0.563); */
     bottom: var(--TopBottomHeight);
     left: 0;
     transition: 0.4s all;
     padding: 15px;
-    backdrop-filter: blur(10px);
     overflow: auto;
     z-index: 2;
 }
@@ -129,12 +130,10 @@ a {
     position: fixed;
     top: var(--TopBottomHeight);
     width: 300px;
-    /* background-color: rgba(103, 65, 255, 0.563); */
     bottom: var(--TopBottomHeight);
     right: 0px;
     transition: 0.4s all;
     padding: 15px;
-    backdrop-filter: blur(10px);
     overflow: auto;
     z-index: 2;
 }
