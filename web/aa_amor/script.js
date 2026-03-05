@@ -64,13 +64,33 @@ function app() {
         //console.log(document.documentElement.scrollTop)
     }
 
-    let superTitle = getclass("superTitle")[0]
+    let superTitle = getclass("superTitle")[1]
+    let superTitleHtml = superTitle.innerHTML
+    let superTitlePlacer = getid("superTitlePlacer")
+    
 
     window.addEventListener('scroll', () => {
         if (window.scrollY > 60) {
+
+            superTitlePlacer.innerHTML = superTitleHtml
+            superTitle.innerHTML = ""
             superTitle.classList.add('superTitleShrink');
-        } else {
+            
+            superTitlePlacer.classList.add('superTitleShrink');
+            
+           
+            
+        } else  {
+            
+            if(superTitlePlacer.innerHTML != "") {
+
+            }
+            
+            superTitle.innerHTML = superTitleHtml
+            superTitlePlacer.innerHTML = ""
             superTitle.classList.remove('superTitleShrink');
+            superTitlePlacer.classList.remove('superTitleShrink');
+
         }
     });
 
