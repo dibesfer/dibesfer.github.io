@@ -68,6 +68,25 @@ function app() {
     let superTitleHtml = superTitle.innerHTML
     let superTitlePlacer = getid("superTitlePlacer")
     
+    if (window.scrollY > 60) {
+
+            superTitlePlacer.innerHTML = superTitleHtml
+            superTitle.innerHTML = ""
+            superTitle.classList.add('superTitleShrink');
+            superTitlePlacer.classList.add('superTitleShrink');
+            
+        } else  {
+            
+            superTitle.innerHTML = superTitleHtml
+            superTitlePlacer.innerHTML = ""
+            superTitle.classList.remove('superTitleShrink');
+            superTitlePlacer.classList.remove('superTitleShrink');
+
+        }
+    
+
+    
+    console.log(window.scrollY)
 
     window.addEventListener('scroll', () => {
         if (window.scrollY > 60) {
@@ -75,16 +94,9 @@ function app() {
             superTitlePlacer.innerHTML = superTitleHtml
             superTitle.innerHTML = ""
             superTitle.classList.add('superTitleShrink');
-            
             superTitlePlacer.classList.add('superTitleShrink');
             
-           
-            
         } else  {
-            
-            if(superTitlePlacer.innerHTML != "") {
-
-            }
             
             superTitle.innerHTML = superTitleHtml
             superTitlePlacer.innerHTML = ""

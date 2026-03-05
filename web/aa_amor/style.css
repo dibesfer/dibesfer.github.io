@@ -69,6 +69,7 @@ a {
     
     text-align: center;
     position: relative;
+    padding: 5px;
     height: 70px;
     z-index: 2;
     transition: 0.2s;
