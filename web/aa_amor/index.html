@@ -18,30 +18,7 @@
 </head>
 
 <body>
-    <header>
-
-        <div id="menuBtn" style="height:100%; padding: 2px; ">
-            <img class="shadowIcon" style="height:100%; filter: invert(1);" src="/assets/branding/dibesfer-logo.png"
-                alt="">
-        </div>
-
-
-        <div id="menuBtnAbout" style="height:100%;padding: 2px;">
-            <img class="shadowIcon" style="height:100%; filter: invert(1);" src="/assets/branding/fer-logo.png" alt="">
-        </div>
-
-    </header>
-
-    <div class="spacing"></div>
-
-    <div class="superTitle">
-
-        <a href="index.html">
-            <img class="shadowIcon" style="height: 100%; filter: invert(1);" src="/assets/branding/dibesfer-title.png"
-                alt="">
-        </a>
-
-    </div>
+    <header></header>
 
     <div id="menuBar" class="closedMenuBar">
         <ul style="list-style: none; padding: 0;">
@@ -110,10 +87,6 @@
     <main>
         <div class="maxWidth">
 
-
-            <!-- <div class="spacing"></div> -->
-            <p id="description" class="textCenter">Dibujos y escritos de Fer</p>
-
             <div class="mockUpBox">
 
                 <img class="franja" src="/assets/deco/franja3.png" alt="">
@@ -166,10 +139,7 @@
 
         </div>
 
-        <div class="maxWidth">
-
-
-        </div>
+       
 
 
         <br>
@@ -215,7 +185,7 @@
 
         <p>Local visits: <span id="localVisitsDisplay"></span></p>
         <p>Total visits: <span id="visitsCounter"></span></p>
-        
+
 
         <div class="spacing" style="height: 100px;"></div>
 
@@ -231,6 +201,25 @@
             src="https://icons.veryicon.com/png/o/miscellaneous/arrows/arrow-down-4-1.png" alt="">
     </div>
 
+    <!-- LOAD SCRIPT -->
+    <script>
+
+        
+        async function load(id, file) {
+            fetch(file)
+                .then(r => r.text())
+                .then(html => gettag(id).innerHTML = html)
+                .then(()=> {app()});
+        }
+
+        
+
+        load("header", "components/header.html");
+        //load("footer", "/components/footer.html");
+        //load("sidebar-left", "/components/sidebar-left.html");
+        //load("sidebar-right", "/components/sidebar-right.html");
+
+    </script>
     <script src="script.js"></script>
     <script src="/assets/scripts/supabase.js"></script>
     <script>

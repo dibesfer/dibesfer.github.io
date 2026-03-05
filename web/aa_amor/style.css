@@ -25,6 +25,10 @@ body {
 }
 
 header {
+    position: relative
+}
+
+#topBar {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -32,14 +36,13 @@ header {
     top: 0;
     right: 0;
     left: 0;
-    
     padding: 5px 20px;
     height: var(--TopBottomHeight);
     
     z-index: 1;
 }
 
-header , #bottomBar , #menuBar , #menuAbout {
+#topBar , #bottomBar , #menuBar , #menuAbout {
     backdrop-filter: blur(20px);
     background-color: rgba(49, 49, 49, 0.307);
 }
@@ -63,11 +66,10 @@ a {
 
 .superTitle {
     margin: auto;
-    width: max-content;
+    width: 100%;
     text-align: center;
     position: sticky;
     top: 0;
-    /* background-color: rgba(255, 255, 0, 0.36); */
     height: 70px;
     padding: 5px;
     line-height: 1.5;
@@ -78,6 +80,7 @@ a {
 
 .superTitleShrink {
     height: var(--TopBottomHeight);
+    position: fixed;
 }
 
 .superTitle a,
@@ -251,7 +254,7 @@ a {
         padding: unset;
     }
 
-    header {
+    #topBar {
         padding: 5px 10px;
     }
 
