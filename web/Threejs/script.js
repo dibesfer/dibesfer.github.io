@@ -1,6 +1,12 @@
 import * as THREE from 'three';
 import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
 
+
+let mobileMode = false
+let windowWidth = window.innerWidth
+
+let windowHeight = window.innerHeight
+
 // --------------------
 // SCENE
 // --------------------
@@ -21,6 +27,39 @@ camera.position.set(0, 3, 10);
 // --------------------
 // RENDERER
 // --------------------
+
+let menuInferior = document.getElementById("menuInferior")
+
+
+function checkForJoysticks() {
+
+  if (windowWidth < 600 && menuInferior.classList.contains("invisible")) {
+
+    console.log("Joysticks Activated")
+    menuCentral.classList.add("invisible")
+    menuInferior.classList.remove("invisible")
+    menuInferior.classList.add("flex")
+    mobileMode = true
+    document.removeEventListener('click', controlLocker);
+
+
+    return true
+
+  }
+  else if (windowWidth > 600) {
+    console.log("Joysticks Deactivated")
+    menuCentral.classList.remove("invisible")
+    menuInferior.classList.add("invisible")
+    menuInferior.classList.remove("flex")
+    mobileMode = false
+    document.addEventListener('click', controlLocker);
+
+    return false
+  }
+}
+
+checkForJoysticks()
+
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setClearColor(0x87CEEB); // cielo azul
@@ -31,7 +70,17 @@ document.body.appendChild(renderer.domElement);
 // CONTROLS
 // --------------------
 const controls = new PointerLockControls(camera, document.body);
-document.addEventListener('click', () => controls.lock());
+
+function controlLocker() {
+
+
+  controls.lock()
+  controls.addEventListener('unlock', () => {
+    menuCentral.classList.remove("invisible")
+  });
+  menuCentral.classList.add("invisible")
+
+}
 
 const keys = {};
 document.addEventListener('keydown', e => keys[e.code] = true);
@@ -53,7 +102,7 @@ scene.add(dir);
 // GROUND
 // --------------------
 const groundGeo = new THREE.PlaneGeometry(1000, 1000);
-const groundMat = new THREE.MeshStandardMaterial({ color: 0x444444 });
+const groundMat = new THREE.MeshStandardMaterial({ color: 0x333333 });
 const ground = new THREE.Mesh(groundGeo, groundMat);
 ground.rotation.x = -Math.PI / 2;
 ground.receiveShadow = true;
@@ -163,9 +212,155 @@ for (let x = -100; x <= 100; x += spacing) {
 window.addEventListener('resize', () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
+
+
+  windowWidth = window.innerWidth
+
+  windowHeight = window.innerHeight
+
+  checkForJoysticks()
+
+
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
+let leftTouchId = null;
+let rightTouchId = null;
+
+const leftJoy = document.querySelector("#menuInferiorLeft .joystick");
+const leftPad = leftJoy.querySelector(".pad");
+
+leftJoy.addEventListener("touchstart", e => {
+  for (let t of e.changedTouches) {
+    leftTouchId = t.identifier;
+  }
+});
+
+leftJoy.addEventListener("touchend", e => {
+  for (let t of e.changedTouches) {
+    if (t.identifier === leftTouchId) {
+      leftTouchId = null;
+      moveForward = 0;
+      moveRight = 0;
+      leftPad.style.transform = "translate(0px,0px)";
+    }
+  }
+});
+
+leftJoy.addEventListener("touchmove", e => {
+  for (let t of e.touches) {
+    if (t.identifier === leftTouchId) {
+
+      const rect = leftJoy.getBoundingClientRect();
+      const x = t.clientX - rect.left - rect.width / 2;
+      const y = t.clientY - rect.top - rect.height / 2;
+
+      const max = 50;
+      const dx = Math.max(-max, Math.min(max, x));
+      const dy = Math.max(-max, Math.min(max, y));
+
+      leftPad.style.transform = `translate(${dx}px,${dy}px)`;
+
+      moveForward = -dy / max;
+      moveRight = dx / max;
+    }
+  }
+});
+
+const rightJoy = document.querySelector("#menuInferiorRight .joystick");
+const rightPad = rightJoy.querySelector(".pad");
+
+rightJoy.addEventListener("touchstart", e => {
+  for (let t of e.changedTouches) {
+    rightTouchId = t.identifier;
+  }
+});
+
+rightJoy.addEventListener("touchend", e => {
+  for (let t of e.changedTouches) {
+    if (t.identifier === rightTouchId) {
+      rightTouchId = null;
+      lookDx = 0;
+      lookDy = 0;
+      rightPad.style.transform = "translate(0px,0px)";
+    }
+  }
+});
+
+rightJoy.addEventListener("touchmove", e => {
+  for (let t of e.touches) {
+    if (t.identifier === rightTouchId) {
+
+      const rect = rightJoy.getBoundingClientRect();
+      const x = t.clientX - rect.left - rect.width / 2;
+      const y = t.clientY - rect.top - rect.height / 2;
+
+      const max = 50;
+      const dx = Math.max(-max, Math.min(max, x));
+      const dy = Math.max(-max, Math.min(max, y));
+
+      rightPad.style.transform = `translate(${dx}px,${dy}px)`;
+
+      lookDx = dx;
+      lookDy = dy;
+    }
+  }
+});
+// --------------------
+// MOBILE CONTROL VALUES
+// --------------------
+let moveForward = 0;
+let moveRight = 0;
+
+let yaw = 0;
+let pitch = 0;
+let lookDx = 0;
+let lookDy = 0;
+
+const sensitivity = 0.002;
+
+
+// fly
+let flying = false
+let descending = false
+buttonUp.addEventListener("touchstart", e => {
+  flying = true
+});
+
+buttonUp.addEventListener("touchend", e => {
+  flying = false
+});
+
+buttonDown.addEventListener("touchstart", e => {
+  descending = true
+});
+
+buttonDown.addEventListener("touchend", e => {
+  descending = false
+});
+
+const clock = new THREE.Clock()
+let frames = 0;
+let accTime = 0;
+let fps = 0
+function checkFPS() {
+  // Calculate the number of seconds passed since the last frame
+  const delta = clock.getDelta()
+  accTime += delta;
+  frames++;
+
+  if (accTime >= 1) {
+    fps = Math.round(frames / accTime);
+    consola.textContent = "FPS: " + fps;
+
+    frames = 0;
+    accTime = 0;
+  }
+  const { x, y, z } = camera.position;
+
+  consola.textContent = "FPS: " + fps + ` X: ${x.toFixed(2)} | Y: ${y.toFixed(2)} | Z: ${z.toFixed(2)}`;
+
+}
 // --------------------
 // ANIMATION LOOP
 // --------------------
@@ -180,7 +375,44 @@ renderer.setAnimationLoop(() => {
 
     if (keys['Space']) camera.position.y += speed;
     if (keys['ShiftLeft'] || keys['ShiftRight']) camera.position.y -= speed;
+
   }
+
+
+  if (mobileMode) {
+    console.log("mobile mode true")
+
+    if (rightTouchId !== null) {
+      yaw -= lookDx * sensitivity;
+      pitch -= lookDy * sensitivity;
+      pitch = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, pitch));
+    }
+
+    // Apply rotation
+    camera.rotation.order = "YXZ";
+    camera.rotation.y = yaw;
+    camera.rotation.x = pitch;
+
+    // Apply movement relative to rotation
+    const forward = new THREE.Vector3();
+    camera.getWorldDirection(forward);
+    forward.y = 0;
+    forward.normalize();
+
+    const right = new THREE.Vector3();
+    right.crossVectors(forward, new THREE.Vector3(0, 1, 0)).normalize();
+
+    camera.position.addScaledVector(forward, moveForward * speed);
+    camera.position.addScaledVector(right, moveRight * speed);
+
+    if (flying) camera.position.y += speed;
+    if (descending) camera.position.y -= speed;
+  }
+
+
+
+  checkFPS()
+
 
   renderer.render(scene, camera);
 });

@@ -1,0 +1,138 @@
+* {
+            margin: 0;
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            overscroll-behavior: none;
+        }
+
+        body {
+            font-family: sans-serif;
+        }
+
+        #consola {
+            position: absolute;
+            top: 0;
+            background-color: rgba(74, 74, 74, 0.426);
+            font-family: monospace;
+            font-size: 1rem;
+            padding: 5px;
+        }
+
+        #crossHair {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-weight: bold;
+            font-size: 2rem;
+        }
+
+        #menuCentral {
+            line-height: 2;
+            text-align: center;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            max-width: 400px;
+            width: 100%;
+            background-color: rgba(255, 255, 255, 0.8);
+            border-radius: 5px;
+            padding: 10px;
+        }
+
+        #menuInferior {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 150px;
+            background-color: rgba(82, 82, 82, 0.391);
+            backdrop-filter: blur(10px);
+            display: none;
+            justify-content: space-around;
+            align-items: center;
+        }
+
+        .joystick {
+            border: solid 3px white;
+            width: 125px;
+            height: 125px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            background-color: gray;
+            align-items: center;
+        }
+
+        .pad {
+            border: solid 3px white;
+            background-color: rgb(75, 75, 75);
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+        }
+
+        .invisible {
+            display: none;
+        }
+
+        .flex {
+            display: flex !important;
+        }
+
+        #menuInferiorLeft {
+            background-color: rgba(255, 0, 0, 0.25);
+            position: relative;
+            height: 100%;
+            flex: 50%;
+        }
+
+        #menuInferiorRight {
+            background-color: rgba(0, 128, 0, 0.25);
+            position: relative;
+            flex: 50%;
+            height: 100%;
+        }
+
+        #menuInferiorLeft>.joystick,
+        #menuInferiorRight>.joystick {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        #buttonDown {
+            position: absolute;
+            left: 5px;
+            bottom: 5px;
+            background-color: rgb(75, 75, 75);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        #buttonUp {
+            position: absolute;
+            right: 5px;
+            bottom: 5px;
+            background-color: rgb(75, 75, 75);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .button {
+            border: solid 3px white;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            user-select: none;
+        }
