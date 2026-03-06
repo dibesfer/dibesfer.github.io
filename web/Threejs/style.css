@@ -29,6 +29,7 @@
             color: white;
             font-weight: bold;
             font-size: 2rem;
+            user-select: none;
         }
 
         #menuCentral {
