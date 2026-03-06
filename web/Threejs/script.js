@@ -1,11 +1,16 @@
 import * as THREE from 'three';
 import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
-import { Entity, HunterEntity } from './entity.js';
+import { Entity, HunterEntity, TalkerEntity } from './entity.js';
 import { createHumanoidModel, applyHumanoidWalkAnimation } from './entityModel.js';
 
 let mobileMode = false;
 let windowWidth = window.innerWidth;
 let windowHeight = window.innerHeight;
+const MOBILE_BREAKPOINT = 600;
+const THIRD_PERSON_MAX_DISTANCE = 8;
+const JOYSTICK_MAX_OFFSET = 50;
+const ENTITY_MIN_SPAWN_DIST_SQ = 6.25;
+const SUPPORT_EPSILON = 0.03;
 
 // --------------------
 // SCENE
@@ -42,7 +47,7 @@ miniMapPlayerMarker.id = 'miniMapPlayerMarker';
 miniMap.appendChild(miniMapPlayerMarker);
 
 function checkForJoysticks() {
-  if (windowWidth < 600 && menuInferior.classList.contains('invisible')) {
+  if (windowWidth < MOBILE_BREAKPOINT && menuInferior.classList.contains('invisible')) {
     console.log('Joysticks Activated');
     menuCentral.classList.add('invisible');
     menuInferior.classList.remove('invisible');
@@ -52,7 +57,7 @@ function checkForJoysticks() {
     return true;
   }
 
-  if (windowWidth > 600) {
+  if (windowWidth > MOBILE_BREAKPOINT) {
     console.log('Joysticks Deactivated');
     menuCentral.classList.remove('invisible');
     menuInferior.classList.add('invisible');
@@ -107,12 +112,12 @@ miniMap.appendChild(miniMapRenderer.domElement);
 // CONTROLS
 // --------------------
 const controls = new PointerLockControls(camera, document.body);
+controls.addEventListener('unlock', () => {
+  menuCentral.classList.remove('invisible');
+});
 
 function controlLocker() {
   controls.lock();
-  controls.addEventListener('unlock', () => {
-    menuCentral.classList.remove('invisible');
-  });
   menuCentral.classList.add('invisible');
 }
 
@@ -225,7 +230,7 @@ scene.add(spawnPad);
 // --------------------
 const PLAYER_HEIGHT = 1.8;
 const PLAYER_HALF_WIDTH = 0.35;
-const EYE_HEIGHT = 1.3;
+const EYE_HEIGHT = 1.7;
 
 const playerState = {
   velocity: new THREE.Vector3(0, 0, 0),
@@ -238,6 +243,8 @@ const playerCollider = new THREE.Box3();
 const playerFoot = new THREE.Vector3();
 const previousFoot = new THREE.Vector3();
 const testBox = new THREE.Box3();
+const playerColliderMin = new THREE.Vector3();
+const playerColliderMax = new THREE.Vector3();
 const playerBody = new THREE.Group();
 const playerHumanoid = createHumanoidModel({
   outfit: {
@@ -247,6 +254,7 @@ const playerHumanoid = createHumanoidModel({
     pants: 0x2d3a50,
     shoes: 0x161616,
     hair: 0x221710,
+    faceEmoji: '😎',
   },
   castShadow: true,
   receiveShadow: false,
@@ -259,21 +267,21 @@ const playerFacingDir = new THREE.Vector3();
 let playerWalkCycle = 0;
 
 function updatePlayerCollider(eyePosition) {
-  const min = new THREE.Vector3(
+  playerColliderMin.set(
     eyePosition.x - PLAYER_HALF_WIDTH,
     eyePosition.y - EYE_HEIGHT,
     eyePosition.z - PLAYER_HALF_WIDTH
   );
 
-  const max = new THREE.Vector3(
+  playerColliderMax.set(
     eyePosition.x + PLAYER_HALF_WIDTH,
-    min.y + PLAYER_HEIGHT,
+    playerColliderMin.y + PLAYER_HEIGHT,
     eyePosition.z + PLAYER_HALF_WIDTH
   );
 
-  playerCollider.min.copy(min);
-  playerCollider.max.copy(max);
-  playerFoot.set(eyePosition.x, min.y, eyePosition.z);
+  playerCollider.min.copy(playerColliderMin);
+  playerCollider.max.copy(playerColliderMax);
+  playerFoot.set(eyePosition.x, playerColliderMin.y, eyePosition.z);
 }
 
 function syncPlayerBody() {
@@ -336,7 +344,7 @@ function handleDesktopWheelThirdPerson(event) {
 
   // Scroll out to move into third-person; scroll in back to first-person.
   const nextDistance = thirdPersonDistance + event.deltaY * 0.01;
-  thirdPersonDistance = THREE.MathUtils.clamp(nextDistance, 0, 8);
+  thirdPersonDistance = THREE.MathUtils.clamp(nextDistance, 0, THIRD_PERSON_MAX_DISTANCE);
   event.preventDefault();
 }
 
@@ -504,11 +512,14 @@ const HUNTER_ENTITY_COUNT = 8;
 const ENTITY_SPAWN_MARGIN = 1.2;
 const entitySpawnBox = new THREE.Box3();
 const spawnTestPos = new THREE.Vector3();
+const entitySpawnPos = new THREE.Vector3();
+const spawnForwardDir = new THREE.Vector3();
 const walkerSkinTones = [0xf0c9a5, 0xd8aa89, 0xb78562];
 const walkerShirts = [0xff9a9a, 0xb5d3ff, 0xbff0b1, 0xf7d48b, 0xd8b8ff];
 const walkerPants = [0x3f4d6b, 0x4d4d4d, 0x2e4a3a, 0x5a4638];
 const walkerShoes = [0x1a1a1a, 0x2a1f18, 0x101820];
 const walkerHair = [0x1f130d, 0x3a271a, 0x5a3a23, 0x111111, 0x8b5b2b];
+const walkerFaceEmoji = ['🙂', '😄', '😎', '🤖', '😴', '😶'];
 
 function pickRandom(list) {
   return list[Math.floor(Math.random() * list.length)];
@@ -523,6 +534,7 @@ function createWalkerOutfit() {
     pants: pickRandom(walkerPants),
     shoes: pickRandom(walkerShoes),
     hair: pickRandom(walkerHair),
+    faceEmoji: pickRandom(walkerFaceEmoji),
   };
 }
 
@@ -544,18 +556,18 @@ function spawnEntities() {
     let tooClose = false;
     spawnTestPos.set(x, GROUND_Y, z);
     for (let i = 0; i < entities.length; i++) {
-      if (entities[i].position.distanceToSquared(spawnTestPos) < 6.25) {
+      if (entities[i].position.distanceToSquared(spawnTestPos) < ENTITY_MIN_SPAWN_DIST_SQ) {
         tooClose = true;
         break;
       }
     }
     if (tooClose) continue;
 
-    const pos = new THREE.Vector3(x, GROUND_Y, z);
+    entitySpawnPos.set(x, GROUND_Y, z);
     if (entities.length < ENTITY_COUNT) {
       entities.push(new Entity({
         scene,
-        position: pos,
+        position: entitySpawnPos,
         groundY: GROUND_Y,
         outfit: createWalkerOutfit(),
         speed: THREE.MathUtils.randFloat(1.2, 2.2),
@@ -564,18 +576,44 @@ function spawnEntities() {
     } else {
       entities.push(new HunterEntity({
         scene,
-        position: pos,
+        position: entitySpawnPos,
         groundY: GROUND_Y,
         color: 0x7e1313,
         speed: THREE.MathUtils.randFloat(2.0, 2.8),
         clearance: 1.0,
-        detectionRadius: 3.0,
+        detectionRadius: 5.0,
       }));
     }
   }
 }
 
 spawnEntities();
+
+function spawnTalker() {
+  camera.getWorldDirection(spawnForwardDir);
+  spawnForwardDir.y = 0;
+  if (spawnForwardDir.lengthSq() < 0.0001) {
+    spawnForwardDir.set(0, 0, -1);
+  } else {
+    spawnForwardDir.normalize();
+  }
+
+  const talkerPos = new THREE.Vector3(
+    SPAWN_CENTER.x + spawnForwardDir.x * 4,
+    GROUND_Y,
+    SPAWN_CENTER.y + spawnForwardDir.z * 4
+  );
+
+  entities.push(new TalkerEntity({
+    scene,
+    position: talkerPos,
+    groundY: GROUND_Y,
+    name: 'Guide',
+    dialogLines: ['Bienvenido a Colorlandia', 'Los Chasers te siguen', 'si te ven de cerca'],
+  }));
+}
+
+spawnTalker();
 
 const PROJECTILE_RADIUS = 0.14;
 const PROJECTILE_SPEED = 42;
@@ -833,7 +871,7 @@ function resolveVertical(deltaY) {
   }
 
   if (deltaY < 0 && playerCollider.max.y >= hit.max.y && previousFoot.y >= hit.max.y - 0.02) {
-    playerEye.y = hit.max.y + EYE_HEIGHT +0.01;
+    playerEye.y = hit.max.y + EYE_HEIGHT + 0.001;
     playerState.velocity.y = 0;
     playerState.onGround = true;
     playerState.jumpsUsed = 0;
@@ -864,8 +902,30 @@ function resolveGround() {
   }
 }
 
+function isStandingOnSupport() {
+  if (Math.abs(playerCollider.min.y - GROUND_Y) <= SUPPORT_EPSILON) {
+    return true;
+  }
+
+  for (let i = 0; i < buildingColliders.length; i++) {
+    const c = buildingColliders[i];
+    const nearTop = Math.abs(playerCollider.min.y - c.max.y) <= SUPPORT_EPSILON;
+    if (!nearTop) continue;
+
+    const overlapX = playerCollider.max.x > c.min.x + 0.001 && playerCollider.min.x < c.max.x - 0.001;
+    const overlapZ = playerCollider.max.z > c.min.z + 0.001 && playerCollider.min.z < c.max.z - 0.001;
+
+    if (overlapX && overlapZ) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 const tmpForward = new THREE.Vector3();
 const tmpRight = new THREE.Vector3();
+const horizontalMove = new THREE.Vector3();
 const worldUp = new THREE.Vector3(0, 1, 0);
 const miniMapFacing = new THREE.Vector3();
 
@@ -909,7 +969,7 @@ function updatePlayer(deltaTime) {
   const sprintMultiplier = getDesktopSprintMultiplier();
   const currentMoveSpeed = moveSpeed * sprintMultiplier;
 
-  const horizontalMove = new THREE.Vector3();
+  horizontalMove.set(0, 0, 0);
   horizontalMove.addScaledVector(tmpForward, inputForward * currentMoveSpeed * deltaTime);
   horizontalMove.addScaledVector(tmpRight, inputRight * currentMoveSpeed * deltaTime);
 
@@ -929,9 +989,7 @@ function updatePlayer(deltaTime) {
   resolveVertical(playerState.velocity.y * deltaTime);
   resolveGround();
 
-  if (playerEye.y > GROUND_Y + EYE_HEIGHT + 0.001) {
-    playerState.onGround = false;
-  }
+  playerState.onGround = isStandingOnSupport();
 
   syncPlayerBody();
   animatePlayerBody(deltaTime, horizontalMove.lengthSq() > 0.00001);
@@ -1000,7 +1058,7 @@ leftJoy.addEventListener('touchmove', e => {
       const x = t.clientX - rect.left - rect.width / 2;
       const y = t.clientY - rect.top - rect.height / 2;
 
-      const max = 50;
+      const max = JOYSTICK_MAX_OFFSET;
       const dx = Math.max(-max, Math.min(max, x));
       const dy = Math.max(-max, Math.min(max, y));
 
@@ -1039,7 +1097,7 @@ rightJoy.addEventListener('touchmove', e => {
       const x = t.clientX - rect.left - rect.width / 2;
       const y = t.clientY - rect.top - rect.height / 2;
 
-      const max = 50;
+      const max = JOYSTICK_MAX_OFFSET;
       const dx = Math.max(-max, Math.min(max, x));
       const dy = Math.max(-max, Math.min(max, y));
 

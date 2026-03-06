@@ -9,6 +9,31 @@ function setShadow(mesh, castShadow, receiveShadow) {
   mesh.receiveShadow = receiveShadow;
 }
 
+function createEmojiFace(emoji) {
+  const canvas = document.createElement('canvas');
+  canvas.width = 128;
+  canvas.height = 128;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return null;
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.font = '96px serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(emoji, canvas.width * 0.5, canvas.height * 0.53);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  const material = new THREE.MeshBasicMaterial({
+    map: texture,
+    transparent: true,
+    depthWrite: false,
+  });
+  const plane = new THREE.Mesh(new THREE.PlaneGeometry(0.42, 0.39), material);
+  plane.renderOrder = 2;
+  return plane;
+}
+
 export function createHumanoidModel({
   outfit = {},
   castShadow = true,
@@ -21,6 +46,7 @@ export function createHumanoidModel({
     pants: outfit.pants ?? 0x3d4b64,
     shoes: outfit.shoes ?? 0x1d1d1d,
     hair: outfit.hair ?? 0x2a1d16,
+    faceEmoji: outfit.faceEmoji ?? '🙂',
   };
 
   const skinMat = createPartMaterial(resolvedOutfit.skin, 0.85, 0.03);
@@ -47,6 +73,12 @@ export function createHumanoidModel({
   setShadow(head, castShadow, receiveShadow);
   root.add(head);
 
+  const faceEmoji = createEmojiFace(resolvedOutfit.faceEmoji);
+  if (faceEmoji) {
+    faceEmoji.position.set(0, 0.01, 0.212);
+    head.add(faceEmoji);
+  }
+
   const hairTop = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.2, 0.5), hairMat);
   hairTop.position.set(0, 0.2, 0);
   setShadow(hairTop, castShadow, receiveShadow);
@@ -67,11 +99,11 @@ export function createHumanoidModel({
   head.add(hairRight);
 
   const leftShoulder = new THREE.Group();
-  leftShoulder.position.set(-0.38, 1.3, 0);
+  leftShoulder.position.set(-0.38, 1.38, 0);
   root.add(leftShoulder);
 
   const rightShoulder = new THREE.Group();
-  rightShoulder.position.set(0.38, 1.3, 0);
+  rightShoulder.position.set(0.38, 1.38, 0);
   root.add(rightShoulder);
 
   const leftUpperArm = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.36, 0.2), sleeveMat);
@@ -191,6 +223,9 @@ export function applyHumanoidWalkAnimation(joints, walkCycle, gaitStrength = 1) 
   joints.leftShoulder.rotation.x = leftShoulderRot;
   joints.rightShoulder.rotation.x = rightShoulderRot;
 
-  joints.leftElbow.rotation.x = 0.1 + Math.max(0, -leftShoulderRot) * 0.35;
-  joints.rightElbow.rotation.x = 0.1 + Math.max(0, -rightShoulderRot) * 0.35;
+  // Smooth elbow bend cycle, avoiding abrupt max() transitions.
+  const leftElbowPhase = 0.5 + 0.5 * Math.sin(walkCycle + Math.PI * 0.5);
+  const rightElbowPhase = 0.5 + 0.5 * Math.sin(walkCycle + Math.PI * 1.5);
+  joints.leftElbow.rotation.x = -(0.14 + leftElbowPhase * 0.18);
+  joints.rightElbow.rotation.x = -(0.14 + rightElbowPhase * 0.18);
 }

@@ -45,6 +45,44 @@ function createEntityLabelSprite(name, type) {
   return sprite;
 }
 
+function createDialogSprite(lines) {
+  const canvas = document.createElement('canvas');
+  canvas.width = 768;
+  canvas.height = 256;
+  const ctx = canvas.getContext('2d');
+
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.96)';
+  ctx.fillRect(16, 16, canvas.width - 32, canvas.height - 32);
+
+  ctx.strokeStyle = 'rgba(0, 0, 0, 0.35)';
+  ctx.lineWidth = 6;
+  ctx.strokeRect(16, 16, canvas.width - 32, canvas.height - 32);
+
+  ctx.fillStyle = '#111';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+
+  const normalizedLines = (Array.isArray(lines) ? lines : [String(lines)]).slice(0, 3);
+  const lineY = [92, 136, 180];
+  const fonts = ['bold 36px Arial', '30px Arial', '30px Arial'];
+  for (let i = 0; i < normalizedLines.length; i++) {
+    ctx.font = fonts[i];
+    ctx.fillText(normalizedLines[i], canvas.width * 0.5, lineY[i]);
+  }
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  const material = new THREE.SpriteMaterial({
+    map: texture,
+    transparent: true,
+    depthWrite: false,
+    depthTest: false,
+  });
+  const sprite = new THREE.Sprite(material);
+  sprite.scale.set(4.1, 1.3, 1);
+  return sprite;
+}
+
 export class Entity {
   constructor({
     scene,
@@ -54,6 +92,7 @@ export class Entity {
     outfit = null,
     name = randomEntityName(),
     typeLabel = 'Walker',
+    dialogLines = null,
     speed = 2.2,
     clearance = 1.0,
   }) {
@@ -64,6 +103,7 @@ export class Entity {
     this.clearance = clearance;
     this.name = name;
     this.typeLabel = typeLabel;
+    this.dialogLines = dialogLines;
 
     this.bodyWidth = 0.8;
     this.bodyDepth = 0.55;
@@ -97,6 +137,11 @@ export class Entity {
     this.labelSprite = createEntityLabelSprite(this.name, this.typeLabel);
     this.labelSprite.position.set(0, this.bodyHeight + 0.55, 0);
     this.group.add(this.labelSprite);
+    if (this.dialogLines && this.dialogLines.length > 0) {
+      this.dialogSprite = createDialogSprite(this.dialogLines);
+      this.dialogSprite.position.set(0, this.bodyHeight + 1.85, 0);
+      this.group.add(this.dialogSprite);
+    }
     this.scene.add(this.group);
 
     this.direction = new THREE.Vector3(1, 0, 0);
@@ -218,27 +263,43 @@ export class HunterEntity extends Entity {
         pants: 0x2d0c0c,
         shoes: 0x120707,
         hair: 0x120707,
+        faceEmoji: '😠',
       },
       speed: options.speed ?? 2.5,
     });
-    this.detectionRadius = options.detectionRadius ?? 3.0;
+    this.detectionRadius = options.detectionRadius ?? 5.0;
+    this.stopDistance = options.stopDistance ?? 1.0;
+    this.disengageDistance = options.disengageDistance ?? 10.0;
+    this.isAggro = false;
   }
 
   update(deltaTime, colliders, playerPosition) {
     this.turnTimer -= deltaTime;
 
     let chasing = false;
+    let shouldMove = true;
     if (playerPosition) {
       this._toPlayer.set(
         playerPosition.x - this.position.x,
         0,
         playerPosition.z - this.position.z
       );
-      const inRange = this._toPlayer.lengthSq() <= this.detectionRadius * this.detectionRadius;
-      if (inRange && this._toPlayer.lengthSq() > 0.0001) {
+      const distanceSq = this._toPlayer.lengthSq();
+      const detectSq = this.detectionRadius * this.detectionRadius;
+      const disengageSq = this.disengageDistance * this.disengageDistance;
+      const stopSq = this.stopDistance * this.stopDistance;
+
+      if (!this.isAggro && distanceSq <= detectSq) {
+        this.isAggro = true;
+      } else if (this.isAggro && distanceSq > disengageSq) {
+        this.isAggro = false;
+      }
+
+      if (this.isAggro && distanceSq > 0.0001) {
         this._toPlayer.normalize();
         this.direction.copy(this._toPlayer);
         chasing = true;
+        shouldMove = distanceSq > stopSq;
       }
     }
 
@@ -248,21 +309,64 @@ export class HunterEntity extends Entity {
       this.turnTimer = 0.2;
     }
 
-    const stepDistance = this.speed * deltaTime;
-    this._nextPos.copy(this.position).addScaledVector(this.direction, stepDistance);
-
-    if (this.willHitObstacleAt(this._nextPos, colliders)) {
-      if (!this.tryFindOpenDirection(colliders, deltaTime)) {
-        return;
-      }
+    if (shouldMove) {
+      const stepDistance = this.speed * deltaTime;
       this._nextPos.copy(this.position).addScaledVector(this.direction, stepDistance);
-    }
 
-    this.position.copy(this._nextPos);
+      if (this.willHitObstacleAt(this._nextPos, colliders)) {
+        if (!this.tryFindOpenDirection(colliders, deltaTime)) {
+          this.updateWalkAnimation(0);
+          return;
+        }
+        this._nextPos.copy(this.position).addScaledVector(this.direction, stepDistance);
+      }
+
+      this.position.copy(this._nextPos);
+    }
     this.group.position.set(this.position.x, this.groundY + this.visualLift, this.position.z);
     this.group.rotation.y = Math.atan2(this.direction.x, this.direction.z);
     this.updateCollider();
 
-    this.updateWalkAnimation(deltaTime);
+    this.updateWalkAnimation(shouldMove ? deltaTime : 0);
+  }
+}
+
+export class TalkerEntity extends Entity {
+  constructor(options = {}) {
+    super({
+      ...options,
+      name: options.name ?? 'Talker',
+      typeLabel: options.typeLabel ?? 'Talker',
+      dialogLines: options.dialogLines ?? ['Hola viajero', 'Pulsa click para disparar', 'Mira el minimapa'],
+      speed: 0,
+      outfit: options.outfit ?? {
+        skin: 0xe4c3a2,
+        shirt: 0x4f6fd1,
+        sleeves: 0x4f6fd1,
+        pants: 0x3d4f77,
+        shoes: 0x1a1a1a,
+        hair: 0x2a1b10,
+        faceEmoji: '🗣️',
+      },
+    });
+  }
+
+  update(deltaTime, colliders, playerPosition) {
+    if (playerPosition) {
+      this._toPlayer.set(
+        playerPosition.x - this.position.x,
+        0,
+        playerPosition.z - this.position.z
+      );
+      if (this._toPlayer.lengthSq() > 0.0001) {
+        this._toPlayer.normalize();
+        this.direction.copy(this._toPlayer);
+      }
+    }
+
+    this.group.position.set(this.position.x, this.groundY + this.visualLift, this.position.z);
+    this.group.rotation.y = Math.atan2(this.direction.x, this.direction.z);
+    this.updateCollider();
+    this.updateWalkAnimation(0);
   }
 }
