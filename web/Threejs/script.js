@@ -1,17 +1,15 @@
 import * as THREE from 'three';
 import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
 
-
-let mobileMode = false
-let windowWidth = window.innerWidth
-
-let windowHeight = window.innerHeight
+let mobileMode = false;
+let windowWidth = window.innerWidth;
+let windowHeight = window.innerHeight;
 
 // --------------------
 // SCENE
 // --------------------
 const scene = new THREE.Scene();
-scene.fog = new THREE.FogExp2(0x87CEEB, 0.002); // niebla azul cielo
+scene.fog = new THREE.FogExp2(0x87CEEB, 0.002);
 
 // --------------------
 // CAMERA
@@ -22,47 +20,46 @@ const camera = new THREE.PerspectiveCamera(
   0.1,
   3000
 );
-camera.position.set(0, 3, 10);
+camera.position.set(5, 3, 5);
 
 // --------------------
 // RENDERER
 // --------------------
-
-let menuInferior = document.getElementById("menuInferior")
-
+const consola = document.getElementById('consola');
+const menuCentral = document.getElementById('menuCentral');
+const menuInferior = document.getElementById('menuInferior');
+const buttonUp = document.getElementById('buttonUp');
+const buttonDown = document.getElementById('buttonDown');
 
 function checkForJoysticks() {
-
-  if (windowWidth < 600 && menuInferior.classList.contains("invisible")) {
-
-    console.log("Joysticks Activated")
-    menuCentral.classList.add("invisible")
-    menuInferior.classList.remove("invisible")
-    menuInferior.classList.add("flex")
-    mobileMode = true
+  if (windowWidth < 600 && menuInferior.classList.contains('invisible')) {
+    console.log('Joysticks Activated');
+    menuCentral.classList.add('invisible');
+    menuInferior.classList.remove('invisible');
+    menuInferior.classList.add('flex');
+    mobileMode = true;
     document.removeEventListener('click', controlLocker);
-
-
-    return true
-
+    return true;
   }
-  else if (windowWidth > 600) {
-    console.log("Joysticks Deactivated")
-    menuCentral.classList.remove("invisible")
-    menuInferior.classList.add("invisible")
-    menuInferior.classList.remove("flex")
-    mobileMode = false
+
+  if (windowWidth > 600) {
+    console.log('Joysticks Deactivated');
+    menuCentral.classList.remove('invisible');
+    menuInferior.classList.add('invisible');
+    menuInferior.classList.remove('flex');
+    mobileMode = false;
     document.addEventListener('click', controlLocker);
-
-    return false
+    return false;
   }
+
+  return mobileMode;
 }
 
-checkForJoysticks()
+checkForJoysticks();
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setClearColor(0x87CEEB); // cielo azul
+renderer.setClearColor(0x87CEEB);
 renderer.shadowMap.enabled = true;
 document.body.appendChild(renderer.domElement);
 
@@ -72,20 +69,20 @@ document.body.appendChild(renderer.domElement);
 const controls = new PointerLockControls(camera, document.body);
 
 function controlLocker() {
-
-
-  controls.lock()
+  controls.lock();
   controls.addEventListener('unlock', () => {
-    menuCentral.classList.remove("invisible")
+    menuCentral.classList.remove('invisible');
   });
-  menuCentral.classList.add("invisible")
-
+  menuCentral.classList.add('invisible');
 }
 
 const keys = {};
 document.addEventListener('keydown', e => keys[e.code] = true);
 document.addEventListener('keyup', e => keys[e.code] = false);
-const speed = 0.25;
+
+const moveSpeed = 10;
+const gravity = 30;
+const jumpSpeed = 11;
 
 // --------------------
 // LIGHTS
@@ -107,17 +104,72 @@ const ground = new THREE.Mesh(groundGeo, groundMat);
 ground.rotation.x = -Math.PI / 2;
 ground.receiveShadow = true;
 scene.add(ground);
+const GROUND_Y = 0;
+
+// --------------------
+// PLAYER BODY + COLLIDER
+// --------------------
+const PLAYER_HEIGHT = 1.8;
+const PLAYER_HALF_WIDTH = 0.35;
+const EYE_HEIGHT = 1.62;
+
+const playerState = {
+  velocity: new THREE.Vector3(0, 0, 0),
+  onGround: false,
+  jumpQueued: false,
+};
+
+const playerCollider = new THREE.Box3();
+const playerFoot = new THREE.Vector3();
+const previousFoot = new THREE.Vector3();
+const testBox = new THREE.Box3();
+
+const playerBody = new THREE.Mesh(
+  new THREE.CapsuleGeometry(0.28, 0.8, 6, 10),
+  new THREE.MeshStandardMaterial({ color: 0xdddddd, metalness: 0.1, roughness: 0.9 })
+);
+playerBody.castShadow = true;
+scene.add(playerBody);
+
+function updatePlayerCollider(eyePosition) {
+  const min = new THREE.Vector3(
+    eyePosition.x - PLAYER_HALF_WIDTH,
+    eyePosition.y - EYE_HEIGHT,
+    eyePosition.z - PLAYER_HALF_WIDTH
+  );
+
+  const max = new THREE.Vector3(
+    eyePosition.x + PLAYER_HALF_WIDTH,
+    min.y + PLAYER_HEIGHT,
+    eyePosition.z + PLAYER_HALF_WIDTH
+  );
+
+  playerCollider.min.copy(min);
+  playerCollider.max.copy(max);
+  playerFoot.set(eyePosition.x, min.y, eyePosition.z);
+}
+
+function syncPlayerBody() {
+  playerBody.position.set(
+    camera.position.x,
+    playerCollider.min.y + PLAYER_HEIGHT * 0.5,
+    camera.position.z
+  );
+}
+
+updatePlayerCollider(camera.position);
+syncPlayerBody();
 
 // --------------------
 // NAME GENERATOR
 // --------------------
-const nameParts1 = ["Neo", "Cyber", "Quantum", "Nova", "Hyper", "Astra", "Meta"];
-const nameParts2 = ["Corp", "Tower", "Labs", "Systems", "Group", "Industries", "Center"];
+const nameParts1 = ['Neo', 'Cyber', 'Quantum', 'Nova', 'Hyper', 'Astra', 'Meta'];
+const nameParts2 = ['Corp', 'Tower', 'Labs', 'Systems', 'Group', 'Industries', 'Center'];
 
 function randomName() {
   return (
     nameParts1[Math.floor(Math.random() * nameParts1.length)] +
-    " " +
+    ' ' +
     nameParts2[Math.floor(Math.random() * nameParts2.length)]
   );
 }
@@ -126,23 +178,23 @@ function randomName() {
 // WALL SIGN FUNCTION
 // --------------------
 function createWallSign(text) {
-  const canvas = document.createElement("canvas");
-  const ctx = canvas.getContext("2d");
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
 
   canvas.width = 512;
   canvas.height = 128;
 
-  ctx.fillStyle = "#111";
+  ctx.fillStyle = '#111';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  ctx.strokeStyle = "white";
+  ctx.strokeStyle = 'white';
   ctx.lineWidth = 6;
   ctx.strokeRect(0, 0, canvas.width, canvas.height);
 
-  ctx.fillStyle = "white";
-  ctx.font = "42px Arial";
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
+  ctx.fillStyle = 'white';
+  ctx.font = '42px Arial';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
   ctx.fillText(text, canvas.width / 2, canvas.height / 2);
 
   const texture = new THREE.CanvasTexture(canvas);
@@ -153,17 +205,16 @@ function createWallSign(text) {
 }
 
 // --------------------
-// CITY GENERATION
+// CITY GENERATION + COLLIDERS
 // --------------------
 const buildingGeo = new THREE.BoxGeometry(1, 1, 1);
-const spacing = 10; // calles más anchas
+const buildingColliders = [];
+const spacing = 10;
 
 for (let x = -100; x <= 100; x += spacing) {
   for (let z = -100; z <= 100; z += spacing) {
-
     const height = Math.random() * 25 + 5;
 
-    // color completamente aleatorio
     const buildingMat = new THREE.MeshStandardMaterial({
       color: new THREE.Color(Math.random(), Math.random(), Math.random())
     });
@@ -175,28 +226,26 @@ for (let x = -100; x <= 100; x += spacing) {
     building.receiveShadow = true;
     scene.add(building);
 
-    // --------------------
-    // RANDOM FACE SIGN
-    // --------------------
+    const collider = new THREE.Box3().setFromObject(building);
+    buildingColliders.push(collider);
+
     const sign = createWallSign(randomName());
-
-    const halfSize = 3; // building width / 2 (6 / 2)
-
+    const halfSize = 3;
     const face = Math.floor(Math.random() * 4);
 
     switch (face) {
-      case 0: // +Z
+      case 0:
         sign.position.set(x, 2, z + halfSize + 0.01);
         break;
-      case 1: // -Z
+      case 1:
         sign.position.set(x, 2, z - halfSize - 0.01);
         sign.rotation.y = Math.PI;
         break;
-      case 2: // +X
+      case 2:
         sign.position.set(x + halfSize + 0.01, 2, z);
         sign.rotation.y = -Math.PI / 2;
         break;
-      case 3: // -X
+      case 3:
         sign.position.set(x - halfSize - 0.01, 2, z);
         sign.rotation.y = Math.PI / 2;
         break;
@@ -206,6 +255,147 @@ for (let x = -100; x <= 100; x += spacing) {
   }
 }
 
+function collidesWithBuildings(box) {
+  for (let i = 0; i < buildingColliders.length; i++) {
+    if (box.intersectsBox(buildingColliders[i])) return buildingColliders[i];
+  }
+  return null;
+}
+
+const axisTestPos = new THREE.Vector3();
+
+function tryMoveAxis(axis, delta) {
+  if (delta === 0) return;
+
+  axisTestPos.copy(camera.position);
+  axisTestPos[axis] += delta;
+
+  updatePlayerCollider(axisTestPos);
+  testBox.copy(playerCollider);
+
+  if (!collidesWithBuildings(testBox)) {
+    camera.position[axis] += delta;
+    updatePlayerCollider(camera.position);
+  }
+}
+
+function resolveVertical(deltaY) {
+  if (deltaY === 0) {
+    return;
+  }
+
+  axisTestPos.copy(camera.position);
+  axisTestPos.y += deltaY;
+
+  updatePlayerCollider(axisTestPos);
+  testBox.copy(playerCollider);
+
+  const hit = collidesWithBuildings(testBox);
+
+  if (!hit) {
+    camera.position.y += deltaY;
+    updatePlayerCollider(camera.position);
+    return;
+  }
+
+  if (deltaY < 0 && playerCollider.max.y >= hit.max.y && previousFoot.y >= hit.max.y - 0.02) {
+    camera.position.y = hit.max.y + EYE_HEIGHT;
+    playerState.velocity.y = 0;
+    playerState.onGround = true;
+    updatePlayerCollider(camera.position);
+    return;
+  }
+
+  if (deltaY > 0 && playerCollider.min.y <= hit.min.y) {
+    camera.position.y = hit.min.y - (PLAYER_HEIGHT - EYE_HEIGHT) - 0.001;
+    playerState.velocity.y = 0;
+    updatePlayerCollider(camera.position);
+    return;
+  }
+
+  playerState.velocity.y = 0;
+  updatePlayerCollider(camera.position);
+}
+
+function resolveGround() {
+  const minEyeY = GROUND_Y + EYE_HEIGHT;
+
+  if (camera.position.y <= minEyeY) {
+    camera.position.y = minEyeY;
+    playerState.velocity.y = 0;
+    playerState.onGround = true;
+    updatePlayerCollider(camera.position);
+  }
+}
+
+const tmpForward = new THREE.Vector3();
+const tmpRight = new THREE.Vector3();
+const worldUp = new THREE.Vector3(0, 1, 0);
+
+function updateDesktopLook() {
+  if (!controls.isLocked) return;
+  yaw = camera.rotation.y;
+  pitch = camera.rotation.x;
+}
+
+function updatePlayer(deltaTime) {
+  previousFoot.copy(playerFoot);
+
+  let inputForward = 0;
+  let inputRight = 0;
+
+  if (controls.isLocked) {
+    if (keys['KeyW']) inputForward += 1;
+    if (keys['KeyS']) inputForward -= 1;
+    if (keys['KeyA']) inputRight -= 1;
+    if (keys['KeyD']) inputRight += 1;
+  }
+
+  if (mobileMode) {
+    inputForward += moveForward;
+    inputRight += moveRight;
+  }
+
+  const inputLength = Math.hypot(inputForward, inputRight);
+  if (inputLength > 1) {
+    inputForward /= inputLength;
+    inputRight /= inputLength;
+  }
+
+  camera.getWorldDirection(tmpForward);
+  tmpForward.y = 0;
+  if (tmpForward.lengthSq() > 0) {
+    tmpForward.normalize();
+  }
+
+  tmpRight.crossVectors(tmpForward, worldUp).normalize();
+
+  const horizontalMove = new THREE.Vector3();
+  horizontalMove.addScaledVector(tmpForward, inputForward * moveSpeed * deltaTime);
+  horizontalMove.addScaledVector(tmpRight, inputRight * moveSpeed * deltaTime);
+
+  tryMoveAxis('x', horizontalMove.x);
+  tryMoveAxis('z', horizontalMove.z);
+
+  playerState.velocity.y -= gravity * deltaTime;
+
+  if (playerState.jumpQueued && playerState.onGround) {
+    playerState.velocity.y = jumpSpeed;
+    playerState.onGround = false;
+  }
+
+  playerState.jumpQueued = false;
+
+  resolveVertical(playerState.velocity.y * deltaTime);
+  resolveGround();
+
+  if (camera.position.y > GROUND_Y + EYE_HEIGHT + 0.001) {
+    playerState.onGround = false;
+  }
+
+  syncPlayerBody();
+}
+
 // --------------------
 // RESIZE
 // --------------------
@@ -213,13 +403,10 @@ window.addEventListener('resize', () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
 
+  windowWidth = window.innerWidth;
+  windowHeight = window.innerHeight;
 
-  windowWidth = window.innerWidth
-
-  windowHeight = window.innerHeight
-
-  checkForJoysticks()
-
+  checkForJoysticks();
 
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
@@ -227,30 +414,29 @@ window.addEventListener('resize', () => {
 let leftTouchId = null;
 let rightTouchId = null;
 
-const leftJoy = document.querySelector("#menuInferiorLeft .joystick");
-const leftPad = leftJoy.querySelector(".pad");
+const leftJoy = document.querySelector('#menuInferiorLeft .joystick');
+const leftPad = leftJoy.querySelector('.pad');
 
-leftJoy.addEventListener("touchstart", e => {
+leftJoy.addEventListener('touchstart', e => {
   for (let t of e.changedTouches) {
     leftTouchId = t.identifier;
   }
 });
 
-leftJoy.addEventListener("touchend", e => {
+leftJoy.addEventListener('touchend', e => {
   for (let t of e.changedTouches) {
     if (t.identifier === leftTouchId) {
       leftTouchId = null;
       moveForward = 0;
       moveRight = 0;
-      leftPad.style.transform = "translate(0px,0px)";
+      leftPad.style.transform = 'translate(0px,0px)';
     }
   }
 });
 
-leftJoy.addEventListener("touchmove", e => {
+leftJoy.addEventListener('touchmove', e => {
   for (let t of e.touches) {
     if (t.identifier === leftTouchId) {
-
       const rect = leftJoy.getBoundingClientRect();
       const x = t.clientX - rect.left - rect.width / 2;
       const y = t.clientY - rect.top - rect.height / 2;
@@ -267,30 +453,29 @@ leftJoy.addEventListener("touchmove", e => {
   }
 });
 
-const rightJoy = document.querySelector("#menuInferiorRight .joystick");
-const rightPad = rightJoy.querySelector(".pad");
+const rightJoy = document.querySelector('#menuInferiorRight .joystick');
+const rightPad = rightJoy.querySelector('.pad');
 
-rightJoy.addEventListener("touchstart", e => {
+rightJoy.addEventListener('touchstart', e => {
   for (let t of e.changedTouches) {
     rightTouchId = t.identifier;
   }
 });
 
-rightJoy.addEventListener("touchend", e => {
+rightJoy.addEventListener('touchend', e => {
   for (let t of e.changedTouches) {
     if (t.identifier === rightTouchId) {
       rightTouchId = null;
       lookDx = 0;
       lookDy = 0;
-      rightPad.style.transform = "translate(0px,0px)";
+      rightPad.style.transform = 'translate(0px,0px)';
     }
   }
 });
 
-rightJoy.addEventListener("touchmove", e => {
+rightJoy.addEventListener('touchmove', e => {
   for (let t of e.touches) {
     if (t.identifier === rightTouchId) {
-
       const rect = rightJoy.getBoundingClientRect();
       const x = t.clientX - rect.left - rect.width / 2;
       const y = t.clientY - rect.top - rect.height / 2;
@@ -306,6 +491,7 @@ rightJoy.addEventListener("touchmove", e => {
     }
   }
 });
+
 // --------------------
 // MOBILE CONTROL VALUES
 // --------------------
@@ -319,100 +505,66 @@ let lookDy = 0;
 
 const sensitivity = 0.002;
 
+function queueJump() {
+  playerState.jumpQueued = true;
+}
 
-// fly
-let flying = false
-let descending = false
-buttonUp.addEventListener("touchstart", e => {
-  flying = true
+buttonUp.addEventListener('touchstart', queueJump);
+
+// Optional quick drop for mobile
+buttonDown.addEventListener('touchstart', () => {
+  if (!playerState.onGround) {
+    playerState.velocity.y = Math.min(playerState.velocity.y, -8);
+  }
 });
 
-buttonUp.addEventListener("touchend", e => {
-  flying = false
+document.addEventListener('keydown', e => {
+  if (e.code === 'Space') {
+    playerState.jumpQueued = true;
+  }
 });
 
-buttonDown.addEventListener("touchstart", e => {
-  descending = true
-});
-
-buttonDown.addEventListener("touchend", e => {
-  descending = false
-});
-
-const clock = new THREE.Clock()
+const clock = new THREE.Clock();
 let frames = 0;
 let accTime = 0;
-let fps = 0
-function checkFPS() {
-  // Calculate the number of seconds passed since the last frame
-  const delta = clock.getDelta()
+let fps = 0;
+
+function checkFPS(delta) {
   accTime += delta;
   frames++;
 
   if (accTime >= 1) {
     fps = Math.round(frames / accTime);
-    consola.textContent = "FPS: " + fps;
-
     frames = 0;
     accTime = 0;
   }
+
   const { x, y, z } = camera.position;
-
-  consola.textContent = "FPS: " + fps + ` X: ${x.toFixed(2)} | Y: ${y.toFixed(2)} | Z: ${z.toFixed(2)}`;
-
+  consola.textContent = 'FPS: ' + fps + ` X: ${x.toFixed(2)} | Y: ${y.toFixed(2)} | Z: ${z.toFixed(2)}`;
 }
+
 // --------------------
 // ANIMATION LOOP
 // --------------------
 renderer.setAnimationLoop(() => {
-
-  if (controls.isLocked) {
-
-    if (keys['KeyW']) controls.moveForward(speed);
-    if (keys['KeyS']) controls.moveForward(-speed);
-    if (keys['KeyA']) controls.moveRight(-speed);
-    if (keys['KeyD']) controls.moveRight(speed);
-
-    if (keys['Space']) camera.position.y += speed;
-    if (keys['ShiftLeft'] || keys['ShiftRight']) camera.position.y -= speed;
-
-  }
-
+  const delta = Math.min(clock.getDelta(), 0.05);
 
   if (mobileMode) {
-    console.log("mobile mode true")
-
     if (rightTouchId !== null) {
       yaw -= lookDx * sensitivity;
       pitch -= lookDy * sensitivity;
       pitch = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, pitch));
     }
 
-    // Apply rotation
-    camera.rotation.order = "YXZ";
+    camera.rotation.order = 'YXZ';
     camera.rotation.y = yaw;
     camera.rotation.x = pitch;
-
-    // Apply movement relative to rotation
-    const forward = new THREE.Vector3();
-    camera.getWorldDirection(forward);
-    forward.y = 0;
-    forward.normalize();
-
-    const right = new THREE.Vector3();
-    right.crossVectors(forward, new THREE.Vector3(0, 1, 0)).normalize();
-
-    camera.position.addScaledVector(forward, moveForward * speed);
-    camera.position.addScaledVector(right, moveRight * speed);
-
-    if (flying) camera.position.y += speed;
-    if (descending) camera.position.y -= speed;
+  } else {
+    updateDesktopLook();
   }
 
-
-
-  checkFPS()
-
+  updatePlayer(delta);
+  checkFPS(delta);
 
   renderer.render(scene, camera);
 });
