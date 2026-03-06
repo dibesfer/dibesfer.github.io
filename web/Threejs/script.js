@@ -27,10 +27,15 @@ camera.position.copy(playerEye);
 // RENDERER
 // --------------------
 const consola = document.getElementById('consola');
+const miniMap = document.getElementById('miniMap');
 const menuCentral = document.getElementById('menuCentral');
 const menuInferior = document.getElementById('menuInferior');
 const buttonUp = document.getElementById('buttonUp');
 const buttonDown = document.getElementById('buttonDown');
+
+const miniMapPlayerMarker = document.createElement('div');
+miniMapPlayerMarker.id = 'miniMapPlayerMarker';
+miniMap.appendChild(miniMapPlayerMarker);
 
 function checkForJoysticks() {
   if (windowWidth < 600 && menuInferior.classList.contains('invisible')) {
@@ -64,6 +69,27 @@ renderer.setClearColor(0x87CEEB);
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 document.body.appendChild(renderer.domElement);
+
+const textureLoader = new THREE.TextureLoader();
+const maxAnisotropy = renderer.capabilities.getMaxAnisotropy();
+const BRICK_TILE_SIZE = 2.2;
+
+const groundTexture = textureLoader.load('assets/grass.jpg');
+groundTexture.colorSpace = THREE.SRGBColorSpace;
+groundTexture.wrapS = THREE.RepeatWrapping;
+groundTexture.wrapT = THREE.RepeatWrapping;
+groundTexture.anisotropy = maxAnisotropy;
+
+const brickTexture = textureLoader.load('assets/black-brick-wall.jpg');
+brickTexture.colorSpace = THREE.SRGBColorSpace;
+brickTexture.wrapS = THREE.RepeatWrapping;
+brickTexture.wrapT = THREE.RepeatWrapping;
+brickTexture.anisotropy = maxAnisotropy;
+
+const miniMapRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+miniMapRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+miniMapRenderer.shadowMap.enabled = false;
+miniMap.appendChild(miniMapRenderer.domElement);
 
 // --------------------
 // CONTROLS
@@ -103,7 +129,8 @@ const dir = new THREE.DirectionalLight(0xffffff, 1.2);
 dir.position.set(100, 200, 100);
 dir.target.position.set(0, 0, 0);
 dir.castShadow = true;
-dir.shadow.mapSize.set(2048, 2048);
+// Slightly lower shadow map resolution for a softer edge filter with PCFSoftShadowMap.
+dir.shadow.mapSize.set(1024, 1024);
 dir.shadow.bias = -0.0002;
 dir.shadow.normalBias = 0.02;
 scene.add(dir);
@@ -119,6 +146,28 @@ const CITY_MARGIN = 15;
 const CITY_OUTER_LIMIT = CITY_MAX + BUILDING_FOOTPRINT * 0.5 + CITY_MARGIN;
 const CITY_GROUND_SIZE = CITY_OUTER_LIMIT * 2;
 const SHADOW_RANGE = CITY_OUTER_LIMIT + 20;
+const MINI_MAP_VIEW_SIZE = 90;
+const MINI_MAP_HEIGHT = 130;
+
+const miniMapCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 500);
+miniMapCamera.up.set(0, 0, -1);
+scene.add(miniMapCamera);
+
+function updateMiniMapSize() {
+  const width = miniMap.clientWidth || 200;
+  const height = miniMap.clientHeight || 200;
+  const aspect = width / height;
+  const halfHeight = MINI_MAP_VIEW_SIZE * 0.5;
+  const halfWidth = halfHeight * aspect;
+
+  miniMapCamera.left = -halfWidth;
+  miniMapCamera.right = halfWidth;
+  miniMapCamera.top = halfHeight;
+  miniMapCamera.bottom = -halfHeight;
+  miniMapCamera.updateProjectionMatrix();
+
+  miniMapRenderer.setSize(width, height, false);
+}
 
 dir.shadow.camera.left = -SHADOW_RANGE;
 dir.shadow.camera.right = SHADOW_RANGE;
@@ -129,7 +178,13 @@ dir.shadow.camera.far = 600;
 dir.shadow.camera.updateProjectionMatrix();
 
 const groundGeo = new THREE.PlaneGeometry(CITY_GROUND_SIZE, CITY_GROUND_SIZE);
-const groundMat = new THREE.MeshStandardMaterial({ color: 0x4a8f42, roughness: 1.0 });
+const groundTileRepeat = CITY_GROUND_SIZE / 12;
+groundTexture.repeat.set(groundTileRepeat, groundTileRepeat);
+const groundMat = new THREE.MeshStandardMaterial({
+  map: groundTexture,
+  color: 0xffffff,
+  roughness: 1.0,
+});
 const ground = new THREE.Mesh(groundGeo, groundMat);
 ground.rotation.x = -Math.PI / 2;
 ground.receiveShadow = true;
@@ -296,8 +351,22 @@ for (let x = CITY_MIN; x <= CITY_MAX; x += spacing) {
     if (Math.random() < 0.04) {          // 4% chance of skyscraper
       height = 25 + Math.random() * 35;  // skyscrapers: 25..60
     }
+    const tintHue = Math.random();
+    const tintSat = 0.25 + Math.random() * 0.45;
+    const tintLight = 0.42 + Math.random() * 0.28;
+    const buildingTint = new THREE.Color().setHSL(tintHue, tintSat, tintLight);
+    const buildingTexture = brickTexture.clone();
+    buildingTexture.needsUpdate = true;
+    buildingTexture.repeat.set(
+      BUILDING_FOOTPRINT / BRICK_TILE_SIZE,
+      height / BRICK_TILE_SIZE
+    );
+
     const buildingMat = new THREE.MeshStandardMaterial({
-      color: new THREE.Color(Math.random(), Math.random(), Math.random())
+      map: buildingTexture,
+      color: buildingTint,
+      roughness: 0.88,
+      metalness: 0.08,
     });
 
     const building = new THREE.Mesh(buildingGeo, buildingMat);
@@ -338,9 +407,19 @@ for (let x = CITY_MIN; x <= CITY_MAX; x += spacing) {
 
 const wallHeight = 6;
 const wallThickness = 0.8;
-const wallMat = new THREE.MeshStandardMaterial({ color: 0xb8b8b8, roughness: 0.9 });
-
 function addCityWall(width, depth, x, z) {
+  const wallTexture = brickTexture.clone();
+  wallTexture.needsUpdate = true;
+  wallTexture.repeat.set(
+    Math.max(width, depth) / BRICK_TILE_SIZE,
+    wallHeight / BRICK_TILE_SIZE
+  );
+  const wallMat = new THREE.MeshStandardMaterial({
+    map: wallTexture,
+    color: 0xffffff,
+    roughness: 0.9,
+    metalness: 0.05,
+  });
   const wall = new THREE.Mesh(new THREE.BoxGeometry(width, wallHeight, depth), wallMat);
   wall.position.set(x, wallHeight * 0.5, z);
   wall.castShadow = true;
@@ -619,6 +698,7 @@ function resolveGround() {
 const tmpForward = new THREE.Vector3();
 const tmpRight = new THREE.Vector3();
 const worldUp = new THREE.Vector3(0, 1, 0);
+const miniMapFacing = new THREE.Vector3();
 
 function updateDesktopLook() {
   if (!controls.isLocked) return;
@@ -688,6 +768,22 @@ function updatePlayer(deltaTime) {
   syncCameraToPlayerView(deltaTime);
 }
 
+function updateMiniMap() {
+  miniMapCamera.position.set(playerEye.x, playerEye.y + MINI_MAP_HEIGHT, playerEye.z);
+  miniMapCamera.lookAt(playerEye.x, GROUND_Y, playerEye.z);
+
+  camera.getWorldDirection(miniMapFacing);
+  miniMapFacing.y = 0;
+
+  if (miniMapFacing.lengthSq() > 0.0001) {
+    miniMapFacing.normalize();
+    const markerAngle = Math.atan2(miniMapFacing.x, -miniMapFacing.z);
+    miniMapPlayerMarker.style.transform = `translate(-50%, -50%) rotate(${markerAngle}rad)`;
+  }
+
+  miniMapRenderer.render(scene, miniMapCamera);
+}
+
 // --------------------
 // RESIZE
 // --------------------
@@ -701,6 +797,7 @@ window.addEventListener('resize', () => {
   checkForJoysticks();
 
   renderer.setSize(window.innerWidth, window.innerHeight);
+  updateMiniMapSize();
 });
 
 let leftTouchId = null;
@@ -824,6 +921,8 @@ let frames = 0;
 let accTime = 0;
 let fps = 0;
 
+updateMiniMapSize();
+
 function checkFPS(delta) {
   accTime += delta;
   frames++;
@@ -863,4 +962,5 @@ renderer.setAnimationLoop(() => {
   checkFPS(delta);
 
   renderer.render(scene, camera);
+  updateMiniMap();
 });
