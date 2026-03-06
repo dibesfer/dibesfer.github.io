@@ -1,5 +1,7 @@
 import * as THREE from 'three';
 import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
+import { Entity, HunterEntity } from './entity.js';
+import { createHumanoidModel, applyHumanoidWalkAnimation } from './entityModel.js';
 
 let mobileMode = false;
 let windowWidth = window.innerWidth;
@@ -32,6 +34,8 @@ const menuCentral = document.getElementById('menuCentral');
 const menuInferior = document.getElementById('menuInferior');
 const buttonUp = document.getElementById('buttonUp');
 const buttonDown = document.getElementById('buttonDown');
+const buttonShoot = document.getElementById('buttonShoot');
+let mobileShootPressed = false;
 
 const miniMapPlayerMarker = document.createElement('div');
 miniMapPlayerMarker.id = 'miniMapPlayerMarker';
@@ -54,6 +58,8 @@ function checkForJoysticks() {
     menuInferior.classList.add('invisible');
     menuInferior.classList.remove('flex');
     mobileMode = false;
+    mobileShootPressed = false;
+    setShootButtonState(false);
     document.addEventListener('click', controlLocker);
     return false;
   }
@@ -85,6 +91,12 @@ brickTexture.colorSpace = THREE.SRGBColorSpace;
 brickTexture.wrapS = THREE.RepeatWrapping;
 brickTexture.wrapT = THREE.RepeatWrapping;
 brickTexture.anisotropy = maxAnisotropy;
+
+const spawnPadTexture = textureLoader.load('assets/1632.jpg');
+spawnPadTexture.colorSpace = THREE.SRGBColorSpace;
+spawnPadTexture.wrapS = THREE.ClampToEdgeWrapping;
+spawnPadTexture.wrapT = THREE.ClampToEdgeWrapping;
+spawnPadTexture.anisotropy = maxAnisotropy;
 
 const miniMapRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
 miniMapRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -191,12 +203,29 @@ ground.receiveShadow = true;
 scene.add(ground);
 const GROUND_Y = 0;
 
+const SPAWN_CENTER = new THREE.Vector2(playerEye.x, playerEye.z);
+const SPAWN_PAD_DIAMETER = BUILDING_FOOTPRINT * 3;
+const SPAWN_CLEAR_RADIUS = SPAWN_PAD_DIAMETER * 0.5;
+const spawnPad = new THREE.Mesh(
+  new THREE.CircleGeometry(SPAWN_PAD_DIAMETER * 0.5, 48),
+  new THREE.MeshStandardMaterial({
+    map: spawnPadTexture,
+    color: 0xffffff,
+    roughness: 0.95,
+    metalness: 0,
+  })
+);
+spawnPad.rotation.x = -Math.PI / 2;
+spawnPad.position.set(SPAWN_CENTER.x, GROUND_Y + 0.03, SPAWN_CENTER.y);
+spawnPad.receiveShadow = true;
+scene.add(spawnPad);
+
 // --------------------
 // PLAYER BODY + COLLIDER
 // --------------------
 const PLAYER_HEIGHT = 1.8;
 const PLAYER_HALF_WIDTH = 0.35;
-const EYE_HEIGHT = 1.5;
+const EYE_HEIGHT = 1.3;
 
 const playerState = {
   velocity: new THREE.Vector3(0, 0, 0),
@@ -209,13 +238,25 @@ const playerCollider = new THREE.Box3();
 const playerFoot = new THREE.Vector3();
 const previousFoot = new THREE.Vector3();
 const testBox = new THREE.Box3();
+const playerBody = new THREE.Group();
+const playerHumanoid = createHumanoidModel({
+  outfit: {
+    skin: 0xf0c9a5,
+    shirt: 0x4f86f7,
+    sleeves: 0x4f86f7,
+    pants: 0x2d3a50,
+    shoes: 0x161616,
+    hair: 0x221710,
+  },
+  castShadow: true,
+  receiveShadow: false,
+});
+playerBody.add(playerHumanoid.root);
+playerBody.scale.set(1, PLAYER_HEIGHT / playerHumanoid.baseHeight, 1);
 
-const playerBody = new THREE.Mesh(
-  new THREE.CapsuleGeometry(0.28, 0.8, 6, 10),
-  new THREE.MeshStandardMaterial({ color: 0xdddddd, metalness: 0.1, roughness: 0.9 })
-);
-playerBody.castShadow = true;
 scene.add(playerBody);
+const playerFacingDir = new THREE.Vector3();
+let playerWalkCycle = 0;
 
 function updatePlayerCollider(eyePosition) {
   const min = new THREE.Vector3(
@@ -238,9 +279,25 @@ function updatePlayerCollider(eyePosition) {
 function syncPlayerBody() {
   playerBody.position.set(
     playerEye.x,
-    playerCollider.min.y + PLAYER_HEIGHT * 0.5,
+    playerCollider.min.y,
     playerEye.z
   );
+
+  camera.getWorldDirection(playerFacingDir);
+  playerFacingDir.y = 0;
+  if (playerFacingDir.lengthSq() > 0.0001) {
+    playerFacingDir.normalize();
+    playerBody.rotation.y = Math.atan2(playerFacingDir.x, playerFacingDir.z);
+  }
+}
+
+function animatePlayerBody(deltaTime, isMoving) {
+  if (isMoving) {
+    playerWalkCycle += deltaTime * 10;
+  }
+
+  const gaitStrength = isMoving ? 1 : 0.25;
+  applyHumanoidWalkAnimation(playerHumanoid.joints, playerWalkCycle, gaitStrength);
 }
 
 const thirdPersonOffsetDir = new THREE.Vector3();
@@ -261,6 +318,7 @@ function syncCameraToPlayerView(deltaTime = 0) {
   currentShoulderOffset = THREE.MathUtils.lerp(currentShoulderOffset, targetShoulderOffset, tShoulder);
 
   camera.position.copy(playerEye);
+  playerBody.visible = currentThirdPersonDistance > 0.001;
 
   if (!mobileMode && currentThirdPersonDistance > 0.001) {
     // Move camera backward from the look direction to get a third-person view.
@@ -338,15 +396,20 @@ function createWallSign(text) {
 const buildingGeo = new THREE.BoxGeometry(1, 1, 1);
 const buildingColliders = [];
 const spacing = 10;
-const EMPTY_PLOT_CHANCE = 0.18;
+const EMPTY_PLOT_CHANCE = 0.5; // higher = more empty plots, fewer buildings
 
 for (let x = CITY_MIN; x <= CITY_MAX; x += spacing) {
   for (let z = CITY_MIN; z <= CITY_MAX; z += spacing) {
+    const spawnDistance = Math.hypot(x - SPAWN_CENTER.x, z - SPAWN_CENTER.y);
+    if (spawnDistance < SPAWN_CLEAR_RADIUS + BUILDING_FOOTPRINT * 0.5) {
+      continue;
+    }
+
     if (Math.random() < EMPTY_PLOT_CHANCE) {
       continue;
     }
 
-    let height = 4 + Math.random() * 10; // normal buildings: 4..14
+    let height = 2 + Math.random() * 10; // normal buildings: 4..14
 
     if (Math.random() < 0.04) {          // 4% chance of skyscraper
       height = 25 + Math.random() * 35;  // skyscrapers: 25..60
@@ -393,11 +456,11 @@ for (let x = CITY_MIN; x <= CITY_MAX; x += spacing) {
         break;
       case 2:
         sign.position.set(x + halfSize + 0.01, 2, z);
-        sign.rotation.y = -Math.PI / 2;
+        sign.rotation.y = Math.PI / 2;
         break;
       case 3:
         sign.position.set(x - halfSize - 0.01, 2, z);
-        sign.rotation.y = Math.PI / 2;
+        sign.rotation.y = -Math.PI / 2;
         break;
     }
 
@@ -434,6 +497,85 @@ addCityWall(CITY_GROUND_SIZE, wallThickness, 0, CITY_OUTER_LIMIT);
 addCityWall(CITY_GROUND_SIZE, wallThickness, 0, -CITY_OUTER_LIMIT);
 addCityWall(wallThickness, CITY_GROUND_SIZE, CITY_OUTER_LIMIT, 0);
 addCityWall(wallThickness, CITY_GROUND_SIZE, -CITY_OUTER_LIMIT, 0);
+
+const entities = [];
+const ENTITY_COUNT = 28;
+const HUNTER_ENTITY_COUNT = 8;
+const ENTITY_SPAWN_MARGIN = 1.2;
+const entitySpawnBox = new THREE.Box3();
+const spawnTestPos = new THREE.Vector3();
+const walkerSkinTones = [0xf0c9a5, 0xd8aa89, 0xb78562];
+const walkerShirts = [0xff9a9a, 0xb5d3ff, 0xbff0b1, 0xf7d48b, 0xd8b8ff];
+const walkerPants = [0x3f4d6b, 0x4d4d4d, 0x2e4a3a, 0x5a4638];
+const walkerShoes = [0x1a1a1a, 0x2a1f18, 0x101820];
+const walkerHair = [0x1f130d, 0x3a271a, 0x5a3a23, 0x111111, 0x8b5b2b];
+
+function pickRandom(list) {
+  return list[Math.floor(Math.random() * list.length)];
+}
+
+function createWalkerOutfit() {
+  const shirt = pickRandom(walkerShirts);
+  return {
+    skin: pickRandom(walkerSkinTones),
+    shirt,
+    sleeves: shirt,
+    pants: pickRandom(walkerPants),
+    shoes: pickRandom(walkerShoes),
+    hair: pickRandom(walkerHair),
+  };
+}
+
+function collidesAtGround(x, z, halfSize) {
+  entitySpawnBox.min.set(x - halfSize, GROUND_Y, z - halfSize);
+  entitySpawnBox.max.set(x + halfSize, GROUND_Y + 2, z + halfSize);
+  return collidesWithBuildings(entitySpawnBox) !== null;
+}
+
+function spawnEntities() {
+  let attempts = 0;
+  while (entities.length < ENTITY_COUNT + HUNTER_ENTITY_COUNT && attempts < 2400) {
+    attempts++;
+    const x = THREE.MathUtils.randFloat(CITY_MIN + 5, CITY_MAX - 5);
+    const z = THREE.MathUtils.randFloat(CITY_MIN + 5, CITY_MAX - 5);
+
+    if (collidesAtGround(x, z, ENTITY_SPAWN_MARGIN)) continue;
+
+    let tooClose = false;
+    spawnTestPos.set(x, GROUND_Y, z);
+    for (let i = 0; i < entities.length; i++) {
+      if (entities[i].position.distanceToSquared(spawnTestPos) < 6.25) {
+        tooClose = true;
+        break;
+      }
+    }
+    if (tooClose) continue;
+
+    const pos = new THREE.Vector3(x, GROUND_Y, z);
+    if (entities.length < ENTITY_COUNT) {
+      entities.push(new Entity({
+        scene,
+        position: pos,
+        groundY: GROUND_Y,
+        outfit: createWalkerOutfit(),
+        speed: THREE.MathUtils.randFloat(1.2, 2.2),
+        clearance: 1.0,
+      }));
+    } else {
+      entities.push(new HunterEntity({
+        scene,
+        position: pos,
+        groundY: GROUND_Y,
+        color: 0x7e1313,
+        speed: THREE.MathUtils.randFloat(2.0, 2.8),
+        clearance: 1.0,
+        detectionRadius: 3.0,
+      }));
+    }
+  }
+}
+
+spawnEntities();
 
 const PROJECTILE_RADIUS = 0.14;
 const PROJECTILE_SPEED = 42;
@@ -554,10 +696,23 @@ function projectileHitsEnvironment(position, radius) {
   return false;
 }
 
-function shootDesktopProjectile(event) {
-  if (event.button !== 0) return;
-  if (mobileMode || !controls.isLocked) return;
+function projectileHitsEntity(position, radius) {
+  projectileSphere.center.copy(position);
+  projectileSphere.radius = radius;
 
+  for (let i = entities.length - 1; i >= 0; i--) {
+    const entity = entities[i];
+    if (!entity.collider.intersectsSphere(projectileSphere)) continue;
+
+    scene.remove(entity.group);
+    entities.splice(i, 1);
+    return true;
+  }
+
+  return false;
+}
+
+function shootProjectileFromPlayer() {
   camera.getWorldDirection(projectileDirection).normalize();
   projectileSpawnPos.copy(playerEye).addScaledVector(projectileDirection, 1.0);
 
@@ -576,6 +731,12 @@ function shootDesktopProjectile(event) {
   });
 }
 
+function shootDesktopProjectile(event) {
+  if (event.button !== 0) return;
+  if (mobileMode || !controls.isLocked) return;
+  shootProjectileFromPlayer();
+}
+
 function updateProjectilesAndExplosions(deltaTime) {
   for (let i = projectiles.length - 1; i >= 0; i--) {
     const projectile = projectiles[i];
@@ -583,7 +744,9 @@ function updateProjectilesAndExplosions(deltaTime) {
     projectile.mesh.position.addScaledVector(projectile.velocity, deltaTime);
 
     const expired = projectile.age >= projectile.life;
-    const hit = projectileHitsEnvironment(projectile.mesh.position, projectile.radius);
+    const hitEnvironment = projectileHitsEnvironment(projectile.mesh.position, projectile.radius);
+    const hitEntity = projectileHitsEntity(projectile.mesh.position, projectile.radius);
+    const hit = hitEnvironment || hitEntity;
 
     if (expired || hit) {
       if (hit) {
@@ -617,6 +780,12 @@ function updateProjectilesAndExplosions(deltaTime) {
       }
       explosions.splice(i, 1);
     }
+  }
+}
+
+function updateEntities(deltaTime) {
+  for (let i = 0; i < entities.length; i++) {
+    entities[i].update(deltaTime, buildingColliders, playerEye);
   }
 }
 
@@ -765,6 +934,7 @@ function updatePlayer(deltaTime) {
   }
 
   syncPlayerBody();
+  animatePlayerBody(deltaTime, horizontalMove.lengthSq() > 0.00001);
   syncCameraToPlayerView(deltaTime);
 }
 
@@ -893,6 +1063,8 @@ let lookDx = 0;
 let lookDy = 0;
 
 const sensitivity = 0.002;
+const MOBILE_SHOOT_INTERVAL = 0.18;
+let mobileShootTimer = 0;
 
 function queueJump() {
   playerState.jumpQueued = true;
@@ -906,6 +1078,42 @@ buttonDown.addEventListener('touchstart', () => {
     playerState.velocity.y = Math.min(playerState.velocity.y, -8);
   }
 });
+
+function setShootButtonState(active) {
+  if (!buttonShoot) return;
+  buttonShoot.classList.toggle('is-shooting', active);
+}
+
+function startMobileShooting(event) {
+  if (!mobileMode) return;
+  if (event) event.preventDefault();
+
+  mobileShootPressed = true;
+  mobileShootTimer = 0;
+  setShootButtonState(true);
+}
+
+function stopMobileShooting(event) {
+  if (event) event.preventDefault();
+  mobileShootPressed = false;
+  setShootButtonState(false);
+}
+
+if (buttonShoot) {
+  buttonShoot.addEventListener('touchstart', startMobileShooting, { passive: false });
+  buttonShoot.addEventListener('touchend', stopMobileShooting, { passive: false });
+  buttonShoot.addEventListener('touchcancel', stopMobileShooting, { passive: false });
+}
+
+function updateMobileShooting(deltaTime) {
+  if (!mobileMode || !mobileShootPressed) return;
+
+  mobileShootTimer -= deltaTime;
+  if (mobileShootTimer <= 0) {
+    shootProjectileFromPlayer();
+    mobileShootTimer += MOBILE_SHOOT_INTERVAL;
+  }
+}
 
 document.addEventListener('mousedown', shootDesktopProjectile);
 
@@ -934,7 +1142,7 @@ function checkFPS(delta) {
   }
 
   const { x, y, z } = playerEye;
-  consola.textContent = 'FPS: ' + fps + ` X: ${x.toFixed(2)} | Y: ${y.toFixed(2)} | Z: ${z.toFixed(2)}`;
+  consola.textContent = 'FPS: ' + fps + ` XYZ: ${x.toFixed(2)} | ${y.toFixed(2)} | ${z.toFixed(2)}`;
 }
 
 // --------------------
@@ -958,6 +1166,8 @@ renderer.setAnimationLoop(() => {
   }
 
   updatePlayer(delta);
+  updateMobileShooting(delta);
+  updateEntities(delta);
   updateProjectilesAndExplosions(delta);
   checkFPS(delta);
 
