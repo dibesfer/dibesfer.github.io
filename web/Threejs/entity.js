@@ -213,6 +213,8 @@ export class Entity {
     this._testBox = new THREE.Box3();
     this._nextPos = new THREE.Vector3();
     this._toPlayer = new THREE.Vector3();
+    this.knockbackVelocity = new THREE.Vector3();
+    this._knockbackStep = new THREE.Vector3();
 
     this.pickRandomDirection();
     this.updateCollider();
@@ -301,7 +303,37 @@ export class Entity {
     applyHumanoidIdleAnimation(this.joints, this.idleCycle, 1);
   }
 
+  applyKnockback(direction, strength = 8) {
+    if (!direction || direction.lengthSq() < 0.0001) return;
+    this.knockbackVelocity.addScaledVector(direction, strength);
+  }
+
+  updateKnockback(deltaTime, colliders) {
+    if (this.knockbackVelocity.lengthSq() < 0.0001) {
+      this.knockbackVelocity.set(0, 0, 0);
+      return false;
+    }
+
+    this._knockbackStep.copy(this.knockbackVelocity).multiplyScalar(deltaTime);
+    this._nextPos.copy(this.position).add(this._knockbackStep);
+
+    if (!this.willHitObstacleAt(this._nextPos, colliders)) {
+      this.position.copy(this._nextPos);
+    } else {
+      this.knockbackVelocity.multiplyScalar(0.2);
+    }
+
+    // Fast damping so the push is short-lived.
+    this.knockbackVelocity.multiplyScalar(Math.exp(-12 * deltaTime));
+    if (this.knockbackVelocity.lengthSq() < 0.02) {
+      this.knockbackVelocity.set(0, 0, 0);
+    }
+    return true;
+  }
+
   update(deltaTime, colliders) {
+    this.updateKnockback(deltaTime, colliders);
+
     this.turnTimer -= deltaTime;
     if (this.turnTimer <= 0) {
       this.pickRandomDirection();
@@ -344,13 +376,15 @@ export class HunterEntity extends Entity {
       speed: options.speed ?? 2.5,
       miniMapType: 'chaser',
     });
-    this.detectionRadius = options.detectionRadius ?? 5.0;
+    this.detectionRadius = options.detectionRadius ?? 10.0;
     this.stopDistance = options.stopDistance ?? 1.5;
-    this.disengageDistance = options.disengageDistance ?? 10.0;
+    this.disengageDistance = options.disengageDistance ?? 14.0;
     this.isAggro = false;
   }
 
   update(deltaTime, colliders, playerPosition) {
+    this.updateKnockback(deltaTime, colliders);
+
     this.turnTimer -= deltaTime;
 
     let chasing = false;
@@ -430,6 +464,8 @@ export class TalkerEntity extends Entity {
   }
 
   update(deltaTime, colliders, playerPosition) {
+    this.updateKnockback(deltaTime, colliders);
+
     if (playerPosition) {
       this._toPlayer.set(
         playerPosition.x - this.position.x,

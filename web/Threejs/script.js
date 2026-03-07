@@ -47,6 +47,8 @@ const menuInferior = document.getElementById('menuInferior');
 const buttonUp = document.getElementById('buttonUp');
 const buttonDown = document.getElementById('buttonDown');
 const buttonShoot = document.getElementById('buttonShoot');
+const playerHealthFill = document.getElementById('playerHealthFill');
+const playerHealthText = document.getElementById('playerHealthText');
 let mobileShootPressed = false;
 
 const miniMapPlayerMarker = document.createElement('div');
@@ -137,6 +139,25 @@ const moveSpeed = 10;
 const gravity = 30;
 const jumpSpeed = 11;
 const maxJumps = 2;
+const PLAYER_MAX_HEALTH = 100;
+
+function updatePlayerHealthUI() {
+  if (playerHealthFill) {
+    const ratio = THREE.MathUtils.clamp(playerState.health / playerState.maxHealth, 0, 1);
+    playerHealthFill.style.width = `${ratio * 100}%`;
+  }
+
+  if (playerHealthText) {
+    playerHealthText.textContent = `${Math.round(playerState.health)} / ${playerState.maxHealth}`;
+  }
+}
+
+function applyPlayerDamage(amount) {
+  if (!Number.isFinite(amount) || amount <= 0) return false;
+  playerState.health = Math.max(0, playerState.health - amount);
+  updatePlayerHealthUI();
+  return playerState.health <= 0;
+}
 
 function getDesktopSprintMultiplier() {
   if (mobileMode) return 1;
@@ -245,6 +266,8 @@ const playerState = {
   onGround: false,
   jumpQueued: false,
   jumpsUsed: 0,
+  maxHealth: PLAYER_MAX_HEALTH,
+  health: PLAYER_MAX_HEALTH,
 };
 
 const playerCollider = new THREE.Box3();
@@ -580,8 +603,8 @@ addCityWall(wallThickness, CITY_GROUND_SIZE, CITY_OUTER_LIMIT, 0);
 addCityWall(wallThickness, CITY_GROUND_SIZE, -CITY_OUTER_LIMIT, 0);
 
 const entities = [];
-const ENTITY_COUNT = 14;
-const HUNTER_ENTITY_COUNT = 4;
+const ENTITY_COUNT = 7;
+const HUNTER_ENTITY_COUNT = 8;
 const ENTITY_SPAWN_MARGIN = 1.2;
 const entitySpawnBox = new THREE.Box3();
 const spawnTestPos = new THREE.Vector3();
@@ -654,7 +677,7 @@ function spawnEntities() {
         color: 0x7e1313,
         speed: THREE.MathUtils.randFloat(2.0, 2.8),
         clearance: 1.0,
-        detectionRadius: 5.0,
+        detectionRadius: 10.0,
         stopDistance: 1.5,
       }));
     }
@@ -722,6 +745,17 @@ const PROJECTILE_SPEED = 42;
 const PROJECTILE_LIFETIME = 3;
 const PROJECTILE_DAMAGE = 20;
 const PUNCH_DAMAGE = 10;
+const PUNCH_PUSH_FORCE = 8;
+const CHASER_PUNCH_DAMAGE = 8;
+const CHASER_ATTACK_INTERVAL = 0.4;
+const CHASER_FRONT_DOT_THRESHOLD = 0.1;
+const CHASER_PUNCH_DURATION = 0.22;
+const CHASER_PUNCH_HITBOX_RADIUS = 0.5;
+const CHASER_PUNCH_HITBOX_LIFETIME = 0.12;
+const CHASER_PUNCH_FORWARD_OFFSET = 0.85;
+const CHASER_PUNCH_SIDE_OFFSET = 0.24;
+const CHASER_PUNCH_HEIGHT = 1.05;
+const CHASER_PUNCH_HITBOX_DEBUG_VISIBLE = true;
 const PUNCH_HITBOX_RADIUS = 0.5;
 const PUNCH_HITBOX_LIFETIME = 0.09;
 const PUNCH_FORWARD_OFFSET = 0.95;
@@ -764,7 +798,27 @@ const projectileDirection = new THREE.Vector3();
 const projectileSphere = new THREE.Sphere();
 const punchForwardDir = new THREE.Vector3();
 const punchRightDir = new THREE.Vector3();
+const punchUpDir = new THREE.Vector3();
 const punchHitboxPos = new THREE.Vector3();
+const punchPushDir = new THREE.Vector3();
+const worldUpDir = new THREE.Vector3(0, 1, 0);
+const playerLookForwardDir = new THREE.Vector3();
+const playerToChaserDir = new THREE.Vector3();
+const chaserToPlayerDir = new THREE.Vector3();
+const chaserAttackCooldowns = new WeakMap();
+const chaserAttackStates = new WeakMap();
+const chaserPunchForwardDir = new THREE.Vector3();
+const chaserPunchRightDir = new THREE.Vector3();
+const chaserPunchHitboxPos = new THREE.Vector3();
+const chaserPunchHitboxes = [];
+const chaserPunchHitboxGeo = new THREE.SphereGeometry(CHASER_PUNCH_HITBOX_RADIUS, 10, 10);
+const chaserPunchHitboxMat = new THREE.MeshBasicMaterial({
+  color: 0xff3333,
+  wireframe: true,
+  transparent: true,
+  opacity: 0.9,
+  visible: CHASER_PUNCH_HITBOX_DEBUG_VISIBLE,
+});
 let audioContext = null;
 const FOOTSTEP_BASE_INTERVAL = 0.42;
 const FOOTSTEP_DOUBLE_TAP_GAP = 0.055;
@@ -978,26 +1032,22 @@ function projectileHitsEntity(position, radius) {
 }
 
 function spawnPunchHitbox(side) {
-  camera.getWorldDirection(punchForwardDir);
-  punchForwardDir.y = 0;
-  if (punchForwardDir.lengthSq() < 0.0001) {
-    punchForwardDir.set(0, 0, -1);
-  } else {
-    punchForwardDir.normalize();
-  }
+  camera.getWorldDirection(punchForwardDir).normalize();
 
-  punchRightDir.crossVectors(punchForwardDir, camera.up);
+  punchRightDir.crossVectors(punchForwardDir, worldUpDir);
   if (punchRightDir.lengthSq() < 0.0001) {
-    punchRightDir.set(1, 0, 0);
+    // Looking almost straight up/down: derive a stable right vector from camera orientation.
+    punchRightDir.set(1, 0, 0).applyQuaternion(camera.quaternion);
   } else {
     punchRightDir.normalize();
   }
+  punchUpDir.crossVectors(punchRightDir, punchForwardDir).normalize();
 
   const sideSign = side === 'right' ? 1 : -1;
   punchHitboxPos.copy(playerEye)
     .addScaledVector(punchForwardDir, PUNCH_FORWARD_OFFSET)
-    .addScaledVector(punchRightDir, PUNCH_SIDE_OFFSET * sideSign);
-  punchHitboxPos.y += PUNCH_VERTICAL_OFFSET;
+    .addScaledVector(punchRightDir, PUNCH_SIDE_OFFSET * sideSign)
+    .addScaledVector(punchUpDir, PUNCH_VERTICAL_OFFSET);
 
   let mesh = null;
   if (PUNCH_HITBOX_DEBUG_VISIBLE) {
@@ -1015,6 +1065,7 @@ function spawnPunchHitbox(side) {
     sphere: new THREE.Sphere(punchHitboxPos.clone(), PUNCH_HITBOX_RADIUS),
     mesh,
     hitEntities: new Set(),
+    hitSomething: false,
   });
 }
 
@@ -1022,6 +1073,7 @@ function updatePunchHitboxes(deltaTime) {
   for (let i = punchHitboxes.length - 1; i >= 0; i--) {
     const hitbox = punchHitboxes[i];
     hitbox.age += deltaTime;
+    let hitThisFrame = false;
 
     for (let j = entities.length - 1; j >= 0; j--) {
       const entity = entities[j];
@@ -1029,11 +1081,36 @@ function updatePunchHitboxes(deltaTime) {
       if (!entity.collider.intersectsSphere(hitbox.sphere)) continue;
 
       hitbox.hitEntities.add(entity);
+      hitThisFrame = true;
+      punchPushDir.set(
+        entity.position.x - playerEye.x,
+        0,
+        entity.position.z - playerEye.z
+      );
+      if (punchPushDir.lengthSq() < 0.0001) {
+        punchPushDir.copy(punchForwardDir);
+      } else {
+        punchPushDir.normalize();
+      }
+      entity.applyKnockback(punchPushDir, PUNCH_PUSH_FORCE);
       const killed = entity.applyDamage(PUNCH_DAMAGE);
       if (killed) {
         scene.remove(entity.group);
         entities.splice(j, 1);
       }
+    }
+
+    if (!hitThisFrame) {
+      for (let j = 0; j < buildingColliders.length; j++) {
+        if (!buildingColliders[j].intersectsSphere(hitbox.sphere)) continue;
+        hitThisFrame = true;
+        break;
+      }
+    }
+
+    if (hitThisFrame && !hitbox.hitSomething) {
+      hitbox.hitSomething = true;
+      playPunchSound();
     }
 
     if (hitbox.age >= hitbox.life) {
@@ -1106,7 +1183,6 @@ function startRightPunch() {
 
   rightPunchTimer = RIGHT_PUNCH_DURATION;
   spawnPunchHitbox('right');
-  playPunchSound();
 }
 
 function startLeftPunch() {
@@ -1116,7 +1192,6 @@ function startLeftPunch() {
 
   leftPunchTimer = RIGHT_PUNCH_DURATION;
   spawnPunchHitbox('left');
-  playPunchSound();
 }
 
 function updateRightPunch(deltaTime) {
@@ -1251,6 +1326,136 @@ function updateProjectilesAndExplosions(deltaTime) {
 function updateEntities(deltaTime) {
   for (let i = 0; i < entities.length; i++) {
     entities[i].update(deltaTime, buildingColliders, playerEye);
+  }
+}
+
+function spawnChaserPunchHitbox(entity, side) {
+  chaserPunchForwardDir.copy(entity.direction);
+  if (chaserPunchForwardDir.lengthSq() < 0.0001) {
+    chaserPunchForwardDir.set(0, 0, 1);
+  } else {
+    chaserPunchForwardDir.normalize();
+  }
+
+  chaserPunchRightDir.crossVectors(worldUpDir, chaserPunchForwardDir);
+  if (chaserPunchRightDir.lengthSq() < 0.0001) {
+    chaserPunchRightDir.set(1, 0, 0);
+  } else {
+    chaserPunchRightDir.normalize();
+  }
+
+  const sideSign = side === 'right' ? 1 : -1;
+  chaserPunchHitboxPos.set(entity.position.x, entity.groundY + CHASER_PUNCH_HEIGHT, entity.position.z)
+    .addScaledVector(chaserPunchForwardDir, CHASER_PUNCH_FORWARD_OFFSET)
+    .addScaledVector(chaserPunchRightDir, CHASER_PUNCH_SIDE_OFFSET * sideSign);
+
+  let mesh = null;
+  if (CHASER_PUNCH_HITBOX_DEBUG_VISIBLE) {
+    mesh = new THREE.Mesh(chaserPunchHitboxGeo, chaserPunchHitboxMat);
+    mesh.position.copy(chaserPunchHitboxPos);
+    scene.add(mesh);
+  }
+
+  chaserPunchHitboxes.push({
+    age: 0,
+    life: CHASER_PUNCH_HITBOX_LIFETIME,
+    mesh,
+  });
+}
+
+function updateChaserPunchHitboxes(deltaTime) {
+  for (let i = chaserPunchHitboxes.length - 1; i >= 0; i--) {
+    const hitbox = chaserPunchHitboxes[i];
+    hitbox.age += deltaTime;
+    if (hitbox.age < hitbox.life) continue;
+
+    if (hitbox.mesh) {
+      scene.remove(hitbox.mesh);
+    }
+    chaserPunchHitboxes.splice(i, 1);
+  }
+}
+
+function updateChaserMeleeAttacks(deltaTime) {
+  camera.getWorldDirection(playerLookForwardDir);
+  playerLookForwardDir.y = 0;
+  if (playerLookForwardDir.lengthSq() > 0.0001) {
+    playerLookForwardDir.normalize();
+  } else {
+    playerLookForwardDir.set(0, 0, -1);
+  }
+
+  for (let i = 0; i < entities.length; i++) {
+    const entity = entities[i];
+    if (!(entity instanceof HunterEntity)) continue;
+
+    let cooldown = chaserAttackCooldowns.get(entity) ?? 0;
+    cooldown = Math.max(0, cooldown - deltaTime);
+    const state = chaserAttackStates.get(entity) ?? {
+      punchTimer: 0,
+      punchSide: 'right',
+      nextPunchRight: false,
+    };
+    state.punchTimer = Math.max(0, state.punchTimer - deltaTime);
+
+    if (!entity.isAggro) {
+      chaserAttackCooldowns.set(entity, 0);
+      state.punchTimer = 0;
+      chaserAttackStates.set(entity, state);
+      continue;
+    }
+
+    chaserToPlayerDir.set(
+      playerEye.x - entity.position.x,
+      0,
+      playerEye.z - entity.position.z
+    );
+    const attackRange = entity.stopDistance + 0.1;
+    if (chaserToPlayerDir.lengthSq() > attackRange * attackRange) {
+      // Out of melee range: return to chase mode.
+      chaserAttackCooldowns.set(entity, 0);
+      state.punchTimer = 0;
+      chaserAttackStates.set(entity, state);
+      continue;
+    }
+
+    playerToChaserDir.copy(chaserToPlayerDir).multiplyScalar(-1);
+    if (playerToChaserDir.lengthSq() > 0.0001) {
+      playerToChaserDir.normalize();
+    } else {
+      playerToChaserDir.set(0, 0, 1);
+    }
+    const isInFrontOfPlayer = playerLookForwardDir.dot(playerToChaserDir) >= CHASER_FRONT_DOT_THRESHOLD;
+    if (!isInFrontOfPlayer) {
+      chaserAttackCooldowns.set(entity, cooldown);
+      chaserAttackStates.set(entity, state);
+      continue;
+    }
+
+    if (cooldown <= 0) {
+      applyPlayerDamage(CHASER_PUNCH_DAMAGE);
+      state.punchSide = state.nextPunchRight ? 'right' : 'left';
+      state.nextPunchRight = !state.nextPunchRight;
+      state.punchTimer = CHASER_PUNCH_DURATION;
+      spawnChaserPunchHitbox(entity, state.punchSide);
+      cooldown = CHASER_ATTACK_INTERVAL;
+    }
+
+    if (state.punchTimer > 0) {
+      const progress = 1 - state.punchTimer / CHASER_PUNCH_DURATION;
+      const strikePhase = progress < 0.35
+        ? progress / 0.35
+        : 1 - (progress - 0.35) / 0.65;
+      const punch = THREE.MathUtils.clamp(strikePhase, 0, 1);
+      if (state.punchSide === 'right') {
+        applyHumanoidRightPunchAnimation(entity.joints, punch, 0);
+      } else {
+        applyHumanoidLeftPunchAnimation(entity.joints, punch, 0);
+      }
+    }
+
+    chaserAttackCooldowns.set(entity, cooldown);
+    chaserAttackStates.set(entity, state);
   }
 }
 
@@ -1486,6 +1691,7 @@ window.addEventListener('resize', () => {
 
   renderer.setSize(window.innerWidth, window.innerHeight);
   updateMiniMapSize();
+  updatePlayerHealthUI();
 });
 
 let leftTouchId = null;
@@ -1642,6 +1848,7 @@ let accTime = 0;
 let fps = 0;
 
 updateMiniMapSize();
+updatePlayerHealthUI();
 
 function checkFPS(delta) {
   accTime += delta;
@@ -1683,6 +1890,8 @@ renderer.setAnimationLoop(() => {
   updatePunchHitboxes(delta);
   updateMobileShooting(delta);
   updateEntities(delta);
+  updateChaserMeleeAttacks(delta);
+  updateChaserPunchHitboxes(delta);
   updateProjectilesAndExplosions(delta);
   checkFPS(delta);
 

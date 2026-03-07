@@ -233,3 +233,51 @@ img {
     }
 
 }
+
+#playerHud {
+    position: absolute;
+    left: 50%;
+    bottom: 12px;
+    transform: translateX(-50%);
+    width: min(360px, calc(100vw - 32px));
+    z-index: 24;
+    pointer-events: none;
+}
+
+#playerHealthBar {
+    position: relative;
+    height: 24px;
+    border: 2px solid rgba(255, 255, 255, 0.9);
+    border-radius: 999px;
+    background: rgba(35, 35, 35, 0.8);
+    overflow: hidden;
+}
+
+#playerHealthFill {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 100%;
+    background: linear-gradient(90deg, #1ca646 0%, #62d84a 100%);
+    transition: width 0.1s linear;
+}
+
+#playerHealthText {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: monospace;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #fff;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+@media only screen and (max-width: 600px) {
+    #playerHud {
+        bottom: 158px;
+    }
+}
