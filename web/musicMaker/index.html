@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>musicMaker</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <h1>musicMaker</h1>
+    <main>
+        <div id="musicSettings">
+            <label for="notationSelect">notation</label>
+            <select id="notationSelect">
+                <option value="latin">latin</option>
+                <option selected value="anglo">anglo</option>
+            </select>
+
+            <label for="echoSelect">echo</label>
+            <select id="echoSelect">
+                <option selected value="off">off</option>
+                <option value="on">on</option>
+            </select>
+        </div>
+        <div id="musicBox">
+
+            <div id="twelveBox">
+
+                <p>chromatic sharp notes</p>
+                    <div id="fiveNotes">
+                        <div class="fiveNotesNote">C#</div>
+                        <div class="fiveNotesNote">D#</div>
+                        <div class="fiveNotesNote">F#</div>
+                        <div class="fiveNotesNote">G#</div>
+                        <div class="fiveNotesNote">A#</div>
+                    </div>
+
+                    <p>diatonic notes</p>
+                    <div id="sevenNotes">
+
+                        <div class="sevenNotesNote">C</div>
+                        <div class="sevenNotesNote">D</div>
+                        <div class="sevenNotesNote">E</div>
+                        <div class="sevenNotesNote">F</div>
+                        <div class="sevenNotesNote">G</div>
+                        <div class="sevenNotesNote">A</div>
+                        <div class="sevenNotesNote">B</div>
+
+                    </div>
+                    
+
+            </div>
+
+        </div>
+    </main>
+    <footer>
+        <p>made by dibesfer and chatGPT</p>
+    </footer>
+    <script src="script.js"></script>
+</body>
+
+</html>

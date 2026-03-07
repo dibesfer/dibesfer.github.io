@@ -1,0 +1,78 @@
+*
+{
+
+    margin: 0;
+    box-sizing: border-box;
+}
+body {
+    padding: 15px;
+    font-family: sans-serif;
+}
+#musicSettings {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+#musicSettings select {
+    font-size: 1rem;
+}
+#musicBox {
+    border: solid 3px black;
+    height: 600px;
+    padding: 15px;
+}
+
+#twelveBox {
+    border: solid 3px black;
+    height: 300px;
+    padding: 15px;
+    
+}
+
+#sevenNotes,
+#fiveNotes {
+    border: solid 3px black;
+    height: 100px;
+    padding: 5px;
+    display: flex;
+    justify-content: space-around;
+}
+
+#fiveNotes {
+    margin-top: 8px;
+}
+
+.sevenNotesNote,
+.fiveNotesNote {
+    border: solid 3px black;
+    height: 100%;
+    aspect-ratio: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 3rem;
+    user-select: none;
+    touch-action: none;
+    cursor: pointer;
+    transition: 0.1s;
+}
+
+.sevenNotesNote:hover,
+.fiveNotesNote:hover {
+    border: solid 6px black;
+    font-weight: bold;
+}
+
+.sevenNotesNote:nth-child(1) { background: #ff0000; }
+.sevenNotesNote:nth-child(2) { background: #ff7f00; }
+.sevenNotesNote:nth-child(3) { background: #ffff00; }
+.sevenNotesNote:nth-child(4) { background: #00ff00; }
+.sevenNotesNote:nth-child(5) { background: #0000ff; color: #fff; }
+.sevenNotesNote:nth-child(6) { background: #4b0082; color: #fff; }
+.sevenNotesNote:nth-child(7) { background: #8b00ff; color: #fff; }
+
+.fiveNotesNote {
+    background: #111;
+    color: #fff;
+}
