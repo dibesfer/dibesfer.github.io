@@ -84,11 +84,21 @@ function checkForJoysticks() {
 
 checkForJoysticks();
 
+const sceneView = document.getElementById("sceneView")
+
 const renderer = new THREE.WebGLRenderer({ antialias: true });
+
+let sceneWidth = sceneView.innerWidth
+let sceneHeight = sceneView.innerHeight
+
+sceneView.style.display = "none"
+
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setClearColor(0x87CEEB);
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+renderer.domElement.id = "sceneView"
 document.body.appendChild(renderer.domElement);
 
 const textureLoader = new THREE.TextureLoader();
@@ -1688,6 +1698,13 @@ window.addEventListener('resize', () => {
   windowHeight = window.innerHeight;
 
   checkForJoysticks();
+
+   sceneWidth = sceneView.innerWidth
+   sceneHeight = sceneView.innerHeight
+
+sceneView.style.display = "none"
+
+renderer.setSize(window.innerWidth, window.innerHeight);
 
   renderer.setSize(window.innerWidth, window.innerHeight);
   updateMiniMapSize();

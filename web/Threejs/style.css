@@ -117,8 +117,8 @@ img {
     bottom: 0;
     left: 0;
     width: 100%;
-    height: 150px;
-    background-color: rgba(82, 82, 82, 0.391);
+    height: 20dvh;
+    background-color: rgba(0, 0, 0, 0.783);
     backdrop-filter: blur(10px);
     display: none;
     justify-content: space-around;
@@ -174,37 +174,56 @@ img {
     transform: translate(-50%, -50%);
 }
 
-#buttonDown {
+#Left0 , #Left1, #buttonDown, #buttonUp , #buttonShoot ,
+#Right1, #Right2 , #Right3{
     position: absolute;
-    left: 5px;
-    bottom: 5px;
     background-color: rgb(75, 75, 75);
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
+
+}
+
+#buttonDown {
+    left: 5px;
+    bottom: 5px;
 }
 
 #buttonUp {
-    position: absolute;
     right: 5px;
     bottom: 5px;
-    background-color: rgb(75, 75, 75);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
+}
+
+#Left0 {
+    left: 5px;
+    top: 5px;
+}
+
+#Left1 {
+    right: 5px;
+    top: 5px;
+}
+
+#Right1 {
+    top: 5px;
+    right: 5px;
+}
+
+#Right2 {
+    bottom: 5px;
+    left: 5px;
+}
+
+#Right3 {
+    bottom: 5px;
+    right: 5px;
 }
 
 #buttonShoot {
-    position: absolute;
     left: 5px;
     top: 5px;
-    background-color: rgb(75, 75, 75);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
+    
     transition: background-color 0.08s linear;
     touch-action: none;
 }
@@ -225,14 +244,6 @@ img {
     user-select: none;
 }
 
-@media only screen and (max-width: 600px) {
-
-    #miniMap{
-        width: 100px;
-        height: 100px;
-    }
-
-}
 
 #playerHud {
     position: absolute;
@@ -276,8 +287,16 @@ img {
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
 }
 
+/* MOBILE MODE */
 @media only screen and (max-width: 600px) {
     #playerHud {
-        bottom: 158px;
+        bottom: 21%;
+    }
+    #miniMap{
+        width: 100px;
+        height: 100px;
+    }
+    #sceneView {
+        height: 80dvh !important;
     }
 }
