@@ -7,9 +7,21 @@
 body {
     padding: 15px;
     font-family: sans-serif;
+    background-color: rgb(0, 81, 152);
+    color: white;
 }
+
+hr {
+    border: solid 3px white;
+}
+
+header , footer {
+    text-align: center;
+}
+
 #musicSettings {
     display: flex;
+    justify-content: center;
     align-items: center;
     gap: 10px;
     margin-bottom: 12px;
@@ -18,24 +30,40 @@ body {
     font-size: 1rem;
 }
 #musicBox {
-    border: solid 3px black;
-    height: 600px;
+    border: solid 3px white;
+    border-radius: 15px;
+    
     padding: 15px;
+    background-color: rgb(0, 48, 0);
 }
 
 #twelveBox {
-    border: solid 3px black;
-    height: 300px;
-    padding: 15px;
+    border: solid 3px white;
+    border-radius: 15px;
     
+    padding: 15px;
+    background-color: rgb(81, 28, 5);
+    
+}
+
+.notesCategory {
+    margin: 6px 0;
+    font-weight: 700;
+}
+
+.notesHint {
+    margin-top: 8px;
+    font-size: 0.9rem;
 }
 
 #sevenNotes,
 #fiveNotes {
-    border: solid 3px black;
-    height: 100px;
+    border: solid 3px white;
+    border-radius: 15px;
+    
     padding: 5px;
     display: flex;
+    flex-wrap: wrap;
     justify-content: space-around;
 }
 
@@ -45,7 +73,8 @@ body {
 
 .sevenNotesNote,
 .fiveNotesNote {
-    border: solid 3px black;
+    border: solid 3px white;
+    border-radius: 15px;
     height: 100%;
     aspect-ratio: 1;
     display: flex;
@@ -66,13 +95,18 @@ body {
 
 .sevenNotesNote:nth-child(1) { background: #ff0000; }
 .sevenNotesNote:nth-child(2) { background: #ff7f00; }
-.sevenNotesNote:nth-child(3) { background: #ffff00; }
+.sevenNotesNote:nth-child(3) { background: #b1b10f; }
 .sevenNotesNote:nth-child(4) { background: #00ff00; }
 .sevenNotesNote:nth-child(5) { background: #0000ff; color: #fff; }
 .sevenNotesNote:nth-child(6) { background: #4b0082; color: #fff; }
 .sevenNotesNote:nth-child(7) { background: #8b00ff; color: #fff; }
 
 .fiveNotesNote {
-    background: #111;
     color: #fff;
 }
+
+.fiveNotesNote:nth-child(1) { background: #990000; } /* C# from C */
+.fiveNotesNote:nth-child(2) { background: #994c00; } /* D# from D */
+.fiveNotesNote:nth-child(3) { background: #009900; } /* F# from F */
+.fiveNotesNote:nth-child(4) { background: #000099; } /* G# from G */
+.fiveNotesNote:nth-child(5) { background: #2f0050; } /* A# from A */

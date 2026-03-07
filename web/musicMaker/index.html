@@ -4,12 +4,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>musicMaker</title>
+    <title>🎵musicMaker</title>
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
-    <h1>musicMaker</h1>
+    <header>
+        <h1>🎵musicMaker</h1>
+        <br>
+        <hr>
+        <br>
+    </header>
     <main>
         <div id="musicSettings">
             <label for="notationSelect">notation</label>
@@ -28,7 +33,7 @@
 
             <div id="twelveBox">
 
-                <p>chromatic sharp notes</p>
+                <p class="notesCategory">Accidentals (sharps/flats): C#/Db, D#/Eb, F#/Gb, G#/Ab, A#/Bb</p>
                     <div id="fiveNotes">
                         <div class="fiveNotesNote">C#</div>
                         <div class="fiveNotesNote">D#</div>
@@ -37,7 +42,7 @@
                         <div class="fiveNotesNote">A#</div>
                     </div>
 
-                    <p>diatonic notes</p>
+                    <p class="notesCategory">Natural notes (one octave: C4-B4)</p>
                     <div id="sevenNotes">
 
                         <div class="sevenNotesNote">C</div>
@@ -49,6 +54,7 @@
                         <div class="sevenNotesNote">B</div>
 
                     </div>
+                    <p class="notesHint">Enharmonic equivalents: E# = F, B# = C5, Cb = B, Fb = E.</p>
                     
 
             </div>
@@ -56,7 +62,9 @@
         </div>
     </main>
     <footer>
+        <br>
         <p>made by dibesfer and chatGPT</p>
+        <br>
     </footer>
     <script src="script.js"></script>
 </body>
