@@ -1,7 +1,13 @@
 import * as THREE from 'three';
 import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
 import { Entity, HunterEntity, TalkerEntity } from './entity.js';
-import { createHumanoidModel, applyHumanoidIdleAnimation, applyHumanoidWalkAnimation } from './entityModel.js';
+import {
+  createHumanoidModel,
+  applyHumanoidIdleAnimation,
+  applyHumanoidWalkAnimation,
+  applyHumanoidRightPunchAnimation,
+  applyHumanoidLeftPunchAnimation,
+} from './entityModel.js';
 
 let mobileMode = false;
 let windowWidth = window.innerWidth;
@@ -649,6 +655,7 @@ function spawnEntities() {
         speed: THREE.MathUtils.randFloat(2.0, 2.8),
         clearance: 1.0,
         detectionRadius: 5.0,
+        stopDistance: 1.5,
       }));
     }
   }
@@ -714,6 +721,13 @@ const PROJECTILE_RADIUS = 0.14;
 const PROJECTILE_SPEED = 42;
 const PROJECTILE_LIFETIME = 3;
 const PROJECTILE_DAMAGE = 20;
+const PUNCH_DAMAGE = 10;
+const PUNCH_HITBOX_RADIUS = 0.5;
+const PUNCH_HITBOX_LIFETIME = 0.09;
+const PUNCH_FORWARD_OFFSET = 0.95;
+const PUNCH_SIDE_OFFSET = 0.28;
+const PUNCH_VERTICAL_OFFSET = -0.12;
+const PUNCH_HITBOX_DEBUG_VISIBLE = true;
 const projectileGeo = new THREE.SphereGeometry(PROJECTILE_RADIUS, 16, 16);
 const projectileMat = new THREE.MeshStandardMaterial({
   color: 0xff2f2f,
@@ -723,6 +737,22 @@ const projectileMat = new THREE.MeshStandardMaterial({
   roughness: 0.25,
 });
 const projectiles = [];
+const punchHitboxGeo = new THREE.SphereGeometry(PUNCH_HITBOX_RADIUS, 12, 12);
+const punchHitboxRightMat = new THREE.MeshBasicMaterial({
+  color: 0xff5522,
+  wireframe: true,
+  transparent: true,
+  opacity: 0.85,
+  visible: PUNCH_HITBOX_DEBUG_VISIBLE,
+});
+const punchHitboxLeftMat = new THREE.MeshBasicMaterial({
+  color: 0x2277ff,
+  wireframe: true,
+  transparent: true,
+  opacity: 0.85,
+  visible: PUNCH_HITBOX_DEBUG_VISIBLE,
+});
+const punchHitboxes = [];
 
 const EXPLOSION_PARTICLE_COUNT = 18;
 const EXPLOSION_LIFETIME = 0.55;
@@ -732,6 +762,9 @@ const explosions = [];
 const projectileSpawnPos = new THREE.Vector3();
 const projectileDirection = new THREE.Vector3();
 const projectileSphere = new THREE.Sphere();
+const punchForwardDir = new THREE.Vector3();
+const punchRightDir = new THREE.Vector3();
+const punchHitboxPos = new THREE.Vector3();
 let audioContext = null;
 const FOOTSTEP_BASE_INTERVAL = 0.42;
 const FOOTSTEP_DOUBLE_TAP_GAP = 0.055;
@@ -944,6 +977,74 @@ function projectileHitsEntity(position, radius) {
   return false;
 }
 
+function spawnPunchHitbox(side) {
+  camera.getWorldDirection(punchForwardDir);
+  punchForwardDir.y = 0;
+  if (punchForwardDir.lengthSq() < 0.0001) {
+    punchForwardDir.set(0, 0, -1);
+  } else {
+    punchForwardDir.normalize();
+  }
+
+  punchRightDir.crossVectors(punchForwardDir, camera.up);
+  if (punchRightDir.lengthSq() < 0.0001) {
+    punchRightDir.set(1, 0, 0);
+  } else {
+    punchRightDir.normalize();
+  }
+
+  const sideSign = side === 'right' ? 1 : -1;
+  punchHitboxPos.copy(playerEye)
+    .addScaledVector(punchForwardDir, PUNCH_FORWARD_OFFSET)
+    .addScaledVector(punchRightDir, PUNCH_SIDE_OFFSET * sideSign);
+  punchHitboxPos.y += PUNCH_VERTICAL_OFFSET;
+
+  let mesh = null;
+  if (PUNCH_HITBOX_DEBUG_VISIBLE) {
+    mesh = new THREE.Mesh(
+      punchHitboxGeo,
+      side === 'right' ? punchHitboxRightMat : punchHitboxLeftMat
+    );
+    mesh.position.copy(punchHitboxPos);
+    scene.add(mesh);
+  }
+
+  punchHitboxes.push({
+    age: 0,
+    life: PUNCH_HITBOX_LIFETIME,
+    sphere: new THREE.Sphere(punchHitboxPos.clone(), PUNCH_HITBOX_RADIUS),
+    mesh,
+    hitEntities: new Set(),
+  });
+}
+
+function updatePunchHitboxes(deltaTime) {
+  for (let i = punchHitboxes.length - 1; i >= 0; i--) {
+    const hitbox = punchHitboxes[i];
+    hitbox.age += deltaTime;
+
+    for (let j = entities.length - 1; j >= 0; j--) {
+      const entity = entities[j];
+      if (hitbox.hitEntities.has(entity)) continue;
+      if (!entity.collider.intersectsSphere(hitbox.sphere)) continue;
+
+      hitbox.hitEntities.add(entity);
+      const killed = entity.applyDamage(PUNCH_DAMAGE);
+      if (killed) {
+        scene.remove(entity.group);
+        entities.splice(j, 1);
+      }
+    }
+
+    if (hitbox.age >= hitbox.life) {
+      if (hitbox.mesh) {
+        scene.remove(hitbox.mesh);
+      }
+      punchHitboxes.splice(i, 1);
+    }
+  }
+}
+
 function shootProjectileFromPlayer() {
   camera.getWorldDirection(projectileDirection).normalize();
   projectileSpawnPos.copy(playerEye).addScaledVector(projectileDirection, 1.0);
@@ -1001,28 +1102,29 @@ function playPunchSound() {
 function startRightPunch() {
   if (mobileMode) return;
   if (!controls.isLocked) return;
-  if (currentThirdPersonDistance > 0.001) return;
   if (rightPunchTimer > 0) return;
 
   rightPunchTimer = RIGHT_PUNCH_DURATION;
+  spawnPunchHitbox('right');
   playPunchSound();
 }
 
 function startLeftPunch() {
   if (mobileMode) return;
   if (!controls.isLocked) return;
-  if (currentThirdPersonDistance > 0.001) return;
   if (leftPunchTimer > 0) return;
 
   leftPunchTimer = RIGHT_PUNCH_DURATION;
+  spawnPunchHitbox('left');
   playPunchSound();
 }
 
 function updateRightPunch(deltaTime) {
   const shoulder = firstPersonArmsRig.joints.rightShoulder;
   const elbow = firstPersonArmsRig.joints.rightElbow;
+  const isFirstPerson = currentThirdPersonDistance <= 0.001;
 
-  if (rightPunchTimer <= 0 || currentThirdPersonDistance > 0.001) {
+  if (rightPunchTimer <= 0) {
     shoulder.position.copy(fpRightShoulderBasePos);
     shoulder.rotation.copy(fpRightShoulderBaseRot);
     elbow.rotation.copy(fpRightElbowBaseRot);
@@ -1037,22 +1139,29 @@ function updateRightPunch(deltaTime) {
     : 1 - (progress - 0.35) / 0.65;
   const punch = THREE.MathUtils.clamp(strikePhase, 0, 1);
 
-  // Straight jab towards the crosshair (camera forward axis), then return.
-  shoulder.position.x = THREE.MathUtils.lerp(fpRightShoulderBasePos.x, 0.16, punch);
-  shoulder.position.y = fpRightShoulderBasePos.y;
-  shoulder.position.z = fpRightShoulderBasePos.z - 0.46 * punch;
+  if (isFirstPerson) {
+    // Straight jab towards the crosshair (camera forward axis), then return.
+    shoulder.position.x = fpRightShoulderBasePos.x;
+    shoulder.position.y = fpRightShoulderBasePos.y;
+    shoulder.position.z = fpRightShoulderBasePos.z - 0.26 * punch;
 
-  shoulder.rotation.x = fpRightShoulderBaseRot.x;
-  shoulder.rotation.y = THREE.MathUtils.lerp(fpRightShoulderBaseRot.y, 0.1, punch);
-  shoulder.rotation.z = THREE.MathUtils.lerp(fpRightShoulderBaseRot.z, 0.04, punch);
-  elbow.rotation.x = THREE.MathUtils.lerp(fpRightElbowBaseRot.x, -0.08, punch);
+    shoulder.rotation.copy(fpRightShoulderBaseRot);
+    elbow.rotation.copy(fpRightElbowBaseRot);
+    return;
+  }
+
+  shoulder.position.copy(fpRightShoulderBasePos);
+  shoulder.rotation.copy(fpRightShoulderBaseRot);
+  elbow.rotation.copy(fpRightElbowBaseRot);
+  applyHumanoidLeftPunchAnimation(playerHumanoid.joints, punch, camera.rotation.x);
 }
 
 function updateLeftPunch(deltaTime) {
   const shoulder = firstPersonArmsRig.joints.leftShoulder;
   const elbow = firstPersonArmsRig.joints.leftElbow;
+  const isFirstPerson = currentThirdPersonDistance <= 0.001;
 
-  if (leftPunchTimer <= 0 || currentThirdPersonDistance > 0.001) {
+  if (leftPunchTimer <= 0) {
     shoulder.position.copy(fpLeftShoulderBasePos);
     shoulder.rotation.copy(fpLeftShoulderBaseRot);
     elbow.rotation.copy(fpLeftElbowBaseRot);
@@ -1067,14 +1176,20 @@ function updateLeftPunch(deltaTime) {
     : 1 - (progress - 0.35) / 0.65;
   const punch = THREE.MathUtils.clamp(strikePhase, 0, 1);
 
-  shoulder.position.x = THREE.MathUtils.lerp(fpLeftShoulderBasePos.x, -0.16, punch);
-  shoulder.position.y = fpLeftShoulderBasePos.y;
-  shoulder.position.z = fpLeftShoulderBasePos.z - 0.46 * punch;
+  if (isFirstPerson) {
+    shoulder.position.x = fpLeftShoulderBasePos.x;
+    shoulder.position.y = fpLeftShoulderBasePos.y;
+    shoulder.position.z = fpLeftShoulderBasePos.z - 0.26 * punch;
 
-  shoulder.rotation.x = fpLeftShoulderBaseRot.x;
-  shoulder.rotation.y = THREE.MathUtils.lerp(fpLeftShoulderBaseRot.y, -0.1, punch);
-  shoulder.rotation.z = THREE.MathUtils.lerp(fpLeftShoulderBaseRot.z, -0.04, punch);
-  elbow.rotation.x = THREE.MathUtils.lerp(fpLeftElbowBaseRot.x, -0.08, punch);
+    shoulder.rotation.copy(fpLeftShoulderBaseRot);
+    elbow.rotation.copy(fpLeftElbowBaseRot);
+    return;
+  }
+
+  shoulder.position.copy(fpLeftShoulderBasePos);
+  shoulder.rotation.copy(fpLeftShoulderBaseRot);
+  elbow.rotation.copy(fpLeftElbowBaseRot);
+  applyHumanoidRightPunchAnimation(playerHumanoid.joints, punch, camera.rotation.x);
 }
 
 function handleDesktopAttack(event) {
@@ -1565,6 +1680,7 @@ renderer.setAnimationLoop(() => {
   updatePlayer(delta);
   updateRightPunch(delta);
   updateLeftPunch(delta);
+  updatePunchHitboxes(delta);
   updateMobileShooting(delta);
   updateEntities(delta);
   updateProjectilesAndExplosions(delta);

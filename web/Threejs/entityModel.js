@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 
 const MODEL_PART_SCALE = 0.9;
+const LIMB_PART_GAP = 0.04;
 
 function createPartMaterial(color, roughness, metalness) {
   return new THREE.MeshStandardMaterial({ color, roughness, metalness });
@@ -62,12 +63,12 @@ export function createHumanoidModel({
   const torso = new THREE.Group();
   root.add(torso);
 
-  const belly = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.34, 0.3), shirtMat);
-  belly.position.set(0, 0.9, 0);
+  const belly = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.24, 0.28), shirtMat);
+  belly.position.set(0, 0.91, 0);
   setShadow(belly, castShadow, receiveShadow);
   torso.add(belly);
 
-  const chest = new THREE.Mesh(new THREE.BoxGeometry(0.52, 0.42, 0.32), shirtMat);
+  const chest = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.42, 0.3), shirtMat);
   chest.position.set(0, 1.27, 0);
   setShadow(chest, castShadow, receiveShadow);
   torso.add(chest);
@@ -103,98 +104,98 @@ export function createHumanoidModel({
   head.add(hairRight);
 
   const leftShoulder = new THREE.Group();
-  leftShoulder.position.set(-0.38, 1.48, 0);
+  leftShoulder.position.set(-0.36, 1.48, 0);
   torso.add(leftShoulder);
 
   const rightShoulder = new THREE.Group();
-  rightShoulder.position.set(0.38, 1.48, 0);
+  rightShoulder.position.set(0.36, 1.48, 0);
   torso.add(rightShoulder);
 
-  const leftUpperArm = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.36, 0.2), sleeveMat);
-  leftUpperArm.position.set(0, -0.18, 0);
+  const leftUpperArm = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.33, 0.18), sleeveMat);
+  leftUpperArm.position.set(0, -0.165, 0);
   setShadow(leftUpperArm, castShadow, receiveShadow);
   leftShoulder.add(leftUpperArm);
 
-  const rightUpperArm = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.36, 0.2), sleeveMat);
-  rightUpperArm.position.set(0, -0.18, 0);
+  const rightUpperArm = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.33, 0.18), sleeveMat);
+  rightUpperArm.position.set(0, -0.165, 0);
   setShadow(rightUpperArm, castShadow, receiveShadow);
   rightShoulder.add(rightUpperArm);
 
   const leftElbow = new THREE.Group();
-  leftElbow.position.set(0, -0.36, 0);
+  leftElbow.position.set(0, -0.33 - LIMB_PART_GAP, 0);
   leftShoulder.add(leftElbow);
 
   const rightElbow = new THREE.Group();
-  rightElbow.position.set(0, -0.36, 0);
+  rightElbow.position.set(0, -0.33 - LIMB_PART_GAP, 0);
   rightShoulder.add(rightElbow);
 
-  const leftForearm = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.32, 0.18), sleeveMat);
+  const leftForearm = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.3, 0.16), sleeveMat);
   leftForearm.name = 'leftForearm';
-  leftForearm.position.set(0, -0.16, 0);
+  leftForearm.position.set(0, -0.15, 0);
   setShadow(leftForearm, castShadow, receiveShadow);
   leftElbow.add(leftForearm);
 
-  const rightForearm = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.32, 0.18), sleeveMat);
+  const rightForearm = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.3, 0.16), sleeveMat);
   rightForearm.name = 'rightForearm';
-  rightForearm.position.set(0, -0.16, 0);
+  rightForearm.position.set(0, -0.15, 0);
   setShadow(rightForearm, castShadow, receiveShadow);
   rightElbow.add(rightForearm);
 
-  const leftHand = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.14, 0.2), skinMat);
+  const leftHand = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.12, 0.17), skinMat);
   leftHand.name = 'leftHand';
-  leftHand.position.set(0, -0.34, 0.01);
+  leftHand.position.set(0, -0.41, 0.015);
   setShadow(leftHand, castShadow, receiveShadow);
   leftElbow.add(leftHand);
 
-  const rightHand = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.14, 0.2), skinMat);
+  const rightHand = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.12, 0.17), skinMat);
   rightHand.name = 'rightHand';
-  rightHand.position.set(0, -0.34, 0.01);
+  rightHand.position.set(0, -0.41, 0.015);
   setShadow(rightHand, castShadow, receiveShadow);
   rightElbow.add(rightHand);
 
   const leftHip = new THREE.Group();
-  leftHip.position.set(-0.11, 0.82, 0);
+  leftHip.position.set(-0.12, 0.82, 0);
   root.add(leftHip);
 
   const rightHip = new THREE.Group();
-  rightHip.position.set(0.11, 0.82, 0);
+  rightHip.position.set(0.12, 0.82, 0);
   root.add(rightHip);
 
-  const leftThigh = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.44, 0.24), pantsMat);
-  leftThigh.position.set(0, -0.22, 0);
+  const leftThigh = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.34, 0.2), pantsMat);
+  leftThigh.position.set(0, -0.17, 0);
   setShadow(leftThigh, castShadow, receiveShadow);
   leftHip.add(leftThigh);
 
-  const rightThigh = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.44, 0.24), pantsMat);
-  rightThigh.position.set(0, -0.22, 0);
+  const rightThigh = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.34, 0.2), pantsMat);
+  rightThigh.position.set(0, -0.17, 0);
   setShadow(rightThigh, castShadow, receiveShadow);
   rightHip.add(rightThigh);
 
   const leftKnee = new THREE.Group();
-  leftKnee.position.set(0, -0.44, 0);
+  leftKnee.position.set(0, -0.34 - LIMB_PART_GAP, 0);
   leftHip.add(leftKnee);
 
   const rightKnee = new THREE.Group();
-  rightKnee.position.set(0, -0.44, 0);
+  rightKnee.position.set(0, -0.34 - LIMB_PART_GAP, 0);
   rightHip.add(rightKnee);
 
-  const leftShin = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.36, 0.22), pantsMat);
-  leftShin.position.set(0, -0.18, 0);
+  const leftShin = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.28, 0.18), pantsMat);
+  leftShin.position.set(0, -0.14, 0);
   setShadow(leftShin, castShadow, receiveShadow);
   leftKnee.add(leftShin);
 
-  const rightShin = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.36, 0.22), pantsMat);
-  rightShin.position.set(0, -0.18, 0);
+  const rightShin = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.28, 0.18), pantsMat);
+  rightShin.position.set(0, -0.14, 0);
   setShadow(rightShin, castShadow, receiveShadow);
   rightKnee.add(rightShin);
 
-  const leftShoe = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.14, 0.36), shoesMat);
-  leftShoe.position.set(0, -0.32, 0.07);
+  const leftShoe = new THREE.Mesh(new THREE.BoxGeometry(0.21, 0.1, 0.29), shoesMat);
+  leftShoe.position.set(0, -0.38, 0.06);
   setShadow(leftShoe, castShadow, receiveShadow);
   leftKnee.add(leftShoe);
 
-  const rightShoe = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.14, 0.36), shoesMat);
-  rightShoe.position.set(0, -0.32, 0.07);
+  const rightShoe = new THREE.Mesh(new THREE.BoxGeometry(0.21, 0.1, 0.29), shoesMat);
+  rightShoe.position.set(0, -0.38, 0.06);
   setShadow(rightShoe, castShadow, receiveShadow);
   rightKnee.add(rightShoe);
 
@@ -284,4 +285,24 @@ export function applyHumanoidIdleAnimation(joints, idleCycle, breathStrength = 1
   joints.rightHip.rotation.x = 0.04 - inhale * 0.025;
   joints.leftKnee.rotation.x = 0.1 + inhale * 0.02;
   joints.rightKnee.rotation.x = 0.1 + inhale * 0.02;
+}
+
+function applyHumanoidPunchAnimation(joints, side, punchStrength = 0, lookPitch = 0) {
+  if (!joints) return;
+  const shoulder = side === 'left' ? joints.leftShoulder : joints.rightShoulder;
+  if (!shoulder) return;
+
+  const p = THREE.MathUtils.clamp(punchStrength, 0, 1);
+  // Fixed vertical swing from shoulder: always 90deg forward, independent of camera direction.
+  const baseRotX = shoulder.rotation.x;
+  const targetRotX = baseRotX - Math.PI * 0.5;
+  shoulder.rotation.x = THREE.MathUtils.lerp(baseRotX, targetRotX, p);
+}
+
+export function applyHumanoidRightPunchAnimation(joints, punchStrength = 0, lookPitch = 0) {
+  applyHumanoidPunchAnimation(joints, 'right', punchStrength, lookPitch);
+}
+
+export function applyHumanoidLeftPunchAnimation(joints, punchStrength = 0, lookPitch = 0) {
+  applyHumanoidPunchAnimation(joints, 'left', punchStrength, lookPitch);
 }

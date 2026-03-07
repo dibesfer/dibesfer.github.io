@@ -12,25 +12,25 @@ function randomEntityName() {
 
 function createEntityLabelSprite(name, type) {
   const canvas = document.createElement('canvas');
-  canvas.width = 512;
-  canvas.height = 192;
+  canvas.width = 272;
+  canvas.height = 92;
   const ctx = canvas.getContext('2d');
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
-  ctx.fillRect(56, 42, 400, 108);
+  ctx.fillRect(28, 20, 216, 52);
 
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
 
   ctx.fillStyle = '#ffffff';
-  ctx.font = 'bold 48px Arial';
-  ctx.fillText(name, canvas.width * 0.5, 82);
+  ctx.font = 'bold 24px Arial';
+  ctx.fillText(name, canvas.width * 0.5, 40);
 
   ctx.fillStyle = '#d0d0d0';
-  ctx.font = '26px Arial';
-  ctx.fillText(type, canvas.width * 0.5, 126);
+  ctx.font = '14px Arial';
+  ctx.fillText(type, canvas.width * 0.5, 62);
 
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
@@ -41,7 +41,7 @@ function createEntityLabelSprite(name, type) {
     depthTest: false,
   });
   const sprite = new THREE.Sprite(material);
-  sprite.scale.set(3.2, 1.2, 1);
+  sprite.scale.set(1.62, 0.53, 1);
   return sprite;
 }
 
@@ -85,8 +85,8 @@ function createDialogSprite(lines) {
 
 function createHealthBarSprite(healthRatio = 1) {
   const canvas = document.createElement('canvas');
-  canvas.width = 256;
-  canvas.height = 64;
+  canvas.width = 136;
+  canvas.height = 32;
   const ctx = canvas.getContext('2d');
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
@@ -99,7 +99,7 @@ function createHealthBarSprite(healthRatio = 1) {
       depthTest: false,
     })
   );
-  sprite.scale.set(2.5, 0.5, 1);
+  sprite.scale.set(1.3, 0.23, 1);
   sprite.userData.healthCanvas = canvas;
   sprite.userData.healthCtx = ctx;
   sprite.userData.healthTexture = texture;
@@ -115,16 +115,16 @@ function drawHealthBarSprite(sprite, healthRatio) {
 
   const w = canvas.width;
   const h = canvas.height;
-  const padding = 10;
+  const padding = 6;
   const barW = w - padding * 2;
-  const barH = 20;
+  const barH = 9;
   const barX = padding;
   const barY = Math.floor((h - barH) * 0.5);
 
   ctx.clearRect(0, 0, w, h);
 
   ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-  ctx.fillRect(barX - 4, barY - 4, barW + 8, barH + 8);
+  ctx.fillRect(barX - 3, barY - 3, barW + 6, barH + 6);
 
   ctx.fillStyle = 'rgba(40, 40, 40, 0.95)';
   ctx.fillRect(barX, barY, barW, barH);
@@ -194,10 +194,10 @@ export class Entity {
     this.modelBaseHeight = humanoid.baseHeight;
     this.group.scale.set(1, this.bodyHeight / this.modelBaseHeight, 1);
     this.labelSprite = createEntityLabelSprite(this.name, this.typeLabel);
-    this.labelSprite.position.set(0, this.bodyHeight + 0.55, 0);
+    this.labelSprite.position.set(0, this.bodyHeight + 0.5, 0);
     this.group.add(this.labelSprite);
     this.healthBarSprite = createHealthBarSprite(1);
-    this.healthBarSprite.position.set(0, this.bodyHeight + 1.15, 0);
+    this.healthBarSprite.position.set(0, this.bodyHeight + 0.82, 0);
     this.group.add(this.healthBarSprite);
     if (this.dialogLines && this.dialogLines.length > 0) {
       this.dialogSprite = createDialogSprite(this.dialogLines);
@@ -345,7 +345,7 @@ export class HunterEntity extends Entity {
       miniMapType: 'chaser',
     });
     this.detectionRadius = options.detectionRadius ?? 5.0;
-    this.stopDistance = options.stopDistance ?? 1.0;
+    this.stopDistance = options.stopDistance ?? 1.5;
     this.disengageDistance = options.disengageDistance ?? 10.0;
     this.isAggro = false;
   }
