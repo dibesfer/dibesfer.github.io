@@ -1,5 +1,7 @@
 import * as THREE from 'three';
 
+const MODEL_PART_SCALE = 0.9;
+
 function createPartMaterial(color, roughness, metalness) {
   return new THREE.MeshStandardMaterial({ color, roughness, metalness });
 }
@@ -57,21 +59,23 @@ export function createHumanoidModel({
   const hairMat = createPartMaterial(resolvedOutfit.hair, 0.88, 0.02);
 
   const root = new THREE.Group();
+  const torso = new THREE.Group();
+  root.add(torso);
 
   const belly = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.34, 0.3), shirtMat);
   belly.position.set(0, 0.9, 0);
   setShadow(belly, castShadow, receiveShadow);
-  root.add(belly);
+  torso.add(belly);
 
   const chest = new THREE.Mesh(new THREE.BoxGeometry(0.52, 0.42, 0.32), shirtMat);
   chest.position.set(0, 1.27, 0);
   setShadow(chest, castShadow, receiveShadow);
-  root.add(chest);
+  torso.add(chest);
 
   const head = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.4, 0.4), skinMat);
   head.position.set(0, 1.68, 0);
   setShadow(head, castShadow, receiveShadow);
-  root.add(head);
+  torso.add(head);
 
   const faceEmoji = createEmojiFace(resolvedOutfit.faceEmoji);
   if (faceEmoji) {
@@ -99,12 +103,12 @@ export function createHumanoidModel({
   head.add(hairRight);
 
   const leftShoulder = new THREE.Group();
-  leftShoulder.position.set(-0.38, 1.38, 0);
-  root.add(leftShoulder);
+  leftShoulder.position.set(-0.38, 1.48, 0);
+  torso.add(leftShoulder);
 
   const rightShoulder = new THREE.Group();
-  rightShoulder.position.set(0.38, 1.38, 0);
-  root.add(rightShoulder);
+  rightShoulder.position.set(0.38, 1.48, 0);
+  torso.add(rightShoulder);
 
   const leftUpperArm = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.36, 0.2), sleeveMat);
   leftUpperArm.position.set(0, -0.18, 0);
@@ -125,31 +129,35 @@ export function createHumanoidModel({
   rightShoulder.add(rightElbow);
 
   const leftForearm = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.32, 0.18), sleeveMat);
+  leftForearm.name = 'leftForearm';
   leftForearm.position.set(0, -0.16, 0);
   setShadow(leftForearm, castShadow, receiveShadow);
   leftElbow.add(leftForearm);
 
   const rightForearm = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.32, 0.18), sleeveMat);
+  rightForearm.name = 'rightForearm';
   rightForearm.position.set(0, -0.16, 0);
   setShadow(rightForearm, castShadow, receiveShadow);
   rightElbow.add(rightForearm);
 
   const leftHand = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.14, 0.2), skinMat);
+  leftHand.name = 'leftHand';
   leftHand.position.set(0, -0.34, 0.01);
   setShadow(leftHand, castShadow, receiveShadow);
   leftElbow.add(leftHand);
 
   const rightHand = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.14, 0.2), skinMat);
+  rightHand.name = 'rightHand';
   rightHand.position.set(0, -0.34, 0.01);
   setShadow(rightHand, castShadow, receiveShadow);
   rightElbow.add(rightHand);
 
   const leftHip = new THREE.Group();
-  leftHip.position.set(-0.17, 0.82, 0);
+  leftHip.position.set(-0.11, 0.82, 0);
   root.add(leftHip);
 
   const rightHip = new THREE.Group();
-  rightHip.position.set(0.17, 0.82, 0);
+  rightHip.position.set(0.11, 0.82, 0);
   root.add(rightHip);
 
   const leftThigh = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.44, 0.24), pantsMat);
@@ -190,9 +198,20 @@ export function createHumanoidModel({
   setShadow(rightShoe, castShadow, receiveShadow);
   rightKnee.add(rightShoe);
 
+  root.traverse(part => {
+    if (part.isMesh) {
+      part.scale.multiplyScalar(MODEL_PART_SCALE);
+    }
+  });
+
+  torso.userData.baseY = torso.position.y;
+  leftShoulder.userData.baseY = leftShoulder.position.y;
+  rightShoulder.userData.baseY = rightShoulder.position.y;
+
   return {
     root,
     joints: {
+      torso,
       leftShoulder,
       rightShoulder,
       leftElbow,
@@ -207,6 +226,16 @@ export function createHumanoidModel({
 }
 
 export function applyHumanoidWalkAnimation(joints, walkCycle, gaitStrength = 1) {
+  if (joints.torso) {
+    joints.torso.position.y = joints.torso.userData.baseY ?? 0;
+  }
+  if (joints.leftShoulder) {
+    joints.leftShoulder.position.y = joints.leftShoulder.userData.baseY ?? joints.leftShoulder.position.y;
+  }
+  if (joints.rightShoulder) {
+    joints.rightShoulder.position.y = joints.rightShoulder.userData.baseY ?? joints.rightShoulder.position.y;
+  }
+
   const leftStride = Math.sin(walkCycle) * gaitStrength;
   const rightStride = Math.sin(walkCycle + Math.PI) * gaitStrength;
 
@@ -228,4 +257,31 @@ export function applyHumanoidWalkAnimation(joints, walkCycle, gaitStrength = 1) 
   const rightElbowPhase = 0.5 + 0.5 * Math.sin(walkCycle + Math.PI * 1.5);
   joints.leftElbow.rotation.x = -(0.14 + leftElbowPhase * 0.18);
   joints.rightElbow.rotation.x = -(0.14 + rightElbowPhase * 0.18);
+}
+
+export function applyHumanoidIdleAnimation(joints, idleCycle, breathStrength = 1) {
+  const s = THREE.MathUtils.clamp(breathStrength, 0, 1.5);
+  const inhale = Math.sin(idleCycle) * s;
+  const torsoLift = inhale * 0.025;
+  const shoulderLift = inhale * 0.012;
+
+  if (joints.torso) {
+    const baseY = joints.torso.userData.baseY ?? 0;
+    joints.torso.position.y = baseY + torsoLift;
+  }
+
+  const leftShoulderBaseY = joints.leftShoulder.userData.baseY ?? joints.leftShoulder.position.y;
+  const rightShoulderBaseY = joints.rightShoulder.userData.baseY ?? joints.rightShoulder.position.y;
+  joints.leftShoulder.position.y = leftShoulderBaseY + shoulderLift;
+  joints.rightShoulder.position.y = rightShoulderBaseY + shoulderLift;
+
+  joints.leftShoulder.rotation.x = -0.06 + inhale * 0.05;
+  joints.rightShoulder.rotation.x = -0.06 + inhale * 0.05;
+  joints.leftElbow.rotation.x = -0.22 + inhale * 0.03;
+  joints.rightElbow.rotation.x = -0.22 + inhale * 0.03;
+
+  joints.leftHip.rotation.x = 0.04 - inhale * 0.025;
+  joints.rightHip.rotation.x = 0.04 - inhale * 0.025;
+  joints.leftKnee.rotation.x = 0.1 + inhale * 0.02;
+  joints.rightKnee.rotation.x = 0.1 + inhale * 0.02;
 }

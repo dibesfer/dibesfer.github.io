@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
 import { Entity, HunterEntity, TalkerEntity } from './entity.js';
-import { createHumanoidModel, applyHumanoidWalkAnimation } from './entityModel.js';
+import { createHumanoidModel, applyHumanoidIdleAnimation, applyHumanoidWalkAnimation } from './entityModel.js';
 
 let mobileMode = false;
 let windowWidth = window.innerWidth;
@@ -24,11 +24,12 @@ scene.fog = new THREE.FogExp2(0x87CEEB, 0.002);
 const camera = new THREE.PerspectiveCamera(
   75,
   window.innerWidth / window.innerHeight,
-  0.1,
+  0.03,
   3000
 );
 const playerEye = new THREE.Vector3(5, 3, 5);
 camera.position.copy(playerEye);
+scene.add(camera);
 
 // --------------------
 // RENDERER
@@ -45,6 +46,7 @@ let mobileShootPressed = false;
 const miniMapPlayerMarker = document.createElement('div');
 miniMapPlayerMarker.id = 'miniMapPlayerMarker';
 miniMap.appendChild(miniMapPlayerMarker);
+const entityMiniMapMarkers = new Map();
 
 function checkForJoysticks() {
   if (windowWidth < MOBILE_BREAKPOINT && menuInferior.classList.contains('invisible')) {
@@ -246,25 +248,87 @@ const testBox = new THREE.Box3();
 const playerColliderMin = new THREE.Vector3();
 const playerColliderMax = new THREE.Vector3();
 const playerBody = new THREE.Group();
+const PLAYER_OUTFIT = {
+  skin: 0xf0c9a5,
+  shirt: 0x4f86f7,
+  sleeves: 0x4f86f7,
+  pants: 0x2d3a50,
+  shoes: 0x161616,
+  hair: 0x221710,
+  faceEmoji: '😎',
+};
 const playerHumanoid = createHumanoidModel({
-  outfit: {
-    skin: 0xf0c9a5,
-    shirt: 0x4f86f7,
-    sleeves: 0x4f86f7,
-    pants: 0x2d3a50,
-    shoes: 0x161616,
-    hair: 0x221710,
-    faceEmoji: '😎',
-  },
+  outfit: PLAYER_OUTFIT,
   castShadow: true,
   receiveShadow: false,
 });
 playerBody.add(playerHumanoid.root);
 playerBody.scale.set(1, PLAYER_HEIGHT / playerHumanoid.baseHeight, 1);
 
+function createFirstPersonArmsRig() {
+  const fpModel = createHumanoidModel({
+    outfit: PLAYER_OUTFIT,
+    castShadow: false,
+    receiveShadow: false,
+  });
+  const visibleParts = new Set(['leftForearm', 'rightForearm', 'leftHand', 'rightHand']);
+
+  fpModel.root.traverse(part => {
+    if (!part.isMesh) return;
+    part.visible = visibleParts.has(part.name);
+    if (!part.visible) return;
+    part.renderOrder = 30;
+    part.frustumCulled = false;
+    part.castShadow = false;
+    part.receiveShadow = false;
+    part.material.depthWrite = false;
+    part.material.depthTest = false;
+  });
+
+  // First-person fists pose using the same skeleton parts as the player model.
+  fpModel.joints.torso.rotation.x = 0.14;
+  fpModel.joints.leftShoulder.position.x = -0.42;
+  fpModel.joints.rightShoulder.position.x = 0.42;
+  fpModel.joints.leftShoulder.rotation.set(2.34, 0.18, 0.24);
+  fpModel.joints.rightShoulder.rotation.set(2.34, -0.18, -0.24);
+  fpModel.joints.leftElbow.rotation.set(-0.52, 0.08, -0.1);
+  fpModel.joints.rightElbow.rotation.set(-0.52, -0.08, 0.1);
+
+  const leftHand = fpModel.root.getObjectByName('leftHand');
+  const rightHand = fpModel.root.getObjectByName('rightHand');
+  if (leftHand) {
+    leftHand.rotation.set(-0.18, 0.2, -0.12);
+  }
+  if (rightHand) {
+    rightHand.rotation.set(-0.18, -0.2, 0.12);
+  }
+
+  fpModel.root.scale.setScalar(1.28);
+  fpModel.root.position.set(0, -2.75, -0.3);
+  fpModel.root.visible = false;
+  return {
+    root: fpModel.root,
+    joints: fpModel.joints,
+  };
+}
+
+const firstPersonArmsRig = createFirstPersonArmsRig();
+camera.add(firstPersonArmsRig.root);
+
+const RIGHT_PUNCH_DURATION = 0.2;
+let rightPunchTimer = 0;
+let leftPunchTimer = 0;
+const fpRightShoulderBasePos = firstPersonArmsRig.joints.rightShoulder.position.clone();
+const fpRightShoulderBaseRot = firstPersonArmsRig.joints.rightShoulder.rotation.clone();
+const fpRightElbowBaseRot = firstPersonArmsRig.joints.rightElbow.rotation.clone();
+const fpLeftShoulderBasePos = firstPersonArmsRig.joints.leftShoulder.position.clone();
+const fpLeftShoulderBaseRot = firstPersonArmsRig.joints.leftShoulder.rotation.clone();
+const fpLeftElbowBaseRot = firstPersonArmsRig.joints.leftElbow.rotation.clone();
+
 scene.add(playerBody);
 const playerFacingDir = new THREE.Vector3();
 let playerWalkCycle = 0;
+let playerIdleCycle = Math.random() * Math.PI * 2;
 
 function updatePlayerCollider(eyePosition) {
   playerColliderMin.set(
@@ -302,10 +366,12 @@ function syncPlayerBody() {
 function animatePlayerBody(deltaTime, isMoving) {
   if (isMoving) {
     playerWalkCycle += deltaTime * 10;
+    applyHumanoidWalkAnimation(playerHumanoid.joints, playerWalkCycle, 1);
+    return;
   }
 
-  const gaitStrength = isMoving ? 1 : 0.25;
-  applyHumanoidWalkAnimation(playerHumanoid.joints, playerWalkCycle, gaitStrength);
+  playerIdleCycle += deltaTime * 2.2;
+  applyHumanoidIdleAnimation(playerHumanoid.joints, playerIdleCycle, 1);
 }
 
 const thirdPersonOffsetDir = new THREE.Vector3();
@@ -327,6 +393,7 @@ function syncCameraToPlayerView(deltaTime = 0) {
 
   camera.position.copy(playerEye);
   playerBody.visible = currentThirdPersonDistance > 0.001;
+  firstPersonArmsRig.root.visible = currentThirdPersonDistance <= 0.001;
 
   if (!mobileMode && currentThirdPersonDistance > 0.001) {
     // Move camera backward from the look direction to get a third-person view.
@@ -507,8 +574,8 @@ addCityWall(wallThickness, CITY_GROUND_SIZE, CITY_OUTER_LIMIT, 0);
 addCityWall(wallThickness, CITY_GROUND_SIZE, -CITY_OUTER_LIMIT, 0);
 
 const entities = [];
-const ENTITY_COUNT = 28;
-const HUNTER_ENTITY_COUNT = 8;
+const ENTITY_COUNT = 14;
+const HUNTER_ENTITY_COUNT = 4;
 const ENTITY_SPAWN_MARGIN = 1.2;
 const entitySpawnBox = new THREE.Box3();
 const spawnTestPos = new THREE.Vector3();
@@ -615,9 +682,38 @@ function spawnTalker() {
 
 spawnTalker();
 
+function getEntityMiniMapMarkerClass(entity) {
+  if (entity.miniMapType === 'chaser') return 'mini-map-marker--chaser';
+  if (entity.miniMapType === 'talker') return 'mini-map-marker--talker';
+  return 'mini-map-marker--walker';
+}
+
+function syncEntityMiniMapMarkers() {
+  const aliveEntities = new Set(entities);
+
+  for (let i = 0; i < entities.length; i++) {
+    const entity = entities[i];
+    let marker = entityMiniMapMarkers.get(entity);
+    if (!marker) {
+      marker = document.createElement('div');
+      marker.className = `mini-map-entity-marker ${getEntityMiniMapMarkerClass(entity)}`;
+      miniMap.appendChild(marker);
+      entityMiniMapMarkers.set(entity, marker);
+    }
+  }
+
+  for (const [entity, marker] of entityMiniMapMarkers.entries()) {
+    if (!aliveEntities.has(entity)) {
+      marker.remove();
+      entityMiniMapMarkers.delete(entity);
+    }
+  }
+}
+
 const PROJECTILE_RADIUS = 0.14;
 const PROJECTILE_SPEED = 42;
 const PROJECTILE_LIFETIME = 3;
+const PROJECTILE_DAMAGE = 20;
 const projectileGeo = new THREE.SphereGeometry(PROJECTILE_RADIUS, 16, 16);
 const projectileMat = new THREE.MeshStandardMaterial({
   color: 0xff2f2f,
@@ -637,6 +733,10 @@ const projectileSpawnPos = new THREE.Vector3();
 const projectileDirection = new THREE.Vector3();
 const projectileSphere = new THREE.Sphere();
 let audioContext = null;
+const FOOTSTEP_BASE_INTERVAL = 0.42;
+const FOOTSTEP_DOUBLE_TAP_GAP = 0.055;
+let footstepTimer = 0;
+let footstepSwap = false;
 
 function ensureAudioContext() {
   if (!audioContext) {
@@ -670,7 +770,7 @@ function playExplosionSound() {
   filter.frequency.exponentialRampToValueAtTime(280, now + 0.25);
 
   gain.gain.setValueAtTime(0.0001, now);
-  gain.gain.exponentialRampToValueAtTime(0.14, now + 0.01);
+  gain.gain.exponentialRampToValueAtTime(0.26, now + 0.01);
   gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.28);
 
   osc.connect(filter);
@@ -679,6 +779,97 @@ function playExplosionSound() {
 
   osc.start(now);
   osc.stop(now + 0.3);
+}
+
+function playFootstepSound(speedFactor = 1) {
+  const ctx = ensureAudioContext();
+  if (!ctx) return;
+
+  const now = ctx.currentTime;
+  const baseFreq = (footstepSwap ? 165 : 190) * THREE.MathUtils.clamp(speedFactor, 0.8, 2.2);
+  const hitTimes = [0, FOOTSTEP_DOUBLE_TAP_GAP];
+
+  for (let i = 0; i < hitTimes.length; i++) {
+    const start = now + hitTimes[i];
+    const osc = ctx.createOscillator();
+    const filter = ctx.createBiquadFilter();
+    const gain = ctx.createGain();
+
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(baseFreq, start);
+    osc.frequency.exponentialRampToValueAtTime(baseFreq * 0.58, start + 0.06);
+
+    filter.type = 'bandpass';
+    filter.frequency.setValueAtTime(780, start);
+    filter.Q.setValueAtTime(0.8, start);
+
+    gain.gain.setValueAtTime(0.0001, start);
+    gain.gain.exponentialRampToValueAtTime(0.085, start + 0.005);
+    gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.07);
+
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start(start);
+    osc.stop(start + 0.08);
+  }
+
+  footstepSwap = !footstepSwap;
+}
+
+function playJumpSound(isDoubleJump = false) {
+  const ctx = ensureAudioContext();
+  if (!ctx) return;
+
+  const now = ctx.currentTime;
+  const osc = ctx.createOscillator();
+  const filter = ctx.createBiquadFilter();
+  const gain = ctx.createGain();
+
+  osc.type = 'triangle';
+  if (isDoubleJump) {
+    osc.frequency.setValueAtTime(540, now);
+    osc.frequency.exponentialRampToValueAtTime(760, now + 0.07);
+    osc.frequency.exponentialRampToValueAtTime(510, now + 0.16);
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(0.12, now + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.18);
+  } else {
+    osc.frequency.setValueAtTime(260, now);
+    osc.frequency.exponentialRampToValueAtTime(420, now + 0.06);
+    osc.frequency.exponentialRampToValueAtTime(240, now + 0.18);
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(0.11, now + 0.012);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.2);
+  }
+
+  filter.type = 'bandpass';
+  filter.frequency.setValueAtTime(isDoubleJump ? 1400 : 980, now);
+  filter.Q.setValueAtTime(0.8, now);
+
+  osc.connect(filter);
+  filter.connect(gain);
+  gain.connect(ctx.destination);
+
+  osc.start(now);
+  osc.stop(now + 0.22);
+}
+
+function updateFootsteps(deltaTime, isMoving, sprintMultiplier, onGround) {
+  if (!isMoving || !onGround) {
+    footstepTimer = 0;
+    return;
+  }
+
+  const speedFactor = THREE.MathUtils.clamp(sprintMultiplier, 1, 2);
+  const interval = FOOTSTEP_BASE_INTERVAL / speedFactor;
+  footstepTimer -= deltaTime;
+
+  if (footstepTimer <= 0) {
+    playFootstepSound(speedFactor);
+    footstepTimer += interval;
+  }
 }
 
 function createExplosion(position) {
@@ -742,8 +933,11 @@ function projectileHitsEntity(position, radius) {
     const entity = entities[i];
     if (!entity.collider.intersectsSphere(projectileSphere)) continue;
 
-    scene.remove(entity.group);
-    entities.splice(i, 1);
+    const killed = entity.applyDamage(PROJECTILE_DAMAGE);
+    if (killed) {
+      scene.remove(entity.group);
+      entities.splice(i, 1);
+    }
     return true;
   }
 
@@ -773,6 +967,124 @@ function shootDesktopProjectile(event) {
   if (event.button !== 0) return;
   if (mobileMode || !controls.isLocked) return;
   shootProjectileFromPlayer();
+}
+
+function playPunchSound() {
+  const ctx = ensureAudioContext();
+  if (!ctx) return;
+
+  const now = ctx.currentTime;
+  const osc = ctx.createOscillator();
+  const filter = ctx.createBiquadFilter();
+  const gain = ctx.createGain();
+
+  osc.type = 'square';
+  osc.frequency.setValueAtTime(230, now);
+  osc.frequency.exponentialRampToValueAtTime(100, now + 0.09);
+
+  filter.type = 'highpass';
+  filter.frequency.setValueAtTime(420, now);
+  filter.Q.setValueAtTime(0.75, now);
+
+  gain.gain.setValueAtTime(0.0001, now);
+  gain.gain.exponentialRampToValueAtTime(0.22, now + 0.005);
+  gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.11);
+
+  osc.connect(filter);
+  filter.connect(gain);
+  gain.connect(ctx.destination);
+
+  osc.start(now);
+  osc.stop(now + 0.12);
+}
+
+function startRightPunch() {
+  if (mobileMode) return;
+  if (!controls.isLocked) return;
+  if (currentThirdPersonDistance > 0.001) return;
+  if (rightPunchTimer > 0) return;
+
+  rightPunchTimer = RIGHT_PUNCH_DURATION;
+  playPunchSound();
+}
+
+function startLeftPunch() {
+  if (mobileMode) return;
+  if (!controls.isLocked) return;
+  if (currentThirdPersonDistance > 0.001) return;
+  if (leftPunchTimer > 0) return;
+
+  leftPunchTimer = RIGHT_PUNCH_DURATION;
+  playPunchSound();
+}
+
+function updateRightPunch(deltaTime) {
+  const shoulder = firstPersonArmsRig.joints.rightShoulder;
+  const elbow = firstPersonArmsRig.joints.rightElbow;
+
+  if (rightPunchTimer <= 0 || currentThirdPersonDistance > 0.001) {
+    shoulder.position.copy(fpRightShoulderBasePos);
+    shoulder.rotation.copy(fpRightShoulderBaseRot);
+    elbow.rotation.copy(fpRightElbowBaseRot);
+    rightPunchTimer = 0;
+    return;
+  }
+
+  rightPunchTimer = Math.max(0, rightPunchTimer - deltaTime);
+  const progress = 1 - rightPunchTimer / RIGHT_PUNCH_DURATION;
+  const strikePhase = progress < 0.35
+    ? progress / 0.35
+    : 1 - (progress - 0.35) / 0.65;
+  const punch = THREE.MathUtils.clamp(strikePhase, 0, 1);
+
+  // Straight jab towards the crosshair (camera forward axis), then return.
+  shoulder.position.x = THREE.MathUtils.lerp(fpRightShoulderBasePos.x, 0.16, punch);
+  shoulder.position.y = fpRightShoulderBasePos.y;
+  shoulder.position.z = fpRightShoulderBasePos.z - 0.46 * punch;
+
+  shoulder.rotation.x = fpRightShoulderBaseRot.x;
+  shoulder.rotation.y = THREE.MathUtils.lerp(fpRightShoulderBaseRot.y, 0.1, punch);
+  shoulder.rotation.z = THREE.MathUtils.lerp(fpRightShoulderBaseRot.z, 0.04, punch);
+  elbow.rotation.x = THREE.MathUtils.lerp(fpRightElbowBaseRot.x, -0.08, punch);
+}
+
+function updateLeftPunch(deltaTime) {
+  const shoulder = firstPersonArmsRig.joints.leftShoulder;
+  const elbow = firstPersonArmsRig.joints.leftElbow;
+
+  if (leftPunchTimer <= 0 || currentThirdPersonDistance > 0.001) {
+    shoulder.position.copy(fpLeftShoulderBasePos);
+    shoulder.rotation.copy(fpLeftShoulderBaseRot);
+    elbow.rotation.copy(fpLeftElbowBaseRot);
+    leftPunchTimer = 0;
+    return;
+  }
+
+  leftPunchTimer = Math.max(0, leftPunchTimer - deltaTime);
+  const progress = 1 - leftPunchTimer / RIGHT_PUNCH_DURATION;
+  const strikePhase = progress < 0.35
+    ? progress / 0.35
+    : 1 - (progress - 0.35) / 0.65;
+  const punch = THREE.MathUtils.clamp(strikePhase, 0, 1);
+
+  shoulder.position.x = THREE.MathUtils.lerp(fpLeftShoulderBasePos.x, -0.16, punch);
+  shoulder.position.y = fpLeftShoulderBasePos.y;
+  shoulder.position.z = fpLeftShoulderBasePos.z - 0.46 * punch;
+
+  shoulder.rotation.x = fpLeftShoulderBaseRot.x;
+  shoulder.rotation.y = THREE.MathUtils.lerp(fpLeftShoulderBaseRot.y, -0.1, punch);
+  shoulder.rotation.z = THREE.MathUtils.lerp(fpLeftShoulderBaseRot.z, -0.04, punch);
+  elbow.rotation.x = THREE.MathUtils.lerp(fpLeftElbowBaseRot.x, -0.08, punch);
+}
+
+function handleDesktopAttack(event) {
+  if (event.button !== 0 && event.button !== 2) return;
+  event.preventDefault();
+  if (event.button === 0) {
+    startRightPunch();
+    return;
+  }
+  startLeftPunch();
 }
 
 function updateProjectilesAndExplosions(deltaTime) {
@@ -928,6 +1240,7 @@ const tmpRight = new THREE.Vector3();
 const horizontalMove = new THREE.Vector3();
 const worldUp = new THREE.Vector3(0, 1, 0);
 const miniMapFacing = new THREE.Vector3();
+const miniMapProjectedPos = new THREE.Vector3();
 
 function updateDesktopLook() {
   if (!controls.isLocked) return;
@@ -982,6 +1295,7 @@ function updatePlayer(deltaTime) {
     playerState.velocity.y = jumpSpeed;
     playerState.onGround = false;
     playerState.jumpsUsed += 1;
+    playJumpSound(playerState.jumpsUsed >= 2);
   }
 
   playerState.jumpQueued = false;
@@ -991,8 +1305,10 @@ function updatePlayer(deltaTime) {
 
   playerState.onGround = isStandingOnSupport();
 
+  const isMoving = horizontalMove.lengthSq() > 0.00001;
+  updateFootsteps(deltaTime, isMoving, sprintMultiplier, playerState.onGround);
   syncPlayerBody();
-  animatePlayerBody(deltaTime, horizontalMove.lengthSq() > 0.00001);
+  animatePlayerBody(deltaTime, isMoving);
   syncCameraToPlayerView(deltaTime);
 }
 
@@ -1007,6 +1323,35 @@ function updateMiniMap() {
     miniMapFacing.normalize();
     const markerAngle = Math.atan2(miniMapFacing.x, -miniMapFacing.z);
     miniMapPlayerMarker.style.transform = `translate(-50%, -50%) rotate(${markerAngle}rad)`;
+  }
+
+  syncEntityMiniMapMarkers();
+  const width = miniMap.clientWidth || 200;
+  const height = miniMap.clientHeight || 200;
+
+  for (let i = 0; i < entities.length; i++) {
+    const entity = entities[i];
+    const marker = entityMiniMapMarkers.get(entity);
+    if (!marker) continue;
+
+    miniMapProjectedPos.set(entity.position.x, GROUND_Y, entity.position.z).project(miniMapCamera);
+    const insideView =
+      miniMapProjectedPos.z >= -1 &&
+      miniMapProjectedPos.z <= 1 &&
+      Math.abs(miniMapProjectedPos.x) <= 1 &&
+      Math.abs(miniMapProjectedPos.y) <= 1;
+    marker.style.display = insideView ? 'block' : 'none';
+    if (!insideView) continue;
+
+    const x = (miniMapProjectedPos.x * 0.5 + 0.5) * width;
+    const y = (-miniMapProjectedPos.y * 0.5 + 0.5) * height;
+    let markerAngle = 0;
+    if (entity.direction && entity.direction.lengthSq() > 0.0001) {
+      markerAngle = Math.atan2(entity.direction.x, -entity.direction.z);
+    }
+    marker.style.left = `${x}px`;
+    marker.style.top = `${y}px`;
+    marker.style.transform = `translate(-50%, -50%) rotate(${markerAngle}rad)`;
   }
 
   miniMapRenderer.render(scene, miniMapCamera);
@@ -1143,12 +1488,11 @@ function setShootButtonState(active) {
 }
 
 function startMobileShooting(event) {
+  // Shooting is reserved for a future update.
   if (!mobileMode) return;
   if (event) event.preventDefault();
-
-  mobileShootPressed = true;
-  mobileShootTimer = 0;
-  setShootButtonState(true);
+  mobileShootPressed = false;
+  setShootButtonState(false);
 }
 
 function stopMobileShooting(event) {
@@ -1164,16 +1508,11 @@ if (buttonShoot) {
 }
 
 function updateMobileShooting(deltaTime) {
-  if (!mobileMode || !mobileShootPressed) return;
-
-  mobileShootTimer -= deltaTime;
-  if (mobileShootTimer <= 0) {
-    shootProjectileFromPlayer();
-    mobileShootTimer += MOBILE_SHOOT_INTERVAL;
-  }
+  return;
 }
 
-document.addEventListener('mousedown', shootDesktopProjectile);
+document.addEventListener('mousedown', handleDesktopAttack);
+document.addEventListener('contextmenu', event => event.preventDefault());
 
 document.addEventListener('keydown', e => {
   if (e.code === 'Space') {
@@ -1224,6 +1563,8 @@ renderer.setAnimationLoop(() => {
   }
 
   updatePlayer(delta);
+  updateRightPunch(delta);
+  updateLeftPunch(delta);
   updateMobileShooting(delta);
   updateEntities(delta);
   updateProjectilesAndExplosions(delta);

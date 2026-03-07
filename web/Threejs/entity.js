@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { createHumanoidModel, applyHumanoidWalkAnimation } from './entityModel.js';
+import { createHumanoidModel, applyHumanoidIdleAnimation, applyHumanoidWalkAnimation } from './entityModel.js';
 
 const ENTITY_NAME_PARTS_A = ['Neo', 'Rex', 'Kira', 'Nova', 'Axel', 'Iris', 'Vex', 'Luna', 'Zed', 'Milo'];
 const ENTITY_NAME_PARTS_B = ['Stone', 'Blade', 'Runner', 'Flux', 'Byte', 'Echo', 'Volt', 'Shade', 'Forge', 'Drift'];
@@ -83,6 +83,60 @@ function createDialogSprite(lines) {
   return sprite;
 }
 
+function createHealthBarSprite(healthRatio = 1) {
+  const canvas = document.createElement('canvas');
+  canvas.width = 256;
+  canvas.height = 64;
+  const ctx = canvas.getContext('2d');
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+
+  const sprite = new THREE.Sprite(
+    new THREE.SpriteMaterial({
+      map: texture,
+      transparent: true,
+      depthWrite: false,
+      depthTest: false,
+    })
+  );
+  sprite.scale.set(2.5, 0.5, 1);
+  sprite.userData.healthCanvas = canvas;
+  sprite.userData.healthCtx = ctx;
+  sprite.userData.healthTexture = texture;
+  drawHealthBarSprite(sprite, healthRatio);
+  return sprite;
+}
+
+function drawHealthBarSprite(sprite, healthRatio) {
+  const canvas = sprite.userData.healthCanvas;
+  const ctx = sprite.userData.healthCtx;
+  const texture = sprite.userData.healthTexture;
+  if (!canvas || !ctx || !texture) return;
+
+  const w = canvas.width;
+  const h = canvas.height;
+  const padding = 10;
+  const barW = w - padding * 2;
+  const barH = 20;
+  const barX = padding;
+  const barY = Math.floor((h - barH) * 0.5);
+
+  ctx.clearRect(0, 0, w, h);
+
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+  ctx.fillRect(barX - 4, barY - 4, barW + 8, barH + 8);
+
+  ctx.fillStyle = 'rgba(40, 40, 40, 0.95)';
+  ctx.fillRect(barX, barY, barW, barH);
+
+  const clampedRatio = THREE.MathUtils.clamp(healthRatio, 0, 1);
+  const fillW = Math.floor(barW * clampedRatio);
+  ctx.fillStyle = '#25d14a';
+  ctx.fillRect(barX, barY, fillW, barH);
+
+  texture.needsUpdate = true;
+}
+
 export class Entity {
   constructor({
     scene,
@@ -95,6 +149,8 @@ export class Entity {
     dialogLines = null,
     speed = 2.2,
     clearance = 1.0,
+    miniMapType = 'walker',
+    maxHealth = 100,
   }) {
     this.scene = scene;
     this.position = position.clone();
@@ -104,6 +160,9 @@ export class Entity {
     this.name = name;
     this.typeLabel = typeLabel;
     this.dialogLines = dialogLines;
+    this.miniMapType = miniMapType;
+    this.maxHealth = Math.max(1, maxHealth);
+    this.health = this.maxHealth;
 
     this.bodyWidth = 0.8;
     this.bodyDepth = 0.55;
@@ -137,6 +196,9 @@ export class Entity {
     this.labelSprite = createEntityLabelSprite(this.name, this.typeLabel);
     this.labelSprite.position.set(0, this.bodyHeight + 0.55, 0);
     this.group.add(this.labelSprite);
+    this.healthBarSprite = createHealthBarSprite(1);
+    this.healthBarSprite.position.set(0, this.bodyHeight + 1.15, 0);
+    this.group.add(this.healthBarSprite);
     if (this.dialogLines && this.dialogLines.length > 0) {
       this.dialogSprite = createDialogSprite(this.dialogLines);
       this.dialogSprite.position.set(0, this.bodyHeight + 1.85, 0);
@@ -147,12 +209,20 @@ export class Entity {
     this.direction = new THREE.Vector3(1, 0, 0);
     this.turnTimer = 0;
     this.walkCycle = Math.random() * Math.PI * 2;
+    this.idleCycle = Math.random() * Math.PI * 2;
     this._testBox = new THREE.Box3();
     this._nextPos = new THREE.Vector3();
     this._toPlayer = new THREE.Vector3();
 
     this.pickRandomDirection();
     this.updateCollider();
+  }
+
+  applyDamage(amount) {
+    if (!Number.isFinite(amount) || amount <= 0) return false;
+    this.health = Math.max(0, this.health - amount);
+    drawHealthBarSprite(this.healthBarSprite, this.health / this.maxHealth);
+    return this.health <= 0;
   }
 
   pickRandomDirection() {
@@ -220,9 +290,15 @@ export class Entity {
     return false;
   }
 
-  updateWalkAnimation(deltaTime) {
-    this.walkCycle += deltaTime * 8;
-    applyHumanoidWalkAnimation(this.joints, this.walkCycle, 1);
+  updateAnimation(deltaTime, isMoving) {
+    if (isMoving) {
+      this.walkCycle += deltaTime * 8;
+      applyHumanoidWalkAnimation(this.joints, this.walkCycle, 1);
+      return;
+    }
+
+    this.idleCycle += deltaTime * 2.2;
+    applyHumanoidIdleAnimation(this.joints, this.idleCycle, 1);
   }
 
   update(deltaTime, colliders) {
@@ -246,7 +322,7 @@ export class Entity {
     this.group.rotation.y = Math.atan2(this.direction.x, this.direction.z);
     this.updateCollider();
 
-    this.updateWalkAnimation(deltaTime);
+    this.updateAnimation(deltaTime, true);
   }
 }
 
@@ -266,6 +342,7 @@ export class HunterEntity extends Entity {
         faceEmoji: '😠',
       },
       speed: options.speed ?? 2.5,
+      miniMapType: 'chaser',
     });
     this.detectionRadius = options.detectionRadius ?? 5.0;
     this.stopDistance = options.stopDistance ?? 1.0;
@@ -315,7 +392,7 @@ export class HunterEntity extends Entity {
 
       if (this.willHitObstacleAt(this._nextPos, colliders)) {
         if (!this.tryFindOpenDirection(colliders, deltaTime)) {
-          this.updateWalkAnimation(0);
+          this.updateAnimation(deltaTime, false);
           return;
         }
         this._nextPos.copy(this.position).addScaledVector(this.direction, stepDistance);
@@ -327,7 +404,7 @@ export class HunterEntity extends Entity {
     this.group.rotation.y = Math.atan2(this.direction.x, this.direction.z);
     this.updateCollider();
 
-    this.updateWalkAnimation(shouldMove ? deltaTime : 0);
+    this.updateAnimation(deltaTime, shouldMove);
   }
 }
 
@@ -348,6 +425,7 @@ export class TalkerEntity extends Entity {
         hair: 0x2a1b10,
         faceEmoji: '🗣️',
       },
+      miniMapType: 'talker',
     });
   }
 
@@ -367,6 +445,6 @@ export class TalkerEntity extends Entity {
     this.group.position.set(this.position.x, this.groundY + this.visualLift, this.position.z);
     this.group.rotation.y = Math.atan2(this.direction.x, this.direction.z);
     this.updateCollider();
-    this.updateWalkAnimation(0);
+    this.updateAnimation(deltaTime, false);
   }
 }
