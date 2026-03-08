@@ -12,7 +12,7 @@ import {
 let mobileMode = false;
 let windowWidth = window.innerWidth;
 let windowHeight = window.innerHeight;
-const MOBILE_BREAKPOINT = 600;
+const MOBILE_BREAKPOINT = 900;
 const THIRD_PERSON_MAX_DISTANCE = 8;
 const JOYSTICK_MAX_OFFSET = 50;
 const ENTITY_MIN_SPAWN_DIST_SQ = 6.25;
