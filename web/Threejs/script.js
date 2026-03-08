@@ -12,6 +12,7 @@ import { createGameAudio } from './audio.js';
 import { createPlayerHud } from './playerHud.js';
 import { buildSimpleMap } from './maps/simpleMap.js';
 import { buildCityMap } from './maps/cityMap.js';
+import { buildVoxelandiaMap } from './maps/voxelandiaMap.js';
 
 let mobileMode = false;
 let windowWidth = window.innerWidth;
@@ -30,7 +31,7 @@ const SUPPORT_EPSILON = 0.03;
 // SCENE
 // --------------------
 const scene = new THREE.Scene();
-scene.fog = new THREE.FogExp2(0x87CEEB, 0.002);
+scene.fog = new THREE.FogExp2(0x5EC9FF, 0.002);
 
 // --------------------
 // CAMERA
@@ -51,13 +52,22 @@ scene.add(camera);
 const consola = document.getElementById('consola');
 const miniMap = document.getElementById('miniMap');
 const menuCentral = document.getElementById('menuCentral');
+const menuOpenInventory = document.getElementById('menuOpenInventory');
 const menuInferior = document.getElementById('menuInferior');
+const inventoryPanel = document.getElementById('inventoryPanel');
+const inventorySlots = document.getElementById('inventorySlots');
+const inventorySelected = document.getElementById('inventorySelected');
+const loadingScreen = document.getElementById('loadingScreen');
+const loadingBarFill = document.getElementById('loadingBarFill');
+const loadingText = document.getElementById('loadingText');
 const buttonUp = document.getElementById('buttonUp');
 const buttonDown = document.getElementById('buttonDown');
 const buttonShoot = document.getElementById('buttonShoot');
 const playerHealthFill = document.getElementById('playerHealthFill');
 const playerHealthText = document.getElementById('playerHealthText');
+const voxelReadout = document.getElementById('voxelReadout');
 let mobileShootPressed = false;
+let inventoryPanelOpen = false;
 const gameAudio = createGameAudio();
 
 const miniMapPlayerMarker = document.createElement('div');
@@ -82,6 +92,8 @@ function applyMode(mode) {
   mobileMode = shouldUseMobile;
 
   if (shouldUseMobile) {
+    inventoryPanelOpen = false;
+    inventoryPanel?.classList.add('invisible');
     if (controls.isLocked) {
       controls.unlock();
     }
@@ -117,11 +129,41 @@ const sceneView = document.getElementById('sceneView');
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 
 renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setClearColor(0x87CEEB);
+renderer.setClearColor(0x5EC9FF);
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
 sceneView.appendChild(renderer.domElement);
+
+function updateLoadingUI(loaded, total) {
+  const safeTotal = Math.max(1, total);
+  const progress = Math.round((loaded / safeTotal) * 100);
+  if (loadingBarFill) {
+    loadingBarFill.style.width = `${progress}%`;
+  }
+  if (loadingText) {
+    loadingText.textContent = `Loading assets... ${progress}%`;
+  }
+}
+
+THREE.DefaultLoadingManager.onStart = (_url, itemsLoaded, itemsTotal) => {
+  updateLoadingUI(itemsLoaded, itemsTotal);
+};
+
+THREE.DefaultLoadingManager.onProgress = (_url, itemsLoaded, itemsTotal) => {
+  updateLoadingUI(itemsLoaded, itemsTotal);
+};
+
+THREE.DefaultLoadingManager.onLoad = () => {
+  updateLoadingUI(1, 1);
+  if (!loadingScreen) return;
+  requestAnimationFrame(() => {
+    loadingScreen.classList.add('is-hidden');
+    window.setTimeout(() => {
+      loadingScreen.remove();
+    }, 420);
+  });
+};
 
 const textureLoader = new THREE.TextureLoader();
 const maxAnisotropy = renderer.capabilities.getMaxAnisotropy();
@@ -155,14 +197,44 @@ miniMap.appendChild(miniMapRenderer.domElement);
 // --------------------
 const controls = new PointerLockControls(camera, document.body);
 controls.addEventListener('unlock', () => {
-  if (!mobileMode) {
+  if (!mobileMode && !inventoryPanelOpen) {
     menuCentral.classList.remove('invisible');
   }
 });
 
 function controlLocker() {
+  if (inventoryPanelOpen) return;
   controls.lock();
   menuCentral.classList.add('invisible');
+}
+
+function setInventoryPanelOpen(nextOpen) {
+  if (mobileMode) return;
+
+  inventoryPanelOpen = nextOpen;
+  if (inventoryPanel) {
+    inventoryPanel.classList.toggle('invisible', !nextOpen);
+  }
+
+  if (nextOpen) {
+    if (controls.isLocked) {
+      controls.unlock();
+    }
+    menuCentral.classList.add('invisible');
+    return;
+  }
+
+  if (!controls.isLocked) {
+    menuCentral.classList.remove('invisible');
+  }
+}
+
+if (menuOpenInventory) {
+  menuOpenInventory.addEventListener('click', event => {
+    event.preventDefault();
+    event.stopPropagation();
+    setInventoryPanelOpen(true);
+  });
 }
 
 updateModeFromViewport();
@@ -172,10 +244,12 @@ document.addEventListener('keydown', e => keys[e.code] = true);
 document.addEventListener('keyup', e => keys[e.code] = false);
 
 const moveSpeed = 10;
+const flySpeed = 10;
 const gravity = 30;
 const jumpSpeed = 11;
 const maxJumps = 2;
 const PLAYER_MAX_HEALTH = 100;
+let flyMode = false;
 
 function updatePlayerHealthUI() {
   playerHud.setHealth(playerState.health);
@@ -192,6 +266,16 @@ function getDesktopSprintMultiplier() {
   if (mobileMode) return 1;
   if (!controls.isLocked) return 1;
   return keys['KeyE'] ? 2 : 1;
+}
+
+function setFlyMode(nextEnabled) {
+  flyMode = nextEnabled;
+  playerState.velocity.y = 0;
+  playerState.jumpQueued = false;
+  if (flyMode) {
+    playerState.onGround = false;
+    playerState.jumpsUsed = 0;
+  }
 }
 
 // --------------------
@@ -214,10 +298,11 @@ scene.add(dir.target);
 // --------------------
 // GROUND
 // --------------------
-const MAP_PRESET = 'simple'; // 'simple' | 'city'
+const MAP_PRESET = 'voxelandia'; // 'simple' | 'city' | 'voxelandia'
 const mapBuilders = {
   simple: buildSimpleMap,
   city: buildCityMap,
+  voxelandia: buildVoxelandiaMap,
 };
 const selectedMapBuilder = mapBuilders[MAP_PRESET] ?? buildSimpleMap;
 const mapData = selectedMapBuilder({
@@ -232,12 +317,83 @@ const mapData = selectedMapBuilder({
 const GROUND_Y = mapData.groundY;
 const buildingColliders = mapData.buildingColliders;
 const entities = mapData.entities;
+const raycastTargets = mapData.raycastTargets ?? [];
+const resolveRaycastLabel = typeof mapData.resolveRaycastLabel === 'function'
+  ? mapData.resolveRaycastLabel
+  : () => null;
+const removeVoxelAtRaycastHit = typeof mapData.removeVoxelAtRaycastHit === 'function'
+  ? mapData.removeVoxelAtRaycastHit
+  : () => false;
+const addVoxelAtRaycastHit = typeof mapData.addVoxelAtRaycastHit === 'function'
+  ? mapData.addVoxelAtRaycastHit
+  : () => false;
+const getVoxelBoxFromRaycastHit = typeof mapData.getVoxelBoxFromRaycastHit === 'function'
+  ? mapData.getVoxelBoxFromRaycastHit
+  : () => null;
+const voxelTypes = Array.isArray(mapData.voxelTypes) ? mapData.voxelTypes : [];
+let selectedVoxelType = voxelTypes.find(type => type.name === 'green')?.name ?? voxelTypes[0]?.name ?? 'green';
+const intersectMapColliderBox = typeof mapData.intersectColliderBox === 'function'
+  ? mapData.intersectColliderBox
+  : () => null;
+const isMapBoxSupported = typeof mapData.isBoxSupported === 'function'
+  ? mapData.isBoxSupported
+  : () => false;
 const SHADOW_RANGE = mapData.shadowRange ?? 80;
 const MINI_MAP_VIEW_SIZE = mapData.miniMapViewSize ?? 90;
 const MINI_MAP_HEIGHT = mapData.miniMapHeight ?? 130;
+const HAS_INFINITE_GROUND = mapData.hasInfiniteGround ?? true;
+const FALL_RESPAWN_Y = -100;
+const playerSpawnPoint = mapData.spawnPoint.clone();
 
 playerEye.copy(mapData.spawnPoint);
 camera.position.copy(playerEye);
+
+function renderInventorySlots() {
+  if (!inventorySlots) return;
+  inventorySlots.textContent = '';
+
+  for (let i = 0; i < voxelTypes.length; i++) {
+    const voxelType = voxelTypes[i];
+    const slot = document.createElement('button');
+    slot.type = 'button';
+    slot.className = 'inventory-slot';
+    slot.dataset.voxelType = voxelType.name;
+
+    const swatch = document.createElement('span');
+    swatch.className = 'inventory-slot-swatch';
+    swatch.style.backgroundColor = `#${voxelType.color.toString(16).padStart(6, '0')}`;
+    slot.appendChild(swatch);
+
+    const label = document.createElement('span');
+    label.textContent = voxelType.name;
+    slot.appendChild(label);
+
+    slot.addEventListener('click', () => {
+      selectedVoxelType = voxelType.name;
+      updateInventorySelectionUI();
+    });
+
+    inventorySlots.appendChild(slot);
+  }
+
+  updateInventorySelectionUI();
+}
+
+function updateInventorySelectionUI() {
+  if (inventorySelected) {
+    inventorySelected.textContent = `Selected: ${selectedVoxelType}`;
+  }
+  if (!inventorySlots) return;
+
+  const slotElements = inventorySlots.querySelectorAll('.inventory-slot');
+  for (let i = 0; i < slotElements.length; i++) {
+    const slot = slotElements[i];
+    const isSelected = slot.dataset.voxelType === selectedVoxelType;
+    slot.classList.toggle('is-selected', isSelected);
+  }
+}
+
+renderInventorySlots();
 
 const miniMapCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 500);
 miniMapCamera.up.set(0, 0, -1);
@@ -266,6 +422,60 @@ dir.shadow.camera.bottom = -SHADOW_RANGE;
 dir.shadow.camera.near = 10;
 dir.shadow.camera.far = 600;
 dir.shadow.camera.updateProjectionMatrix();
+
+const CAMERA_RAYCAST_RANGE = 18;
+const CAMERA_RAYCAST_START_OFFSET = 0.18;
+const cameraRaycaster = new THREE.Raycaster();
+cameraRaycaster.near = 0;
+cameraRaycaster.far = CAMERA_RAYCAST_RANGE;
+const cameraRayOrigin = new THREE.Vector3();
+const cameraRayDirection = new THREE.Vector3();
+const cameraRayEnd = new THREE.Vector3();
+const cameraRayLineGeometry = new THREE.BufferGeometry().setFromPoints([
+  new THREE.Vector3(),
+  new THREE.Vector3(0, 0, -CAMERA_RAYCAST_RANGE),
+]);
+const cameraRayLine = new THREE.Line(
+  cameraRayLineGeometry,
+  new THREE.LineBasicMaterial({
+    color: 0xff3a3a,
+    depthTest: false,
+    transparent: true,
+    opacity: 0.95,
+  })
+);
+cameraRayLine.frustumCulled = false;
+cameraRayLine.renderOrder = 999;
+scene.add(cameraRayLine);
+const cameraRayTip = new THREE.Mesh(
+  new THREE.SphereGeometry(0.045, 10, 10),
+  new THREE.MeshBasicMaterial({
+    color: 0xffb3b3,
+    transparent: true,
+    opacity: 0.95,
+    depthTest: false,
+  })
+);
+cameraRayTip.renderOrder = 1000;
+cameraRayTip.frustumCulled = false;
+scene.add(cameraRayTip);
+
+const VOXEL_HIGHLIGHT_SCALE = 1.04;
+const voxelHighlightMesh = new THREE.Mesh(
+  new THREE.BoxGeometry(VOXEL_HIGHLIGHT_SCALE, VOXEL_HIGHLIGHT_SCALE, VOXEL_HIGHLIGHT_SCALE),
+  new THREE.MeshStandardMaterial({
+    color: 0xfff3a6,
+    emissive: 0xffea84,
+    emissiveIntensity: 0.45,
+    transparent: true,
+    opacity: 0.28,
+    depthWrite: false,
+  })
+);
+voxelHighlightMesh.visible = false;
+voxelHighlightMesh.renderOrder = 998;
+scene.add(voxelHighlightMesh);
+const voxelHighlightBox = new THREE.Box3();
 
 // --------------------
 // PLAYER BODY + COLLIDER
@@ -857,9 +1067,33 @@ function updateLeftPunch(deltaTime) {
 
 function handleDesktopAttack(event) {
   if (event.button !== 0 && event.button !== 2) return;
+
+  if (inventoryPanelOpen) {
+    const clickedInsideInventory = Boolean(event.target?.closest?.('#inventoryPanel'));
+    if (clickedInsideInventory) {
+      return;
+    }
+
+    setInventoryPanelOpen(false);
+    controls.lock();
+    menuCentral.classList.add('invisible');
+    return;
+  }
+
   event.preventDefault();
   if (event.button === 0) {
+    if (currentRaycastState.voxelEditionMode) {
+      removeVoxelAtRaycastHit(currentRaycastState.hit);
+      return;
+    }
     startRightPunch();
+    return;
+  }
+  if (currentRaycastState.voxelEditionMode) {
+    addVoxelAtRaycastHit(currentRaycastState.hit, {
+      playerCollider,
+      voxelType: selectedVoxelType,
+    });
     return;
   }
   startLeftPunch();
@@ -1048,6 +1282,9 @@ function updateChaserMeleeAttacks(deltaTime) {
 }
 
 function collidesWithBuildings(box) {
+  const mapCollision = intersectMapColliderBox(box);
+  if (mapCollision) return mapCollision;
+
   for (let i = 0; i < buildingColliders.length; i++) {
     if (box.intersectsBox(buildingColliders[i])) return buildingColliders[i];
   }
@@ -1111,6 +1348,8 @@ function resolveVertical(deltaY) {
 }
 
 function resolveGround() {
+  if (!HAS_INFINITE_GROUND) return;
+
   const minEyeY = GROUND_Y + EYE_HEIGHT;
 
   if (playerEye.y <= minEyeY) {
@@ -1123,7 +1362,11 @@ function resolveGround() {
 }
 
 function isStandingOnSupport() {
-  if (Math.abs(playerCollider.min.y - GROUND_Y) <= SUPPORT_EPSILON) {
+  if (HAS_INFINITE_GROUND && Math.abs(playerCollider.min.y - GROUND_Y) <= SUPPORT_EPSILON) {
+    return true;
+  }
+
+  if (isMapBoxSupported(playerCollider, SUPPORT_EPSILON)) {
     return true;
   }
 
@@ -1149,6 +1392,57 @@ const horizontalMove = new THREE.Vector3();
 const worldUp = new THREE.Vector3(0, 1, 0);
 const miniMapFacing = new THREE.Vector3();
 const miniMapProjectedPos = new THREE.Vector3();
+const currentRaycastState = {
+  hit: null,
+  voxelEditionMode: false,
+};
+
+function updateVoxelRaycast() {
+  camera.getWorldDirection(cameraRayDirection);
+  cameraRayDirection.normalize();
+  camera.getWorldPosition(cameraRayOrigin);
+  cameraRayOrigin.addScaledVector(cameraRayDirection, CAMERA_RAYCAST_START_OFFSET);
+
+  cameraRaycaster.set(cameraRayOrigin, cameraRayDirection);
+  const intersections = raycastTargets.length > 0
+    ? cameraRaycaster.intersectObjects(raycastTargets, true)
+    : [];
+
+  let voxelLabel = 'none';
+  let activeVoxelHit = null;
+  if (intersections.length > 0) {
+    const hit = intersections[0];
+    cameraRayEnd.copy(hit.point);
+    const resolvedLabel = resolveRaycastLabel(hit);
+    if (resolvedLabel) {
+      voxelLabel = resolvedLabel;
+      activeVoxelHit = hit;
+    }
+  } else {
+    cameraRayEnd.copy(cameraRayOrigin).addScaledVector(cameraRayDirection, CAMERA_RAYCAST_RANGE);
+  }
+
+  currentRaycastState.hit = activeVoxelHit;
+  currentRaycastState.voxelEditionMode = activeVoxelHit !== null;
+
+  if (activeVoxelHit && getVoxelBoxFromRaycastHit(activeVoxelHit, voxelHighlightBox)) {
+    voxelHighlightBox.getCenter(voxelHighlightMesh.position);
+    voxelHighlightMesh.visible = true;
+  } else {
+    voxelHighlightMesh.visible = false;
+  }
+
+  const linePosition = cameraRayLineGeometry.attributes.position;
+  linePosition.setXYZ(0, cameraRayOrigin.x, cameraRayOrigin.y, cameraRayOrigin.z);
+  linePosition.setXYZ(1, cameraRayEnd.x, cameraRayEnd.y, cameraRayEnd.z);
+  linePosition.needsUpdate = true;
+  cameraRayLineGeometry.computeBoundingSphere();
+  cameraRayTip.position.copy(cameraRayEnd);
+
+  if (voxelReadout) {
+    voxelReadout.textContent = `Voxel: ${voxelLabel}`;
+  }
+}
 
 function updateDesktopLook() {
   if (!controls.isLocked) return;
@@ -1156,7 +1450,23 @@ function updateDesktopLook() {
   pitch = camera.rotation.x;
 }
 
+function respawnPlayerAtSpawn() {
+  playerEye.copy(playerSpawnPoint);
+  playerState.velocity.set(0, 0, 0);
+  playerState.onGround = false;
+  playerState.jumpQueued = false;
+  playerState.jumpsUsed = 0;
+  updatePlayerCollider(playerEye);
+}
+
 function updatePlayer(deltaTime) {
+  if (playerEye.y < FALL_RESPAWN_Y) {
+    respawnPlayerAtSpawn();
+    syncPlayerBody();
+    syncCameraToPlayerView(deltaTime);
+    return;
+  }
+
   previousFoot.copy(playerFoot);
 
   let inputForward = 0;
@@ -1196,6 +1506,27 @@ function updatePlayer(deltaTime) {
 
   tryMoveAxis('x', horizontalMove.x);
   tryMoveAxis('z', horizontalMove.z);
+
+  if (flyMode) {
+    let inputVertical = 0;
+    if (controls.isLocked) {
+      if (keys['Space']) inputVertical += 1;
+      if (keys['ShiftLeft'] || keys['ShiftRight']) inputVertical -= 1;
+    }
+
+    const verticalDelta = inputVertical * flySpeed * deltaTime;
+    resolveVertical(verticalDelta);
+    playerState.velocity.y = 0;
+    playerState.jumpQueued = false;
+    playerState.onGround = false;
+
+    const isMoving = horizontalMove.lengthSq() > 0.00001 || Math.abs(verticalDelta) > 0.00001;
+    gameAudio.updateFootsteps(deltaTime, false, sprintMultiplier, false);
+    syncPlayerBody();
+    animatePlayerBody(deltaTime, isMoving);
+    syncCameraToPlayerView(deltaTime);
+    return;
+  }
 
   playerState.velocity.y -= gravity * deltaTime;
 
@@ -1424,7 +1755,20 @@ document.addEventListener('mousedown', handleDesktopAttack);
 document.addEventListener('contextmenu', event => event.preventDefault());
 
 document.addEventListener('keydown', e => {
+  if (e.code === 'KeyF' && !mobileMode) {
+    if (e.repeat) return;
+    setFlyMode(!flyMode);
+    return;
+  }
+
+  if (e.code === 'KeyI' && !mobileMode) {
+    e.preventDefault();
+    setInventoryPanelOpen(!inventoryPanelOpen);
+    return;
+  }
+
   if (e.code === 'Space') {
+    if (flyMode) return;
     if (e.repeat) return;
     playerState.jumpQueued = true;
   }
@@ -1437,6 +1781,7 @@ let fps = 0;
 
 updateMiniMapSize();
 updatePlayerHealthUI();
+updateVoxelRaycast();
 
 function checkFPS(delta) {
   accTime += delta;
@@ -1481,6 +1826,7 @@ renderer.setAnimationLoop(() => {
   updateChaserMeleeAttacks(delta);
   updateChaserPunchHitboxes(delta);
   updateProjectilesAndExplosions(delta);
+  updateVoxelRaycast();
   checkFPS(delta);
 
   renderer.render(scene, camera);

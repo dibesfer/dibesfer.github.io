@@ -20,6 +20,16 @@
 
 <body>
 
+    <div id="loadingScreen" aria-live="polite">
+        <div id="loadingContent">
+            <h1>Loading Voxelandia</h1>
+            <div id="loadingBarTrack">
+                <div id="loadingBarFill"></div>
+            </div>
+            <p id="loadingText">Loading assets... 0%</p>
+        </div>
+    </div>
+
     <div id="consola">
         <p>FPS: </p>
     </div>
@@ -31,21 +41,30 @@
     <div id="crossHair">+</div>
 
     <div id="playerHud">
+        <div id="voxelReadout">Voxel: none</div>
         <div id="playerHealthBar" aria-label="Player health">
             <div id="playerHealthFill"></div>
             <span id="playerHealthText">100 / 100</span>
         </div>
     </div>
 
+    <div id="inventoryPanel" class="invisible" aria-label="Inventory panel">
+        <h2>Inventory</h2>
+        <div id="inventorySlots"></div>
+        <p id="inventorySelected">Selected: green</p>
+        <p class="inventory-help">Press I to close</p>
+    </div>
+
     <div id="menuCentral" class="invisible">
         <h1>Colorlandia</h1>
+        <button id="menuOpenInventory" type="button">Open Inventory</button>
         <h2>Desktop Controllers</h2>
         <hr>
         <p>Click anywhere to lock your cursor and drive the camera with your mouse.</p>
         <p>Move with WASD</p>
         <p>Jump with Space</p>
 
-        <p>Press Escape to unlock your cursor</p>
+        <p>Press Escape to unlock your cursor and open the Menu</p>
         <br>
         <p>game made with Three.js by dibesfer</p>
     </div>
