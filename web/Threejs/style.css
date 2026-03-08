@@ -14,7 +14,7 @@ body {
 
 body {
     font-family: sans-serif;
-    height: 100dvh;
+    height: 100vh;
 }
 
 #loadingScreen {
@@ -444,10 +444,15 @@ img {
 
 #buttonShoot>img {
     filter: invert(1);
+    pointer-events: none;
 }
 
 #buttonShoot.is-shooting {
     background-color: rgb(210, 30, 30);
+}
+
+.button.is-active {
+    background-color: rgb(210, 170, 30);
 }
 
 .button {

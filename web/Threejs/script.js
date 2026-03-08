@@ -62,11 +62,14 @@ const loadingBarFill = document.getElementById('loadingBarFill');
 const loadingText = document.getElementById('loadingText');
 const buttonUp = document.getElementById('buttonUp');
 const buttonDown = document.getElementById('buttonDown');
+const buttonLeft1 = document.getElementById('Left1');
 const buttonShoot = document.getElementById('buttonShoot');
+const buttonRight1 = document.getElementById('Right1');
 const playerHealthFill = document.getElementById('playerHealthFill');
 const playerHealthText = document.getElementById('playerHealthText');
 const voxelReadout = document.getElementById('voxelReadout');
 let mobileShootPressed = false;
+let mobileSprintEnabled = false;
 let inventoryPanelOpen = false;
 const gameAudio = createGameAudio();
 
@@ -112,7 +115,9 @@ function applyMode(mode) {
   menuInferior.classList.add('invisible');
   menuInferior.classList.remove('flex');
   mobileShootPressed = false;
+  mobileSprintEnabled = false;
   setShootButtonState(false);
+  setMobileSprintState(false);
   document.addEventListener('click', controlLocker);
 }
 
@@ -263,7 +268,7 @@ function applyPlayerDamage(amount) {
 }
 
 function getDesktopSprintMultiplier() {
-  if (mobileMode) return 1;
+  if (mobileMode) return mobileSprintEnabled ? 2 : 1;
   if (!controls.isLocked) return 1;
   return keys['KeyE'] ? 2 : 1;
 }
@@ -974,22 +979,48 @@ function shootDesktopProjectile(event) {
   shootProjectileFromPlayer();
 }
 
-function startRightPunch() {
-  if (mobileMode) return;
-  if (!controls.isLocked) return;
+function startRightPunch(options = {}) {
+  const allowMobile = options.allowMobile === true;
+  if (mobileMode && !allowMobile) return;
+  if (!mobileMode && !controls.isLocked) return;
   if (rightPunchTimer > 0) return;
 
   rightPunchTimer = RIGHT_PUNCH_DURATION;
   spawnPunchHitbox('right');
 }
 
-function startLeftPunch() {
-  if (mobileMode) return;
-  if (!controls.isLocked) return;
+function startLeftPunch(options = {}) {
+  const allowMobile = options.allowMobile === true;
+  if (mobileMode && !allowMobile) return;
+  if (!mobileMode && !controls.isLocked) return;
   if (leftPunchTimer > 0) return;
 
   leftPunchTimer = RIGHT_PUNCH_DURATION;
   spawnPunchHitbox('left');
+}
+
+function triggerActionForMouseButton(button, options = {}) {
+  const allowMobile = options.allowMobile === true;
+
+  if (button === 0) {
+    if (currentRaycastState.voxelEditionMode) {
+      removeVoxelAtRaycastHit(currentRaycastState.hit);
+      return;
+    }
+    startRightPunch({ allowMobile });
+    return;
+  }
+
+  if (button === 2) {
+    if (currentRaycastState.voxelEditionMode) {
+      addVoxelAtRaycastHit(currentRaycastState.hit, {
+        playerCollider,
+        voxelType: selectedVoxelType,
+      });
+      return;
+    }
+    startLeftPunch({ allowMobile });
+  }
 }
 
 function updateRightPunch(deltaTime) {
@@ -1067,6 +1098,7 @@ function updateLeftPunch(deltaTime) {
 
 function handleDesktopAttack(event) {
   if (event.button !== 0 && event.button !== 2) return;
+  if (mobileMode) return;
 
   if (inventoryPanelOpen) {
     const clickedInsideInventory = Boolean(event.target?.closest?.('#inventoryPanel'));
@@ -1081,22 +1113,7 @@ function handleDesktopAttack(event) {
   }
 
   event.preventDefault();
-  if (event.button === 0) {
-    if (currentRaycastState.voxelEditionMode) {
-      removeVoxelAtRaycastHit(currentRaycastState.hit);
-      return;
-    }
-    startRightPunch();
-    return;
-  }
-  if (currentRaycastState.voxelEditionMode) {
-    addVoxelAtRaycastHit(currentRaycastState.hit, {
-      playerCollider,
-      voxelType: selectedVoxelType,
-    });
-    return;
-  }
-  startLeftPunch();
+  triggerActionForMouseButton(event.button);
 }
 
 function updateProjectilesAndExplosions(deltaTime) {
@@ -1727,24 +1744,73 @@ function setShootButtonState(active) {
   buttonShoot.classList.toggle('is-shooting', active);
 }
 
-function startMobileShooting(event) {
-  // Shooting is reserved for a future update.
+function setMobileSprintState(active) {
+  if (!buttonLeft1) return;
+  buttonLeft1.classList.toggle('is-active', active);
+}
+
+function startMobileLeftClick(event) {
   if (!mobileMode) return;
   if (event) event.preventDefault();
-  mobileShootPressed = false;
+  setShootButtonState(true);
+  triggerActionForMouseButton(0, { allowMobile: true });
+}
+
+function stopMobileLeftClick(event) {
+  if (event) event.preventDefault();
   setShootButtonState(false);
 }
 
-function stopMobileShooting(event) {
+function startMobileRightClick(event) {
+  if (!mobileMode) return;
   if (event) event.preventDefault();
-  mobileShootPressed = false;
-  setShootButtonState(false);
+  triggerActionForMouseButton(2, { allowMobile: true });
+}
+
+function toggleMobileSprint(event) {
+  if (!mobileMode) return;
+  if (event) event.preventDefault();
+  mobileSprintEnabled = !mobileSprintEnabled;
+  setMobileSprintState(mobileSprintEnabled);
 }
 
 if (buttonShoot) {
-  buttonShoot.addEventListener('touchstart', startMobileShooting, { passive: false });
-  buttonShoot.addEventListener('touchend', stopMobileShooting, { passive: false });
-  buttonShoot.addEventListener('touchcancel', stopMobileShooting, { passive: false });
+  buttonShoot.addEventListener('touchstart', startMobileLeftClick, { passive: false });
+  buttonShoot.addEventListener('touchend', stopMobileLeftClick, { passive: false });
+  buttonShoot.addEventListener('touchcancel', stopMobileLeftClick, { passive: false });
+  buttonShoot.addEventListener('pointerdown', event => {
+    if (!mobileMode) return;
+    event.preventDefault();
+    startMobileLeftClick(event);
+  });
+  buttonShoot.addEventListener('pointerup', event => {
+    if (!mobileMode) return;
+    event.preventDefault();
+    stopMobileLeftClick(event);
+  });
+  buttonShoot.addEventListener('click', event => {
+    if (!mobileMode) return;
+    event.preventDefault();
+    triggerActionForMouseButton(0, { allowMobile: true });
+  });
+}
+
+if (buttonRight1) {
+  buttonRight1.addEventListener('touchstart', startMobileRightClick, { passive: false });
+  buttonRight1.addEventListener('click', event => {
+    if (!mobileMode) return;
+    event.preventDefault();
+    triggerActionForMouseButton(2, { allowMobile: true });
+  });
+}
+
+if (buttonLeft1) {
+  buttonLeft1.addEventListener('touchstart', toggleMobileSprint, { passive: false });
+  buttonLeft1.addEventListener('click', event => {
+    if (!mobileMode) return;
+    event.preventDefault();
+    toggleMobileSprint(event);
+  });
 }
 
 function updateMobileShooting(deltaTime) {
