@@ -8,11 +8,18 @@ import {
   applyHumanoidRightPunchAnimation,
   applyHumanoidLeftPunchAnimation,
 } from './entityModel.js';
+import { createGameAudio } from './audio.js';
+import { createPlayerHud } from './playerHud.js';
 
 let mobileMode = false;
 let windowWidth = window.innerWidth;
 let windowHeight = window.innerHeight;
 const MOBILE_BREAKPOINT = 900;
+const MODE_DESKTOP = 'desktop';
+const MODE_MOBILE_PORTRAIT = 'mobile-portrait';
+const MODE_MOBILE_LANDSCAPE = 'mobile-landscape';
+let activeMode = MODE_DESKTOP;
+const touchQuery = window.matchMedia('(hover: none) and (pointer: coarse)');
 const THIRD_PERSON_MAX_DISTANCE = 8;
 const JOYSTICK_MAX_OFFSET = 50;
 const ENTITY_MIN_SPAWN_DIST_SQ = 6.25;
@@ -50,56 +57,70 @@ const buttonShoot = document.getElementById('buttonShoot');
 const playerHealthFill = document.getElementById('playerHealthFill');
 const playerHealthText = document.getElementById('playerHealthText');
 let mobileShootPressed = false;
+const gameAudio = createGameAudio();
 
 const miniMapPlayerMarker = document.createElement('div');
 miniMapPlayerMarker.id = 'miniMapPlayerMarker';
 miniMap.appendChild(miniMapPlayerMarker);
 const entityMiniMapMarkers = new Map();
 
-function checkForJoysticks() {
-  if (windowWidth < MOBILE_BREAKPOINT && menuInferior.classList.contains('invisible')) {
-    console.log('Joysticks Activated');
+function resolveMode() {
+  const hasTouchScreen = (navigator.maxTouchPoints ?? 0) > 1;
+  const isCoarsePointer = touchQuery.matches;
+  const touchMobileViewport = (hasTouchScreen || isCoarsePointer) && Math.max(windowWidth, windowHeight) <= 1400;
+  const isMobile = windowWidth < MOBILE_BREAKPOINT || touchMobileViewport;
+  if (!isMobile) return MODE_DESKTOP;
+  return windowWidth > windowHeight ? MODE_MOBILE_LANDSCAPE : MODE_MOBILE_PORTRAIT;
+}
+
+function applyMode(mode) {
+  activeMode = mode;
+  document.body.dataset.mode = mode;
+
+  const shouldUseMobile = mode !== MODE_DESKTOP;
+  mobileMode = shouldUseMobile;
+
+  if (shouldUseMobile) {
+    if (controls.isLocked) {
+      controls.unlock();
+    }
     menuCentral.classList.add('invisible');
     menuInferior.classList.remove('invisible');
     menuInferior.classList.add('flex');
-    mobileMode = true;
     document.removeEventListener('click', controlLocker);
-    return true;
+    return;
   }
 
-  if (windowWidth > MOBILE_BREAKPOINT) {
-    console.log('Joysticks Deactivated');
+  if (controls.isLocked) {
+    menuCentral.classList.add('invisible');
+  } else {
     menuCentral.classList.remove('invisible');
-    menuInferior.classList.add('invisible');
-    menuInferior.classList.remove('flex');
-    mobileMode = false;
-    mobileShootPressed = false;
-    setShootButtonState(false);
-    document.addEventListener('click', controlLocker);
-    return false;
   }
-
-  return mobileMode;
+  menuInferior.classList.add('invisible');
+  menuInferior.classList.remove('flex');
+  mobileShootPressed = false;
+  setShootButtonState(false);
+  document.addEventListener('click', controlLocker);
 }
 
-checkForJoysticks();
+function updateModeFromViewport() {
+  const nextMode = resolveMode();
+  if (nextMode !== activeMode) {
+    console.log(`Mode changed: ${activeMode} -> ${nextMode}`);
+  }
+  applyMode(nextMode);
+}
 
-const sceneView = document.getElementById("sceneView")
+const sceneView = document.getElementById('sceneView');
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
-
-let sceneWidth = sceneView.innerWidth
-let sceneHeight = sceneView.innerHeight
-
-sceneView.style.display = "none"
 
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setClearColor(0x87CEEB);
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
-renderer.domElement.id = "sceneView"
-document.body.appendChild(renderer.domElement);
+sceneView.appendChild(renderer.domElement);
 
 const textureLoader = new THREE.TextureLoader();
 const maxAnisotropy = renderer.capabilities.getMaxAnisotropy();
@@ -133,13 +154,17 @@ miniMap.appendChild(miniMapRenderer.domElement);
 // --------------------
 const controls = new PointerLockControls(camera, document.body);
 controls.addEventListener('unlock', () => {
-  menuCentral.classList.remove('invisible');
+  if (!mobileMode) {
+    menuCentral.classList.remove('invisible');
+  }
 });
 
 function controlLocker() {
   controls.lock();
   menuCentral.classList.add('invisible');
 }
+
+updateModeFromViewport();
 
 const keys = {};
 document.addEventListener('keydown', e => keys[e.code] = true);
@@ -152,14 +177,7 @@ const maxJumps = 2;
 const PLAYER_MAX_HEALTH = 100;
 
 function updatePlayerHealthUI() {
-  if (playerHealthFill) {
-    const ratio = THREE.MathUtils.clamp(playerState.health / playerState.maxHealth, 0, 1);
-    playerHealthFill.style.width = `${ratio * 100}%`;
-  }
-
-  if (playerHealthText) {
-    playerHealthText.textContent = `${Math.round(playerState.health)} / ${playerState.maxHealth}`;
-  }
+  playerHud.setHealth(playerState.health);
 }
 
 function applyPlayerDamage(amount) {
@@ -279,6 +297,11 @@ const playerState = {
   maxHealth: PLAYER_MAX_HEALTH,
   health: PLAYER_MAX_HEALTH,
 };
+const playerHud = createPlayerHud({
+  fillEl: playerHealthFill,
+  textEl: playerHealthText,
+  maxHealth: PLAYER_MAX_HEALTH,
+});
 
 const playerCollider = new THREE.Box3();
 const playerFoot = new THREE.Vector3();
@@ -829,145 +852,6 @@ const chaserPunchHitboxMat = new THREE.MeshBasicMaterial({
   opacity: 0.9,
   visible: CHASER_PUNCH_HITBOX_DEBUG_VISIBLE,
 });
-let audioContext = null;
-const FOOTSTEP_BASE_INTERVAL = 0.42;
-const FOOTSTEP_DOUBLE_TAP_GAP = 0.055;
-let footstepTimer = 0;
-let footstepSwap = false;
-
-function ensureAudioContext() {
-  if (!audioContext) {
-    const AudioCtx = window.AudioContext || window.webkitAudioContext;
-    if (!AudioCtx) return null;
-    audioContext = new AudioCtx();
-  }
-
-  if (audioContext.state === 'suspended') {
-    audioContext.resume();
-  }
-
-  return audioContext;
-}
-
-function playExplosionSound() {
-  const ctx = ensureAudioContext();
-  if (!ctx) return;
-
-  const now = ctx.currentTime;
-  const osc = ctx.createOscillator();
-  const filter = ctx.createBiquadFilter();
-  const gain = ctx.createGain();
-
-  osc.type = 'triangle';
-  osc.frequency.setValueAtTime(220, now);
-  osc.frequency.exponentialRampToValueAtTime(70, now + 0.25);
-
-  filter.type = 'lowpass';
-  filter.frequency.setValueAtTime(1300, now);
-  filter.frequency.exponentialRampToValueAtTime(280, now + 0.25);
-
-  gain.gain.setValueAtTime(0.0001, now);
-  gain.gain.exponentialRampToValueAtTime(0.26, now + 0.01);
-  gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.28);
-
-  osc.connect(filter);
-  filter.connect(gain);
-  gain.connect(ctx.destination);
-
-  osc.start(now);
-  osc.stop(now + 0.3);
-}
-
-function playFootstepSound(speedFactor = 1) {
-  const ctx = ensureAudioContext();
-  if (!ctx) return;
-
-  const now = ctx.currentTime;
-  const baseFreq = (footstepSwap ? 165 : 190) * THREE.MathUtils.clamp(speedFactor, 0.8, 2.2);
-  const hitTimes = [0, FOOTSTEP_DOUBLE_TAP_GAP];
-
-  for (let i = 0; i < hitTimes.length; i++) {
-    const start = now + hitTimes[i];
-    const osc = ctx.createOscillator();
-    const filter = ctx.createBiquadFilter();
-    const gain = ctx.createGain();
-
-    osc.type = 'triangle';
-    osc.frequency.setValueAtTime(baseFreq, start);
-    osc.frequency.exponentialRampToValueAtTime(baseFreq * 0.58, start + 0.06);
-
-    filter.type = 'bandpass';
-    filter.frequency.setValueAtTime(780, start);
-    filter.Q.setValueAtTime(0.8, start);
-
-    gain.gain.setValueAtTime(0.0001, start);
-    gain.gain.exponentialRampToValueAtTime(0.085, start + 0.005);
-    gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.07);
-
-    osc.connect(filter);
-    filter.connect(gain);
-    gain.connect(ctx.destination);
-
-    osc.start(start);
-    osc.stop(start + 0.08);
-  }
-
-  footstepSwap = !footstepSwap;
-}
-
-function playJumpSound(isDoubleJump = false) {
-  const ctx = ensureAudioContext();
-  if (!ctx) return;
-
-  const now = ctx.currentTime;
-  const osc = ctx.createOscillator();
-  const filter = ctx.createBiquadFilter();
-  const gain = ctx.createGain();
-
-  osc.type = 'triangle';
-  if (isDoubleJump) {
-    osc.frequency.setValueAtTime(540, now);
-    osc.frequency.exponentialRampToValueAtTime(760, now + 0.07);
-    osc.frequency.exponentialRampToValueAtTime(510, now + 0.16);
-    gain.gain.setValueAtTime(0.0001, now);
-    gain.gain.exponentialRampToValueAtTime(0.12, now + 0.01);
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.18);
-  } else {
-    osc.frequency.setValueAtTime(260, now);
-    osc.frequency.exponentialRampToValueAtTime(420, now + 0.06);
-    osc.frequency.exponentialRampToValueAtTime(240, now + 0.18);
-    gain.gain.setValueAtTime(0.0001, now);
-    gain.gain.exponentialRampToValueAtTime(0.11, now + 0.012);
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.2);
-  }
-
-  filter.type = 'bandpass';
-  filter.frequency.setValueAtTime(isDoubleJump ? 1400 : 980, now);
-  filter.Q.setValueAtTime(0.8, now);
-
-  osc.connect(filter);
-  filter.connect(gain);
-  gain.connect(ctx.destination);
-
-  osc.start(now);
-  osc.stop(now + 0.22);
-}
-
-function updateFootsteps(deltaTime, isMoving, sprintMultiplier, onGround) {
-  if (!isMoving || !onGround) {
-    footstepTimer = 0;
-    return;
-  }
-
-  const speedFactor = THREE.MathUtils.clamp(sprintMultiplier, 1, 2);
-  const interval = FOOTSTEP_BASE_INTERVAL / speedFactor;
-  footstepTimer -= deltaTime;
-
-  if (footstepTimer <= 0) {
-    playFootstepSound(speedFactor);
-    footstepTimer += interval;
-  }
-}
 
 function createExplosion(position) {
   const particles = [];
@@ -1006,7 +890,7 @@ function createExplosion(position) {
     life: EXPLOSION_LIFETIME,
     particles,
   });
-  playExplosionSound();
+  gameAudio.playExplosionSound();
 }
 
 function projectileHitsEnvironment(position, radius) {
@@ -1120,7 +1004,7 @@ function updatePunchHitboxes(deltaTime) {
 
     if (hitThisFrame && !hitbox.hitSomething) {
       hitbox.hitSomething = true;
-      playPunchSound();
+      gameAudio.playPunchSound();
     }
 
     if (hitbox.age >= hitbox.life) {
@@ -1155,35 +1039,6 @@ function shootDesktopProjectile(event) {
   if (event.button !== 0) return;
   if (mobileMode || !controls.isLocked) return;
   shootProjectileFromPlayer();
-}
-
-function playPunchSound() {
-  const ctx = ensureAudioContext();
-  if (!ctx) return;
-
-  const now = ctx.currentTime;
-  const osc = ctx.createOscillator();
-  const filter = ctx.createBiquadFilter();
-  const gain = ctx.createGain();
-
-  osc.type = 'square';
-  osc.frequency.setValueAtTime(230, now);
-  osc.frequency.exponentialRampToValueAtTime(100, now + 0.09);
-
-  filter.type = 'highpass';
-  filter.frequency.setValueAtTime(420, now);
-  filter.Q.setValueAtTime(0.75, now);
-
-  gain.gain.setValueAtTime(0.0001, now);
-  gain.gain.exponentialRampToValueAtTime(0.22, now + 0.005);
-  gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.11);
-
-  osc.connect(filter);
-  filter.connect(gain);
-  gain.connect(ctx.destination);
-
-  osc.start(now);
-  osc.stop(now + 0.12);
 }
 
 function startRightPunch() {
@@ -1625,7 +1480,7 @@ function updatePlayer(deltaTime) {
     playerState.velocity.y = jumpSpeed;
     playerState.onGround = false;
     playerState.jumpsUsed += 1;
-    playJumpSound(playerState.jumpsUsed >= 2);
+    gameAudio.playJumpSound(playerState.jumpsUsed >= 2);
   }
 
   playerState.jumpQueued = false;
@@ -1636,7 +1491,7 @@ function updatePlayer(deltaTime) {
   playerState.onGround = isStandingOnSupport();
 
   const isMoving = horizontalMove.lengthSq() > 0.00001;
-  updateFootsteps(deltaTime, isMoving, sprintMultiplier, playerState.onGround);
+  gameAudio.updateFootsteps(deltaTime, isMoving, sprintMultiplier, playerState.onGround);
   syncPlayerBody();
   animatePlayerBody(deltaTime, isMoving);
   syncCameraToPlayerView(deltaTime);
@@ -1697,14 +1552,7 @@ window.addEventListener('resize', () => {
   windowWidth = window.innerWidth;
   windowHeight = window.innerHeight;
 
-  checkForJoysticks();
-
-   sceneWidth = sceneView.innerWidth
-   sceneHeight = sceneView.innerHeight
-
-sceneView.style.display = "none"
-
-renderer.setSize(window.innerWidth, window.innerHeight);
+  updateModeFromViewport();
 
   renderer.setSize(window.innerWidth, window.innerHeight);
   updateMiniMapSize();
