@@ -57,6 +57,7 @@ const menuInferior = document.getElementById('menuInferior');
 const inventoryPanel = document.getElementById('inventoryPanel');
 const inventorySlots = document.getElementById('inventorySlots');
 const inventorySelected = document.getElementById('inventorySelected');
+const hotbarSlotEls = document.querySelectorAll('#hotbar .hotbar-slot');
 const loadingScreen = document.getElementById('loadingScreen');
 const loadingBarFill = document.getElementById('loadingBarFill');
 const loadingText = document.getElementById('loadingText');
@@ -346,6 +347,7 @@ const getVoxelBoxFromRaycastHit = typeof mapData.getVoxelBoxFromRaycastHit === '
   : () => null;
 const voxelTypes = Array.isArray(mapData.voxelTypes) ? mapData.voxelTypes : [];
 let selectedVoxelType = voxelTypes.find(type => type.name === 'green')?.name ?? voxelTypes[0]?.name ?? 'green';
+let selectedHotbarIndex = Math.max(0, voxelTypes.findIndex(type => type.name === selectedVoxelType));
 const intersectMapColliderBox = typeof mapData.intersectColliderBox === 'function'
   ? mapData.intersectColliderBox
   : () => null;
@@ -406,6 +408,25 @@ function updateInventorySelectionUI() {
     const isSelected = slot.dataset.voxelType === selectedVoxelType;
     slot.classList.toggle('is-selected', isSelected);
   }
+
+  const voxelIndex = voxelTypes.findIndex(type => type.name === selectedVoxelType);
+  if (voxelIndex >= 0 && voxelIndex < hotbarSlotEls.length) {
+    selectedHotbarIndex = voxelIndex;
+  }
+
+  for (let i = 0; i < hotbarSlotEls.length; i++) {
+    hotbarSlotEls[i].classList.toggle('is-selected', i === selectedHotbarIndex);
+  }
+}
+
+function selectHotbarSlot(index) {
+  if (index < 0 || index >= hotbarSlotEls.length) return;
+  selectedHotbarIndex = index;
+  const selectedType = voxelTypes[index];
+  if (selectedType) {
+    selectedVoxelType = selectedType.name;
+  }
+  updateInventorySelectionUI();
 }
 
 renderInventorySlots();
@@ -1849,6 +1870,14 @@ document.addEventListener('keydown', e => {
   if (e.code === 'KeyI' && !mobileMode) {
     e.preventDefault();
     setInventoryPanelOpen(!inventoryPanelOpen);
+    return;
+  }
+
+  if (!mobileMode && /^Digit[1-8]$/.test(e.code)) {
+    e.preventDefault();
+    if (e.repeat) return;
+    const slotIndex = Number(e.code.slice(5)) - 1;
+    selectHotbarSlot(slotIndex);
     return;
   }
 
