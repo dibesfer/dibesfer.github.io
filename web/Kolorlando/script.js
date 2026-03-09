@@ -52,12 +52,12 @@ scene.add(camera);
 const consola = document.getElementById('consola');
 const miniMap = document.getElementById('miniMap');
 const menuCentral = document.getElementById('menuCentral');
-const menuOpenInventory = document.getElementById('menuOpenInventory');
+const menuTabButtons = document.querySelectorAll('#menuCentral .menu-tab');
+const menuPanels = document.querySelectorAll('#menuCentral .menu-panel');
+const playButton = document.getElementById('playButton');
 const menuInferior = document.getElementById('menuInferior');
-const inventoryPanel = document.getElementById('inventoryPanel');
 const inventorySlots = document.getElementById('inventorySlots');
 const inventorySelected = document.getElementById('inventorySelected');
-const playerInventoryPanel = document.getElementById('playerInventoryPanel');
 const playerInventorySlots = document.getElementById('playerInventorySlots');
 const hotbarSlotEls = document.querySelectorAll('#hotbar .hotbar-slot');
 const loadingScreen = document.getElementById('loadingScreen');
@@ -74,8 +74,7 @@ const playerHealthText = document.getElementById('playerHealthText');
 const voxelReadout = document.getElementById('voxelReadout');
 let mobileShootPressed = false;
 let mobileSprintEnabled = false;
-let inventoryPanelOpen = false;
-let playerInventoryPanelOpen = false;
+let activeMenuCentralTab = 'settings';
 const gameAudio = createGameAudio();
 
 const miniMapPlayerMarker = document.createElement('div');
@@ -92,6 +91,37 @@ function resolveMode() {
   return windowWidth > windowHeight ? MODE_MOBILE_LANDSCAPE : MODE_MOBILE_PORTRAIT;
 }
 
+function isMenuCentralVisible() {
+  return !menuCentral.classList.contains('invisible');
+}
+
+function setMenuCentralTab(tabName) {
+  activeMenuCentralTab = tabName;
+  for (let i = 0; i < menuTabButtons.length; i++) {
+    const isActive = menuTabButtons[i].dataset.menuTab === tabName;
+    menuTabButtons[i].classList.toggle('is-active', isActive);
+  }
+  for (let i = 0; i < menuPanels.length; i++) {
+    const isActive = menuPanels[i].dataset.menuPanel === tabName;
+    menuPanels[i].classList.toggle('is-active', isActive);
+  }
+}
+
+function showMenuCentral(tabName = activeMenuCentralTab) {
+  if (!mobileMode && typeof controls !== 'undefined' && controls.isLocked) {
+    hideMenuCentral();
+    return;
+  }
+  setMenuCentralTab(tabName);
+  menuCentral.style.removeProperty('display');
+  menuCentral.classList.remove('invisible');
+}
+
+function hideMenuCentral() {
+  menuCentral.style.display = 'none';
+  menuCentral.classList.add('invisible');
+}
+
 function applyMode(mode) {
   activeMode = mode;
   document.body.dataset.mode = mode;
@@ -100,24 +130,22 @@ function applyMode(mode) {
   mobileMode = shouldUseMobile;
 
   if (shouldUseMobile) {
-    inventoryPanelOpen = false;
-    inventoryPanel?.classList.add('invisible');
-    playerInventoryPanelOpen = false;
-    playerInventoryPanel?.classList.add('invisible');
     if (controls.isLocked) {
       controls.unlock();
     }
-    menuCentral.classList.add('invisible');
+    hideMenuCentral();
     menuInferior.classList.remove('invisible');
     menuInferior.classList.add('flex');
-    document.removeEventListener('click', controlLocker);
+    document.addEventListener('click', controlLocker);
+    document.addEventListener('touchstart', controlLocker, { passive: true });
     return;
   }
 
+  setMenuCentralTab(activeMenuCentralTab || 'settings');
   if (controls.isLocked) {
-    menuCentral.classList.add('invisible');
+    hideMenuCentral();
   } else {
-    menuCentral.classList.remove('invisible');
+    showMenuCentral(activeMenuCentralTab || 'settings');
   }
   menuInferior.classList.add('invisible');
   menuInferior.classList.remove('flex');
@@ -126,6 +154,7 @@ function applyMode(mode) {
   setShootButtonState(false);
   setMobileSprintState(false);
   document.addEventListener('click', controlLocker);
+  document.addEventListener('touchstart', controlLocker, { passive: true });
 }
 
 function updateModeFromViewport() {
@@ -215,78 +244,82 @@ miniMap.appendChild(miniMapRenderer.domElement);
 // CONTROLS
 // --------------------
 const controls = new PointerLockControls(camera, document.body);
+controls.addEventListener('lock', () => {
+  hideMenuCentral();
+});
 controls.addEventListener('unlock', () => {
-  if (!mobileMode && !inventoryPanelOpen && !playerInventoryPanelOpen) {
-    menuCentral.classList.remove('invisible');
+  if (!mobileMode) {
+    showMenuCentral(activeMenuCentralTab || 'settings');
   }
 });
 
-function controlLocker() {
-  if (inventoryPanelOpen || playerInventoryPanelOpen) return;
-  controls.lock();
-  menuCentral.classList.add('invisible');
+function controlLocker(event) {
+  if (!isMenuCentralVisible()) return;
+  const clickedInsideMenu = Boolean(event?.target?.closest?.('#menuCentral'));
+  if (clickedInsideMenu) return;
+  hideMenuCentral();
+
+  if (mobileMode) {
+    menuInferior.classList.remove('invisible');
+    menuInferior.classList.add('flex');
+    return;
+  }
+
+  if (!controls.isLocked) {
+    controls.lock();
+  }
 }
 
 function setInventoryPanelOpen(nextOpen, { allowMobile = false } = {}) {
-  if (mobileMode && !allowMobile) return;
-
-  inventoryPanelOpen = nextOpen;
-  if (inventoryPanel) {
-    inventoryPanel.classList.toggle('invisible', !nextOpen);
-  }
-
-  if (nextOpen) {
-    playerInventoryPanelOpen = false;
-    if (playerInventoryPanel) {
-      playerInventoryPanel.classList.add('invisible');
+  if (mobileMode) {
+    if (!allowMobile) return;
+    if (nextOpen) {
+      showMenuCentral('creative');
+      menuInferior.classList.add('invisible');
+      menuInferior.classList.remove('flex');
+    } else {
+      hideMenuCentral();
+      menuInferior.classList.remove('invisible');
+      menuInferior.classList.add('flex');
     }
-    if (controls.isLocked) {
-      controls.unlock();
-    }
-    menuCentral.classList.add('invisible');
     return;
   }
 
-  if (!mobileMode && !controls.isLocked && !playerInventoryPanelOpen) {
-    menuCentral.classList.remove('invisible');
+  if (!nextOpen) return;
+  if (controls.isLocked) {
+    controls.unlock();
   }
-}
-
-function setPlayerInventoryPanelOpen(nextOpen) {
-  if (mobileMode) return;
-
-  playerInventoryPanelOpen = nextOpen;
-  if (playerInventoryPanel) {
-    playerInventoryPanel.classList.toggle('invisible', !nextOpen);
-  }
-
-  if (nextOpen) {
-    inventoryPanelOpen = false;
-    if (inventoryPanel) {
-      inventoryPanel.classList.add('invisible');
-    }
-    if (controls.isLocked) {
-      controls.unlock();
-    }
-    menuCentral.classList.add('invisible');
-    return;
-  }
-
-  if (!controls.isLocked && !inventoryPanelOpen) {
-    menuCentral.classList.remove('invisible');
-  }
-}
-
-if (menuOpenInventory) {
-  menuOpenInventory.addEventListener('click', event => {
-    event.preventDefault();
-    event.stopPropagation();
-    setInventoryPanelOpen(true);
-  });
+  showMenuCentral('creative');
 }
 
 updateModeFromViewport();
 updateSceneViewSize();
+setMenuCentralTab('settings');
+
+if (menuCentral) {
+  menuCentral.addEventListener('click', event => {
+    event.stopPropagation();
+  });
+}
+
+for (let i = 0; i < menuTabButtons.length; i++) {
+  menuTabButtons[i].addEventListener('click', event => {
+    event.preventDefault();
+    event.stopPropagation();
+    const nextTab = menuTabButtons[i].dataset.menuTab;
+    if (!nextTab) return;
+    setMenuCentralTab(nextTab);
+  });
+}
+
+if (playButton) {
+  playButton.addEventListener('click', event => {
+    event.preventDefault();
+    event.stopPropagation();
+    hideMenuCentral();
+    controls.lock();
+  });
+}
 
 const keys = {};
 document.addEventListener('keydown', e => keys[e.code] = true);
@@ -1177,16 +1210,13 @@ function handleDesktopAttack(event) {
   if (event.button !== 0 && event.button !== 2) return;
   if (mobileMode) return;
 
-  if (inventoryPanelOpen || playerInventoryPanelOpen) {
-    const clickedInsidePanel = Boolean(event.target?.closest?.('#inventoryPanel, #playerInventoryPanel'));
-    if (clickedInsidePanel) {
+  if (isMenuCentralVisible()) {
+    const clickedInsideMenu = Boolean(event.target?.closest?.('#menuCentral'));
+    if (clickedInsideMenu) {
       return;
     }
-
-    setInventoryPanelOpen(false);
-    setPlayerInventoryPanelOpen(false);
+    hideMenuCentral();
     controls.lock();
-    menuCentral.classList.add('invisible');
     return;
   }
 
@@ -1882,12 +1912,14 @@ if (buttonRight3) {
   buttonRight3.addEventListener('touchstart', event => {
     if (!mobileMode) return;
     event.preventDefault();
-    setInventoryPanelOpen(!inventoryPanelOpen, { allowMobile: true });
+    event.stopPropagation();
+    setInventoryPanelOpen(!isMenuCentralVisible(), { allowMobile: true });
   }, { passive: false });
   buttonRight3.addEventListener('click', event => {
     if (!mobileMode) return;
     event.preventDefault();
-    setInventoryPanelOpen(!inventoryPanelOpen, { allowMobile: true });
+    event.stopPropagation();
+    setInventoryPanelOpen(!isMenuCentralVisible(), { allowMobile: true });
   });
 }
 
@@ -1904,6 +1936,22 @@ function updateMobileShooting(deltaTime) {
   return;
 }
 
+function toggleMenuCentralTab(tabName) {
+  if (mobileMode) return;
+
+  const sameTabOpen = isMenuCentralVisible() && activeMenuCentralTab === tabName;
+  if (sameTabOpen) {
+    hideMenuCentral();
+    controls.lock();
+    return;
+  }
+
+  if (controls.isLocked) {
+    controls.unlock();
+  }
+  showMenuCentral(tabName);
+}
+
 document.addEventListener('mousedown', handleDesktopAttack);
 document.addEventListener('contextmenu', event => event.preventDefault());
 
@@ -1916,13 +1964,13 @@ document.addEventListener('keydown', e => {
 
   if (e.code === 'KeyC' && !mobileMode) {
     e.preventDefault();
-    setInventoryPanelOpen(!inventoryPanelOpen);
+    toggleMenuCentralTab('creative');
     return;
   }
 
   if (e.code === 'KeyI' && !mobileMode) {
     e.preventDefault();
-    setPlayerInventoryPanelOpen(!playerInventoryPanelOpen);
+    toggleMenuCentralTab('inventory');
     return;
   }
 
@@ -1969,6 +2017,9 @@ function checkFPS(delta) {
 // --------------------
 renderer.setAnimationLoop(() => {
   const delta = Math.min(clock.getDelta(), 0.05);
+  if (!mobileMode && controls.isLocked && isMenuCentralVisible()) {
+    hideMenuCentral();
+  }
 
   if (mobileMode) {
     if (rightTouchId !== null) {

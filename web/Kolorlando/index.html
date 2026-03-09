@@ -56,44 +56,54 @@
         </div>
     </div>
 
-    <div id="inventoryPanel" class="invisible" aria-label="Creative panel">
-        <h2>Creative Panel</h2>
-        <div id="inventorySlots"></div>
-        <p id="inventorySelected">Selected: green</p>
-        <p class="inventory-help">Press C to close</p>
-    </div>
-
-    <div id="playerInventoryPanel" class="invisible" aria-label="Inventory panel">
-        <h2>Inventory</h2>
-        <div id="playerInventorySlots"></div>
-        <p class="inventory-help">Press I to close</p>
-    </div>
-
     <div id="menuCentral" class="invisible">
         <h1>Kolorlando</h1>
-        <button id="menuOpenInventory" type="button"> Creative</button>
-        <button id="menuOpenCreative" type="button">
-            Inventory</button>
-        <button id="menuOpenCharacter" type="button">
-            Character</button>
-        <button id="menuOpenSettings" type="button">
-            Settings</button>
-        <button id="menuOpenCreative" type="button">
-            About</button>
-        <h2>Desktop Controllers</h2>
-        <hr>
-        <p>Click PLAY or anywhere outside the menu to lock your cursor and drive the camera with your mouse.</p>
-        <p>Move with WASD</p>
-        <p>Jump with Space</p>
-        <p>Press <code>C</code> to open the Creative Panel</p>
-        <p>Press <code>I</code> to open the Inventory</p>
+        <div class="menu-tabs" role="tablist" aria-label="Main menu sections">
+            <button class="menu-tab" type="button" data-menu-tab="creative">CREATIVE</button>
+            <button class="menu-tab" type="button" data-menu-tab="inventory">INVENTORY</button>
+            <button class="menu-tab" type="button" data-menu-tab="character">CHARACTER</button>
+            <button class="menu-tab is-active" type="button" data-menu-tab="settings">SETTINGS</button>
+            <button class="menu-tab" type="button" data-menu-tab="about">ABOUT</button>
+        </div>
 
-        <p>Press Escape to unlock your cursor and open the Menu</p>
-        <br>
-        <button id="playButton">PLAY</button>
-        <br>
-        <br>
-        <p>game made with Three.js by dibesfer</p>
+        <section class="menu-panel" data-menu-panel="creative">
+            <h2>Creative</h2>
+            <div id="inventorySlots"></div>
+            <p id="inventorySelected">Selected: green</p>
+            <p class="inventory-help">Press <code>C</code> to open this tab quickly.</p>
+        </section>
+
+        <section class="menu-panel" data-menu-panel="inventory">
+            <h2>Inventory</h2>
+            <div id="playerInventorySlots"></div>
+            <p class="inventory-help">Press <code>I</code> to open this tab quickly.</p>
+        </section>
+
+        <section class="menu-panel" data-menu-panel="character">
+            <h2>Character</h2>
+            <p>Face: 😎</p>
+            <p>Health and selected block are shown in the HUD while playing.</p>
+        </section>
+
+        <section class="menu-panel is-active" data-menu-panel="settings">
+            <h2>Settings</h2>
+            <h3>Controls</h3>
+            <hr>
+            <p>Click PLAY to lock your cursor and drive the camera.</p>
+            <p>Move with WASD</p>
+            <p>Jump with Space</p>
+            <p>Press <code>C</code> for Creative</p>
+            <p>Press <code>I</code> for Inventory</p>
+            <p>Desktop: clicking outside this menu closes it and returns to cursor lock.</p>
+            <p>Mobile: clicking outside this menu closes it.</p>
+            <p>Press Escape to unlock your cursor and open this menu.</p>
+            <button id="playButton" type="button">PLAY</button>
+        </section>
+
+        <section class="menu-panel" data-menu-panel="about">
+            <h2>About</h2>
+            <p>Game made with Three.js by dibesfer.</p>
+        </section>
     </div>
 
     <div id="menuInferior" class="invisible">

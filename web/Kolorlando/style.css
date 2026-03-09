@@ -177,37 +177,76 @@ img {
 }
 
 #menuCentral {
-    line-height: 2;
-    text-align: center;
+    text-align: left;
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    max-width: 400px;
-    width: 100%;
-    background-color: rgba(255, 255, 255, 0.8);
-    border-radius: 5px;
-    padding: 10px;
+    max-width: 760px;
+    height: 500px;
+    width: min(760px, calc(100vw - 28px));
+    background-color: rgba(255, 255, 255, 0.9);
+    border-radius: 10px;
+    padding: 14px;
     z-index: 35;
+    display: flex;
+    flex-direction: column;
+
 }
 
-#menuOpenInventory {
+#menuCentral h1 {
+    font-family: monospace;
     margin-bottom: 10px;
+    text-align: center;
+}
+
+.menu-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 14px;
+}
+
+.menu-tab {
     border: 1px solid rgba(0, 0, 0, 0.35);
     border-radius: 999px;
     padding: 6px 14px;
     font-family: monospace;
     font-weight: 700;
-    background: #fff4b0;
-    color: #2f2a18;
+    background: #fff;
+    color: #222;
     cursor: pointer;
 }
 
-#menuOpenInventory:hover {
+.menu-tab:hover {
     filter: brightness(0.96);
 }
 
+.menu-tab.is-active {
+    background: #fff4b0;
+    color: #2f2a18;
+}
 
+.menu-panel {
+    display: none;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.72);
+    padding: 12px;
+    line-height: 1.7;
+    height: 100%;
+}
+
+.menu-panel.is-active {
+    display: block;
+    overflow: auto;
+}
+
+.menu-panel h2,
+.menu-panel h3 {
+    font-family: monospace;
+    margin-bottom: 8px;
+}
 
 .joystick {
     border: var(--commonBorder);
@@ -262,48 +301,11 @@ img {
     pointer-events: none;
 }
 
-#inventoryPanel {
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
-    width: min(720px, calc(100vw - 40px));
-    background: rgba(12, 18, 25, 0.92);
-    border: 2px solid rgba(255, 255, 255, 0.55);
-    border-radius: 12px;
-    padding: 14px;
-    color: #f4f7fb;
-    z-index: 45;
-}
-
-#inventoryPanel h2 {
-    margin-bottom: 12px;
-    font-family: monospace;
-}
-
-#playerInventoryPanel {
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
-    width: min(560px, calc(100vw - 32px));
-    background: rgba(12, 18, 25, 0.92);
-    border: 2px solid rgba(255, 255, 255, 0.55);
-    border-radius: 12px;
-    padding: 14px;
-    color: #f4f7fb;
-    z-index: 45;
-}
-
-#playerInventoryPanel h2 {
-    margin-bottom: 12px;
-    font-family: monospace;
-}
-
 #playerInventorySlots {
     display: grid;
     grid-template-columns: repeat(8, minmax(0, 1fr));
     gap: 6px;
+    background-color: black;
 }
 
 #inventorySlots {
@@ -313,15 +315,15 @@ img {
 }
 
 .inventory-slot {
-    border: 1px solid rgba(255, 255, 255, 0.35);
+    border: 1px solid rgba(0, 0, 0, 0.2);
     border-radius: 10px;
     min-height: 72px;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.65);
     font-family: monospace;
-    color: #f4f7fb;
+    color: #1f2630;
     cursor: pointer;
     gap: 8px;
     padding: 6px;
@@ -445,20 +447,21 @@ img {
     border: solid 6px green;
     color: rgb(0, 52, 0);
     background-color: rgb(72, 255, 72);
+    margin-top: 10px;
     padding: 5px;
-    min-width: 50%;
+    min-width: 220px;
     font: unset;
     font-size: 2rem;
     font-family: monospace;
     transition: 0.2s;
 }
 
-.playButton:hover {
+#playButton:hover {
     color: white;
 
 }
 
-.playButton:active {
+#playButton:active {
     color: red;
 }
 
