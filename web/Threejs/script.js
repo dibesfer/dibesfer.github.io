@@ -60,11 +60,12 @@ const inventorySelected = document.getElementById('inventorySelected');
 const loadingScreen = document.getElementById('loadingScreen');
 const loadingBarFill = document.getElementById('loadingBarFill');
 const loadingText = document.getElementById('loadingText');
-const buttonUp = document.getElementById('buttonUp');
+const buttonUp = document.getElementById('Right2');
 const buttonDown = document.getElementById('buttonDown');
 const buttonLeft1 = document.getElementById('Left1');
 const buttonShoot = document.getElementById('buttonShoot');
 const buttonRight1 = document.getElementById('Right1');
+const buttonRight3 = document.getElementById('Right3');
 const playerHealthFill = document.getElementById('playerHealthFill');
 const playerHealthText = document.getElementById('playerHealthText');
 const voxelReadout = document.getElementById('voxelReadout');
@@ -220,8 +221,8 @@ function controlLocker() {
   menuCentral.classList.add('invisible');
 }
 
-function setInventoryPanelOpen(nextOpen) {
-  if (mobileMode) return;
+function setInventoryPanelOpen(nextOpen, { allowMobile = false } = {}) {
+  if (mobileMode && !allowMobile) return;
 
   inventoryPanelOpen = nextOpen;
   if (inventoryPanel) {
@@ -236,7 +237,7 @@ function setInventoryPanelOpen(nextOpen) {
     return;
   }
 
-  if (!controls.isLocked) {
+  if (!mobileMode && !controls.isLocked) {
     menuCentral.classList.remove('invisible');
   }
 }
@@ -357,8 +358,9 @@ const MINI_MAP_HEIGHT = mapData.miniMapHeight ?? 130;
 const HAS_INFINITE_GROUND = mapData.hasInfiniteGround ?? true;
 const FALL_RESPAWN_Y = -100;
 const playerSpawnPoint = mapData.spawnPoint.clone();
+playerSpawnPoint.y += 1;
 
-playerEye.copy(mapData.spawnPoint);
+playerEye.copy(playerSpawnPoint);
 camera.position.copy(playerEye);
 
 function renderInventorySlots() {
@@ -1805,6 +1807,19 @@ if (buttonRight1) {
     if (!mobileMode) return;
     event.preventDefault();
     triggerActionForMouseButton(2, { allowMobile: true });
+  });
+}
+
+if (buttonRight3) {
+  buttonRight3.addEventListener('touchstart', event => {
+    if (!mobileMode) return;
+    event.preventDefault();
+    setInventoryPanelOpen(!inventoryPanelOpen, { allowMobile: true });
+  }, { passive: false });
+  buttonRight3.addEventListener('click', event => {
+    if (!mobileMode) return;
+    event.preventDefault();
+    setInventoryPanelOpen(!inventoryPanelOpen, { allowMobile: true });
   });
 }
 

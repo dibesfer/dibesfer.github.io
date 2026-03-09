@@ -449,9 +449,10 @@ img {
     touch-action: none;
 }
 
-#buttonShoot>img {
+.icon {
     filter: invert(1);
     pointer-events: none;
+    padding: 5px;
 }
 
 #buttonShoot.is-shooting {
@@ -484,7 +485,7 @@ body[data-mode="mobile-portrait"] #sceneView {
 }
 
 body[data-mode="mobile-portrait"] #playerHud {
-    bottom: 21%;
+    bottom: 22%;
 }
 
 body[data-mode="mobile-portrait"] #miniMap {
