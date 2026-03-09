@@ -279,6 +279,31 @@ img {
     font-family: monospace;
 }
 
+#playerInventoryPanel {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: min(560px, calc(100vw - 32px));
+    background: rgba(12, 18, 25, 0.92);
+    border: 2px solid rgba(255, 255, 255, 0.55);
+    border-radius: 12px;
+    padding: 14px;
+    color: #f4f7fb;
+    z-index: 45;
+}
+
+#playerInventoryPanel h2 {
+    margin-bottom: 12px;
+    font-family: monospace;
+}
+
+#playerInventorySlots {
+    display: grid;
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+    gap: 6px;
+}
+
 #inventorySlots {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));

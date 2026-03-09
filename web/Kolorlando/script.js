@@ -57,6 +57,8 @@ const menuInferior = document.getElementById('menuInferior');
 const inventoryPanel = document.getElementById('inventoryPanel');
 const inventorySlots = document.getElementById('inventorySlots');
 const inventorySelected = document.getElementById('inventorySelected');
+const playerInventoryPanel = document.getElementById('playerInventoryPanel');
+const playerInventorySlots = document.getElementById('playerInventorySlots');
 const hotbarSlotEls = document.querySelectorAll('#hotbar .hotbar-slot');
 const loadingScreen = document.getElementById('loadingScreen');
 const loadingBarFill = document.getElementById('loadingBarFill');
@@ -73,6 +75,7 @@ const voxelReadout = document.getElementById('voxelReadout');
 let mobileShootPressed = false;
 let mobileSprintEnabled = false;
 let inventoryPanelOpen = false;
+let playerInventoryPanelOpen = false;
 const gameAudio = createGameAudio();
 
 const miniMapPlayerMarker = document.createElement('div');
@@ -99,6 +102,8 @@ function applyMode(mode) {
   if (shouldUseMobile) {
     inventoryPanelOpen = false;
     inventoryPanel?.classList.add('invisible');
+    playerInventoryPanelOpen = false;
+    playerInventoryPanel?.classList.add('invisible');
     if (controls.isLocked) {
       controls.unlock();
     }
@@ -211,13 +216,13 @@ miniMap.appendChild(miniMapRenderer.domElement);
 // --------------------
 const controls = new PointerLockControls(camera, document.body);
 controls.addEventListener('unlock', () => {
-  if (!mobileMode && !inventoryPanelOpen) {
+  if (!mobileMode && !inventoryPanelOpen && !playerInventoryPanelOpen) {
     menuCentral.classList.remove('invisible');
   }
 });
 
 function controlLocker() {
-  if (inventoryPanelOpen) return;
+  if (inventoryPanelOpen || playerInventoryPanelOpen) return;
   controls.lock();
   menuCentral.classList.add('invisible');
 }
@@ -231,6 +236,10 @@ function setInventoryPanelOpen(nextOpen, { allowMobile = false } = {}) {
   }
 
   if (nextOpen) {
+    playerInventoryPanelOpen = false;
+    if (playerInventoryPanel) {
+      playerInventoryPanel.classList.add('invisible');
+    }
     if (controls.isLocked) {
       controls.unlock();
     }
@@ -238,7 +247,32 @@ function setInventoryPanelOpen(nextOpen, { allowMobile = false } = {}) {
     return;
   }
 
-  if (!mobileMode && !controls.isLocked) {
+  if (!mobileMode && !controls.isLocked && !playerInventoryPanelOpen) {
+    menuCentral.classList.remove('invisible');
+  }
+}
+
+function setPlayerInventoryPanelOpen(nextOpen) {
+  if (mobileMode) return;
+
+  playerInventoryPanelOpen = nextOpen;
+  if (playerInventoryPanel) {
+    playerInventoryPanel.classList.toggle('invisible', !nextOpen);
+  }
+
+  if (nextOpen) {
+    inventoryPanelOpen = false;
+    if (inventoryPanel) {
+      inventoryPanel.classList.add('invisible');
+    }
+    if (controls.isLocked) {
+      controls.unlock();
+    }
+    menuCentral.classList.add('invisible');
+    return;
+  }
+
+  if (!controls.isLocked && !inventoryPanelOpen) {
     menuCentral.classList.remove('invisible');
   }
 }
@@ -396,6 +430,17 @@ function renderInventorySlots() {
   updateInventorySelectionUI();
 }
 
+function renderPlayerInventorySlots() {
+  if (!playerInventorySlots) return;
+  playerInventorySlots.textContent = '';
+
+  for (let i = 0; i < 32; i++) {
+    const slot = document.createElement('div');
+    slot.className = 'hotbar-slot';
+    playerInventorySlots.appendChild(slot);
+  }
+}
+
 function updateInventorySelectionUI() {
   if (inventorySelected) {
     inventorySelected.textContent = `Selected: ${selectedVoxelType}`;
@@ -430,6 +475,7 @@ function selectHotbarSlot(index) {
 }
 
 renderInventorySlots();
+renderPlayerInventorySlots();
 
 const miniMapCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 500);
 miniMapCamera.up.set(0, 0, -1);
@@ -1131,13 +1177,14 @@ function handleDesktopAttack(event) {
   if (event.button !== 0 && event.button !== 2) return;
   if (mobileMode) return;
 
-  if (inventoryPanelOpen) {
-    const clickedInsideInventory = Boolean(event.target?.closest?.('#inventoryPanel'));
-    if (clickedInsideInventory) {
+  if (inventoryPanelOpen || playerInventoryPanelOpen) {
+    const clickedInsidePanel = Boolean(event.target?.closest?.('#inventoryPanel, #playerInventoryPanel'));
+    if (clickedInsidePanel) {
       return;
     }
 
     setInventoryPanelOpen(false);
+    setPlayerInventoryPanelOpen(false);
     controls.lock();
     menuCentral.classList.add('invisible');
     return;
@@ -1867,9 +1914,15 @@ document.addEventListener('keydown', e => {
     return;
   }
 
-  if (e.code === 'KeyI' && !mobileMode) {
+  if (e.code === 'KeyC' && !mobileMode) {
     e.preventDefault();
     setInventoryPanelOpen(!inventoryPanelOpen);
+    return;
+  }
+
+  if (e.code === 'KeyI' && !mobileMode) {
+    e.preventDefault();
+    setPlayerInventoryPanelOpen(!playerInventoryPanelOpen);
     return;
   }
 
