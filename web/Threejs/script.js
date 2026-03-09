@@ -133,12 +133,19 @@ const sceneView = document.getElementById('sceneView');
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 
-renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setClearColor(0x5EC9FF);
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
 sceneView.appendChild(renderer.domElement);
+
+function updateSceneViewSize() {
+  const width = Math.max(1, sceneView.clientWidth);
+  const height = Math.max(1, sceneView.clientHeight);
+  camera.aspect = width / height;
+  camera.updateProjectionMatrix();
+  renderer.setSize(width, height, false);
+}
 
 function updateLoadingUI(loaded, total) {
   const safeTotal = Math.max(1, total);
@@ -243,6 +250,7 @@ if (menuOpenInventory) {
 }
 
 updateModeFromViewport();
+updateSceneViewSize();
 
 const keys = {};
 document.addEventListener('keydown', e => keys[e.code] = true);
@@ -1617,15 +1625,11 @@ function updateMiniMap() {
 // RESIZE
 // --------------------
 window.addEventListener('resize', () => {
-  camera.aspect = window.innerWidth / window.innerHeight;
-  camera.updateProjectionMatrix();
-
   windowWidth = window.innerWidth;
   windowHeight = window.innerHeight;
 
   updateModeFromViewport();
-
-  renderer.setSize(window.innerWidth, window.innerHeight);
+  updateSceneViewSize();
   updateMiniMapSize();
   updatePlayerHealthUI();
 });
