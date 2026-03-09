@@ -777,7 +777,7 @@ function syncCameraToPlayerView(deltaTime = 0) {
 }
 
 function handleDesktopWheelThirdPerson(event) {
-  if (mobileMode) return;
+  if (mobileMode || !controls.isLocked) return;
 
   // Scroll out to move into third-person; scroll in back to first-person.
   const nextDistance = thirdPersonDistance + event.deltaY * 0.01;
