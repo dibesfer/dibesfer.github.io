@@ -107,19 +107,21 @@ function setMenuCentralTab(tabName) {
   }
 }
 
-function showMenuCentral(tabName = activeMenuCentralTab) {
-  if (!mobileMode && typeof controls !== 'undefined' && controls.isLocked) {
+function showMenuCentral(tabName = activeMenuCentralTab, { force = false } = {}) {
+  if (!force && !mobileMode && typeof controls !== 'undefined' && controls.isLocked) {
     hideMenuCentral();
     return;
   }
   setMenuCentralTab(tabName);
   menuCentral.style.removeProperty('display');
   menuCentral.classList.remove('invisible');
+  document.body.classList.add('menu-central-open');
 }
 
 function hideMenuCentral() {
   menuCentral.style.display = 'none';
   menuCentral.classList.add('invisible');
+  document.body.classList.remove('menu-central-open');
 }
 
 function applyMode(mode) {
@@ -249,7 +251,7 @@ controls.addEventListener('lock', () => {
 });
 controls.addEventListener('unlock', () => {
   if (!mobileMode) {
-    showMenuCentral(activeMenuCentralTab || 'settings');
+    showMenuCentral(activeMenuCentralTab || 'settings', { force: true });
   }
 });
 
@@ -275,12 +277,8 @@ function setInventoryPanelOpen(nextOpen, { allowMobile = false } = {}) {
     if (!allowMobile) return;
     if (nextOpen) {
       showMenuCentral('creative');
-      menuInferior.classList.add('invisible');
-      menuInferior.classList.remove('flex');
     } else {
       hideMenuCentral();
-      menuInferior.classList.remove('invisible');
-      menuInferior.classList.add('flex');
     }
     return;
   }
@@ -1915,6 +1913,11 @@ if (buttonRight3) {
     event.stopPropagation();
     setInventoryPanelOpen(!isMenuCentralVisible(), { allowMobile: true });
   }, { passive: false });
+  buttonRight3.addEventListener('touchend', event => {
+    if (!mobileMode) return;
+    event.preventDefault();
+    event.stopPropagation();
+  }, { passive: false });
   buttonRight3.addEventListener('click', event => {
     if (!mobileMode) return;
     event.preventDefault();
@@ -1946,10 +1949,13 @@ function toggleMenuCentralTab(tabName) {
     return;
   }
 
+  setMenuCentralTab(tabName);
+
   if (controls.isLocked) {
     controls.unlock();
+    return;
   }
-  showMenuCentral(tabName);
+  showMenuCentral(activeMenuCentralTab);
 }
 
 document.addEventListener('mousedown', handleDesktopAttack);
@@ -1964,12 +1970,14 @@ document.addEventListener('keydown', e => {
 
   if (e.code === 'KeyC' && !mobileMode) {
     e.preventDefault();
+    if (e.repeat) return;
     toggleMenuCentralTab('creative');
     return;
   }
 
   if (e.code === 'KeyI' && !mobileMode) {
     e.preventDefault();
+    if (e.repeat) return;
     toggleMenuCentralTab('inventory');
     return;
   }
