@@ -89,6 +89,10 @@ function setElementHidden(element, hidden) {
   element.classList.toggle('invisible', hidden);
 }
 
+function syncAppHeight() {
+  document.documentElement.style.setProperty('--app-height', `${window.innerHeight}px`);
+}
+
 function resolveMode() {
   const hasTouchScreen = (navigator.maxTouchPoints ?? 0) > 1;
   const isCoarsePointer = touchQuery.matches;
@@ -292,6 +296,7 @@ function setInventoryPanelOpen(nextOpen, { allowMobile = false } = {}) {
 }
 
 updateModeFromViewport();
+syncAppHeight();
 updateSceneViewSize();
 setMenuCentralTab('settings');
 document.addEventListener('click', controlLocker);
@@ -1730,6 +1735,7 @@ window.addEventListener('resize', () => {
   windowWidth = window.innerWidth;
   windowHeight = window.innerHeight;
 
+  syncAppHeight();
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   miniMapRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   updateModeFromViewport();
