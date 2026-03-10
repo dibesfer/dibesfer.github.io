@@ -874,19 +874,23 @@ body[data-mode="mobile-landscape"] #sceneView {
 body[data-mode="mobile-landscape"] #menuInferiorLeft {
     background-color: rgba(255, 0, 0, 0.25);
     height: 40%;
-    flex: 20%;
-    max-width: 20%;
+    flex: 25%;
+    max-width: 25%;
 }
 
 body[data-mode="mobile-landscape"] #menuInferiorRight {
     background-color: rgba(0, 128, 0, 0.25);
-    flex: 20%;
+    flex: 25%;
     height: 40%;
-    max-width: 20%;
+    max-width: 25%;
 }
 
 body[data-mode="mobile-landscape"] #miniMap {
     width: 100px;
     height: 100px;
     right: 12px;
+}
+
+body[data-mode="mobile-landscape"] #playerHud {
+    width: 50%;
 }
