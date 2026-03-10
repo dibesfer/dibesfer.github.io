@@ -2,7 +2,7 @@
     --commonBorder: solid 1px white;
     --uiFont: monospace;
     --panelSurface: rgba(255, 255, 255, 0.9);
-    --panelBorder: rgba(0, 0, 0, 0.15);
+    --panelBorder: rgba(0, 0, 0, 0.922);
 }
 
 * {
@@ -257,7 +257,7 @@ img {
 }
 
 .menu-tab {
-    border: 1px solid rgba(0, 0, 0, 0.35);
+    border: 2px solid rgba(0, 0, 0, 0.75);
     border-radius: 999px;
     padding: 6px 14px;
     font-family: var(--uiFont);
@@ -278,7 +278,7 @@ img {
 
 .menu-panel {
     display: none;
-    border: 1px solid var(--panelBorder);
+    border: 2px solid var(--panelBorder);
     border-radius: 8px;
     background: rgba(255, 255, 255, 0.72);
     padding: 12px;
