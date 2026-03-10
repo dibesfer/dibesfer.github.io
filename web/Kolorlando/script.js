@@ -64,6 +64,7 @@ const playerInventorySelection = document.getElementById('playerInventorySelecti
 const hotbarSlotEls = Array.from(document.querySelectorAll('#hotbar .hotbar-slot'));
 const gameModeReadout = document.getElementById('gameModeReadout');
 const gameModeButtons = Array.from(document.querySelectorAll('[data-game-mode]'));
+const characterMenuPlayer = document.getElementById('kolorlandiaCharacterMenu_player');
 const loadingScreen = document.getElementById('loadingScreen');
 const loadingBarFill = document.getElementById('loadingBarFill');
 const loadingText = document.getElementById('loadingText');
@@ -77,21 +78,131 @@ const settingsFullScreen = document.getElementById('settingsFullScreen');
 const playerHealthFill = document.getElementById('playerHealthFill');
 const playerHealthText = document.getElementById('playerHealthText');
 const voxelReadout = document.getElementById('voxelReadout');
+const inventoryDragPreview = document.createElement('div');
 let mobileShootPressed = false;
 let mobileSprintEnabled = false;
 let activeMenuCentralTab = 'settings';
 let inventorySlotEls = [];
+let inventoryDragState = null;
+let suppressInventorySlotClick = false;
+let characterPreviewDragState = null;
 const gameAudio = createGameAudio();
 
 const miniMapPlayerMarker = document.createElement('div');
 miniMapPlayerMarker.id = 'miniMapPlayerMarker';
 miniMap.appendChild(miniMapPlayerMarker);
 const entityMiniMapMarkers = new Map();
+inventoryDragPreview.className = 'inventory-drag-preview';
+inventoryDragPreview.hidden = true;
+document.body.appendChild(inventoryDragPreview);
+
+function isTypingTarget(target) {
+  return Boolean(
+    target instanceof HTMLElement
+      && (target.tagName === 'INPUT'
+        || target.tagName === 'TEXTAREA'
+        || target.tagName === 'SELECT'
+        || target.isContentEditable)
+  );
+}
 
 function setElementHidden(element, hidden) {
   if (!element) return;
   element.hidden = hidden;
   element.classList.toggle('invisible', hidden);
+}
+
+let characterPreviewRenderer = null;
+let characterPreviewScene = null;
+let characterPreviewCamera = null;
+let characterPreviewModel = null;
+let characterPreviewModelRoot = null;
+let characterPreviewIdleCycle = Math.random() * Math.PI * 2;
+let characterPreviewWidth = 0;
+let characterPreviewHeight = 0;
+const CHARACTER_PREVIEW_LOOK_Y = 1.26;
+
+function updateCharacterPreviewSize() {
+  if (!characterMenuPlayer || !characterPreviewRenderer || !characterPreviewCamera) return;
+  const width = Math.max(1, Math.round(characterMenuPlayer.clientWidth));
+  const height = Math.max(1, Math.round(characterMenuPlayer.clientHeight));
+  if (width === characterPreviewWidth && height === characterPreviewHeight) return;
+
+  characterPreviewWidth = width;
+  characterPreviewHeight = height;
+  characterPreviewCamera.aspect = width / height;
+  characterPreviewCamera.updateProjectionMatrix();
+  characterPreviewRenderer.setSize(width, height, false);
+}
+
+function initCharacterPreview() {
+  if (!characterMenuPlayer || characterPreviewRenderer) return;
+
+  characterPreviewScene = new THREE.Scene();
+  characterPreviewCamera = new THREE.PerspectiveCamera(24, 9 / 16, 0.1, 30);
+  characterPreviewCamera.position.set(0, CHARACTER_PREVIEW_LOOK_Y, 5.1);
+  characterPreviewCamera.lookAt(0, CHARACTER_PREVIEW_LOOK_Y, 0);
+
+  characterPreviewRenderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+  characterPreviewRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  characterPreviewRenderer.setClearColor(0x000000, 0);
+  characterPreviewRenderer.outputColorSpace = THREE.SRGBColorSpace;
+  characterPreviewRenderer.domElement.setAttribute('aria-hidden', 'true');
+  characterMenuPlayer.appendChild(characterPreviewRenderer.domElement);
+
+  const ambientLight = new THREE.HemisphereLight(0xf6fbff, 0x4b5566, 1.5);
+  characterPreviewScene.add(ambientLight);
+
+  const keyLight = new THREE.DirectionalLight(0xffffff, 1.55);
+  keyLight.position.set(2.8, 4.4, 4.6);
+  characterPreviewScene.add(keyLight);
+
+  const rimLight = new THREE.DirectionalLight(0xbfd8ff, 0.45);
+  rimLight.position.set(-2.4, 1.8, -3.2);
+  characterPreviewScene.add(rimLight);
+
+  characterPreviewModel = createHumanoidModel({
+    outfit: PLAYER_OUTFIT,
+    castShadow: false,
+    receiveShadow: false,
+  });
+
+  characterPreviewModelRoot = new THREE.Group();
+  characterPreviewModelRoot.position.set(0, 1, 0);
+  characterPreviewModel.root.position.set(0, -0.72, 0);
+  characterPreviewModel.root.rotation.y = -0.42;
+  characterPreviewModelRoot.add(characterPreviewModel.root);
+  characterPreviewScene.add(characterPreviewModelRoot);
+  updateCharacterPreviewSize();
+
+  characterMenuPlayer.addEventListener('pointerdown', event => {
+    if (event.button !== undefined && event.button !== 0) return;
+    characterPreviewDragState = {
+      pointerId: event.pointerId,
+      lastX: event.clientX,
+    };
+    characterMenuPlayer.setPointerCapture?.(event.pointerId);
+  });
+
+  characterMenuPlayer.addEventListener('pointermove', event => {
+    if (!characterPreviewDragState || event.pointerId !== characterPreviewDragState.pointerId || !characterPreviewModelRoot) {
+      return;
+    }
+
+    const deltaX = event.clientX - characterPreviewDragState.lastX;
+    characterPreviewDragState.lastX = event.clientX;
+    characterPreviewModelRoot.rotation.y += deltaX * 0.014;
+    event.preventDefault();
+  });
+
+  const stopCharacterPreviewDrag = event => {
+    if (!characterPreviewDragState || event.pointerId !== characterPreviewDragState.pointerId) return;
+    characterMenuPlayer.releasePointerCapture?.(event.pointerId);
+    characterPreviewDragState = null;
+  };
+
+  characterMenuPlayer.addEventListener('pointerup', stopCharacterPreviewDrag);
+  characterMenuPlayer.addEventListener('pointercancel', stopCharacterPreviewDrag);
 }
 
 function syncAppHeight() {
@@ -502,28 +613,91 @@ function getVoxelTypeHexColor(typeName) {
   return `#${getVoxelTypeColor(typeName).toString(16).padStart(6, '0')}`;
 }
 
+function mixColorChannel(channel, target, amount) {
+  return Math.round(channel + (target - channel) * amount);
+}
+
+function tintHexColor(hexColor, amount) {
+  const normalized = hexColor.replace('#', '');
+  const color = Number.parseInt(normalized, 16);
+  const r = (color >> 16) & 0xff;
+  const g = (color >> 8) & 0xff;
+  const b = color & 0xff;
+  const target = amount >= 0 ? 255 : 0;
+  const strength = Math.abs(amount);
+
+  const tinted = (mixColorChannel(r, target, strength) << 16)
+    | (mixColorChannel(g, target, strength) << 8)
+    | mixColorChannel(b, target, strength);
+
+  return `#${tinted.toString(16).padStart(6, '0')}`;
+}
+
+function createVoxelIcon(hexColor) {
+  const icon = document.createElement('span');
+  icon.className = 'voxel-icon item-slot-icon';
+  const svgNamespace = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(svgNamespace, 'svg');
+  svg.setAttribute('viewBox', '0 0 64 64');
+  svg.setAttribute('aria-hidden', 'true');
+  svg.classList.add('voxel-icon__svg');
+
+  const top = document.createElementNS(svgNamespace, 'polygon');
+  top.setAttribute('points', '32,6 54,19 32,32 10,19');
+  top.setAttribute('fill', tintHexColor(hexColor, 0.38));
+  top.setAttribute('stroke', 'rgba(15, 18, 22, 0.92)');
+  top.setAttribute('stroke-width', '2');
+  top.setAttribute('stroke-linejoin', 'round');
+  svg.appendChild(top);
+
+  const left = document.createElementNS(svgNamespace, 'polygon');
+  left.setAttribute('points', '10,19 32,32 32,57 10,44');
+  left.setAttribute('fill', tintHexColor(hexColor, 0.1));
+  left.setAttribute('stroke', 'rgba(15, 18, 22, 0.92)');
+  left.setAttribute('stroke-width', '2');
+  left.setAttribute('stroke-linejoin', 'round');
+  svg.appendChild(left);
+
+  const right = document.createElementNS(svgNamespace, 'polygon');
+  right.setAttribute('points', '54,19 32,32 32,57 54,44');
+  right.setAttribute('fill', tintHexColor(hexColor, -0.18));
+  right.setAttribute('stroke', 'rgba(15, 18, 22, 0.92)');
+  right.setAttribute('stroke-width', '2');
+  right.setAttribute('stroke-linejoin', 'round');
+  svg.appendChild(right);
+
+  const edge = document.createElementNS(svgNamespace, 'polyline');
+  edge.setAttribute('points', '32,32 32,57');
+  edge.setAttribute('fill', 'none');
+  edge.setAttribute('stroke', 'rgba(15, 18, 22, 0.92)');
+  edge.setAttribute('stroke-width', '2');
+  edge.setAttribute('stroke-linecap', 'round');
+  edge.setAttribute('stroke-linejoin', 'round');
+  svg.appendChild(edge);
+
+  icon.appendChild(svg);
+
+  return icon;
+}
+
 function getSelectedSurvivalStack() {
   return playerInventory[selectedInventorySlotIndex];
 }
 
+function findInventorySlotIndexByType(typeName) {
+  if (!typeName) return -1;
+  return playerInventory.findIndex(stack => stack?.typeName === typeName);
+}
+
+function inventoryHasType(typeName) {
+  return findInventorySlotIndexByType(typeName) >= 0;
+}
+
 function syncSelectedVoxelTypeFromMode() {
-  if (gameMode === GAME_MODE_SURVIVAL) {
-    const selectedStack = getSelectedSurvivalStack();
-    if (selectedStack?.typeName) {
-      selectedVoxelType = selectedStack.typeName;
-      return;
-    }
-
-    const firstFilledSlotIndex = playerInventory.findIndex(Boolean);
-    if (firstFilledSlotIndex >= 0) {
-      selectedInventorySlotIndex = firstFilledSlotIndex;
-      selectedHotbarIndex = firstFilledSlotIndex < hotbarSlotEls.length ? firstFilledSlotIndex : -1;
-      selectedVoxelType = playerInventory[firstFilledSlotIndex].typeName;
-      return;
-    }
+  const selectedStack = getSelectedSurvivalStack();
+  if (selectedStack?.typeName) {
+    selectedVoxelType = selectedStack.typeName;
   }
-
-  selectedVoxelType = voxelTypes.find(type => type.name === 'green')?.name ?? voxelTypes[0]?.name ?? 'green';
 }
 
 function getSelectedInventoryLabel() {
@@ -618,7 +792,122 @@ function selectInventorySlot(index) {
 }
 
 function handlePlayerInventorySlotClick(index) {
+  if (suppressInventorySlotClick) {
+    suppressInventorySlotClick = false;
+    return;
+  }
   selectInventorySlot(index);
+}
+
+function clearInventoryDragPreview() {
+  inventoryDragPreview.hidden = true;
+  inventoryDragPreview.textContent = '';
+}
+
+function updateInventoryDragPreviewPosition(clientX, clientY) {
+  inventoryDragPreview.style.transform = `translate(${clientX - 32}px, ${clientY - 32}px)`;
+}
+
+function stopInventoryDrag() {
+  if (!inventoryDragState) return;
+  inventoryDragState.sourceElement?.classList.remove('is-drag-source');
+  inventoryDragState = null;
+  clearInventoryDragPreview();
+}
+
+function moveInventoryStack(sourceIndex, targetIndex) {
+  if (sourceIndex === targetIndex) return;
+  if (sourceIndex < 0 || sourceIndex >= playerInventory.length) return;
+  if (targetIndex < 0 || targetIndex >= playerInventory.length) return;
+
+  const movedStack = playerInventory[sourceIndex];
+  playerInventory[sourceIndex] = playerInventory[targetIndex];
+  playerInventory[targetIndex] = movedStack;
+
+  if (selectedInventorySlotIndex === sourceIndex) {
+    selectedInventorySlotIndex = targetIndex;
+  } else if (selectedInventorySlotIndex === targetIndex) {
+    selectedInventorySlotIndex = sourceIndex;
+  }
+
+  selectedHotbarIndex = selectedInventorySlotIndex < hotbarSlotEls.length ? selectedInventorySlotIndex : -1;
+  syncSelectedVoxelTypeFromMode();
+  renderPlayerInventorySlots();
+  updateInventorySelectionUI();
+}
+
+function beginInventorySlotDrag(index, event, element) {
+  if (!playerInventory[index]) return;
+  if (event.button !== undefined && event.button !== 0) return;
+
+  inventoryDragState = {
+    pointerId: event.pointerId,
+    sourceIndex: index,
+    sourceElement: element,
+    startX: event.clientX,
+    startY: event.clientY,
+    lastX: event.clientX,
+    lastY: event.clientY,
+    dragging: false,
+  };
+}
+
+function handleInventoryDragMove(event) {
+  if (!inventoryDragState || event.pointerId !== inventoryDragState.pointerId) return;
+
+  inventoryDragState.lastX = event.clientX;
+  inventoryDragState.lastY = event.clientY;
+
+  if (!inventoryDragState.dragging) {
+    const deltaX = event.clientX - inventoryDragState.startX;
+    const deltaY = event.clientY - inventoryDragState.startY;
+    if (Math.hypot(deltaX, deltaY) < 8) return;
+
+    inventoryDragState.dragging = true;
+    suppressInventorySlotClick = true;
+    inventoryDragState.sourceElement?.classList.add('is-drag-source');
+    const previewSlot = inventoryDragState.sourceElement?.cloneNode(true);
+    if (previewSlot) {
+      inventoryDragPreview.textContent = '';
+      inventoryDragPreview.appendChild(previewSlot);
+    }
+    inventoryDragPreview.hidden = false;
+  }
+
+  event.preventDefault();
+  updateInventoryDragPreviewPosition(event.clientX, event.clientY);
+}
+
+function handleInventoryDragEnd(event) {
+  if (!inventoryDragState || event.pointerId !== inventoryDragState.pointerId) return;
+
+  const { dragging, sourceIndex, lastX, lastY } = inventoryDragState;
+  const clientX = event.clientX ?? lastX;
+  const clientY = event.clientY ?? lastY;
+
+  if (dragging) {
+    event.preventDefault();
+    const dropTarget = document.elementFromPoint(clientX, clientY)?.closest?.('.inventory-menu-slot');
+    const targetIndex = Number(dropTarget?.dataset.slotIndex);
+    if (Number.isInteger(targetIndex)) {
+      moveInventoryStack(sourceIndex, targetIndex);
+    }
+    window.setTimeout(() => {
+      suppressInventorySlotClick = false;
+    }, 0);
+  }
+
+  stopInventoryDrag();
+}
+
+function addCreativeInventoryItem(typeName) {
+  const added = addItemToInventory(typeName, 1);
+  if (added <= 0) return;
+
+  const slotIndex = findInventorySlotIndexByType(typeName);
+  if (slotIndex >= 0) {
+    selectInventorySlot(slotIndex);
+  }
 }
 
 function renderInventorySlots() {
@@ -630,19 +919,22 @@ function renderInventorySlots() {
     const voxelType = voxelTypes[i];
     const slot = document.createElement('button');
     slot.type = 'button';
-    slot.className = 'inventory-slot';
+    slot.className = 'hotbar-slot creative-slot';
     slot.dataset.voxelType = voxelType.name;
 
-    const swatch = document.createElement('span');
-    swatch.className = 'inventory-slot-swatch';
-    swatch.style.backgroundColor = `#${voxelType.color.toString(16).padStart(6, '0')}`;
+    const swatch = createVoxelIcon(getVoxelTypeHexColor(voxelType.name));
     slot.appendChild(swatch);
 
     const label = document.createElement('span');
+    label.className = 'hotbar-slot-label';
     label.textContent = voxelType.name;
     slot.appendChild(label);
 
     slot.addEventListener('click', () => {
+      if (gameMode === GAME_MODE_CREATIVE) {
+        addCreativeInventoryItem(voxelType.name);
+        return;
+      }
       selectedVoxelType = voxelType.name;
       updateInventorySelectionUI();
     });
@@ -663,6 +955,7 @@ function renderPlayerInventorySlots() {
     const slot = document.createElement('button');
     slot.type = 'button';
     slot.className = 'hotbar-slot inventory-menu-slot';
+    slot.dataset.slotIndex = String(i);
     if (!stack) {
       slot.classList.add('is-empty');
     }
@@ -670,10 +963,10 @@ function renderPlayerInventorySlots() {
       slot.classList.add('is-selected');
     }
 
-    const swatch = document.createElement('span');
-    swatch.className = 'hotbar-slot-swatch';
-    swatch.style.backgroundColor = stack ? getVoxelTypeHexColor(stack.typeName) : 'transparent';
-    slot.appendChild(swatch);
+    if (stack) {
+      const swatch = createVoxelIcon(getVoxelTypeHexColor(stack.typeName));
+      slot.appendChild(swatch);
+    }
 
     const label = document.createElement('span');
     label.className = 'hotbar-slot-label';
@@ -687,6 +980,9 @@ function renderPlayerInventorySlots() {
 
     slot.addEventListener('click', () => {
       handlePlayerInventorySlotClick(i);
+    });
+    slot.addEventListener('pointerdown', event => {
+      beginInventorySlotDrag(i, event, slot);
     });
 
     playerInventorySlots.appendChild(slot);
@@ -704,51 +1000,28 @@ function renderPlayerInventorySlots() {
 
 function updateInventorySelectionUI() {
   if (inventorySelected) {
-    if (gameMode === GAME_MODE_SURVIVAL) {
-      const selectedStack = getSelectedSurvivalStack();
-      inventorySelected.textContent = selectedStack
-        ? `Selected: ${selectedStack.typeName} x${selectedStack.count}`
-        : 'Selected: empty slot';
-    } else {
-      inventorySelected.textContent = `Selected: ${selectedVoxelType}`;
-    }
+    const selectedStack = getSelectedSurvivalStack();
+    inventorySelected.textContent = selectedStack
+      ? `Selected: ${selectedStack.typeName} x${selectedStack.count}`
+      : 'Selected: empty slot';
   }
   if (!inventorySlots) return;
 
   for (let i = 0; i < inventorySlotEls.length; i++) {
     const slot = inventorySlotEls[i];
-    const isSelected = slot.dataset.voxelType === selectedVoxelType;
+    const selectedStack = getSelectedSurvivalStack();
+    const isSelected = slot.dataset.voxelType === selectedStack?.typeName;
     slot.classList.toggle('is-selected', isSelected);
-  }
-
-  if (gameMode === GAME_MODE_CREATIVE) {
-    const voxelIndex = voxelTypes.findIndex(type => type.name === selectedVoxelType);
-    if (voxelIndex >= 0 && voxelIndex < hotbarSlotEls.length) {
-      selectedHotbarIndex = voxelIndex;
-    }
   }
 
   for (let i = 0; i < hotbarSlotEls.length; i++) {
     hotbarSlotEls[i].classList.toggle('is-selected', i === selectedHotbarIndex);
     hotbarSlotEls[i].textContent = '';
 
-    if (gameMode === GAME_MODE_CREATIVE) {
-      const voxelType = voxelTypes[i];
-      if (!voxelType) continue;
-
-      const swatch = document.createElement('span');
-      swatch.className = 'hotbar-slot-swatch';
-      swatch.style.backgroundColor = getVoxelTypeHexColor(voxelType.name);
-      hotbarSlotEls[i].appendChild(swatch);
-      continue;
-    }
-
     const stack = playerInventory[i];
     if (!stack) continue;
 
-    const swatch = document.createElement('span');
-    swatch.className = 'hotbar-slot-swatch';
-    swatch.style.backgroundColor = getVoxelTypeHexColor(stack.typeName);
+    const swatch = createVoxelIcon(getVoxelTypeHexColor(stack.typeName));
     hotbarSlotEls[i].appendChild(swatch);
 
     const label = document.createElement('span');
@@ -770,19 +1043,47 @@ function updateInventorySelectionUI() {
 function selectHotbarSlot(index) {
   if (index < 0 || index >= hotbarSlotEls.length) return;
   selectedHotbarIndex = index;
-  if (gameMode === GAME_MODE_SURVIVAL) {
-    selectedInventorySlotIndex = index;
-    selectedHotbarIndex = index;
-    syncSelectedVoxelTypeFromMode();
-  } else {
-    const selectedType = voxelTypes[index];
-    if (selectedType) {
-      selectedVoxelType = selectedType.name;
-    }
-  }
+  selectedInventorySlotIndex = index;
+  selectedHotbarIndex = index;
+  syncSelectedVoxelTypeFromMode();
   updateInventorySelectionUI();
   renderPlayerInventorySlots();
 }
+
+for (let i = 0; i < hotbarSlotEls.length; i++) {
+  const slot = hotbarSlotEls[i];
+  slot.setAttribute('role', 'button');
+  slot.setAttribute('tabindex', '0');
+  slot.setAttribute('aria-label', `Select hotbar slot ${i + 1}`);
+
+  slot.addEventListener('mousedown', event => {
+    event.preventDefault();
+    event.stopPropagation();
+    selectHotbarSlot(i);
+  });
+
+  slot.addEventListener('touchstart', event => {
+    event.preventDefault();
+    event.stopPropagation();
+    selectHotbarSlot(i);
+  }, { passive: false });
+
+  slot.addEventListener('click', event => {
+    event.preventDefault();
+    event.stopPropagation();
+    selectHotbarSlot(i);
+  });
+
+  slot.addEventListener('keydown', event => {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    event.preventDefault();
+    selectHotbarSlot(i);
+  });
+}
+
+document.addEventListener('pointermove', handleInventoryDragMove, { passive: false });
+document.addEventListener('pointerup', handleInventoryDragEnd);
+document.addEventListener('pointercancel', handleInventoryDragEnd);
 
 renderInventorySlots();
 renderPlayerInventorySlots();
@@ -907,6 +1208,7 @@ const PLAYER_OUTFIT = {
   hair: 0x221710,
   faceEmoji: '😎',
 };
+initCharacterPreview();
 const playerHumanoid = createHumanoidModel({
   outfit: PLAYER_OUTFIT,
   castShadow: true,
@@ -1396,8 +1698,12 @@ function triggerActionForMouseButton(button, options = {}) {
     if (currentRaycastState.voxelEditionMode) {
       const removedVoxelType = resolveRaycastLabel(currentRaycastState.hit);
       const removed = removeVoxelAtRaycastHit(currentRaycastState.hit);
-      if (removed && gameMode === GAME_MODE_SURVIVAL && removedVoxelType) {
-        addItemToInventory(removedVoxelType, 1);
+      if (removed && removedVoxelType) {
+        if (gameMode === GAME_MODE_SURVIVAL) {
+          addItemToInventory(removedVoxelType, 1);
+        } else if (!inventoryHasType(removedVoxelType)) {
+          addCreativeInventoryItem(removedVoxelType);
+        }
       }
       return;
     }
@@ -1407,24 +1713,16 @@ function triggerActionForMouseButton(button, options = {}) {
 
   if (button === 2) {
     if (currentRaycastState.voxelEditionMode) {
-      if (gameMode === GAME_MODE_SURVIVAL) {
-        const selectedStack = getSelectedSurvivalStack();
-        if (!selectedStack?.typeName) return;
+      const selectedStack = getSelectedSurvivalStack();
+      if (!selectedStack?.typeName) return;
 
-        const added = addVoxelAtRaycastHit(currentRaycastState.hit, {
-          playerCollider,
-          voxelType: selectedStack.typeName,
-        });
-        if (added) {
-          consumeSelectedInventoryItem(1);
-        }
-        return;
-      }
-
-      addVoxelAtRaycastHit(currentRaycastState.hit, {
+      const added = addVoxelAtRaycastHit(currentRaycastState.hit, {
         playerCollider,
-        voxelType: selectedVoxelType,
+        voxelType: selectedStack.typeName,
       });
+      if (added && gameMode === GAME_MODE_SURVIVAL) {
+          consumeSelectedInventoryItem(1);
+      }
       return;
     }
     startLeftPunch({ allowMobile });
@@ -2037,6 +2335,10 @@ window.addEventListener('resize', () => {
   syncAppHeight();
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   miniMapRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  if (characterPreviewRenderer) {
+    characterPreviewRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    updateCharacterPreviewSize();
+  }
   updateModeFromViewport();
   updateSceneViewSize();
   updateMiniMapSize();
@@ -2279,6 +2581,8 @@ document.addEventListener('mousedown', handleDesktopAttack);
 document.addEventListener('contextmenu', event => event.preventDefault());
 
 document.addEventListener('keydown', e => {
+  if (isTypingTarget(e.target)) return;
+
   if (e.code === 'KeyF' && !mobileMode) {
     if (e.repeat) return;
     setFlyMode(!flyMode);
@@ -2299,10 +2603,10 @@ document.addEventListener('keydown', e => {
     return;
   }
 
-  if (!mobileMode && /^Digit[1-8]$/.test(e.code)) {
+  if (!mobileMode && /^[1-8]$/.test(e.key)) {
     e.preventDefault();
     if (e.repeat) return;
-    const slotIndex = Number(e.code.slice(5)) - 1;
+    const slotIndex = Number(e.key) - 1;
     selectHotbarSlot(slotIndex);
     return;
   }
@@ -2371,6 +2675,20 @@ renderer.setAnimationLoop(() => {
   updateProjectilesAndExplosions(delta);
   updateVoxelRaycast();
   checkFPS(delta);
+
+  if (
+    characterPreviewRenderer
+    && characterPreviewScene
+    && characterPreviewCamera
+    && characterPreviewModel
+    && isMenuCentralVisible()
+    && activeMenuCentralTab === 'character'
+  ) {
+    updateCharacterPreviewSize();
+    characterPreviewIdleCycle += delta * 0.65;
+    applyHumanoidIdleAnimation(characterPreviewModel.joints, characterPreviewIdleCycle, 0.9);
+    characterPreviewRenderer.render(characterPreviewScene, characterPreviewCamera);
+  }
 
   renderer.render(scene, camera);
   updateMiniMap();
