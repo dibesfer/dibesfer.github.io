@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Kolorlando</title>
+    <link rel="stylesheet" href="style.css">
+
+    <script type="importmap">
+    {
+    "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@v0.182.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@v0.182.0/examples/jsm/"
+    }
+    }
+    </script>
+
+</head>
+
+<body>
+
+    <div id="loadingScreen" role="status" aria-live="polite">
+        <div id="loadingContent">
+            <h1>Loading Voxelandia</h1>
+            <div id="loadingBarTrack">
+                <div id="loadingBarFill"></div>
+            </div>
+            <p id="loadingText">Loading assets... 0%</p>
+        </div>
+    </div>
+
+    <div id="consola">
+        <p>FPS: </p>
+        
+    </div>
+
+    <div id="chatBox">
+        
+        <div id="chatBoxOutput">
+            <div>Server says: Hello World!</div>
+            
+
+        </div>
+        <input type="text" name="" id="chatBoxInput">
+    </div>
+
+    <div id="miniMap">
+
+    </div>
+
+    <div id="playerHud">
+        <div id="voxelReadout">Voxel: none</div>
+        <div id="playerHealthBar" aria-label="Player health">
+            <div id="playerHealthFill"></div>
+            <span id="playerHealthText">100 / 100</span>
+        </div>
+        <div id="hotbar" aria-label="Hotbar">
+            <div class="hotbar-slot is-selected"></div>
+            <div class="hotbar-slot"></div>
+            <div class="hotbar-slot"></div>
+            <div class="hotbar-slot"></div>
+            <div class="hotbar-slot"></div>
+            <div class="hotbar-slot"></div>
+            <div class="hotbar-slot"></div>
+            <div class="hotbar-slot"></div>
+        </div>
+    </div>
+
+    <div id="menuCentral" class="invisible" hidden>
+        <h1>Kolorlando</h1>
+        <div class="menu-tabs" role="tablist" aria-label="Main menu sections">
+            <button class="menu-tab" type="button" data-menu-tab="creative">CREATIVE</button>
+            <button class="menu-tab" type="button" data-menu-tab="inventory">INVENTORY</button>
+            <button class="menu-tab" type="button" data-menu-tab="character">CHARACTER</button>
+            <button class="menu-tab is-active" type="button" data-menu-tab="settings">SETTINGS</button>
+            <button class="menu-tab" type="button" data-menu-tab="about">ABOUT</button>
+        </div>
+
+        <section class="menu-panel" data-menu-panel="creative">
+            <h2>Creative</h2>
+            <div id="inventorySlots"></div>
+            <p id="inventorySelected">Selected: green</p>
+            <p class="inventory-help">Press <code>C</code> to open this tab quickly.</p>
+        </section>
+
+        <section class="menu-panel" data-menu-panel="inventory">
+            <h2>Inventory</h2>
+            <div id="playerInventorySlots"></div>
+            <p class="inventory-help">Press <code>I</code> to open this tab quickly.</p>
+        </section>
+
+        <section class="menu-panel" data-menu-panel="character">
+            <h2>Character</h2>
+            <p>Face: 😎</p>
+            <p>Health and selected block are shown in the HUD while playing.</p>
+        </section>
+
+        <section class="menu-panel is-active" data-menu-panel="settings">
+            <h2>Settings</h2>
+
+            
+
+            <h3>Controls</h3>
+            <hr>
+            <p>Click PLAY to lock your cursor and drive the camera.</p>
+            <p>Move with WASD</p>
+            <p>Jump with Space</p>
+            <p>Press <code>C</code> for Creative</p>
+            <p>Press <code>I</code> for Inventory</p>
+            <p>Desktop: clicking outside this menu closes it and returns to cursor lock.</p>
+            <p>Mobile: clicking outside this menu closes it.</p>
+            <p>Press Escape to unlock your cursor and open this menu.</p>
+            <button id="playButton" type="button">PLAY</button>
+        </section>
+
+        <section class="menu-panel" data-menu-panel="about">
+            <h2>About</h2>
+            <p>Game made with Three.js by dibesfer.</p>
+        </section>
+    </div>
+
+    <div id="menuInferior" class="invisible" hidden>
+
+        <div id="menuInferiorLeft">
+
+            <div class="joystick">
+                <div class="pad">
+                    <img class="icon" src="assets/Movimiento.png" alt="icono de movimiento" width="50" height="50" decoding="async">
+
+                </div>
+            </div>
+
+            <div id="buttonDown" class="button">
+                down
+            </div>
+            <div id="buttonUp" class="button">
+                up
+            </div>
+
+            <div id="Left0" class="button">
+                Left
+            </div>
+            <div id="Left1" class="button">
+                Sprint
+            </div>
+        </div>
+
+        <div id="menuInferiorRight">
+
+            <div class="joystick">
+                <div class="pad">
+                    <img class="icon" src="assets/Mirilla rifle.png" alt="mirilla rifle" width="50" height="50" decoding="async">
+                </div>
+            </div>
+
+            <div id="buttonShoot" class="button">
+
+                ✋
+
+            </div>
+
+            <div id="Right1" class="button">
+
+                🤚
+            </div>
+            <div id="Right2" class="button">
+                Jump
+            </div>
+            <div id="Right3" class="button">
+
+                &#8801;
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div id="sceneView">
+        <div id="crossHair">+</div>
+    </div>
+
+    <script type="module" src="script.js"></script>
+</body>
+
+</html>
