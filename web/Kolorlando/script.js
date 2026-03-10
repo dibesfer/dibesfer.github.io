@@ -59,7 +59,11 @@ const menuInferior = document.getElementById('menuInferior');
 const inventorySlots = document.getElementById('inventorySlots');
 const inventorySelected = document.getElementById('inventorySelected');
 const playerInventorySlots = document.getElementById('playerInventorySlots');
+const playerInventorySummary = document.getElementById('playerInventorySummary');
+const playerInventorySelection = document.getElementById('playerInventorySelection');
 const hotbarSlotEls = Array.from(document.querySelectorAll('#hotbar .hotbar-slot'));
+const gameModeReadout = document.getElementById('gameModeReadout');
+const gameModeButtons = Array.from(document.querySelectorAll('[data-game-mode]'));
 const loadingScreen = document.getElementById('loadingScreen');
 const loadingBarFill = document.getElementById('loadingBarFill');
 const loadingText = document.getElementById('loadingText');
@@ -229,6 +233,12 @@ function updateLoadingUI(loaded, total) {
   if (loadingText) {
     loadingText.textContent = `Loading assets... ${progress}%`;
   }
+}
+
+for (let i = 0; i < gameModeButtons.length; i++) {
+  gameModeButtons[i].addEventListener('click', () => {
+    setGameMode(gameModeButtons[i].dataset.gameMode);
+  });
 }
 
 THREE.DefaultLoadingManager.onStart = (_url, itemsLoaded, itemsTotal) => {
@@ -457,6 +467,14 @@ const getVoxelBoxFromRaycastHit = typeof mapData.getVoxelBoxFromRaycastHit === '
   ? mapData.getVoxelBoxFromRaycastHit
   : () => null;
 const voxelTypes = Array.isArray(mapData.voxelTypes) ? mapData.voxelTypes : [];
+const voxelTypeByName = new Map(voxelTypes.map(type => [type.name, type]));
+const PLAYER_INVENTORY_SLOT_COUNT = 32;
+const PLAYER_STACK_LIMIT = 99;
+const GAME_MODE_CREATIVE = 'creative';
+const GAME_MODE_SURVIVAL = 'survival';
+let gameMode = GAME_MODE_SURVIVAL;
+const playerInventory = Array.from({ length: PLAYER_INVENTORY_SLOT_COUNT }, () => null);
+let selectedInventorySlotIndex = 0;
 let selectedVoxelType = voxelTypes.find(type => type.name === 'green')?.name ?? voxelTypes[0]?.name ?? 'green';
 let selectedHotbarIndex = Math.max(0, voxelTypes.findIndex(type => type.name === selectedVoxelType));
 const intersectMapColliderBox = typeof mapData.intersectColliderBox === 'function'
@@ -475,6 +493,133 @@ playerSpawnPoint.y += 1;
 
 playerEye.copy(playerSpawnPoint);
 camera.position.copy(playerEye);
+
+function getVoxelTypeColor(typeName) {
+  return voxelTypeByName.get(typeName)?.color ?? 0xffffff;
+}
+
+function getVoxelTypeHexColor(typeName) {
+  return `#${getVoxelTypeColor(typeName).toString(16).padStart(6, '0')}`;
+}
+
+function getSelectedSurvivalStack() {
+  return playerInventory[selectedInventorySlotIndex];
+}
+
+function syncSelectedVoxelTypeFromMode() {
+  if (gameMode === GAME_MODE_SURVIVAL) {
+    const selectedStack = getSelectedSurvivalStack();
+    if (selectedStack?.typeName) {
+      selectedVoxelType = selectedStack.typeName;
+      return;
+    }
+
+    const firstFilledSlotIndex = playerInventory.findIndex(Boolean);
+    if (firstFilledSlotIndex >= 0) {
+      selectedInventorySlotIndex = firstFilledSlotIndex;
+      selectedHotbarIndex = firstFilledSlotIndex < hotbarSlotEls.length ? firstFilledSlotIndex : -1;
+      selectedVoxelType = playerInventory[firstFilledSlotIndex].typeName;
+      return;
+    }
+  }
+
+  selectedVoxelType = voxelTypes.find(type => type.name === 'green')?.name ?? voxelTypes[0]?.name ?? 'green';
+}
+
+function getSelectedInventoryLabel() {
+  const slotNumber = selectedInventorySlotIndex + 1;
+  const selectedStack = getSelectedSurvivalStack();
+  if (!selectedStack) {
+    return `Selected slot: ${slotNumber} (empty)`;
+  }
+  return `Selected slot: ${slotNumber} (${selectedStack.typeName} x${selectedStack.count})`;
+}
+
+function updateGameModeUI() {
+  if (gameModeReadout) {
+    const modeLabel = gameMode === GAME_MODE_SURVIVAL ? 'Survival' : 'Creative';
+    gameModeReadout.textContent = `Mode: ${modeLabel}`;
+  }
+
+  for (let i = 0; i < gameModeButtons.length; i++) {
+    const isActive = gameModeButtons[i].dataset.gameMode === gameMode;
+    gameModeButtons[i].classList.toggle('is-active', isActive);
+  }
+}
+
+function setGameMode(nextMode) {
+  const normalizedMode = nextMode === GAME_MODE_SURVIVAL ? GAME_MODE_SURVIVAL : GAME_MODE_CREATIVE;
+  if (gameMode === normalizedMode) {
+    updateGameModeUI();
+    updateInventorySelectionUI();
+    renderPlayerInventorySlots();
+    return;
+  }
+
+  gameMode = normalizedMode;
+  if (gameMode === GAME_MODE_SURVIVAL) {
+    selectedHotbarIndex = selectedInventorySlotIndex < hotbarSlotEls.length ? selectedInventorySlotIndex : -1;
+  }
+  syncSelectedVoxelTypeFromMode();
+  updateGameModeUI();
+  updateInventorySelectionUI();
+  renderPlayerInventorySlots();
+}
+
+function addItemToInventory(typeName, amount = 1) {
+  if (!typeName || amount <= 0) return 0;
+
+  let remaining = amount;
+
+  for (let i = 0; i < playerInventory.length && remaining > 0; i++) {
+    const stack = playerInventory[i];
+    if (!stack || stack.typeName !== typeName || stack.count >= PLAYER_STACK_LIMIT) continue;
+    const freeSpace = PLAYER_STACK_LIMIT - stack.count;
+    const movedAmount = Math.min(freeSpace, remaining);
+    stack.count += movedAmount;
+    remaining -= movedAmount;
+  }
+
+  for (let i = 0; i < playerInventory.length && remaining > 0; i++) {
+    if (playerInventory[i]) continue;
+    const movedAmount = Math.min(PLAYER_STACK_LIMIT, remaining);
+    playerInventory[i] = { typeName, count: movedAmount };
+    remaining -= movedAmount;
+  }
+
+  renderPlayerInventorySlots();
+  updateInventorySelectionUI();
+  return amount - remaining;
+}
+
+function consumeSelectedInventoryItem(amount = 1) {
+  const selectedStack = getSelectedSurvivalStack();
+  if (!selectedStack || amount <= 0) return false;
+  if (selectedStack.count < amount) return false;
+
+  selectedStack.count -= amount;
+  if (selectedStack.count <= 0) {
+    playerInventory[selectedInventorySlotIndex] = null;
+  }
+
+  syncSelectedVoxelTypeFromMode();
+  renderPlayerInventorySlots();
+  updateInventorySelectionUI();
+  return true;
+}
+
+function selectInventorySlot(index) {
+  if (index < 0 || index >= playerInventory.length) return;
+  selectedInventorySlotIndex = index;
+  selectedHotbarIndex = index < hotbarSlotEls.length ? index : -1;
+  syncSelectedVoxelTypeFromMode();
+  renderPlayerInventorySlots();
+  updateInventorySelectionUI();
+}
+
+function handlePlayerInventorySlotClick(index) {
+  selectInventorySlot(index);
+}
 
 function renderInventorySlots() {
   if (!inventorySlots) return;
@@ -513,16 +658,60 @@ function renderPlayerInventorySlots() {
   if (!playerInventorySlots) return;
   playerInventorySlots.textContent = '';
 
-  for (let i = 0; i < 32; i++) {
-    const slot = document.createElement('div');
-    slot.className = 'hotbar-slot';
+  for (let i = 0; i < PLAYER_INVENTORY_SLOT_COUNT; i++) {
+    const stack = playerInventory[i];
+    const slot = document.createElement('button');
+    slot.type = 'button';
+    slot.className = 'hotbar-slot inventory-menu-slot';
+    if (!stack) {
+      slot.classList.add('is-empty');
+    }
+    if (i === selectedInventorySlotIndex) {
+      slot.classList.add('is-selected');
+    }
+
+    const swatch = document.createElement('span');
+    swatch.className = 'hotbar-slot-swatch';
+    swatch.style.backgroundColor = stack ? getVoxelTypeHexColor(stack.typeName) : 'transparent';
+    slot.appendChild(swatch);
+
+    const label = document.createElement('span');
+    label.className = 'hotbar-slot-label';
+    label.textContent = stack ? stack.typeName : 'empty';
+    slot.appendChild(label);
+
+    const count = document.createElement('span');
+    count.className = 'hotbar-slot-count';
+    count.textContent = stack ? String(stack.count) : '';
+    slot.appendChild(count);
+
+    slot.addEventListener('click', () => {
+      handlePlayerInventorySlotClick(i);
+    });
+
     playerInventorySlots.appendChild(slot);
+  }
+
+  if (playerInventorySummary) {
+    const totalItems = playerInventory.reduce((sum, stack) => sum + (stack?.count ?? 0), 0);
+    playerInventorySummary.textContent = `${totalItems} / ${PLAYER_INVENTORY_SLOT_COUNT * PLAYER_STACK_LIMIT} items`;
+  }
+
+  if (playerInventorySelection) {
+    playerInventorySelection.textContent = getSelectedInventoryLabel();
   }
 }
 
 function updateInventorySelectionUI() {
   if (inventorySelected) {
-    inventorySelected.textContent = `Selected: ${selectedVoxelType}`;
+    if (gameMode === GAME_MODE_SURVIVAL) {
+      const selectedStack = getSelectedSurvivalStack();
+      inventorySelected.textContent = selectedStack
+        ? `Selected: ${selectedStack.typeName} x${selectedStack.count}`
+        : 'Selected: empty slot';
+    } else {
+      inventorySelected.textContent = `Selected: ${selectedVoxelType}`;
+    }
   }
   if (!inventorySlots) return;
 
@@ -532,28 +721,72 @@ function updateInventorySelectionUI() {
     slot.classList.toggle('is-selected', isSelected);
   }
 
-  const voxelIndex = voxelTypes.findIndex(type => type.name === selectedVoxelType);
-  if (voxelIndex >= 0 && voxelIndex < hotbarSlotEls.length) {
-    selectedHotbarIndex = voxelIndex;
+  if (gameMode === GAME_MODE_CREATIVE) {
+    const voxelIndex = voxelTypes.findIndex(type => type.name === selectedVoxelType);
+    if (voxelIndex >= 0 && voxelIndex < hotbarSlotEls.length) {
+      selectedHotbarIndex = voxelIndex;
+    }
   }
 
   for (let i = 0; i < hotbarSlotEls.length; i++) {
     hotbarSlotEls[i].classList.toggle('is-selected', i === selectedHotbarIndex);
+    hotbarSlotEls[i].textContent = '';
+
+    if (gameMode === GAME_MODE_CREATIVE) {
+      const voxelType = voxelTypes[i];
+      if (!voxelType) continue;
+
+      const swatch = document.createElement('span');
+      swatch.className = 'hotbar-slot-swatch';
+      swatch.style.backgroundColor = getVoxelTypeHexColor(voxelType.name);
+      hotbarSlotEls[i].appendChild(swatch);
+      continue;
+    }
+
+    const stack = playerInventory[i];
+    if (!stack) continue;
+
+    const swatch = document.createElement('span');
+    swatch.className = 'hotbar-slot-swatch';
+    swatch.style.backgroundColor = getVoxelTypeHexColor(stack.typeName);
+    hotbarSlotEls[i].appendChild(swatch);
+
+    const label = document.createElement('span');
+    label.className = 'hotbar-slot-label';
+    label.textContent = stack.typeName;
+    hotbarSlotEls[i].appendChild(label);
+
+    const count = document.createElement('span');
+    count.className = 'hotbar-slot-count';
+    count.textContent = String(stack.count);
+    hotbarSlotEls[i].appendChild(count);
+  }
+
+  if (playerInventorySelection) {
+    playerInventorySelection.textContent = getSelectedInventoryLabel();
   }
 }
 
 function selectHotbarSlot(index) {
   if (index < 0 || index >= hotbarSlotEls.length) return;
   selectedHotbarIndex = index;
-  const selectedType = voxelTypes[index];
-  if (selectedType) {
-    selectedVoxelType = selectedType.name;
+  if (gameMode === GAME_MODE_SURVIVAL) {
+    selectedInventorySlotIndex = index;
+    selectedHotbarIndex = index;
+    syncSelectedVoxelTypeFromMode();
+  } else {
+    const selectedType = voxelTypes[index];
+    if (selectedType) {
+      selectedVoxelType = selectedType.name;
+    }
   }
   updateInventorySelectionUI();
+  renderPlayerInventorySlots();
 }
 
 renderInventorySlots();
 renderPlayerInventorySlots();
+updateGameModeUI();
 
 const miniMapCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 500);
 miniMapCamera.up.set(0, 0, -1);
@@ -1161,7 +1394,11 @@ function triggerActionForMouseButton(button, options = {}) {
 
   if (button === 0) {
     if (currentRaycastState.voxelEditionMode) {
-      removeVoxelAtRaycastHit(currentRaycastState.hit);
+      const removedVoxelType = resolveRaycastLabel(currentRaycastState.hit);
+      const removed = removeVoxelAtRaycastHit(currentRaycastState.hit);
+      if (removed && gameMode === GAME_MODE_SURVIVAL && removedVoxelType) {
+        addItemToInventory(removedVoxelType, 1);
+      }
       return;
     }
     startRightPunch({ allowMobile });
@@ -1170,6 +1407,20 @@ function triggerActionForMouseButton(button, options = {}) {
 
   if (button === 2) {
     if (currentRaycastState.voxelEditionMode) {
+      if (gameMode === GAME_MODE_SURVIVAL) {
+        const selectedStack = getSelectedSurvivalStack();
+        if (!selectedStack?.typeName) return;
+
+        const added = addVoxelAtRaycastHit(currentRaycastState.hit, {
+          playerCollider,
+          voxelType: selectedStack.typeName,
+        });
+        if (added) {
+          consumeSelectedInventoryItem(1);
+        }
+        return;
+      }
+
       addVoxelAtRaycastHit(currentRaycastState.hit, {
         playerCollider,
         voxelType: selectedVoxelType,

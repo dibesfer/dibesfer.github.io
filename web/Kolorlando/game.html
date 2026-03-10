@@ -50,6 +50,7 @@
     </div>
 
     <div id="playerHud">
+        <div id="gameModeReadout">Mode: Survival</div>
         <div id="voxelReadout">Voxel: none</div>
         <div id="playerHealthBar" aria-label="Player health">
             <div id="playerHealthFill"></div>
@@ -86,7 +87,10 @@
 
         <section class="menu-panel" data-menu-panel="inventory">
             <h2>Inventory</h2>
+            <p id="playerInventorySummary">0 / 3168 items</p>
             <div id="playerInventorySlots"></div>
+            <p id="playerInventorySelection">Selected slot: 1</p>
+            <p class="inventory-help">Click any slot to select its stack for Survival mode.</p>
             <p class="inventory-help">Press <code>I</code> to open this tab quickly.</p>
         </section>
 
@@ -98,6 +102,12 @@
 
         <section class="menu-panel is-active" data-menu-panel="settings">
             <h2>Settings</h2>
+
+            <div class="game-mode-picker" aria-label="Game mode">
+                <span>Game mode</span>
+                <button class="game-mode-button" type="button" data-game-mode="creative">Creative</button>
+                <button class="game-mode-button is-active" type="button" data-game-mode="survival">Survival</button>
+            </div>
 
             
             <input type="checkbox" name="fullScreen" id="settingsFullScreen">
