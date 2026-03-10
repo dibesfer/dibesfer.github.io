@@ -20,7 +20,7 @@
 
 <body>
 
-    <div id="loadingScreen" aria-live="polite">
+    <div id="loadingScreen" role="status" aria-live="polite">
         <div id="loadingContent">
             <h1>Loading Voxelandia</h1>
             <div id="loadingBarTrack">
@@ -56,7 +56,7 @@
         </div>
     </div>
 
-    <div id="menuCentral" class="invisible">
+    <div id="menuCentral" class="invisible" hidden>
         <h1>Kolorlando</h1>
         <div class="menu-tabs" role="tablist" aria-label="Main menu sections">
             <button class="menu-tab" type="button" data-menu-tab="creative">CREATIVE</button>
@@ -106,13 +106,13 @@
         </section>
     </div>
 
-    <div id="menuInferior" class="invisible">
+    <div id="menuInferior" class="invisible" hidden>
 
         <div id="menuInferiorLeft">
 
             <div class="joystick">
                 <div class="pad">
-                    <img class="icon" src="assets/Movimiento.png" alt="icono de movimiento">
+                    <img class="icon" src="assets/Movimiento.png" alt="icono de movimiento" width="50" height="50" decoding="async">
 
                 </div>
             </div>
@@ -136,7 +136,7 @@
 
             <div class="joystick">
                 <div class="pad">
-                    <img class="icon" src="assets/Mirilla rifle.png" alt="mirilla rifle">
+                    <img class="icon" src="assets/Mirilla rifle.png" alt="mirilla rifle" width="50" height="50" decoding="async">
                 </div>
             </div>
 
@@ -167,9 +167,7 @@
         <div id="crossHair">+</div>
     </div>
 
-    <script src="script.js" type="module">
-
-    </script>
+    <script type="module" src="script.js"></script>
 </body>
 
 </html>

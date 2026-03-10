@@ -1,10 +1,17 @@
 :root {
-  --commonBorder: solid 1px white; /* global scope */
+    --commonBorder: solid 1px white;
+    --uiFont: monospace;
+    --panelSurface: rgba(255, 255, 255, 0.9);
+    --panelBorder: rgba(0, 0, 0, 0.15);
 }
 
 * {
     margin: 0;
     box-sizing: border-box;
+}
+
+[hidden] {
+    display: none !important;
 }
 
 html,
@@ -16,6 +23,8 @@ body {
 body {
     font-family: sans-serif;
     height: 100vh;
+    overflow: hidden;
+    background: #5aa8d4;
 }
 
 #loadingScreen {
@@ -42,7 +51,7 @@ body {
     border: 1px solid rgba(255, 255, 255, 0.4);
     background: rgba(14, 25, 34, 0.6);
     backdrop-filter: blur(4px);
-    font-family: monospace;
+    font-family: var(--uiFont);
 }
 
 #loadingContent h1 {
@@ -76,6 +85,7 @@ body {
     border: none;
     outline: none;
     z-index: 0;
+    contain: layout paint size;
 }
 
 #sceneView canvas {
@@ -95,7 +105,7 @@ img {
     top: 0;
     left: 0;
     background-color: rgba(74, 74, 74, 0.426);
-    font-family: monospace;
+    font-family: var(--uiFont);
     font-size: 1rem;
     padding: 5px;
     z-index: 40;
@@ -186,7 +196,7 @@ img {
     height: 500px;
     max-height: 90%;
     width: min(760px, calc(100vw - 28px));
-    background-color: rgba(255, 255, 255, 0.9);
+    background-color: var(--panelSurface);
     border-radius: 10px;
     padding: 14px;
     z-index: 60;
@@ -197,7 +207,7 @@ img {
 }
 
 #menuCentral h1 {
-    font-family: monospace;
+    font-family: var(--uiFont);
     margin-bottom: 10px;
     text-align: center;
 }
@@ -214,7 +224,7 @@ img {
     border: 1px solid rgba(0, 0, 0, 0.35);
     border-radius: 999px;
     padding: 6px 14px;
-    font-family: monospace;
+    font-family: var(--uiFont);
     font-weight: 700;
     background: #fff;
     color: #222;
@@ -232,7 +242,7 @@ img {
 
 .menu-panel {
     display: none;
-    border: 1px solid rgba(0, 0, 0, 0.15);
+    border: 1px solid var(--panelBorder);
     border-radius: 8px;
     background: rgba(255, 255, 255, 0.72);
     padding: 12px;
@@ -247,7 +257,7 @@ img {
 
 .menu-panel h2,
 .menu-panel h3 {
-    font-family: monospace;
+    font-family: var(--uiFont);
     margin-bottom: 8px;
 }
 
@@ -260,6 +270,7 @@ img {
     justify-content: center;
     background-color: gray;
     align-items: center;
+    touch-action: none;
 }
 
 .pad {
@@ -270,6 +281,7 @@ img {
     border-radius: 50%;
     position: relative;
     z-index: 2;
+    will-change: transform;
 }
 
 .invisible {
@@ -292,6 +304,7 @@ img {
     justify-content: space-around;
     align-items: center;
     z-index: 35;
+    touch-action: none;
 }
 
 #playerHud {
@@ -325,7 +338,7 @@ img {
     align-items: center;
     justify-content: center;
     background: rgba(255, 255, 255, 0.65);
-    font-family: monospace;
+    font-family: var(--uiFont);
     color: #1f2630;
     cursor: pointer;
     gap: 8px;
@@ -347,20 +360,20 @@ img {
 
 #inventorySelected {
     margin-top: 10px;
-    font-family: monospace;
+    font-family: var(--uiFont);
     font-weight: 700;
 }
 
 .inventory-help {
     margin-top: 10px;
-    font-family: monospace;
+    font-family: var(--uiFont);
     opacity: 0.9;
 }
 
 #voxelReadout {
     margin-bottom: 6px;
     text-align: center;
-    font-family: monospace;
+    font-family: var(--uiFont);
     font-size: 0.9rem;
     font-weight: 700;
     color: #ffebeb;
@@ -392,7 +405,7 @@ img {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-family: monospace;
+    font-family: var(--uiFont);
     font-size: 0.95rem;
     font-weight: 700;
     color: #fff;
@@ -426,6 +439,7 @@ img {
     position: relative;
     height: 100%;
     flex: 50%;
+    touch-action: none;
 }
 
 #menuInferiorRight {
@@ -433,6 +447,7 @@ img {
     position: relative;
     flex: 50%;
     height: 100%;
+    touch-action: none;
 }
 
 #menuInferiorLeft>.joystick,
@@ -455,7 +470,7 @@ img {
     min-width: 220px;
     font: unset;
     font-size: 2rem;
-    font-family: monospace;
+    font-family: var(--uiFont);
     transition: 0.2s;
 }
 
@@ -550,18 +565,19 @@ img {
     user-select: none;
     position: relative;
     z-index: 1;
+    touch-action: none;
 }
 
 /* MOBILE PORTRAIT MODE */
 body[data-mode="mobile-portrait"] {
-    height: 100vh;
+    height: 100dvh;
     overflow: hidden;
 }
 
 body[data-mode="mobile-portrait"] #sceneView {
     position: relative;
     inset: auto;
-    height: 80vh;
+    height: 80dvh;
     
 }
 
@@ -579,17 +595,17 @@ body[data-mode="mobile-portrait"] #menuInferior {
     left: 0;
     bottom: 0;
     width: 100%;
-    height: 20vh;
+    height: 20dvh;
 }
 
 body[data-mode="mobile-portrait"] #menuCentral {
     position: fixed;
-    top: 4vh;
+    top: 4dvh;
     left: 50%;
     transform: translateX(-50%);
     width: min(760px, calc(100vw - 20px));
-    height: 74vh;
-    max-height: 74vh;
+    height: 74dvh;
+    max-height: 74dvh;
 }
 
 /* MOBILE LANDSCAPE MODE */

@@ -52,14 +52,14 @@ scene.add(camera);
 const consola = document.getElementById('consola');
 const miniMap = document.getElementById('miniMap');
 const menuCentral = document.getElementById('menuCentral');
-const menuTabButtons = document.querySelectorAll('#menuCentral .menu-tab');
-const menuPanels = document.querySelectorAll('#menuCentral .menu-panel');
+const menuTabButtons = Array.from(document.querySelectorAll('#menuCentral .menu-tab'));
+const menuPanels = Array.from(document.querySelectorAll('#menuCentral .menu-panel'));
 const playButton = document.getElementById('playButton');
 const menuInferior = document.getElementById('menuInferior');
 const inventorySlots = document.getElementById('inventorySlots');
 const inventorySelected = document.getElementById('inventorySelected');
 const playerInventorySlots = document.getElementById('playerInventorySlots');
-const hotbarSlotEls = document.querySelectorAll('#hotbar .hotbar-slot');
+const hotbarSlotEls = Array.from(document.querySelectorAll('#hotbar .hotbar-slot'));
 const loadingScreen = document.getElementById('loadingScreen');
 const loadingBarFill = document.getElementById('loadingBarFill');
 const loadingText = document.getElementById('loadingText');
@@ -75,12 +75,19 @@ const voxelReadout = document.getElementById('voxelReadout');
 let mobileShootPressed = false;
 let mobileSprintEnabled = false;
 let activeMenuCentralTab = 'settings';
+let inventorySlotEls = [];
 const gameAudio = createGameAudio();
 
 const miniMapPlayerMarker = document.createElement('div');
 miniMapPlayerMarker.id = 'miniMapPlayerMarker';
 miniMap.appendChild(miniMapPlayerMarker);
 const entityMiniMapMarkers = new Map();
+
+function setElementHidden(element, hidden) {
+  if (!element) return;
+  element.hidden = hidden;
+  element.classList.toggle('invisible', hidden);
+}
 
 function resolveMode() {
   const hasTouchScreen = (navigator.maxTouchPoints ?? 0) > 1;
@@ -92,7 +99,7 @@ function resolveMode() {
 }
 
 function isMenuCentralVisible() {
-  return !menuCentral.classList.contains('invisible');
+  return !menuCentral.hidden;
 }
 
 function setMenuCentralTab(tabName) {
@@ -113,14 +120,12 @@ function showMenuCentral(tabName = activeMenuCentralTab, { force = false } = {})
     return;
   }
   setMenuCentralTab(tabName);
-  menuCentral.style.removeProperty('display');
-  menuCentral.classList.remove('invisible');
+  setElementHidden(menuCentral, false);
   document.body.classList.add('menu-central-open');
 }
 
 function hideMenuCentral() {
-  menuCentral.style.display = 'none';
-  menuCentral.classList.add('invisible');
+  setElementHidden(menuCentral, true);
   document.body.classList.remove('menu-central-open');
 }
 
@@ -136,10 +141,8 @@ function applyMode(mode) {
       controls.unlock();
     }
     hideMenuCentral();
-    menuInferior.classList.remove('invisible');
+    setElementHidden(menuInferior, false);
     menuInferior.classList.add('flex');
-    document.addEventListener('click', controlLocker);
-    document.addEventListener('touchstart', controlLocker, { passive: true });
     return;
   }
 
@@ -149,14 +152,12 @@ function applyMode(mode) {
   } else {
     showMenuCentral(activeMenuCentralTab || 'settings');
   }
-  menuInferior.classList.add('invisible');
+  setElementHidden(menuInferior, true);
   menuInferior.classList.remove('flex');
   mobileShootPressed = false;
   mobileSprintEnabled = false;
   setShootButtonState(false);
   setMobileSprintState(false);
-  document.addEventListener('click', controlLocker);
-  document.addEventListener('touchstart', controlLocker, { passive: true });
 }
 
 function updateModeFromViewport() {
@@ -170,7 +171,7 @@ function updateModeFromViewport() {
 const sceneView = document.getElementById('sceneView');
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
-
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.setClearColor(0x5EC9FF);
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -262,7 +263,7 @@ function controlLocker(event) {
   hideMenuCentral();
 
   if (mobileMode) {
-    menuInferior.classList.remove('invisible');
+    setElementHidden(menuInferior, false);
     menuInferior.classList.add('flex');
     return;
   }
@@ -293,6 +294,8 @@ function setInventoryPanelOpen(nextOpen, { allowMobile = false } = {}) {
 updateModeFromViewport();
 updateSceneViewSize();
 setMenuCentralTab('settings');
+document.addEventListener('click', controlLocker);
+document.addEventListener('touchstart', controlLocker, { passive: true });
 
 if (menuCentral) {
   menuCentral.addEventListener('click', event => {
@@ -433,6 +436,7 @@ camera.position.copy(playerEye);
 function renderInventorySlots() {
   if (!inventorySlots) return;
   inventorySlots.textContent = '';
+  inventorySlotEls = [];
 
   for (let i = 0; i < voxelTypes.length; i++) {
     const voxelType = voxelTypes[i];
@@ -456,6 +460,7 @@ function renderInventorySlots() {
     });
 
     inventorySlots.appendChild(slot);
+    inventorySlotEls.push(slot);
   }
 
   updateInventorySelectionUI();
@@ -478,9 +483,8 @@ function updateInventorySelectionUI() {
   }
   if (!inventorySlots) return;
 
-  const slotElements = inventorySlots.querySelectorAll('.inventory-slot');
-  for (let i = 0; i < slotElements.length; i++) {
-    const slot = slotElements[i];
+  for (let i = 0; i < inventorySlotEls.length; i++) {
+    const slot = inventorySlotEls[i];
     const isSelected = slot.dataset.voxelType === selectedVoxelType;
     slot.classList.toggle('is-selected', isSelected);
   }
@@ -1726,6 +1730,8 @@ window.addEventListener('resize', () => {
   windowWidth = window.innerWidth;
   windowHeight = window.innerHeight;
 
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  miniMapRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   updateModeFromViewport();
   updateSceneViewSize();
   updateMiniMapSize();
@@ -1739,12 +1745,14 @@ const leftJoy = document.querySelector('#menuInferiorLeft .joystick');
 const leftPad = leftJoy.querySelector('.pad');
 
 leftJoy.addEventListener('touchstart', e => {
+  e.preventDefault();
   for (let t of e.changedTouches) {
     leftTouchId = t.identifier;
   }
-});
+}, { passive: false });
 
 leftJoy.addEventListener('touchend', e => {
+  e.preventDefault();
   for (let t of e.changedTouches) {
     if (t.identifier === leftTouchId) {
       leftTouchId = null;
@@ -1753,9 +1761,10 @@ leftJoy.addEventListener('touchend', e => {
       leftPad.style.transform = 'translate(0px,0px)';
     }
   }
-});
+}, { passive: false });
 
 leftJoy.addEventListener('touchmove', e => {
+  e.preventDefault();
   for (let t of e.touches) {
     if (t.identifier === leftTouchId) {
       const rect = leftJoy.getBoundingClientRect();
@@ -1772,18 +1781,20 @@ leftJoy.addEventListener('touchmove', e => {
       moveRight = dx / max;
     }
   }
-});
+}, { passive: false });
 
 const rightJoy = document.querySelector('#menuInferiorRight .joystick');
 const rightPad = rightJoy.querySelector('.pad');
 
 rightJoy.addEventListener('touchstart', e => {
+  e.preventDefault();
   for (let t of e.changedTouches) {
     rightTouchId = t.identifier;
   }
-});
+}, { passive: false });
 
 rightJoy.addEventListener('touchend', e => {
+  e.preventDefault();
   for (let t of e.changedTouches) {
     if (t.identifier === rightTouchId) {
       rightTouchId = null;
@@ -1792,9 +1803,10 @@ rightJoy.addEventListener('touchend', e => {
       rightPad.style.transform = 'translate(0px,0px)';
     }
   }
-});
+}, { passive: false });
 
 rightJoy.addEventListener('touchmove', e => {
+  e.preventDefault();
   for (let t of e.touches) {
     if (t.identifier === rightTouchId) {
       const rect = rightJoy.getBoundingClientRect();
@@ -1811,7 +1823,7 @@ rightJoy.addEventListener('touchmove', e => {
       lookDy = dy;
     }
   }
-});
+}, { passive: false });
 
 // --------------------
 // MOBILE CONTROL VALUES
