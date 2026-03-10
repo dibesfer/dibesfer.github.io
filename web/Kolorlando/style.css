@@ -108,7 +108,41 @@ img {
     font-family: var(--uiFont);
     font-size: 1rem;
     padding: 5px;
+    height: 2rem;
     z-index: 40;
+}
+
+#chatBox{
+    position: absolute;
+    top: 2rem;
+    background-color: rgba(156, 156, 255, 0.468);
+    left: 0;
+    height: 150px;
+    width: 50%;
+    z-index: 1;
+    padding: 5px;
+    overflow: auto;
+    font-family: var(--uiFont);
+    font-size: 1rem;
+    
+}
+
+#chatBoxOutput {
+    
+    height: 80%;
+    overflow: auto;
+}
+
+#chatBoxInput {
+    max-width: 100%;
+    border: solid 1px rgb(0, 0, 120);
+    background-color: unset;
+    position: absolute;
+    bottom: 5px;
+    left: 5px;
+    right: 5px;
+    
+
 }
 
 #miniMap {
@@ -198,6 +232,7 @@ img {
     width: min(760px, calc(100vw - 28px));
     background-color: var(--panelSurface);
     border-radius: 10px;
+    border: solid 2px black;
     padding: 14px;
     z-index: 60;
     display: flex;
