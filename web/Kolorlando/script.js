@@ -69,6 +69,7 @@ const buttonLeft1 = document.getElementById('Left1');
 const buttonShoot = document.getElementById('buttonShoot');
 const buttonRight1 = document.getElementById('Right1');
 const buttonRight3 = document.getElementById('Right3');
+const settingsFullScreen = document.getElementById('settingsFullScreen');
 const playerHealthFill = document.getElementById('playerHealthFill');
 const playerHealthText = document.getElementById('playerHealthText');
 const voxelReadout = document.getElementById('voxelReadout');
@@ -190,6 +191,35 @@ function updateSceneViewSize() {
   renderer.setSize(width, height, false);
 }
 
+function syncFullScreenSetting() {
+  if (!settingsFullScreen) return;
+  settingsFullScreen.checked = document.fullscreenElement != null;
+}
+
+async function setFullScreenEnabled(nextEnabled) {
+  if (nextEnabled) {
+    if (document.fullscreenElement) return true;
+    try {
+      await document.documentElement.requestFullscreen();
+      return true;
+    } catch (error) {
+      console.error('Failed to enter fullscreen mode.', error);
+      syncFullScreenSetting();
+      return false;
+    }
+  }
+
+  if (!document.fullscreenElement) return true;
+  try {
+    await document.exitFullscreen();
+    return true;
+  } catch (error) {
+    console.error('Failed to exit fullscreen mode.', error);
+    syncFullScreenSetting();
+    return false;
+  }
+}
+
 function updateLoadingUI(loaded, total) {
   const safeTotal = Math.max(1, total);
   const progress = Math.round((loaded / safeTotal) * 100);
@@ -299,12 +329,20 @@ updateModeFromViewport();
 syncAppHeight();
 updateSceneViewSize();
 setMenuCentralTab('settings');
+syncFullScreenSetting();
 document.addEventListener('click', controlLocker);
 document.addEventListener('touchstart', controlLocker, { passive: true });
+document.addEventListener('fullscreenchange', syncFullScreenSetting);
 
 if (menuCentral) {
   menuCentral.addEventListener('click', event => {
     event.stopPropagation();
+  });
+}
+
+if (settingsFullScreen) {
+  settingsFullScreen.addEventListener('change', () => {
+    setFullScreenEnabled(settingsFullScreen.checked);
   });
 }
 
@@ -733,13 +771,15 @@ function syncPlayerBody() {
     playerCollider.min.y,
     playerEye.z
   );
+}
 
-  camera.getWorldDirection(playerFacingDir);
+function syncPlayerFacing(facingDirection) {
+  if (!facingDirection) return;
+  playerFacingDir.copy(facingDirection);
   playerFacingDir.y = 0;
-  if (playerFacingDir.lengthSq() > 0.0001) {
-    playerFacingDir.normalize();
-    playerBody.rotation.y = Math.atan2(playerFacingDir.x, playerFacingDir.z);
-  }
+  if (playerFacingDir.lengthSq() <= 0.0001) return;
+  playerFacingDir.normalize();
+  playerBody.rotation.y = Math.atan2(playerFacingDir.x, playerFacingDir.z);
 }
 
 function animatePlayerBody(deltaTime, isMoving) {
@@ -1521,6 +1561,7 @@ function isStandingOnSupport() {
 const tmpForward = new THREE.Vector3();
 const tmpRight = new THREE.Vector3();
 const horizontalMove = new THREE.Vector3();
+const playerMoveFacing = new THREE.Vector3();
 const worldUp = new THREE.Vector3(0, 1, 0);
 const miniMapFacing = new THREE.Vector3();
 const miniMapProjectedPos = new THREE.Vector3();
@@ -1655,6 +1696,9 @@ function updatePlayer(deltaTime) {
     const isMoving = horizontalMove.lengthSq() > 0.00001 || Math.abs(verticalDelta) > 0.00001;
     gameAudio.updateFootsteps(deltaTime, false, sprintMultiplier, false);
     syncPlayerBody();
+    if (horizontalMove.lengthSq() > 0.00001) {
+      syncPlayerFacing(horizontalMove);
+    }
     animatePlayerBody(deltaTime, isMoving);
     syncCameraToPlayerView(deltaTime);
     return;
@@ -1679,6 +1723,10 @@ function updatePlayer(deltaTime) {
   const isMoving = horizontalMove.lengthSq() > 0.00001;
   gameAudio.updateFootsteps(deltaTime, isMoving, sprintMultiplier, playerState.onGround);
   syncPlayerBody();
+  if (isMoving) {
+    playerMoveFacing.copy(horizontalMove);
+    syncPlayerFacing(playerMoveFacing);
+  }
   animatePlayerBody(deltaTime, isMoving);
   syncCameraToPlayerView(deltaTime);
 }
