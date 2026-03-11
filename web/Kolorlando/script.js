@@ -147,6 +147,14 @@ function scrollChatToBottom() {
   chatBoxOutput.scrollTop = chatBoxOutput.scrollHeight;
 }
 
+function appendChatLine(message, speaker = 'System') {
+  if (!chatBoxOutput) return;
+  const line = document.createElement('div');
+  line.textContent = `${speaker}: ${message}`;
+  chatBoxOutput.appendChild(line);
+  scrollChatToBottom();
+}
+
 function showChatInput() {
   if (!chatBoxInput) return;
   if (!mobileMode && typeof controls !== 'undefined' && controls.isLocked) {
@@ -174,6 +182,13 @@ function submitChatInput() {
   const message = chatBoxInput.value.trim();
   if (!message) return false;
 
+  if (handleChatCommand(message)) {
+    chatBoxInput.value = '';
+    hideChatInput();
+    scrollChatToBottom();
+    return true;
+  }
+
   const line = document.createElement('div');
   line.textContent = `You: ${message}`;
   chatBoxOutput.appendChild(line);
@@ -191,6 +206,13 @@ function handleChatAction() {
   }
 
   return submitChatInput();
+}
+
+function handleChatCommand(message) {
+  const normalizedMessage = message.trim().toLowerCase();
+  if (normalizedMessage !== '/debugmode') return false;
+  setDebugMode(!debugModeEnabled);
+  return true;
 }
 
 if (chatBoxInput) {
@@ -706,6 +728,9 @@ const intersectMapColliderBox = typeof mapData.intersectColliderBox === 'functio
 const isMapBoxSupported = typeof mapData.isBoxSupported === 'function'
   ? mapData.isBoxSupported
   : () => false;
+const collectMapDebugCollisionBoxes = typeof mapData.collectDebugCollisionBoxes === 'function'
+  ? mapData.collectDebugCollisionBoxes
+  : null;
 const SHADOW_RANGE = mapData.shadowRange ?? 80;
 const MINI_MAP_VIEW_SIZE = mapData.miniMapViewSize ?? 90;
 const MINI_MAP_HEIGHT = mapData.miniMapHeight ?? 130;
@@ -1310,6 +1335,8 @@ const previousFoot = new THREE.Vector3();
 const testBox = new THREE.Box3();
 const playerColliderMin = new THREE.Vector3();
 const playerColliderMax = new THREE.Vector3();
+const debugCollisionBoxes = [];
+const DEBUG_COLLISION_RADIUS = 4;
 const playerBody = new THREE.Group();
 const PLAYER_OUTFIT = {
   skin: 0xf0c9a5,
@@ -1410,6 +1437,81 @@ function updatePlayerCollider(eyePosition) {
   playerCollider.min.copy(playerColliderMin);
   playerCollider.max.copy(playerColliderMax);
   playerFoot.set(eyePosition.x, playerColliderMin.y, eyePosition.z);
+}
+
+const debugCollisionGroup = new THREE.Group();
+debugCollisionGroup.visible = false;
+scene.add(debugCollisionGroup);
+
+const playerColliderDebugHelper = new THREE.Box3Helper(playerCollider, 0xffdd33);
+debugCollisionGroup.add(playerColliderDebugHelper);
+
+const nearbyCollisionHelpers = [];
+
+function getDebugCollisionHelper(index) {
+  if (!nearbyCollisionHelpers[index]) {
+    const helper = new THREE.Box3Helper(new THREE.Box3(), 0x3ddcff);
+    nearbyCollisionHelpers[index] = helper;
+    debugCollisionGroup.add(helper);
+  }
+  return nearbyCollisionHelpers[index];
+}
+
+let debugModeEnabled = false;
+
+function setDebugMode(nextEnabled) {
+  debugModeEnabled = nextEnabled;
+  debugCollisionGroup.visible = nextEnabled;
+  if (!nextEnabled) {
+    for (let i = 0; i < nearbyCollisionHelpers.length; i++) {
+      nearbyCollisionHelpers[i].visible = false;
+    }
+  }
+  appendChatLine(`Debug mode ${nextEnabled ? 'enabled' : 'disabled'}.`);
+}
+
+function collectNearbyCollisionBoxes() {
+  debugCollisionBoxes.length = 0;
+
+  if (collectMapDebugCollisionBoxes) {
+    collectMapDebugCollisionBoxes(playerEye, DEBUG_COLLISION_RADIUS, debugCollisionBoxes);
+  }
+
+  for (let i = 0; i < buildingColliders.length; i++) {
+    const collider = buildingColliders[i];
+    const centerX = (collider.min.x + collider.max.x) * 0.5;
+    const centerY = (collider.min.y + collider.max.y) * 0.5;
+    const centerZ = (collider.min.z + collider.max.z) * 0.5;
+    if (
+      Math.abs(centerX - playerEye.x) > DEBUG_COLLISION_RADIUS ||
+      Math.abs(centerY - playerEye.y) > DEBUG_COLLISION_RADIUS ||
+      Math.abs(centerZ - playerEye.z) > DEBUG_COLLISION_RADIUS
+    ) {
+      continue;
+    }
+    debugCollisionBoxes.push(collider);
+  }
+}
+
+function updateDebugCollisionVisuals() {
+  if (!debugModeEnabled) return;
+
+  playerColliderDebugHelper.box.copy(playerCollider);
+  playerColliderDebugHelper.visible = true;
+  playerColliderDebugHelper.material.color.setHex(0xffdd33);
+
+  collectNearbyCollisionBoxes();
+
+  for (let i = 0; i < debugCollisionBoxes.length; i++) {
+    const helper = getDebugCollisionHelper(i);
+    helper.box.copy(debugCollisionBoxes[i]);
+    helper.visible = true;
+    helper.material.color.setHex(playerCollider.intersectsBox(debugCollisionBoxes[i]) ? 0xff4d4d : 0x3ddcff);
+  }
+
+  for (let i = debugCollisionBoxes.length; i < nearbyCollisionHelpers.length; i++) {
+    nearbyCollisionHelpers[i].visible = false;
+  }
 }
 
 function syncPlayerBody() {
@@ -2937,6 +3039,7 @@ renderer.setAnimationLoop(() => {
   updateChaserPunchHitboxes(delta);
   updateProjectilesAndExplosions(delta);
   updateVoxelRaycast();
+  updateDebugCollisionVisuals();
   checkFPS(delta);
 
   if (

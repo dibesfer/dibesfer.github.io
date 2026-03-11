@@ -180,6 +180,33 @@ export function buildVoxelandiaMap({ scene }) {
     return false;
   }
 
+  function collectDebugCollisionBoxes(center, halfExtent = 6, targetBoxes = []) {
+    if (!center || !Array.isArray(targetBoxes)) return targetBoxes;
+
+    const radius = Math.max(voxelSize, halfExtent);
+    const minCellX = Math.floor((center.x - radius) / voxelSize);
+    const maxCellX = Math.floor((center.x + radius) / voxelSize);
+    const minCellY = Math.floor((center.y - radius) / voxelSize);
+    const maxCellY = Math.floor((center.y + radius) / voxelSize);
+    const minCellZ = Math.floor((center.z - radius) / voxelSize);
+    const maxCellZ = Math.floor((center.z + radius) / voxelSize);
+
+    for (let y = minCellY; y <= maxCellY; y++) {
+      for (let x = minCellX; x <= maxCellX; x++) {
+        for (let z = minCellZ; z <= maxCellZ; z++) {
+          const key = keyFromCell(x, y, z);
+          if (!occupiedVoxels.has(key)) continue;
+          targetBoxes.push(new THREE.Box3(
+            new THREE.Vector3(x * voxelSize, y * voxelSize, z * voxelSize),
+            new THREE.Vector3((x + 1) * voxelSize, (y + 1) * voxelSize, (z + 1) * voxelSize)
+          ));
+        }
+      }
+    }
+
+    return targetBoxes;
+  }
+
   for (let y = 0; y < gridHeight; y++) {
     for (let x = 0; x < gridWidth; x++) {
       for (let z = 0; z < gridDepth; z++) {
@@ -224,6 +251,7 @@ export function buildVoxelandiaMap({ scene }) {
     entities: [],
     intersectColliderBox,
     isBoxSupported,
+    collectDebugCollisionBoxes,
     getVoxelBoxFromRaycastHit(hit, targetBox) {
       if (!hit || hit.object !== voxelGrid || !targetBox) return null;
       const voxelId = hit.instanceId;
