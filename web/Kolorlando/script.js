@@ -24,6 +24,7 @@ const MODE_MOBILE_LANDSCAPE = 'mobile-landscape';
 let activeMode = MODE_DESKTOP;
 const touchQuery = window.matchMedia('(hover: none) and (pointer: coarse)');
 const THIRD_PERSON_MAX_DISTANCE = 8;
+const THIRD_PERSON_DISTANCE_INPUT_SCALE = 0.01;
 const JOYSTICK_MAX_OFFSET = 50;
 const SUPPORT_EPSILON = 0.03;
 
@@ -165,6 +166,15 @@ function handleChatAction() {
   }
 
   return submitChatInput();
+}
+
+if (chatBoxInput) {
+  chatBoxInput.addEventListener('keydown', event => {
+    if (event.key !== 'Enter') return;
+    event.preventDefault();
+    event.stopPropagation();
+    handleChatAction();
+  });
 }
 
 let characterPreviewRenderer = null;
@@ -1401,7 +1411,6 @@ let currentShoulderOffset = 0;
 const THIRD_PERSON_DISTANCE_LERP = 8;
 const THIRD_PERSON_SHOULDER_LERP = 8;
 const THIRD_PERSON_MAX_SHOULDER_OFFSET = 0.5;
-const MOBILE_PINCH_ZOOM_SENSITIVITY = 0.02;
 
 let pinchZoomTouchIds = [];
 let pinchStartDistance = 0;
@@ -1450,7 +1459,7 @@ function handleMobilePinchMove(event) {
 
   const pinchDistance = getTouchDistance(firstTouch, secondTouch);
   const pinchDelta = pinchDistance - pinchStartDistance;
-  setThirdPersonDistance(pinchStartThirdPersonDistance + pinchDelta * MOBILE_PINCH_ZOOM_SENSITIVITY);
+  setThirdPersonDistance(pinchStartThirdPersonDistance + pinchDelta * THIRD_PERSON_DISTANCE_INPUT_SCALE);
   event.preventDefault();
 }
 
@@ -1490,7 +1499,7 @@ function handleDesktopWheelThirdPerson(event) {
   if (mobileMode || !controls.isLocked) return;
 
   // Scroll out to move into third-person; scroll in back to first-person.
-  setThirdPersonDistance(thirdPersonDistance + event.deltaY * 0.01);
+  setThirdPersonDistance(thirdPersonDistance + event.deltaY * THIRD_PERSON_DISTANCE_INPUT_SCALE);
   event.preventDefault();
 }
 
