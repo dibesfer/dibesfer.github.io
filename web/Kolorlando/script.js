@@ -1496,7 +1496,7 @@ function handleMobilePinchMove(event) {
   if (!firstTouch || !secondTouch) return;
 
   const pinchDistance = getTouchDistance(firstTouch, secondTouch);
-  const pinchDelta = pinchDistance - pinchStartDistance;
+  const pinchDelta = pinchStartDistance - pinchDistance;
   setThirdPersonDistance(pinchStartThirdPersonDistance + pinchDelta * THIRD_PERSON_DISTANCE_INPUT_SCALE);
   event.preventDefault();
 }
@@ -1522,7 +1522,7 @@ function syncCameraToPlayerView(deltaTime = 0) {
   playerBody.visible = currentThirdPersonDistance > 0.001;
   firstPersonArmsRig.root.visible = currentThirdPersonDistance <= 0.001;
 
-  if (!mobileMode && currentThirdPersonDistance > 0.001) {
+  if (currentThirdPersonDistance > 0.001) {
     // Move camera backward from the look direction to get a third-person view.
     camera.getWorldDirection(thirdPersonOffsetDir);
     thirdPersonRightDir.crossVectors(thirdPersonOffsetDir, worldUp).normalize();
