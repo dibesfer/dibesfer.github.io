@@ -76,6 +76,7 @@ const buttonShoot = document.getElementById('buttonShoot');
 const buttonRight1 = document.getElementById('Right1');
 const buttonRight3 = document.getElementById('Right3');
 const settingsFullScreen = document.getElementById('settingsFullScreen');
+const settingsMenuThemeDark = document.getElementById('settingsMenuThemeDark');
 const playerHealthFill = document.getElementById('playerHealthFill');
 const playerHealthText = document.getElementById('playerHealthText');
 const voxelReadout = document.getElementById('voxelReadout');
@@ -93,6 +94,8 @@ let inventoryDragState = null;
 let suppressInventorySlotClick = false;
 let characterPreviewDragState = null;
 const gameAudio = createGameAudio();
+const systemMenuThemeQuery = window.matchMedia('(prefers-color-scheme: dark)');
+let menuThemePreference = 'system';
 
 const miniMapPlayerMarker = document.createElement('div');
 miniMapPlayerMarker.id = 'miniMapPlayerMarker';
@@ -115,6 +118,28 @@ function isTypingTarget(target) {
 function setElementHidden(element, hidden) {
   if (!element) return;
   element.hidden = hidden;
+}
+
+function resolveMenuTheme() {
+  if (menuThemePreference === 'dark') return 'dark';
+  if (menuThemePreference === 'light') return 'light';
+  return systemMenuThemeQuery.matches ? 'dark' : 'light';
+}
+
+function syncMenuThemeSetting() {
+  if (!settingsMenuThemeDark) return;
+  settingsMenuThemeDark.checked = resolveMenuTheme() === 'dark';
+}
+
+function applyMenuTheme() {
+  if (!menuCentral) return;
+  menuCentral.dataset.theme = resolveMenuTheme();
+  syncMenuThemeSetting();
+}
+
+function setMenuThemePreference(nextPreference) {
+  menuThemePreference = nextPreference;
+  applyMenuTheme();
 }
 
 function scrollChatToBottom() {
@@ -524,10 +549,17 @@ syncAppHeight();
 updateSceneViewSize();
 setMenuCentralTab('settings');
 syncFullScreenSetting();
+applyMenuTheme();
 scrollChatToBottom();
 document.addEventListener('click', controlLocker);
 document.addEventListener('touchstart', controlLocker, { passive: true });
 document.addEventListener('fullscreenchange', syncFullScreenSetting);
+if (typeof systemMenuThemeQuery.addEventListener === 'function') {
+  systemMenuThemeQuery.addEventListener('change', () => {
+    if (menuThemePreference !== 'system') return;
+    applyMenuTheme();
+  });
+}
 
 if (menuCentral) {
   menuCentral.addEventListener('click', event => {
@@ -538,6 +570,12 @@ if (menuCentral) {
 if (settingsFullScreen) {
   settingsFullScreen.addEventListener('change', () => {
     setFullScreenEnabled(settingsFullScreen.checked);
+  });
+}
+
+if (settingsMenuThemeDark) {
+  settingsMenuThemeDark.addEventListener('change', () => {
+    setMenuThemePreference(settingsMenuThemeDark.checked ? 'dark' : 'light');
   });
 }
 

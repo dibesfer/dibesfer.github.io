@@ -231,6 +231,15 @@ img {
 }
 
 #menuCentral {
+    --menu-surface: rgba(255, 255, 255, 0.9);
+    --menu-surface-strong: rgba(255, 255, 255, 0.72);
+    --menu-border: rgba(0, 0, 0, 0.92);
+    --menu-text: #181818;
+    --menu-tab-bg: #ffffff;
+    --menu-tab-text: #222222;
+    --menu-tab-active-bg: #fff4b0;
+    --menu-tab-active-text: #2f2a18;
+    --menu-link: #0052cc;
     text-align: left;
     position: absolute;
     top: 50%;
@@ -240,15 +249,27 @@ img {
     height: 500px;
     max-height: 90%;
     width: min(760px, calc(100vw - 28px));
-    background-color: var(--panelSurface);
+    background-color: var(--menu-surface);
     border-radius: 10px;
-    border: solid 2px black;
+    border: solid 2px var(--menu-border);
     padding: 14px;
     z-index: 60;
     display: flex;
     flex-direction: column;
+    color: var(--menu-text);
+    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.22);
+}
 
-
+#menuCentral[data-theme="dark"] {
+    --menu-surface: rgba(18, 24, 32, 0.94);
+    --menu-surface-strong: rgba(29, 38, 48, 0.9);
+    --menu-border: rgba(214, 224, 234, 0.28);
+    --menu-text: #edf3f8;
+    --menu-tab-bg: #22303d;
+    --menu-tab-text: #edf3f8;
+    --menu-tab-active-bg: #ffd76a;
+    --menu-tab-active-text: #2c2414;
+    --menu-link: #8cc4ff;
 }
 
 #menuCentral h1 {
@@ -266,13 +287,13 @@ img {
 }
 
 .menu-tab {
-    border: 2px solid rgba(0, 0, 0, 0.75);
+    border: 2px solid var(--menu-border);
     border-radius: 999px;
     padding: 6px 14px;
     font-family: var(--uiFont);
     font-weight: 700;
-    background: #fff;
-    color: #222;
+    background: var(--menu-tab-bg);
+    color: var(--menu-tab-text);
     cursor: pointer;
 }
 
@@ -281,15 +302,15 @@ img {
 }
 
 .menu-tab.is-active {
-    background: #fff4b0;
-    color: #2f2a18;
+    background: var(--menu-tab-active-bg);
+    color: var(--menu-tab-active-text);
 }
 
 .menu-panel {
     display: none;
-    border: 2px solid var(--panelBorder);
+    border: 2px solid var(--menu-border);
     border-radius: 8px;
-    background: rgba(255, 255, 255, 0.72);
+    background: var(--menu-surface-strong);
     padding: 12px;
     line-height: 1.7;
     height: 100%;
@@ -304,6 +325,26 @@ img {
 .menu-panel h3 {
     font-family: var(--uiFont);
     margin-bottom: 8px;
+}
+
+#menuCentral a {
+    color: var(--menu-link);
+}
+
+#menuCentral input,
+#menuCentral button,
+#menuCentral select {
+    color: inherit;
+}
+
+#menuCentral input[type="range"] {
+    accent-color: #f0b000;
+}
+
+.settings-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 #kolorlandiaCharacterMenu {
