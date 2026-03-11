@@ -1401,6 +1401,68 @@ let currentShoulderOffset = 0;
 const THIRD_PERSON_DISTANCE_LERP = 8;
 const THIRD_PERSON_SHOULDER_LERP = 8;
 const THIRD_PERSON_MAX_SHOULDER_OFFSET = 0.5;
+const MOBILE_PINCH_ZOOM_SENSITIVITY = 0.02;
+
+let pinchZoomTouchIds = [];
+let pinchStartDistance = 0;
+let pinchStartThirdPersonDistance = 0;
+
+function setThirdPersonDistance(nextDistance) {
+  thirdPersonDistance = THREE.MathUtils.clamp(nextDistance, 0, THIRD_PERSON_MAX_DISTANCE);
+}
+
+function getTouchDistance(firstTouch, secondTouch) {
+  return Math.hypot(secondTouch.clientX - firstTouch.clientX, secondTouch.clientY - firstTouch.clientY);
+}
+
+function findTouchByIdentifier(touchList, identifier) {
+  for (let i = 0; i < touchList.length; i++) {
+    if (touchList[i].identifier === identifier) {
+      return touchList[i];
+    }
+  }
+  return null;
+}
+
+function resetMobilePinchZoom() {
+  pinchZoomTouchIds = [];
+  pinchStartDistance = 0;
+  pinchStartThirdPersonDistance = thirdPersonDistance;
+}
+
+function handleMobilePinchStart(event) {
+  if (!mobileMode || event.touches.length < 2) return;
+
+  const firstTouch = event.touches[0];
+  const secondTouch = event.touches[1];
+  pinchZoomTouchIds = [firstTouch.identifier, secondTouch.identifier];
+  pinchStartDistance = getTouchDistance(firstTouch, secondTouch);
+  pinchStartThirdPersonDistance = thirdPersonDistance;
+  event.preventDefault();
+}
+
+function handleMobilePinchMove(event) {
+  if (!mobileMode || pinchZoomTouchIds.length !== 2) return;
+
+  const firstTouch = findTouchByIdentifier(event.touches, pinchZoomTouchIds[0]);
+  const secondTouch = findTouchByIdentifier(event.touches, pinchZoomTouchIds[1]);
+  if (!firstTouch || !secondTouch) return;
+
+  const pinchDistance = getTouchDistance(firstTouch, secondTouch);
+  const pinchDelta = pinchDistance - pinchStartDistance;
+  setThirdPersonDistance(pinchStartThirdPersonDistance + pinchDelta * MOBILE_PINCH_ZOOM_SENSITIVITY);
+  event.preventDefault();
+}
+
+function handleMobilePinchEnd(event) {
+  if (!mobileMode || pinchZoomTouchIds.length === 0) return;
+
+  const firstTouch = findTouchByIdentifier(event.touches, pinchZoomTouchIds[0]);
+  const secondTouch = findTouchByIdentifier(event.touches, pinchZoomTouchIds[1]);
+  if (firstTouch && secondTouch) return;
+
+  resetMobilePinchZoom();
+}
 
 function syncCameraToPlayerView(deltaTime = 0) {
   const tDistance = 1 - Math.exp(-THIRD_PERSON_DISTANCE_LERP * deltaTime);
@@ -1428,12 +1490,15 @@ function handleDesktopWheelThirdPerson(event) {
   if (mobileMode || !controls.isLocked) return;
 
   // Scroll out to move into third-person; scroll in back to first-person.
-  const nextDistance = thirdPersonDistance + event.deltaY * 0.01;
-  thirdPersonDistance = THREE.MathUtils.clamp(nextDistance, 0, THIRD_PERSON_MAX_DISTANCE);
+  setThirdPersonDistance(thirdPersonDistance + event.deltaY * 0.01);
   event.preventDefault();
 }
 
 window.addEventListener('wheel', handleDesktopWheelThirdPerson, { passive: false });
+sceneView.addEventListener('touchstart', handleMobilePinchStart, { passive: false });
+sceneView.addEventListener('touchmove', handleMobilePinchMove, { passive: false });
+sceneView.addEventListener('touchend', handleMobilePinchEnd, { passive: false });
+sceneView.addEventListener('touchcancel', handleMobilePinchEnd, { passive: false });
 
 updatePlayerCollider(playerEye);
 syncPlayerBody();
