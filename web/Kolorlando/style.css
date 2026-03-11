@@ -28,6 +28,15 @@ body {
     background: #5aa8d4;
 }
 
+a {
+    text-decoration: none;
+    color: blue;
+    transition: 0.2s;
+}
+
+a:hover {
+    font-weight: bold;
+}
 #loadingScreen {
     position: fixed;
     inset: 0;
@@ -113,10 +122,9 @@ img {
     z-index: 40;
 }
 
-#chatBox{
+#chatBox {
     position: absolute;
     top: 2rem;
-    background-color: rgba(156, 156, 255, 0.468);
     left: 0;
     height: 150px;
     width: 50%;
@@ -125,13 +133,16 @@ img {
     overflow: auto;
     font-family: var(--uiFont);
     font-size: 1rem;
-    
+    transition: 0.2s;
 }
 
 #chatBoxOutput {
-    
     height: 80%;
     overflow: auto;
+}
+
+.backgrounded {
+    background-color: rgba(16, 16, 108, 0.468);
 }
 
 #chatBoxInput {
@@ -142,8 +153,6 @@ img {
     bottom: 5px;
     left: 5px;
     right: 5px;
-    
-
 }
 
 #miniMap {
@@ -154,7 +163,7 @@ img {
     height: 200px;
     background-color: rgba(5, 20, 30, 0.65);
     border: var(--commonBorder);
-    
+
     overflow: hidden;
     pointer-events: none;
     z-index: 45;
@@ -238,7 +247,7 @@ img {
     z-index: 60;
     display: flex;
     flex-direction: column;
-   
+
 
 }
 
@@ -298,86 +307,86 @@ img {
 }
 
 #kolorlandiaCharacterMenu {
-            background-color: rgb(72, 72, 72);
-            
-            display: flex;
-            flex-wrap: wrap;
-        }
+    background-color: rgb(72, 72, 72);
 
-        #kolorlandiaCharacterMenu_info {
-            width: 50%;
-            padding: 15px;
-        }
+    display: flex;
+    flex-wrap: wrap;
+}
 
-        #kolorlandiaCharacterMenu_player {
-            position: relative;
-            background: transparent;
-            width: 25%;
-            aspect-ratio: 9/16;
-            overflow: hidden;
-            touch-action: none;
-            cursor: grab;
-        }
+#kolorlandiaCharacterMenu_info {
+    width: 50%;
+    padding: 15px;
+}
 
-        #kolorlandiaCharacterMenu_player:active {
-            cursor: grabbing;
-        }
+#kolorlandiaCharacterMenu_player {
+    position: relative;
+    background: transparent;
+    width: 25%;
+    aspect-ratio: 9/16;
+    overflow: hidden;
+    touch-action: none;
+    cursor: grab;
+}
 
-        #kolorlandiaCharacterMenu_player canvas {
-            position: absolute;
-            inset: 0;
-            width: 100%;
-            height: 100%;
-            display: block;
-        }
+#kolorlandiaCharacterMenu_player:active {
+    cursor: grabbing;
+}
 
-        #kolorlandiaCharacterMenu_slots {
-            line-height: 0;
-            background-color: gray;
-            width: 25%;
-            aspect-ratio: 1;
-            margin: auto 0;
-            height: max-content;
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            grid-gap: 5px;
-            padding: 5px;
-        }
+#kolorlandiaCharacterMenu_player canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+}
 
-        #kolorlandiaCharacterMenu_slots>div {
-            border: solid 3px black;
-            aspect-ratio: 1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+#kolorlandiaCharacterMenu_slots {
+    line-height: 0;
+    background-color: gray;
+    width: 25%;
+    aspect-ratio: 1;
+    margin: auto 0;
+    height: max-content;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    grid-gap: 5px;
+    padding: 5px;
+}
 
-        }
+#kolorlandiaCharacterMenu_slots>div {
+    border: solid 3px black;
+    aspect-ratio: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 
-        #kolorlandiaCharacterMenu_slots>div>img {
-            width: 100%;
+}
 
-        }
+#kolorlandiaCharacterMenu_slots>div>img {
+    width: 100%;
 
-        .inverted {
-            transform: scaleX(-1);
-        }
+}
 
-        @media screen and (max-width: 650px) {
-            #kolorlandiaCharacterMenu_info {
-                width: 100%;
+.inverted {
+    transform: scaleX(-1);
+}
 
-            }
+@media screen and (max-width: 650px) {
+    #kolorlandiaCharacterMenu_info {
+        width: 100%;
 
-            #kolorlandiaCharacterMenu_player {
+    }
 
-                width: 100%;
+    #kolorlandiaCharacterMenu_player {
 
-            }
+        width: 100%;
 
-            #kolorlandiaCharacterMenu_slots {
-                width: 100%;
-            }
-        }
+    }
+
+    #kolorlandiaCharacterMenu_slots {
+        width: 100%;
+    }
+}
 
 .joystick {
     border: var(--commonBorder);
@@ -400,10 +409,6 @@ img {
     position: relative;
     z-index: 2;
     will-change: transform;
-}
-
-.invisible {
-    display: none;
 }
 
 .flex {
@@ -647,7 +652,7 @@ img {
     pointer-events: none;
 }
 
-.inventory-drag-preview > .inventory-menu-slot {
+.inventory-drag-preview>.inventory-menu-slot {
     width: 64px;
     box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
     opacity: 0.96;
@@ -705,7 +710,7 @@ img {
 
 /* BUTTONS */
 
-#playButton{
+#playButton {
     border: solid 6px green;
     color: rgb(0, 52, 0);
     background-color: rgb(72, 255, 72);
@@ -822,7 +827,7 @@ body[data-mode="mobile-portrait"] #sceneView {
     position: relative;
     inset: auto;
     height: 80dvh;
-    
+
 }
 
 body[data-mode="mobile-portrait"] #playerHud {

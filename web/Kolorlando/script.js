@@ -78,10 +78,15 @@ const settingsFullScreen = document.getElementById('settingsFullScreen');
 const playerHealthFill = document.getElementById('playerHealthFill');
 const playerHealthText = document.getElementById('playerHealthText');
 const voxelReadout = document.getElementById('voxelReadout');
+const chatBox = document.getElementById('chatBox');
+const chatBoxOutput = document.getElementById('chatBoxOutput');
+const chatBoxInput = document.getElementById('chatBoxInput');
+const buttonLeft0 = document.getElementById('Left0');
 const inventoryDragPreview = document.createElement('div');
 let mobileShootPressed = false;
 let mobileSprintEnabled = false;
 let activeMenuCentralTab = 'settings';
+let openingChatFromPointerLock = false;
 let inventorySlotEls = [];
 let inventoryDragState = null;
 let suppressInventorySlotClick = false;
@@ -109,7 +114,57 @@ function isTypingTarget(target) {
 function setElementHidden(element, hidden) {
   if (!element) return;
   element.hidden = hidden;
-  element.classList.toggle('invisible', hidden);
+}
+
+function scrollChatToBottom() {
+  if (!chatBoxOutput) return;
+  chatBoxOutput.scrollTop = chatBoxOutput.scrollHeight;
+}
+
+function showChatInput() {
+  if (!chatBoxInput) return;
+  if (!mobileMode && typeof controls !== 'undefined' && controls.isLocked) {
+    openingChatFromPointerLock = true;
+    controls.unlock();
+  }
+  setElementHidden(chatBoxInput, false);
+  chatBox?.classList.add('backgrounded');
+  chatBoxInput.focus();
+  chatBoxInput.select();
+}
+
+function hideChatInput() {
+  if (!chatBoxInput) return;
+  setElementHidden(chatBoxInput, true);
+  chatBox?.classList.remove('backgrounded');
+  chatBoxInput.blur();
+  if (!mobileMode && typeof controls !== 'undefined' && !controls.isLocked && !isMenuCentralVisible()) {
+    controls.lock();
+  }
+}
+
+function submitChatInput() {
+  if (!chatBoxInput || !chatBoxOutput) return false;
+  const message = chatBoxInput.value.trim();
+  if (!message) return false;
+
+  const line = document.createElement('div');
+  line.textContent = `You: ${message}`;
+  chatBoxOutput.appendChild(line);
+  chatBoxInput.value = '';
+  hideChatInput();
+  scrollChatToBottom();
+  return true;
+}
+
+function handleChatAction() {
+  if (!chatBoxInput) return false;
+  if (chatBoxInput.hidden) {
+    showChatInput();
+    return true;
+  }
+
+  return submitChatInput();
 }
 
 let characterPreviewRenderer = null;
@@ -406,6 +461,14 @@ controls.addEventListener('lock', () => {
   hideMenuCentral();
 });
 controls.addEventListener('unlock', () => {
+  if (openingChatFromPointerLock) {
+    openingChatFromPointerLock = false;
+    return;
+  }
+  if (chatBoxInput && !chatBoxInput.hidden) {
+    hideChatInput();
+    return;
+  }
   if (!mobileMode) {
     showMenuCentral(activeMenuCentralTab || 'settings', { force: true });
   }
@@ -451,6 +514,7 @@ syncAppHeight();
 updateSceneViewSize();
 setMenuCentralTab('settings');
 syncFullScreenSetting();
+scrollChatToBottom();
 document.addEventListener('click', controlLocker);
 document.addEventListener('touchstart', controlLocker, { passive: true });
 document.addEventListener('fullscreenchange', syncFullScreenSetting);
@@ -2453,6 +2517,19 @@ function queueJump() {
 
 buttonUp.addEventListener('touchstart', queueJump);
 
+if (buttonLeft0) {
+  buttonLeft0.addEventListener('touchstart', event => {
+    if (!mobileMode) return;
+    event.preventDefault();
+    handleChatAction();
+  }, { passive: false });
+  buttonLeft0.addEventListener('click', event => {
+    if (!mobileMode) return;
+    event.preventDefault();
+    handleChatAction();
+  });
+}
+
 // Optional quick drop for mobile
 buttonDown.addEventListener('touchstart', () => {
   if (!playerState.onGround) {
@@ -2581,6 +2658,22 @@ document.addEventListener('mousedown', handleDesktopAttack);
 document.addEventListener('contextmenu', event => event.preventDefault());
 
 document.addEventListener('keydown', e => {
+  if (e.code === 'Escape' && chatBoxInput && !chatBoxInput.hidden) {
+    e.preventDefault();
+    e.stopPropagation();
+    hideChatInput();
+    return;
+  }
+
+  if (e.code === 'Enter') {
+    if (e.repeat) return;
+    if (e.target === chatBoxInput || !isTypingTarget(e.target)) {
+      e.preventDefault();
+      handleChatAction();
+      return;
+    }
+  }
+
   if (isTypingTarget(e.target)) return;
 
   if (e.code === 'KeyF' && !mobileMode) {
