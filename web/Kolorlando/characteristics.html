@@ -9,6 +9,23 @@
         body {
             font-family: sans-serif;
         }
+
+        a {
+            text-decoration: none;
+            color: blue;
+        }
+
+        .done {
+            color: green;
+        }
+
+        .not-implemented {
+            color: purple;
+        }
+
+        .not-done {
+            color: red
+        }
     </style>
 </head>
 
@@ -20,17 +37,51 @@
     <p>Definition: Kolorlando is a 3D game. A voxel world in which you play a voxel character.</p>
     <h2>Characteristics</h2>
     <ol>
-        <li>3D Camera</li>
-        <li>Desktop mode, mobile-portrait mode and mobile-landscape mode</li>
-        <li>Zoomable camera from First Person mode to Third Person Mode</li>
-        <li>Movement, jump and crouch.</li>
-        <li>Inventory</li>
-        <li>Customizable characters</li>
-        <li>NPCS (walker, chaser)</li>
-        <li>Minimap</li>
+        <li class="done">3D Camera</li>
+        <li class="done">Desktop mode, mobile-portrait mode and mobile-landscape mode</li>
+        <li class="done">Zoomable camera from First Person mode to Third Person Mode</li>
+        <li class="done">Movement, double jump and crouch.</li>
+        
+        <li class="done">Hotbar for quick item selection</li>
+        <li class="not-implemented">Chat box</li>
+        <li class="not-implemented">NPCs (walker, chaser, talker)</li>
+        <li class="done">Minimap</li>
     </ol>
+    <h3>Player</h3>
+    <ol>
+        <li class="done">Inventory</li>
+        <li class="not-done">Customizable characters</li>
+        <li class="not-done">Equipment/wearables</li>
+        <li class="not-done">Tools/weapons</li>
+        <li class="done">HUD with health bar, selected voxel and game mode</li>
+        <li class="done">Step-up movement over one-block obstacles</li>
+        <li class="done">Left and right punch</li>
+        <li class="not-implemented">Shooting</li>
+    </ol>
+    <h3>Mobile mode</h3>
+    <ol>
+        <li class="done">Left joystick for movement and right joystick for camera</li>
+        <li class="done">Pinch to zoom and switch camera mode.</li>
+
+    </ol>
+    <h3>Voxel Edition</h3>
+    <ol>
+        <li class="done">12 different voxels</li>
+        <li class="done">Voxel placement and removal</li>
+        <li class="done">Creative mode and Survival mode</li>
+    </ol>
+
+    <h3>Settings</h3>
+    <ol>
+        <li class="done">dark / light theme</li>
+        <li class="done">fullscreen</li>
+        <li class="not-done">Background music</li>
+    </ol>
+
+    <hr>
     <h2>Links</h2>
     <ul>
+        <li><a href="/web/Kolorlando/characteristics.html">Characteristics</a></li>
         <li><a href="/web/Kolorlando/">Landing Page</a></li>
         <li><a href="/web/Kolorlando/hall.html">Hall</a></li>
         <li><a href="/web/Kolorlando/game.html">Game</a></li>
