@@ -1453,6 +1453,22 @@ const THIRD_PERSON_MAX_SHOULDER_OFFSET = 0.5;
 let pinchZoomTouchIds = [];
 let pinchStartDistance = 0;
 let pinchStartThirdPersonDistance = 0;
+const MOBILE_PINCH_BLOCK_SELECTOR = [
+  '#menuCentral',
+  '#chatBox',
+  '#miniMap',
+  '#hotbar',
+  '#inventorySlots',
+  '#playerInventorySlots',
+  '.button',
+  '.joystick',
+  '.pad',
+  'input',
+  'select',
+  'textarea',
+  'button',
+  'a',
+].join(', ');
 
 function setThirdPersonDistance(nextDistance) {
   thirdPersonDistance = THREE.MathUtils.clamp(nextDistance, 0, THIRD_PERSON_MAX_DISTANCE);
@@ -1477,11 +1493,19 @@ function resetMobilePinchZoom() {
   pinchStartThirdPersonDistance = thirdPersonDistance;
 }
 
+function shouldBlockMobilePinchTouch(touch) {
+  const target = touch?.target;
+  return Boolean(target instanceof Element && target.closest(MOBILE_PINCH_BLOCK_SELECTOR));
+}
+
 function handleMobilePinchStart(event) {
   if (!mobileMode || event.touches.length < 2) return;
 
   const firstTouch = event.touches[0];
   const secondTouch = event.touches[1];
+  if (shouldBlockMobilePinchTouch(firstTouch) || shouldBlockMobilePinchTouch(secondTouch)) {
+    return;
+  }
   pinchZoomTouchIds = [firstTouch.identifier, secondTouch.identifier];
   pinchStartDistance = getTouchDistance(firstTouch, secondTouch);
   pinchStartThirdPersonDistance = thirdPersonDistance;
@@ -1542,10 +1566,10 @@ function handleDesktopWheelThirdPerson(event) {
 }
 
 window.addEventListener('wheel', handleDesktopWheelThirdPerson, { passive: false });
-sceneView.addEventListener('touchstart', handleMobilePinchStart, { passive: false });
-sceneView.addEventListener('touchmove', handleMobilePinchMove, { passive: false });
-sceneView.addEventListener('touchend', handleMobilePinchEnd, { passive: false });
-sceneView.addEventListener('touchcancel', handleMobilePinchEnd, { passive: false });
+document.addEventListener('touchstart', handleMobilePinchStart, { passive: false });
+document.addEventListener('touchmove', handleMobilePinchMove, { passive: false });
+document.addEventListener('touchend', handleMobilePinchEnd, { passive: false });
+document.addEventListener('touchcancel', handleMobilePinchEnd, { passive: false });
 
 updatePlayerCollider(playerEye);
 syncPlayerBody();
@@ -2189,6 +2213,35 @@ function collidesWithBuildings(box) {
 }
 
 const axisTestPos = new THREE.Vector3();
+const stepTestPos = new THREE.Vector3();
+const PLAYER_STEP_HEIGHT = 1.05;
+
+function tryStepUp(axis, delta, blockingHit) {
+  if (!blockingHit || delta === 0) return false;
+  if (flyMode || !playerState.onGround || playerState.velocity.y > 0) return false;
+
+  const currentFootY = playerCollider.min.y;
+  const stepHeight = blockingHit.max.y - currentFootY;
+  if (stepHeight <= 0.001 || stepHeight > PLAYER_STEP_HEIGHT) return false;
+
+  stepTestPos.copy(playerEye);
+  stepTestPos.y = blockingHit.max.y + EYE_HEIGHT + 0.001;
+  stepTestPos[axis] += delta;
+
+  updatePlayerCollider(stepTestPos);
+  testBox.copy(playerCollider);
+  if (collidesWithBuildings(testBox)) {
+    updatePlayerCollider(playerEye);
+    return false;
+  }
+
+  playerEye.copy(stepTestPos);
+  playerState.velocity.y = 0;
+  playerState.onGround = true;
+  playerState.jumpsUsed = 0;
+  updatePlayerCollider(playerEye);
+  return true;
+}
 
 function tryMoveAxis(axis, delta) {
   if (delta === 0) return;
@@ -2199,10 +2252,15 @@ function tryMoveAxis(axis, delta) {
   updatePlayerCollider(axisTestPos);
   testBox.copy(playerCollider);
 
-  if (!collidesWithBuildings(testBox)) {
+  const blockingHit = collidesWithBuildings(testBox);
+
+  if (!blockingHit) {
     playerEye[axis] += delta;
     updatePlayerCollider(playerEye);
+    return;
   }
+
+  tryStepUp(axis, delta, blockingHit);
 }
 
 function resolveVertical(deltaY) {

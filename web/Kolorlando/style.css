@@ -357,12 +357,16 @@ img {
     color: var(--menu-control-text);
 }
 
-#menuCentral input[type="checkbox"] {
-    accent-color: #f0b000;
+#menuCentral input[type="checkbox"],
+#menuCentral input[type="range"] {
+    accent-color: var(--menu-control-bg-active);
 }
 
-#menuCentral input[type="range"] {
-    accent-color: #f0b000;
+#menuCentral input:focus-visible,
+#menuCentral button:focus-visible,
+#menuCentral select:focus-visible {
+    outline: 2px solid var(--menu-control-bg-active);
+    outline-offset: 2px;
 }
 
 .settings-toggle {
