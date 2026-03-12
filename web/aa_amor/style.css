@@ -24,10 +24,9 @@ body {
     line-height: 2;
 }
 
-header {
-    
+footer {
+    text-align: center;
 }
-
 #topBar {
     display: flex;
     justify-content: space-between;
@@ -44,7 +43,6 @@ header {
 
 #topBar , #bottomBar , #menuBar , #menuAbout {
     backdrop-filter: blur(20px);
-    background-color: rgba(49, 49, 49, 0.307);
 }
 
 #bottomBar {
@@ -65,23 +63,17 @@ a {
 }
 
 .superTitle {
-    
-    
     text-align: center;
     position: relative;
     padding: 5px;
-    height: 70px;
+    height: 80px;
     z-index: 2;
     transition: 0.2s;
 
 }
 
 .superTitleShrink {
-    
-    height: var(--TopBottomHeight);
-    
-    
-    
+    height: var(--TopBottomHeight);    
 }
 
 .superTitle a,
@@ -111,8 +103,6 @@ a {
     margin: auto;
     max-width: 800px;
 }
-
-
 
 #menuBar {
     position: fixed;

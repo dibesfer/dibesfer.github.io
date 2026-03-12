@@ -14,86 +14,13 @@
     <!-- SUPABASE cdn -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 
-
 </head>
 
 <body>
     <header></header>
 
-    <div id="menuBar" class="closedMenuBar">
-        <ul style="list-style: none; padding: 0;">
-            <a href="/p/gallery/">
-                <li>🎨 Galería</li>
-            </a>
-            <a href="/p/library/">
-                <li>📚 Librería</li>
-            </a>
-            <a href="/p/dev/">
-                <li>💻 Dev</li>
-            </a>
-            <a href="/p/games/">
-                <li>🕹️ Juegos</li>
-            </a>
-            <a href="/p/web/">
-                <li>🌐 Web</li>
-            </a>
-            <a href="https://dibesfer.github.io">
-                <li>ℹ️ Info</li>
-            </a>
-            <a href="https://dibesfer.blogspot.com">
-                <li>📜 Blog</li>
-            </a>
-            <a href="/p/random/">
-                <li🎲 Random>
-                    </li>
-            </a>
-            <a href="https://dibesfer.neocities.org">
-                <li>🐱 Neocities</li>
-            </a>
-            <a href="https://mastodon.social/@dibesfer">
-                <li>🦣 Mastodon</li>
-            </a>
-            <a href="/p/games/minetest/">
-                <li>⛏️ Luanti</li>
-            </a>
-            <a href="/p/games/minetest/colorlandia/">
-                <li>🌈 Colorlandia</li>
-            </a>
-        </ul>
-    </div>
-
-    <div id="menuAbout" class="closedMenuAbout">
-        <a href="#">
-            <p>enlace ejemplo</p>
-        </a>
-        <a href="#">
-            <p>enlace ejemplo</p>
-        </a>
-        <a href="#">
-            <p>enlace ejemplo</p>
-        </a>
-        <a href="#">
-            <p>enlace ejemplo</p>
-        </a>
-        <a href="#">
-            <p>enlace ejemplo</p>
-        </a>
-        <a href="#">
-            <p>enlace ejemplo</p>
-        </a>
-
-    </div>
-
     <main>
-        <div class="maxWidth">
 
-            <div class="mockUpBox">
-
-                <img class="franja" src="/assets/deco/franja3.png" alt="">
-
-            </div>
-
-        </div>
 
         <div class="flexgrid">
             <div class="flexgriditem">
@@ -139,7 +66,7 @@
 
         </div>
 
-       
+
 
 
         <br>
@@ -147,104 +74,36 @@
         <img src="https://content.luanti.org/uploads/4e6235eec4.png" alt="">
 
 
-        <div class="maxWidth">
-
-            <!-- <h2>Gallery</h2>
-            <p>Ore waa! Kino masaki sunari otopelo irisidoi onnomoraki uronita!</p>
-            <div style="text-align: center;">
-                <img style="filter: invert(1);" width="400px"
-                    src="/assets/books/aliusus/ChatGPT Image Dec 1, 2025, 11_48_03 AM.png" alt="">
-            </div>
-
-
-            <h2>Web</h2>
-
-
-            <br>
-
-
-
-            <h2>Games</h2>
-            <p>Kino marusati oropenodois</p>
-            <p>Datatest Full-screen image</p> -->
-
-
-            <div class="mockUpBox">
-
-                <img class="franja" src="/assets/deco/franja3.png" alt="">
-
-
-            </div>
-            <img src="/assets/branding/illustrated-title.png" alt="">
-        </div>
+    
 
     </main>
-    <footer class="textCenter">
-        <div class="spacing"></div>
+    <footer></footer>
 
-
-        <p>Local visits: <span id="localVisitsDisplay"></span></p>
-        <p>Total visits: <span id="visitsCounter"></span></p>
-
-
-        <div class="spacing" style="height: 100px;"></div>
-
-    </footer>
-    <div id="bottomBar">
-        <p id="toggleFull" onclick="toggleFullscreen(this)">Full</p>
-        <p>🖂 <a style="color: unset;" href="mailto:dibesfer@gmail.com">dibesfer@gmail.com</a></p>
-
-
-
-        <!-- transform: rotate(180deg) -->
-        <img id="scrollBottom" class="shadowIcon" onclick="scrollToBottom()" style="height: 100%; filter: invert(1); "
-            src="https://icons.veryicon.com/png/o/miscellaneous/arrows/arrow-down-4-1.png" alt="">
-    </div>
-
-    <!-- LOAD SCRIPT -->
+   
+    <script src="script.js"></script>
+    <script src="/assets/scripts/supabase.js"></script>
+    <!-- 6. ADD LOAD SCRIPT -->
     <script>
 
-        
         async function load(id, file) {
             fetch(file)
                 .then(r => r.text())
                 .then(html => gettag(id).innerHTML = html)
-                .then(()=> {app()});
+                .then(() => {
+
+                    fetch("components/footer.html")
+                        .then(a => a.text())
+                        .then(html => gettag("footer").innerHTML = html)
+                        .then(() => {
+                            app()
+                        })
+                });
         }
 
-        load("header", "components/header.html");
-        //load("footer", "/components/footer.html");
-        //load("sidebar-left", "/components/sidebar-left.html");
-        //load("sidebar-right", "/components/sidebar-right.html");
+        load("header", "components/header-main.html");
 
     </script>
-    <script src="script.js"></script>
-    <script src="/assets/scripts/supabase.js"></script>
-    <script>
-        async function setVisits() {
-            const { data, error } = await database
-                .from('visits')
-                .update({ dibesfer: currentVisits })
-                .eq('id', 1)
-                .select()
-            visitsCounter.textContent = data[0].dibesfer
-        }
-
-
-        async function getVisits(tableName, rowName) {
-            const res = await database.from(tableName).select(rowName)
-            currentVisits = res.data[0].dibesfer
-            currentVisits++
-            setVisits()
-        }
-
-        let visitsCounter = getid("visitsCounter")
-        getVisits("visits", "dibesfer")
-
-        setLocalVisits()
-
-
-    </script>
+    
 </body>
 
 </html>

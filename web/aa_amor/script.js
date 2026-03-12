@@ -49,7 +49,6 @@ function app() {
 
     let scrollBottom = getid("scrollBottom")
 
-    
 
     document.body.onscroll = function () { scrollFunction() }
 
@@ -64,67 +63,100 @@ function app() {
         //console.log(document.documentElement.scrollTop)
     }
 
-    let superTitle = getclass("superTitle")[1]
-    let superTitleHtml = superTitle.innerHTML
-    let superTitlePlacer = getid("superTitlePlacer")
-    
-    if (window.scrollY > 60) {
+    // MAIN LOCATION
+    let url = window.location.toString()
+    url = url.split("/web/aa_amor/")
+    console.log(url, url.length)
 
-            superTitlePlacer.innerHTML = superTitleHtml
-            superTitle.innerHTML = ""
-            superTitle.classList.add('superTitleShrink');
-            superTitlePlacer.classList.add('superTitleShrink');
-            
-        } else  {
-            
-            superTitle.innerHTML = superTitleHtml
-            superTitlePlacer.innerHTML = ""
-            superTitle.classList.remove('superTitleShrink');
-            superTitlePlacer.classList.remove('superTitleShrink');
+    if (url[1] == "" || url[1] == "index.html") {
 
-        }
-    
 
-    
-    console.log(window.scrollY)
+        let superTitle = getclass("superTitle")[1]
+        let superTitleHtml = superTitle.innerHTML
+        let superTitlePlacer = getid("superTitlePlacer")
 
-    window.addEventListener('scroll', () => {
         if (window.scrollY > 60) {
 
             superTitlePlacer.innerHTML = superTitleHtml
             superTitle.innerHTML = ""
             superTitle.classList.add('superTitleShrink');
             superTitlePlacer.classList.add('superTitleShrink');
-            
-        } else  {
-            
+
+        } else {
+
             superTitle.innerHTML = superTitleHtml
             superTitlePlacer.innerHTML = ""
             superTitle.classList.remove('superTitleShrink');
             superTitlePlacer.classList.remove('superTitleShrink');
 
         }
-    });
-
-    let description = getid("description")
-    let descriptions = [
-        "<<<---··· /// wOwOw \\\ ###--->>>",
-        "<b>Dib</b>ujos y <i>es</i>critos de <u>Fer</u>",
-        "<b>Dev</b> <i>Illustr</i><u>author</u>",
-        "No <b>space</b> is <i>limited</i> if <u>ideas</u> fit in.",
-        "What I enjoy the <b>most</b> and do <u>the best</u> is <i>creating</i>",
-        "Creer o crear, tú eliges",
-        "No es la <b>forma</b> ni el <i>mensaje</i>, es el <u>tono</u>",
-        "It is not the <b>shape</b>, nor the <u>message</u>, it is the <i>tone</i>"
-        //"Be <b class='red'>aggresive</b> defending your <i>quality</i> of <u>existing</u>. For <b>you</b>, for <i>us</i>",
-    ]
 
 
-    function changeDescription() {
-        let random = randomInt(0, descriptions.length - 1);
-        description.innerHTML = descriptions[random]
+
+        console.log(window.scrollY)
+
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 60) {
+
+                superTitlePlacer.innerHTML = superTitleHtml
+                superTitle.innerHTML = ""
+                superTitle.classList.add('superTitleShrink');
+                superTitlePlacer.classList.add('superTitleShrink');
+
+            } else {
+
+                superTitle.innerHTML = superTitleHtml
+                superTitlePlacer.innerHTML = ""
+                superTitle.classList.remove('superTitleShrink');
+                superTitlePlacer.classList.remove('superTitleShrink');
+
+            }
+        });
+
+        let description = getid("description")
+        let descriptions = [
+            "<<<---··· /// wOwOw \\\ ###--->>>",
+            "<b>Dib</b>ujos y <i>es</i>critos de <u>Fer</u>",
+            "<b>Dev</b> <i>Illustr</i><u>author</u>",
+            "No <b>space</b> is <i>limited</i> if <u>ideas</u> fit in.",
+            "What I enjoy the <b>most</b> and do <u>the best</u> is <i>creating</i>",
+            "Creer o crear, tú eliges",
+            "No es la <b>forma</b> ni el <i>mensaje</i>, es el <u>tono</u>",
+            "It is not the <b>shape</b>, nor the <u>message</u>, it is the <i>tone</i>"
+            //"Be <b class='red'>aggresive</b> defending your <i>quality</i> of <u>existing</u>. For <b>you</b>, for <i>us</i>",
+        ]
+        function changeDescription() {
+            let random = randomInt(0, descriptions.length - 1);
+            description.innerHTML = descriptions[random]
+        }
+        changeDescription()
     }
-    changeDescription()
+    else {
+        console.log("SECONDARY")
+    }
+
+
+    async function setVisits() {
+        const { data, error } = await database
+            .from('visits')
+            .update({ dibesfer: currentVisits })
+            .eq('id', 1)
+            .select()
+        visitsCounter.textContent = data[0].dibesfer
+    }
+
+
+    async function getVisits(tableName, rowName) {
+        const res = await database.from(tableName).select(rowName)
+        currentVisits = res.data[0].dibesfer
+        currentVisits++
+        setVisits()
+    }
+
+    let visitsCounter = getid("visitsCounter")
+    getVisits("visits", "dibesfer")
+
+    setLocalVisits()
 
 
     function instantiateAppearingItems() {
@@ -158,11 +190,11 @@ function app() {
 
 function scrollToBottom() {
 
-        if (scrollBottom.classList.contains("rotated180")) {
-            window.scrollTo(0, 0);
-        }
-        else {
-            window.scrollTo(0, document.body.scrollHeight);
-        }
-
+    if (scrollBottom.classList.contains("rotated180")) {
+        window.scrollTo(0, 0);
     }
+    else {
+        window.scrollTo(0, document.body.scrollHeight);
+    }
+
+}

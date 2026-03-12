@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>dbf - secondary</title>
+
+    <!-- 1. TAKE THE STYLES -->
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="/ferstyle.css">
+
+    <!-- 2. TAKE THE FERSCRIPT -->
+    <script src="/ferscript.js"></script>
+    <!-- SUPABASE cdn -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+
+</head>
+
+<body>
+
+    <!-- 3. ADD AN EMPTY HEADER -->
+    <header></header>
+
+    <main>
+        <div class="maxWidth">
+            <h2>Gallery</h2>
+            <p>Example subpage</p>
+        </div>
+
+    </main>
+
+    <!-- 4. ADD AN EMPTY FOOTER -->
+    <footer></footer>
+
+    <!-- 5. ADD SCRIPT.JS -->
+    <script src="script.js"></script>
+    <script src="/assets/scripts/supabase.js"></script>
+    <!-- 6. ADD LOAD SCRIPT -->
+    <script>
+
+        async function load(id, file) {
+            fetch(file)
+                .then(r => r.text())
+                .then(html => gettag(id).innerHTML = html)
+                .then(() => {
+
+                    fetch("components/footer.html")
+                        .then(a => a.text())
+                        .then(html => gettag("footer").innerHTML = html)
+                        .then(() => {
+                            app()
+                        })
+                });
+        }
+
+        load("header", "components/header.html");
+
+    </script>
+</body>
+
+</html>
