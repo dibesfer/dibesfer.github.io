@@ -18,10 +18,8 @@ function app() {
         menuBtnAbout.classList.toggle("rotateLeft")
     }
 
-
     menuBtn.onclick = openMenuBar
     menuBtnAbout.onclick = openMenuAbout
-
 
     // LOAD DECORATIVE BAR IMAGES "FRANJA"
     let arrayFranjas = [
@@ -70,7 +68,6 @@ function app() {
 
     if (url[1] == "" || url[1] == "index.html") {
 
-
         let superTitle = getclass("superTitle")[1]
         let superTitleHtml = superTitle.innerHTML
         let superTitlePlacer = getid("superTitlePlacer")
@@ -90,10 +87,6 @@ function app() {
             superTitlePlacer.classList.remove('superTitleShrink');
 
         }
-
-
-
-        console.log(window.scrollY)
 
         window.addEventListener('scroll', () => {
             if (window.scrollY > 60) {
@@ -157,7 +150,6 @@ function app() {
     getVisits("visits", "dibesfer")
 
     setLocalVisits()
-
 
     function instantiateAppearingItems() {
         const items = document.querySelectorAll(".appear");
