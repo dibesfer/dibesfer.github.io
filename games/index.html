@@ -82,26 +82,41 @@
   <script src="/web/aa_amor/script.js"></script>
   <script src="/assets/scripts/supabase.js"></script>
   <!-- 6. ADD LOAD SCRIPT -->
-    <script>
+  <script>
 
-        async function load(id, file) {
-            fetch(file)
-                .then(r => r.text())
-                .then(html => gettag(id).innerHTML = html)
-                .then(() => {
+    async function load(id, file) {
+      fetch(file)
+        .then(r => r.text())
+        .then(html => gettag(id).innerHTML = html)
+        .then(() => {
 
-                    fetch("/web/aa_amor/components/footer.html")
-                        .then(a => a.text())
-                        .then(html => gettag("footer").innerHTML = html)
-                        .then(() => {
-                            app()
-                        })
-                });
-        }
+          fetch("/web/aa_amor/components/leftMenu.html")
+            .then(a => a.text())
+            .then(html => {
+              gettag(id).innerHTML += html
 
-        load("header", "/web/aa_amor/components/header.html");
+              fetch("/web/aa_amor/components/rightMenu.html")
+                .then(a => a.text())
+                .then(html => {
+                  gettag(id).innerHTML += html
 
-    </script>
+
+                  fetch("/web/aa_amor/components/footer.html")
+                    .then(a => a.text())
+                    .then(html => {
+                      gettag("footer").innerHTML = html
+                    }).then(() => {
+                      app()
+                    })
+                })
+            })
+
+        });
+    }
+
+    load("header", "/web/aa_amor/components/header.html");
+
+  </script>
 </body>
 
 </html>
