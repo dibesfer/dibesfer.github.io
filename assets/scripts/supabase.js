@@ -3,7 +3,7 @@ const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS
 const database = supabase.createClient(supabaseUrl, supabaseKey)
 
 var localVisits = localStorage.getItem("dibesferLocalVisits")
-if(localVisits == null){
+if(localVisits == null || localVisits <= 0){
     localVisits = 1
 }
 else {
