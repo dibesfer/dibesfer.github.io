@@ -63,10 +63,20 @@ function app() {
 
     // MAIN LOCATION
     let url = window.location.toString()
-    url = url.split("/web/aa_amor/")
+    let mainBool = false
+
+    if (url == "http://127.0.0.1:5500/" ||
+        url == "https://dibesfer.com/" ||
+        url == "http://127.0.0.1:5500/index.html" ||
+        url == "https://dibesfer.com/index.html"
+
+    ){
+        mainBool = true
+    }
+    
     console.log(url, url.length)
 
-    if (url[1] == "" || url[1] == "index.html") {
+    if (mainBool) {
 
         let superTitle = getclass("superTitle")[1]
         let superTitleHtml = superTitle.innerHTML

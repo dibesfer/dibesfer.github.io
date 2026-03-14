@@ -7,6 +7,7 @@
   <title>dibesfer</title>
   <link rel="icon" type="image/x-icon" href="/assets/branding/favicon512.ico">
   <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/web/aa_amor/style.css">
 
   <!-- FERSCRIPT.JS -->
   <script src="/ferscript.js"></script>
@@ -65,8 +66,29 @@
   </main>
 
   <footer></footer>
+  <script src="/web/aa_amor/script.js"></script>
   <script src="/assets/scripts/supabase.js"></script>
-  <script src="/assets/scripts/loadModules.js"></script>
+  <!-- 6. ADD LOAD SCRIPT -->
+    <script>
+
+        async function load(id, file) {
+            fetch(file)
+                .then(r => r.text())
+                .then(html => gettag(id).innerHTML = html)
+                .then(() => {
+
+                    fetch("/web/aa_amor/components/footer.html")
+                        .then(a => a.text())
+                        .then(html => gettag("footer").innerHTML = html)
+                        .then(() => {
+                            app()
+                        })
+                });
+        }
+
+        load("header", "/web/aa_amor/components/header.html");
+
+    </script>
 </body>
 
 </html>

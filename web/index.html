@@ -7,6 +7,7 @@
   <title>dibesfer - web</title>
   <link rel="icon" type="image/x-icon" href="/assets/branding/favicon512.ico">
   <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/web/aa_amor/style.css">
 
   <!-- FERSCRIPT.JS -->
   <script src="/ferscript.js"></script>
@@ -61,7 +62,7 @@
 
       <p>I make a lot of new webs from time to time.</p>
       
-      <h2>Cool projects</h2>
+      
 
       <p>Blog: <a href="https://dibesfer.blogspot.com">dibesfer.blogspot.com</a></p>
       <p><a href="/web/chat">monochat</a></p>
@@ -69,7 +70,7 @@
       <p><a href="/web/musicMaker/">🎵musicMaker</a></p>
       <p>Old super cool web</p>
       <p><a href="https://dibesfer.codeberg.page" target="_blank">dibesfer.codeberg.page</a></p>
-      <hr>
+      
       <p><a href="https://dibesfer.neocities.org/">🔧🐱🖌️Neocities</a></p>
       <p><a href="https://dibesfer.w3spaces.com/">w3spaces</a></p>
       <p>🦊GitLab Pages: <a href="https://dibesfer.gitlab.io/">dibesfer.gitlab.io</a></p>
@@ -200,8 +201,29 @@
   </main>
 
   <footer></footer>
+  <script src="/web/aa_amor/script.js"></script>
   <script src="/assets/scripts/supabase.js"></script>
-  <script src="/assets/scripts/loadModules.js"></script>
+  <!-- 6. ADD LOAD SCRIPT -->
+    <script>
+
+        async function load(id, file) {
+            fetch(file)
+                .then(r => r.text())
+                .then(html => gettag(id).innerHTML = html)
+                .then(() => {
+
+                    fetch("/web/aa_amor/components/footer.html")
+                        .then(a => a.text())
+                        .then(html => gettag("footer").innerHTML = html)
+                        .then(() => {
+                            app()
+                        })
+                });
+        }
+
+        load("header", "/web/aa_amor/components/header.html");
+
+    </script>
 </body>
 
 </html>

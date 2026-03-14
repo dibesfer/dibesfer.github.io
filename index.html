@@ -7,6 +7,9 @@
   <title>dibesfer</title>
   <link rel="icon" type="image/x-icon" href="/assets/branding/favicon512.ico">
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="/web/aa_amor/style.css">
+  <link rel="stylesheet" href="/ferstyle.css">
+
 
   <!-- FERSCRIPT.JS -->
   <script src="/ferscript.js"></script>
@@ -31,8 +34,7 @@
 </head>
 
 <body>
-  <header>
-  </header>
+  <header></header>
 
   <main>
     <!-- <p style="text-align:center;"><b>Dib</b>ujos y <u>es</u>critos de <i>Fer</i></p> -->
@@ -85,6 +87,11 @@
 
     </div>
 
+    <br>
+
+        <img src="https://content.luanti.org/uploads/4e6235eec4.png" alt="">
+
+
     <br><br>
     <div class="ad notForMobile">
       <p>Ad</p>
@@ -118,6 +125,7 @@
   <footer>
   </footer>
   <!-- <script>
+
     let chatHTML = ''
 
     function openChat(){
@@ -129,8 +137,30 @@
 
     }
   </script> -->
+  <script src="/web/aa_amor/script.js"></script>
   <script src="assets/scripts/supabase.js"></script>
-  <script src="/assets/scripts/loadModules.js"></script>
+  <!-- 6. ADD LOAD SCRIPT -->
+    <script>
+
+        async function load(id, file) {
+            fetch(file)
+                .then(r => r.text())
+                .then(html => gettag(id).innerHTML = html)
+                .then(() => {
+
+                    fetch("/web/aa_amor/components/footer.html")
+                        .then(a => a.text())
+                        .then(html => gettag("footer").innerHTML = html)
+                        .then(() => {
+                            app()
+                        })
+                });
+        }
+
+        load("header", "/web/aa_amor/components/header-main.html");
+
+    </script>
+  <!-- <script src="/assets/scripts/loadModules.js"></script> -->
 </body>
 
 </html>

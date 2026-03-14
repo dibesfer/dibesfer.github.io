@@ -17,28 +17,12 @@ body {
 
 }
 
-header {
-  /* position: fixed;
-  left: 0;
-  right: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(10px);
-  z-index: 1;
-  line-height: 0;
-  padding: 5px; */
-
-}
-
 header a,
 footer a {
   color: unset;
 }
 
-header,
-footer {
-  text-align: center;
-  padding: 40px;
-}
+
 
 h2 {
   font-variant: small-caps;
@@ -58,12 +42,12 @@ a {
   transition: 0.4s;
 }
 
-/* a:hover {
-  letter-spacing: 1.5px;
-} */
-
 img {
   max-width: 100%;
+}
+
+.pixel {
+  image-rendering: pixelated;
 }
 
 hr {
@@ -104,7 +88,6 @@ hr {
 
 .flexgriditem>div {
   border: solid 1px white;
-
   padding: 10px;
 }
 
@@ -135,11 +118,6 @@ hr {
   .notForMobile {
     display: none;
   }
-
-  header,
-  footer {
-    padding: 20px;
-  } 
 
 }
 
