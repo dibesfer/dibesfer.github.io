@@ -7,6 +7,7 @@
   <title>dibesfer - socials</title>
   <link rel="icon" type="image/x-icon" href="/assets/branding/favicon512.ico">
   <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/web/aa_amor/style.css">
 
   <!-- FERSCRIPT.JS -->
   <script src="/ferscript.js"></script>
@@ -40,20 +41,12 @@
   <header></header>
 
   <main>
-    <div id="mainBody">
+    <iframe id="myIframe" class="styledIframe" width="100%" src="/games/gameDesign/" frameborder="0"></iframe>
 
-      <iframe id="myIframe" class="styledIframe" width="100%" src="/games/gameDesign/" frameborder="0"></iframe>
-
-      <!-- src="https://dibesfer.github.io/web/blockcity/"  -->
-
-
-
-
-
-    </div>
+    
     <style>
       select {
-        border:  solid 1px white;
+        border: solid 1px white;
         padding: 5px;
         font: unset;
         background-color: black;
@@ -118,9 +111,44 @@
     }
   </script>
 
+  <script src="/web/aa_amor/script.js"></script>
   <script src="/assets/scripts/supabase.js"></script>
+  <!-- 6. ADD LOAD SCRIPT -->
+  <script>
 
-  <script src="/assets/scripts/loadModules.js"></script>
+    async function load(id, file) {
+      fetch(file)
+        .then(r => r.text())
+        .then(html => gettag(id).innerHTML = html)
+        .then(() => {
+
+          fetch("/web/aa_amor/components/leftMenu.html")
+            .then(a => a.text())
+            .then(html => {
+              gettag(id).innerHTML += html
+
+              fetch("/web/aa_amor/components/rightMenu.html")
+                .then(a => a.text())
+                .then(html => {
+                  gettag(id).innerHTML += html
+
+
+                  fetch("/web/aa_amor/components/footer.html")
+                    .then(a => a.text())
+                    .then(html => {
+                      gettag("footer").innerHTML = html
+                    }).then(() => {
+                      app()
+                    })
+                })
+            })
+
+        });
+    }
+
+    load("header", "/web/aa_amor/components/header.html");
+
+  </script>
 </body>
 
 </html>

@@ -115,6 +115,7 @@ a {
     padding: 15px;
     overflow: auto;
     z-index: 2;
+    line-height: 2.5;
 }
 
 .closedMenuBar {
