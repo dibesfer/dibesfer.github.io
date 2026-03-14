@@ -24,8 +24,9 @@
 
   <style>
     .styledIframe {
-      border: unset;
+      border: 1px white solid;
       height: 400px;
+      background-color: white;
 
     }
 
@@ -43,7 +44,7 @@
   <main>
     <iframe id="myIframe" class="styledIframe" width="100%" src="/games/gameDesign/" frameborder="0"></iframe>
 
-    
+
     <style>
       select {
         border: solid 1px white;
@@ -82,6 +83,7 @@
 
     function changeSrcdoc(stringURL) {
 
+
       fetch(stringURL)
         .then(function (response) {
           // When the page is loaded convert it to text
@@ -91,7 +93,7 @@
 
         })
         .then(function (html) {
-          myIframe.srcdoc = html;
+          myIframe.src = myLink;
 
 
         })
@@ -99,8 +101,8 @@
           console.log('Failed to fetch page: ', err);
         });
     }
-
-    //changeSrcdoc(myLink)
+    if (myLink != null)
+      changeSrcdoc(myLink)
 
 
     function changeIframeSrc() {
