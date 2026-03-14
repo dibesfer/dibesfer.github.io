@@ -23,7 +23,7 @@
 
 
         header , footer {
-            padding: 60px;
+            padding: 30px;
             background-color: rgb(254, 168, 255);
         }
 
@@ -34,7 +34,6 @@
 
         #kImages {
             width: 100%;
-           
             padding: 20px;
             display: flex;
             flex-wrap: wrap;
@@ -98,6 +97,10 @@
         }
 
         @media screen and (max-width: 800px) {
+
+            #kImages {
+                padding: 0;
+            }
             #kImages>div {
                 width: 100%;
                 margin: 20px;
@@ -126,6 +129,11 @@
             <img src="assets/imagenesPortada/Captura desde 2026-03-10 13-02-09.png" alt="">
         </div>
     </div>
+
+    <br>
+    <button id="playButton" onclick="window.location='/web/Kolorlando/hall.html'">PLAY</button>
+    <br><br>
+
     <div id="info">
         <h3>What is Kolorlando?</h3>
         <p>Kolorlando is a 3D browser game.</p>
@@ -133,9 +141,7 @@
         <p><a href="/web/Kolorlando/characteristics.html">Characteristics</a></p>
     </div>
 
-    <br>
-    <button id="playButton" onclick="window.location='/web/Kolorlando/hall.html'">PLAY</button>
-    <br><br>
+    
     <footer>
         
         <p>Contact <a href="mailto:dibesfer@gmail.com">dibesfer@gmail.com</a></p>
