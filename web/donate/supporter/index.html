@@ -6,14 +6,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
     <style>
+        body {
+            font-family: sans-serif;
+            background-color: black;
+            color: white;
+            max-width: 800px;
+            margin: auto;
+        }
 
-        body
-            {
-                font-family: sans-serif;
-            }
+        hr {
+            border-color: white;
+        }
 
-        header
-        {
+        img {
+            max-width: 100%;
+        }
+
+        header {
             width: 2rem;
             display: inline;
             font-size: 2rem;
@@ -24,12 +33,16 @@
         .logo {
             width: 2rem;
         }
-        
+        .logo-big {
+            width: 300px;
+            filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.433));
+        }
     </style>
 </head>
 
 <body>
 
+    <br>
 
     <div>
         <header>
@@ -38,7 +51,8 @@
         </header>
         <hr>
         <main>
-            <p>Supporter is a paid private role assigned to users that collaborate with a subscription of 10€ per month.</p>
+            <p>Supporter is a <u>paid private role</u> assigned to users that collaborate with a subscription of 10€ per
+                month.</p>
             <p>This role allows users to:</p>
             <ol>
                 <li>Appear on the supporters list</li>
@@ -47,10 +61,13 @@
                 <li>Wider access to storage capacity</li>
                 <li>Custom appearance</li>
             </ol>
-            <p>Pay with Stripe or Paypal</p>
+            <p>Subscribe with Stripe or Paypal</p>
+            <p>Supporter badge image:</p>
+            <img class="logo-big" src="/assets/branding/supporter-logo.png" alt="">
         </main>
 
     </div>
+    <br>
 </body>
 
 </html>

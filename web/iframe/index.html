@@ -24,7 +24,7 @@
 
   <style>
     .styledIframe {
-      border: 1px white solid;
+     
       height: 400px;
       background-color: white;
 
@@ -94,7 +94,7 @@
         })
         .then(function (html) {
           myIframe.src = myLink;
-
+adjustHeight()
 
         })
         .catch(function (err) {
@@ -109,7 +109,15 @@
       //myIframe.src='/assets/books/primaryChat.txt'
       //myIframe.srcdoc = "<style>body {color: white}</style><h1>Hello world</h1>"
       changeSrcdoc()
+      
 
+    }
+
+    function adjustHeight(){
+      myIframe.onload = () => {
+      myIframe.style.height =
+        myIframe.contentWindow.document.body.scrollHeight + "px";
+    };
     }
   </script>
 
