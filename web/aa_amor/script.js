@@ -65,15 +65,17 @@ function app() {
     let url = window.location.toString()
     let mainBool = false
 
+    
+
     if (url == "http://127.0.0.1:5500/" ||
         url == "https://dibesfer.com/" ||
         url == "http://127.0.0.1:5500/index.html" ||
         url == "https://dibesfer.com/index.html"
 
-    ){
+    ) {
         mainBool = true
     }
-    
+
     console.log(url, url.length)
 
     if (mainBool) {
