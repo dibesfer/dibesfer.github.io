@@ -106,13 +106,14 @@ function toggleFullscreen(toggleFull) {
   if (fullmode) {
     closeFullscreen()
     if (toggleFull)
-    toggleFull.textContent = "Full"
+      toggleFull.src = "/assets/icons/fullscreen.png"
+      //toggleFull.textContent = "Full"
   }
   else {
     console.log("no full")
     openFullscreen()
     if (toggleFull)
-    toggleFull.textContent = "No Full"
+      toggleFull.src = "/assets/icons/fullscreenOff.png"
 
   }
 
