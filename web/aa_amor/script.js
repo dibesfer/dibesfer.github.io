@@ -65,7 +65,13 @@ function app() {
     let url = window.location.toString()
     let mainBool = false
 
-    
+    if (url.includes("/gallery"))
+        leftMenuLinkGallery.classList.add("leftMenuLinkCurrent")
+    if (url.includes("/games"))
+        leftMenuLinkGames.classList.add("leftMenuLinkCurrent")
+        if (url.includes("/web"))
+        leftMenuLinkWeb.classList.add("leftMenuLinkCurrent")
+
 
     if (url == "http://127.0.0.1:5500/" ||
         url == "https://dibesfer.com/" ||

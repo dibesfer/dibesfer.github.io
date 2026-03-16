@@ -61,6 +61,7 @@ footer {
 
 a {
     color: rgb(135, 18, 188);
+    transition: 0.2s;
 }
 
 .superTitle {
@@ -213,6 +214,39 @@ a {
     .flexgriditem {
         flex: 100%;
     }
+
+    #menuBar {
+    position: fixed;
+    top: var(--TopBottomHeight);
+    width: 50%;
+    bottom: var(--TopBottomHeight);
+    left: 0;
+    transition: 0.4s all;
+    padding: 15px;
+    overflow: auto;
+    z-index: 2;
+    line-height: 2.5;
+}
+
+.closedMenuBar {
+    left: -50% !important;
+}
+
+#menuAbout {
+    position: fixed;
+    top: var(--TopBottomHeight);
+    width: 50%;
+    bottom: var(--TopBottomHeight);
+    right: 0px;
+    transition: 0.4s all;
+    padding: 15px;
+    overflow: auto;
+    z-index: 2;
+}
+
+.closedMenuAbout {
+    right: -50% !important;
+}
 }
 
 .zoomableimage {
@@ -267,4 +301,28 @@ a {
   transition-delay: 0.2s;
   /* -webkit-transform: none;
   transform: none; */
+}
+
+
+
+#menuBar > ul > a {
+ display: block;
+ margin-bottom: 10px;
+ height: 3rem;
+}
+
+#menuBar > ul > a:hover {
+    font-weight: bold;
+   
+    background-color: rgba(169, 169, 169, 0.173);
+    border: solid 1px white;
+    padding: 0 5px ;
+}
+
+.leftMenuLinkCurrent{
+    font-weight: bold;
+    display: block;
+    background-color: rgba(169, 169, 169, 0.295);
+    border: solid 1px white;
+    padding: 0 5px ;
 }
