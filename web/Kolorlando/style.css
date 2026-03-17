@@ -28,6 +28,22 @@ body {
     background: #5aa8d4;
 }
 
+body[data-camera-mode="wow"] {
+    cursor: url("assets/icons/cursor/Middle Ages--cursor--SweezyCursors.png") 0.1 0.1, auto;
+}
+
+body[data-camera-mode="wow"] button,
+body[data-camera-mode="wow"] a,
+body[data-camera-mode="wow"] label,
+body[data-camera-mode="wow"] input,
+body[data-camera-mode="wow"] select {
+    cursor: url("assets/icons/cursor/Middle Ages--pointer--SweezyCursors.png") 0.1 0.1, pointer;
+}
+
+body[data-camera-mode="wow"] #crossHair {
+    display: none;
+}
+
 a {
     text-decoration: none;
     color: blue;
@@ -218,6 +234,7 @@ img {
 }
 
 #crossHair {
+    display: block;
     position: absolute;
     top: 50%;
     left: 50%;

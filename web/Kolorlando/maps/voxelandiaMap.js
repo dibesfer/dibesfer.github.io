@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { Entity, HunterEntity } from '../entity.js';
 
 const VOXEL_TYPES = [
   { name: 'red', color: 0xff4040 },
@@ -14,6 +15,32 @@ const VOXEL_TYPES = [
   { name: 'gray', color: 0x8a8a8a },
   { name: 'black', color: 0x171717 },
 ];
+
+const ENTITY_MIN_SPAWN_DIST_SQ = 9;
+
+function pickRandom(list) {
+  return list[Math.floor(Math.random() * list.length)];
+}
+
+function createWalkerOutfit() {
+  const walkerSkinTones = [0xf0c9a5, 0xd8aa89, 0xb78562];
+  const walkerShirts = [0xff9a9a, 0xb5d3ff, 0xbff0b1, 0xf7d48b, 0xd8b8ff];
+  const walkerPants = [0x3f4d6b, 0x4d4d4d, 0x2e4a3a, 0x5a4638];
+  const walkerShoes = [0x1a1a1a, 0x2a1f18, 0x101820];
+  const walkerHair = [0x1f130d, 0x3a271a, 0x5a3a23, 0x111111, 0x8b5b2b];
+  const walkerFaceEmoji = ['🙂', '😄', '😎', '🤖', '😴', '😶'];
+  const shirt = pickRandom(walkerShirts);
+
+  return {
+    skin: pickRandom(walkerSkinTones),
+    shirt,
+    sleeves: shirt,
+    pants: pickRandom(walkerPants),
+    shoes: pickRandom(walkerShoes),
+    hair: pickRandom(walkerHair),
+    faceEmoji: pickRandom(walkerFaceEmoji),
+  };
+}
 
 function createBorderedVoxelTexture() {
   const size = 64;
@@ -46,6 +73,39 @@ export function buildVoxelandiaMap({ scene }) {
   const gridHeight = 3;
   const voxelSize = 1;
   const groundY = 0;
+  const jailWallThickness = 1;
+  const jailMinX = -gridWidth * 0.5;
+  const jailMaxX = gridWidth * 0.5;
+  const jailMinZ = -gridDepth * 0.5;
+  const jailMaxZ = gridDepth * 0.5;
+  const jailBottomY = -gridHeight;
+  const jailTopY = 100;
+  const jailColliders = [
+    new THREE.Box3(
+      new THREE.Vector3(jailMinX - jailWallThickness, jailBottomY, jailMinZ),
+      new THREE.Vector3(jailMinX, jailTopY, jailMaxZ)
+    ),
+    new THREE.Box3(
+      new THREE.Vector3(jailMaxX, jailBottomY, jailMinZ),
+      new THREE.Vector3(jailMaxX + jailWallThickness, jailTopY, jailMaxZ)
+    ),
+    new THREE.Box3(
+      new THREE.Vector3(jailMinX, jailBottomY, jailMinZ - jailWallThickness),
+      new THREE.Vector3(jailMaxX, jailTopY, jailMinZ)
+    ),
+    new THREE.Box3(
+      new THREE.Vector3(jailMinX, jailBottomY, jailMaxZ),
+      new THREE.Vector3(jailMaxX, jailTopY, jailMaxZ + jailWallThickness)
+    ),
+    new THREE.Box3(
+      new THREE.Vector3(jailMinX - jailWallThickness, jailBottomY - jailWallThickness, jailMinZ - jailWallThickness),
+      new THREE.Vector3(jailMaxX + jailWallThickness, jailBottomY, jailMaxZ + jailWallThickness)
+    ),
+    new THREE.Box3(
+      new THREE.Vector3(jailMinX - jailWallThickness, jailTopY, jailMinZ - jailWallThickness),
+      new THREE.Vector3(jailMaxX + jailWallThickness, jailTopY + jailWallThickness, jailMaxZ + jailWallThickness)
+    ),
+  ];
   const initialVoxelCount = gridWidth * gridDepth * gridHeight;
   const extraVoxelCapacity = 20000;
   const maxVoxelCount = initialVoxelCount + extraVoxelCapacity;
@@ -180,7 +240,7 @@ export function buildVoxelandiaMap({ scene }) {
     return false;
   }
 
-  function collectDebugCollisionBoxes(center, halfExtent = 6, targetBoxes = []) {
+  function collectVoxelDebugCollisionBoxes(center, halfExtent = 6, targetBoxes = []) {
     if (!center || !Array.isArray(targetBoxes)) return targetBoxes;
 
     const radius = Math.max(voxelSize, halfExtent);
@@ -242,16 +302,91 @@ export function buildVoxelandiaMap({ scene }) {
   }
   scene.add(voxelGrid);
 
+  const spawnPoint = new THREE.Vector3(0, 1.7, 0);
+  const entities = [];
+  const entitySpawnBox = new THREE.Box3();
+  const entitySpawnPos = new THREE.Vector3();
+  const ENTITY_SPAWN_MARGIN = 0.9;
+  const WALKER_COUNT = 3;
+  const CHASER_COUNT = 3;
+
+  function collidesAtGround(x, z, halfSize) {
+    entitySpawnBox.min.set(x - halfSize, groundY, z - halfSize);
+    entitySpawnBox.max.set(x + halfSize, groundY + 2, z + halfSize);
+    for (let i = 0; i < jailColliders.length; i++) {
+      if (entitySpawnBox.intersectsBox(jailColliders[i])) return true;
+    }
+    return intersectColliderBox(entitySpawnBox) !== null;
+  }
+
+  let attempts = 0;
+  while (entities.length < WALKER_COUNT + CHASER_COUNT && attempts < 1200) {
+    attempts++;
+    const x = THREE.MathUtils.randFloat(jailMinX + 4, jailMaxX - 4);
+    const z = THREE.MathUtils.randFloat(jailMinZ + 4, jailMaxZ - 4);
+    if (collidesAtGround(x, z, ENTITY_SPAWN_MARGIN)) continue;
+    if (spawnPoint.distanceToSquared(new THREE.Vector3(x, spawnPoint.y, z)) < 64) continue;
+
+    let tooClose = false;
+    entitySpawnPos.set(x, groundY, z);
+    for (let i = 0; i < entities.length; i++) {
+      if (entities[i].position.distanceToSquared(entitySpawnPos) < ENTITY_MIN_SPAWN_DIST_SQ) {
+        tooClose = true;
+        break;
+      }
+    }
+    if (tooClose) continue;
+
+    if (entities.length < WALKER_COUNT) {
+      entities.push(new Entity({
+        scene,
+        position: entitySpawnPos,
+        groundY,
+        outfit: createWalkerOutfit(),
+        speed: THREE.MathUtils.randFloat(1.2, 2.1),
+        clearance: 1.0,
+      }));
+    } else {
+      entities.push(new HunterEntity({
+        scene,
+        position: entitySpawnPos,
+        groundY,
+        color: 0x7e1313,
+        speed: THREE.MathUtils.randFloat(2.0, 2.8),
+        clearance: 1.0,
+        detectionRadius: 10.0,
+        stopDistance: 1.5,
+      }));
+    }
+  }
+
   return {
     groundY,
     hasInfiniteGround: false,
     voxelTypes: VOXEL_TYPES.map(type => ({ ...type })),
-    spawnPoint: new THREE.Vector3(0, 1.7, 0),
-    buildingColliders: [],
-    entities: [],
+    spawnPoint,
+    buildingColliders: jailColliders,
+    entities,
     intersectColliderBox,
     isBoxSupported,
-    collectDebugCollisionBoxes,
+    collectDebugCollisionBoxes(center, halfExtent = 6, targetBoxes = []) {
+      collectVoxelDebugCollisionBoxes(center, halfExtent, targetBoxes);
+      if (!center || !Array.isArray(targetBoxes)) return targetBoxes;
+
+      const radius = Math.max(voxelSize, halfExtent);
+      const debugRegion = new THREE.Box3(
+        new THREE.Vector3(center.x - radius, center.y - radius, center.z - radius),
+        new THREE.Vector3(center.x + radius, center.y + radius, center.z + radius)
+      );
+
+      for (let i = 0; i < jailColliders.length; i++) {
+        if (debugRegion.intersectsBox(jailColliders[i])) {
+          targetBoxes.push(jailColliders[i].clone());
+        }
+      }
+
+      return targetBoxes;
+    },
     getVoxelBoxFromRaycastHit(hit, targetBox) {
       if (!hit || hit.object !== voxelGrid || !targetBox) return null;
       const voxelId = hit.instanceId;

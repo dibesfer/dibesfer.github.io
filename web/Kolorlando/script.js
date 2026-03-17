@@ -80,10 +80,13 @@ const settingsMenuThemeDark = document.getElementById('settingsMenuThemeDark');
 const playerHealthFill = document.getElementById('playerHealthFill');
 const playerHealthText = document.getElementById('playerHealthText');
 const voxelReadout = document.getElementById('voxelReadout');
+const wowCursorNdc = new THREE.Vector2();
 const chatBox = document.getElementById('chatBox');
 const chatBoxOutput = document.getElementById('chatBoxOutput');
 const chatBoxInput = document.getElementById('chatBoxInput');
 const buttonLeft0 = document.getElementById('Left0');
+const cameraModeInputs = Array.from(document.querySelectorAll('input[name="cameraMode"]'));
+const cameraModeWowInput = document.getElementById('cameraModeWow');
 const inventoryDragPreview = document.createElement('div');
 let mobileShootPressed = false;
 let mobileSprintEnabled = false;
@@ -96,6 +99,121 @@ let characterPreviewDragState = null;
 const gameAudio = createGameAudio();
 const systemMenuThemeQuery = window.matchMedia('(prefers-color-scheme: dark)');
 let menuThemePreference = 'system';
+const CAMERA_MODE_SKYRIM = 'skyrim';
+const CAMERA_MODE_WOW = 'wow';
+const CAMERA_MODE_LEGO_LOL = 'legoLol';
+const CAMERA_MODE_STORAGE_KEY = 'kolorlando.cameraMode';
+let wowCameraScreenActive = false;
+let wowCameraDragState = null;
+let wowCursorRaycastActive = false;
+let currentCameraMode = (() => {
+  try {
+    const savedCameraMode = window.localStorage.getItem(CAMERA_MODE_STORAGE_KEY);
+    return savedCameraMode === CAMERA_MODE_WOW || savedCameraMode === CAMERA_MODE_LEGO_LOL || savedCameraMode === CAMERA_MODE_SKYRIM
+      ? savedCameraMode
+      : CAMERA_MODE_SKYRIM;
+  } catch (error) {
+    return CAMERA_MODE_SKYRIM;
+  }
+})();
+
+function isWowCameraMode() {
+  return currentCameraMode === CAMERA_MODE_WOW && !mobileMode;
+}
+
+function isWowCameraScreenActive() {
+  return isWowCameraMode() && wowCameraScreenActive;
+}
+
+function isDesktopGameplayActive() {
+  return !mobileMode && (controls.isLocked || isWowCameraScreenActive());
+}
+
+function shouldUsePointerLock() {
+  return !mobileMode && currentCameraMode !== CAMERA_MODE_WOW;
+}
+
+function syncDesktopLookAnglesFromCamera() {
+  yaw = camera.rotation.y;
+  pitch = camera.rotation.x;
+}
+
+function setWowCameraScreenActive(nextActive) {
+  wowCameraScreenActive = Boolean(nextActive) && isWowCameraMode();
+  if (wowCameraScreenActive) {
+    syncDesktopLookAnglesFromCamera();
+    return;
+  }
+  wowCameraDragState = null;
+  clearWowCursorRaycastPointer();
+}
+
+function activateDesktopScreenActivity() {
+  if (mobileMode) return;
+  hideMenuCentral();
+  if (isWowCameraMode()) {
+    setWowCameraScreenActive(true);
+    return;
+  }
+  if (!controls.isLocked) {
+    controls.lock();
+  }
+}
+
+function deactivateDesktopScreenActivity(tabName = activeMenuCentralTab || 'settings') {
+  if (mobileMode) return;
+  if (isWowCameraMode()) {
+    setWowCameraScreenActive(false);
+    showMenuCentral(tabName, { force: true });
+    return;
+  }
+  if (controls.isLocked) {
+    controls.unlock();
+    return;
+  }
+  showMenuCentral(tabName, { force: true });
+}
+
+function persistCameraModePreference() {
+  try {
+    window.localStorage.setItem(CAMERA_MODE_STORAGE_KEY, currentCameraMode);
+  } catch (error) {
+    // Ignore persistence failures.
+  }
+}
+
+function applyCameraMode() {
+  document.body.dataset.cameraMode = currentCameraMode;
+  persistCameraModePreference();
+  setWowCameraScreenActive(false);
+  if (isWowCameraMode() && typeof controls !== 'undefined' && controls.isLocked) {
+    controls.unlock();
+  }
+}
+
+function setCurrentCameraMode(nextCameraMode) {
+  if (!nextCameraMode) return;
+  if (nextCameraMode === CAMERA_MODE_WOW && mobileMode) {
+    nextCameraMode = CAMERA_MODE_SKYRIM;
+  }
+  currentCameraMode = nextCameraMode;
+  for (let i = 0; i < cameraModeInputs.length; i++) {
+    cameraModeInputs[i].checked = cameraModeInputs[i].value === currentCameraMode;
+  }
+  applyCameraMode();
+}
+
+function syncCameraModeAvailability() {
+  const wowAvailable = !mobileMode;
+  if (cameraModeWowInput) {
+    cameraModeWowInput.disabled = !wowAvailable;
+  }
+  if (!wowAvailable && currentCameraMode === CAMERA_MODE_WOW) {
+    setCurrentCameraMode(CAMERA_MODE_SKYRIM);
+    return;
+  }
+  applyCameraMode();
+}
 
 const miniMapPlayerMarker = document.createElement('div');
 miniMapPlayerMarker.id = 'miniMapPlayerMarker';
@@ -172,7 +290,7 @@ function hideChatInput() {
   setElementHidden(chatBoxInput, true);
   chatBox?.classList.remove('backgrounded');
   chatBoxInput.blur();
-  if (!mobileMode && typeof controls !== 'undefined' && !controls.isLocked && !isMenuCentralVisible()) {
+  if (shouldUsePointerLock() && typeof controls !== 'undefined' && !controls.isLocked && !isMenuCentralVisible()) {
     controls.lock();
   }
 }
@@ -366,6 +484,9 @@ function showMenuCentral(tabName = activeMenuCentralTab, { force = false } = {})
     hideMenuCentral();
     return;
   }
+  if (isWowCameraMode()) {
+    setWowCameraScreenActive(false);
+  }
   setMenuCentralTab(tabName);
   setElementHidden(menuCentral, false);
   document.body.classList.add('menu-central-open');
@@ -382,6 +503,7 @@ function applyMode(mode) {
 
   const shouldUseMobile = mode !== MODE_DESKTOP;
   mobileMode = shouldUseMobile;
+  syncCameraModeAvailability();
 
   if (shouldUseMobile) {
     if (controls.isLocked) {
@@ -424,6 +546,52 @@ renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
 sceneView.appendChild(renderer.domElement);
+sceneView.addEventListener('pointermove', event => {
+  updateWowCursorRaycastPointer(event.clientX, event.clientY);
+  if (!wowCameraDragState || event.pointerId !== wowCameraDragState.pointerId || !isWowCameraScreenActive()) return;
+
+  const dx = event.clientX - wowCameraDragState.lastX;
+  const dy = event.clientY - wowCameraDragState.lastY;
+  wowCameraDragState.lastX = event.clientX;
+  wowCameraDragState.lastY = event.clientY;
+  wowCameraDragState.dragDistance += Math.hypot(dx, dy);
+  yaw -= dx * sensitivity;
+  pitch -= dy * sensitivity;
+  pitch = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, pitch));
+  event.preventDefault();
+});
+sceneView.addEventListener('pointerenter', event => {
+  updateWowCursorRaycastPointer(event.clientX, event.clientY);
+});
+sceneView.addEventListener('pointerleave', event => {
+  if (wowCameraDragState && event.pointerId === wowCameraDragState.pointerId) return;
+  clearWowCursorRaycastPointer();
+});
+sceneView.addEventListener('pointerdown', event => {
+  if (!isWowCameraScreenActive() || isMenuCentralVisible() || event.button !== 0) return;
+  wowCameraDragState = {
+    pointerId: event.pointerId,
+    lastX: event.clientX,
+    lastY: event.clientY,
+    dragDistance: 0,
+  };
+  sceneView.setPointerCapture?.(event.pointerId);
+  updateWowCursorRaycastPointer(event.clientX, event.clientY);
+});
+const stopWowCameraDrag = event => {
+  if (!wowCameraDragState || event.pointerId !== wowCameraDragState.pointerId) return;
+  const dragDistance = wowCameraDragState.dragDistance;
+  sceneView.releasePointerCapture?.(event.pointerId);
+  wowCameraDragState = null;
+
+  if (event.type === 'pointerup' && dragDistance < 6 && isWowCameraScreenActive() && !isMenuCentralVisible()) {
+    updateWowCursorRaycastPointer(event.clientX, event.clientY);
+    updateVoxelRaycast();
+    triggerActionForMouseButton(0);
+  }
+};
+sceneView.addEventListener('pointerup', stopWowCameraDrag);
+sceneView.addEventListener('pointercancel', stopWowCameraDrag);
 
 function updateSceneViewSize() {
   const width = Math.max(1, sceneView.clientWidth);
@@ -550,17 +718,15 @@ function controlLocker(event) {
   if (!isMenuCentralVisible()) return;
   const clickedInsideMenu = Boolean(event?.target?.closest?.('#menuCentral'));
   if (clickedInsideMenu) return;
-  hideMenuCentral();
 
   if (mobileMode) {
+    hideMenuCentral();
     setElementHidden(menuInferior, false);
     menuInferior.classList.add('flex');
     return;
   }
 
-  if (!controls.isLocked) {
-    controls.lock();
-  }
+  activateDesktopScreenActivity();
 }
 
 function setInventoryPanelOpen(nextOpen, { allowMobile = false } = {}) {
@@ -581,6 +747,7 @@ function setInventoryPanelOpen(nextOpen, { allowMobile = false } = {}) {
   showMenuCentral('creative');
 }
 
+setCurrentCameraMode(currentCameraMode);
 updateModeFromViewport();
 syncAppHeight();
 updateSceneViewSize();
@@ -616,6 +783,13 @@ if (settingsMenuThemeDark) {
   });
 }
 
+for (let i = 0; i < cameraModeInputs.length; i++) {
+  cameraModeInputs[i].addEventListener('change', () => {
+    if (!cameraModeInputs[i].checked || cameraModeInputs[i].disabled) return;
+    setCurrentCameraMode(cameraModeInputs[i].value);
+  });
+}
+
 for (let i = 0; i < menuTabButtons.length; i++) {
   menuTabButtons[i].addEventListener('click', event => {
     event.preventDefault();
@@ -630,8 +804,7 @@ if (playButton) {
   playButton.addEventListener('click', event => {
     event.preventDefault();
     event.stopPropagation();
-    hideMenuCentral();
-    controls.lock();
+    activateDesktopScreenActivity();
   });
 }
 
@@ -651,16 +824,28 @@ function updatePlayerHealthUI() {
   playerHud.setHealth(playerState.health);
 }
 
+function resetPlayerHealth() {
+  playerState.health = playerState.maxHealth;
+  updatePlayerHealthUI();
+}
+
+function respawnPlayerAfterDeath() {
+  respawnPlayerAtSpawn();
+  resetPlayerHealth();
+}
+
 function applyPlayerDamage(amount) {
   if (!Number.isFinite(amount) || amount <= 0) return false;
   playerState.health = Math.max(0, playerState.health - amount);
   updatePlayerHealthUI();
-  return playerState.health <= 0;
+  if (playerState.health > 0) return false;
+  respawnPlayerAfterDeath();
+  return true;
 }
 
 function getDesktopSprintMultiplier() {
   if (mobileMode) return mobileSprintEnabled ? 2 : 1;
-  if (!controls.isLocked) return 1;
+  if (!isDesktopGameplayActive()) return 1;
   return keys['KeyE'] ? 2 : 1;
 }
 
@@ -1656,7 +1841,7 @@ function syncCameraToPlayerView(deltaTime = 0) {
   const tDistance = 1 - Math.exp(-THIRD_PERSON_DISTANCE_LERP * deltaTime);
   const tShoulder = 1 - Math.exp(-THIRD_PERSON_SHOULDER_LERP * deltaTime);
   currentThirdPersonDistance = THREE.MathUtils.lerp(currentThirdPersonDistance, thirdPersonDistance, tDistance);
-  const targetShoulderOffset = thirdPersonDistance > 0.001 ? THIRD_PERSON_MAX_SHOULDER_OFFSET : 0;
+  const targetShoulderOffset = thirdPersonDistance > 0.001 && !isWowCameraMode() ? THIRD_PERSON_MAX_SHOULDER_OFFSET : 0;
   currentShoulderOffset = THREE.MathUtils.lerp(currentShoulderOffset, targetShoulderOffset, tShoulder);
 
   camera.position.copy(playerEye);
@@ -1675,7 +1860,7 @@ function syncCameraToPlayerView(deltaTime = 0) {
 }
 
 function handleDesktopWheelThirdPerson(event) {
-  if (mobileMode || !controls.isLocked) return;
+  if (mobileMode || !isDesktopGameplayActive()) return;
 
   // Scroll out to move into third-person; scroll in back to first-person.
   setThirdPersonDistance(thirdPersonDistance + event.deltaY * THIRD_PERSON_DISTANCE_INPUT_SCALE);
@@ -1984,14 +2169,14 @@ function shootProjectileFromPlayer() {
 
 function shootDesktopProjectile(event) {
   if (event.button !== 0) return;
-  if (mobileMode || !controls.isLocked) return;
+  if (mobileMode || !isDesktopGameplayActive()) return;
   shootProjectileFromPlayer();
 }
 
 function startRightPunch(options = {}) {
   const allowMobile = options.allowMobile === true;
   if (mobileMode && !allowMobile) return;
-  if (!mobileMode && !controls.isLocked) return;
+  if (!mobileMode && !isDesktopGameplayActive()) return;
   if (rightPunchTimer > 0) return;
 
   rightPunchTimer = RIGHT_PUNCH_DURATION;
@@ -2001,7 +2186,7 @@ function startRightPunch(options = {}) {
 function startLeftPunch(options = {}) {
   const allowMobile = options.allowMobile === true;
   if (mobileMode && !allowMobile) return;
-  if (!mobileMode && !controls.isLocked) return;
+  if (!mobileMode && !isDesktopGameplayActive()) return;
   if (leftPunchTimer > 0) return;
 
   leftPunchTimer = RIGHT_PUNCH_DURATION;
@@ -2123,13 +2308,21 @@ function handleDesktopAttack(event) {
   if (event.button !== 0 && event.button !== 2) return;
   if (mobileMode) return;
 
+  if (isWowCameraScreenActive()) {
+    updateWowCursorRaycastPointer(event.clientX, event.clientY);
+    updateVoxelRaycast();
+    if (event.button === 0) {
+      event.preventDefault();
+      return;
+    }
+  }
+
   if (isMenuCentralVisible()) {
     const clickedInsideMenu = Boolean(event.target?.closest?.('#menuCentral'));
     if (clickedInsideMenu) {
       return;
     }
-    hideMenuCentral();
-    controls.lock();
+    activateDesktopScreenActivity();
     return;
   }
 
@@ -2470,16 +2663,60 @@ const currentRaycastState = {
   voxelEditionMode: false,
 };
 
-function updateVoxelRaycast() {
-  camera.getWorldDirection(cameraRayDirection);
-  cameraRayDirection.normalize();
-  camera.getWorldPosition(cameraRayOrigin);
-  cameraRayOrigin.addScaledVector(cameraRayDirection, CAMERA_RAYCAST_START_OFFSET);
+function updateWowCursorRaycastPointer(clientX, clientY) {
+  if (!sceneView || mobileMode || !isWowCameraScreenActive()) {
+    wowCursorRaycastActive = false;
+    return;
+  }
 
-  cameraRaycaster.set(cameraRayOrigin, cameraRayDirection);
-  const intersections = raycastTargets.length > 0
-    ? cameraRaycaster.intersectObjects(raycastTargets, true)
-    : [];
+  const rect = sceneView.getBoundingClientRect();
+  if (rect.width <= 0 || rect.height <= 0) {
+    wowCursorRaycastActive = false;
+    return;
+  }
+
+  wowCursorNdc.x = ((clientX - rect.left) / rect.width) * 2 - 1;
+  wowCursorNdc.y = -((clientY - rect.top) / rect.height) * 2 + 1;
+  wowCursorRaycastActive = wowCursorNdc.x >= -1 && wowCursorNdc.x <= 1
+    && wowCursorNdc.y >= -1 && wowCursorNdc.y <= 1;
+}
+
+function clearWowCursorRaycastPointer() {
+  wowCursorRaycastActive = false;
+}
+
+function updateVoxelRaycast() {
+  let intersections = [];
+
+  if (isWowCameraScreenActive()) {
+    if (wowCursorRaycastActive) {
+      cameraRaycaster.setFromCamera(wowCursorNdc, camera);
+      cameraRayOrigin.copy(cameraRaycaster.ray.origin);
+      cameraRayDirection.copy(cameraRaycaster.ray.direction).normalize();
+      intersections = raycastTargets.length > 0
+        ? cameraRaycaster.intersectObjects(raycastTargets, true)
+        : [];
+    } else {
+      camera.getWorldPosition(cameraRayOrigin);
+      camera.getWorldDirection(cameraRayDirection);
+      cameraRayDirection.normalize();
+      cameraRayEnd.copy(cameraRayOrigin);
+    }
+  } else if (isWowCameraMode()) {
+    camera.getWorldPosition(cameraRayOrigin);
+    camera.getWorldDirection(cameraRayDirection);
+    cameraRayDirection.normalize();
+    cameraRayEnd.copy(cameraRayOrigin);
+  } else {
+    camera.getWorldDirection(cameraRayDirection);
+    cameraRayDirection.normalize();
+    camera.getWorldPosition(cameraRayOrigin);
+    cameraRayOrigin.addScaledVector(cameraRayDirection, CAMERA_RAYCAST_START_OFFSET);
+    cameraRaycaster.set(cameraRayOrigin, cameraRayDirection);
+    intersections = raycastTargets.length > 0
+      ? cameraRaycaster.intersectObjects(raycastTargets, true)
+      : [];
+  }
 
   let voxelLabel = 'none';
   let activeVoxelHit = null;
@@ -2518,6 +2755,12 @@ function updateVoxelRaycast() {
 }
 
 function updateDesktopLook() {
+  if (isWowCameraScreenActive()) {
+    camera.rotation.order = 'YXZ';
+    camera.rotation.y = yaw;
+    camera.rotation.x = pitch;
+    return;
+  }
   if (!controls.isLocked) return;
   yaw = camera.rotation.y;
   pitch = camera.rotation.x;
@@ -2545,7 +2788,7 @@ function updatePlayer(deltaTime) {
   let inputForward = 0;
   let inputRight = 0;
 
-  if (controls.isLocked) {
+  if (isDesktopGameplayActive()) {
     if (keys['KeyW']) inputForward += 1;
     if (keys['KeyS']) inputForward -= 1;
     if (keys['KeyA']) inputRight -= 1;
@@ -2582,7 +2825,7 @@ function updatePlayer(deltaTime) {
 
   if (flyMode) {
     let inputVertical = 0;
-    if (controls.isLocked) {
+    if (isDesktopGameplayActive()) {
       if (keys['Space']) inputVertical += 1;
       if (keys['ShiftLeft'] || keys['ShiftRight']) inputVertical -= 1;
     }
@@ -2922,8 +3165,7 @@ function toggleMenuCentralTab(tabName) {
 
   const sameTabOpen = isMenuCentralVisible() && activeMenuCentralTab === tabName;
   if (sameTabOpen) {
-    hideMenuCentral();
-    controls.lock();
+    activateDesktopScreenActivity();
     return;
   }
 
@@ -2931,6 +3173,10 @@ function toggleMenuCentralTab(tabName) {
 
   if (controls.isLocked) {
     controls.unlock();
+    return;
+  }
+  if (isWowCameraScreenActive()) {
+    deactivateDesktopScreenActivity(tabName);
     return;
   }
   showMenuCentral(activeMenuCentralTab);
@@ -2944,6 +3190,13 @@ document.addEventListener('keydown', e => {
     e.preventDefault();
     e.stopPropagation();
     hideChatInput();
+    return;
+  }
+
+  if (e.code === 'Escape' && isWowCameraScreenActive()) {
+    e.preventDefault();
+    e.stopPropagation();
+    deactivateDesktopScreenActivity(activeMenuCentralTab || 'settings');
     return;
   }
 
@@ -3022,7 +3275,7 @@ function checkFPS(delta) {
 // --------------------
 renderer.setAnimationLoop(() => {
   const delta = Math.min(clock.getDelta(), 0.05);
-  if (!mobileMode && controls.isLocked && isMenuCentralVisible()) {
+  if (!mobileMode && isDesktopGameplayActive() && isMenuCentralVisible()) {
     hideMenuCentral();
   }
 
