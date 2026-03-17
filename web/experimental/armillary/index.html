@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Armillary</title>
+    <style>
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: grid;
+            place-items: center;
+            overflow: hidden;
+            background: #05070b;
+        }
+
+        div {
+            width: min(100vw, calc(100vh * 16 / 9));
+            height: min(100vh, calc(100vw * 9 / 16));
+            aspect-ratio: 16/9;
+        }
+
+        #myCanvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            background:
+                radial-gradient(circle at center, rgba(27, 40, 65, 0.9), rgba(3, 5, 10, 1) 68%),
+                #000;
+        }
+    </style>
+</head>
+<body>
+
+    <div>
+        <canvas id="myCanvas"></canvas>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('myCanvas');
+        const ctx = canvas.getContext('2d');
+        const TAU = Math.PI * 2;
+        const DESIGN_SPHERE_SIZE = 420;
+        const rings = [
+            { radius: 156, tiltX: 0, tiltY: 0, speedX: 0, speedY: 0.0012, color: '#ffffff', parent: null },
+            { radius: 116, tiltX: 0, tiltY: 0, speedX: 0.0012, speedY: 0, color: '#ffffff', parent: 0 },
+            { radius: 77, tiltX: 0, tiltY: 0, speedX: 0, speedY: 0.0012, color: '#ffffff', parent: 1 }
+        ];
+
+        function resizeCanvas() {
+            const ratio = window.devicePixelRatio || 1;
+            const bounds = canvas.getBoundingClientRect();
+            canvas.width = Math.round(bounds.width * ratio);
+            canvas.height = Math.round(bounds.height * ratio);
+            ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+        }
+
+        function rotateX(point, angle) {
+            const cos = Math.cos(angle);
+            const sin = Math.sin(angle);
+            return {
+                x: point.x,
+                y: point.y * cos - point.z * sin,
+                z: point.y * sin + point.z * cos
+            };
+        }
+
+        function rotateY(point, angle) {
+            const cos = Math.cos(angle);
+            const sin = Math.sin(angle);
+            return {
+                x: point.x * cos + point.z * sin,
+                y: point.y,
+                z: -point.x * sin + point.z * cos
+            };
+        }
+
+        function project(point, perspective) {
+            const scale = perspective / (perspective - point.z);
+            return {
+                x: point.x * scale,
+                y: point.y * scale,
+                scale
+            };
+        }
+
+        function getLocalRotation(ringIndex, time, includeLocal = true) {
+            const ring = rings[ringIndex];
+            if (!includeLocal) {
+                return { x: 0, y: 0 };
+            }
+            return {
+                x: ring.tiltX + time * ring.speedX,
+                y: ring.tiltY + time * ring.speedY
+            };
+        }
+
+        function applyRingTransform(point, ringIndex, time, includeLocal = true) {
+            const ring = rings[ringIndex];
+            const localRotation = getLocalRotation(ringIndex, time, includeLocal);
+            let transformed = rotateX(point, localRotation.x);
+            transformed = rotateY(transformed, localRotation.y);
+
+            if (ring.parent === null) {
+                return transformed;
+            }
+
+            return applyRingTransform(transformed, ring.parent, time, true);
+        }
+
+        function getRingPoint(ringIndex, angle, time, sphereScale, includeLocal = true) {
+            const ring = rings[ringIndex];
+            const radius = ring.radius * sphereScale;
+            const point = {
+                x: Math.cos(angle) * radius,
+                y: Math.sin(angle) * radius,
+                z: 0
+            };
+            return applyRingTransform(point, ringIndex, time, includeLocal);
+        }
+
+        function drawRing(ringIndex, time, centerX, centerY, perspective, sphereScale) {
+            const ring = rings[ringIndex];
+            const scaledRadius = ring.radius * sphereScale;
+            const segments = 220;
+            let previous = null;
+
+            for (let i = 0; i <= segments; i++) {
+                const angle = (i / segments) * TAU;
+                const point = getRingPoint(ringIndex, angle, time, sphereScale);
+                const projected = project(point, perspective);
+                const x = centerX + projected.x;
+                const y = centerY + projected.y;
+
+                if (previous) {
+                    const depthAlpha = Math.max(0.18, Math.min(0.95, (point.z + scaledRadius) / (scaledRadius * 2)));
+                    ctx.strokeStyle = ring.color;
+                    ctx.globalAlpha = depthAlpha;
+                    ctx.lineWidth = (1.2 + projected.scale * 1.8) * sphereScale;
+                    ctx.beginPath();
+                    ctx.moveTo(previous.x, previous.y);
+                    ctx.lineTo(x, y);
+                    ctx.stroke();
+                }
+
+                previous = { x, y };
+            }
+        }
+
+        function drawConnectorPair(outerRingIndex, innerRingIndex, time, centerX, centerY, perspective, sphereScale, connectorAngles = [0, Math.PI], innerIncludeLocal = true) {
+            for (let i = 0; i < connectorAngles.length; i++) {
+                const angle = connectorAngles[i];
+                const outerPoint = project(getRingPoint(outerRingIndex, angle, time, sphereScale), perspective);
+                const innerPoint = project(getRingPoint(innerRingIndex, angle, time, sphereScale, innerIncludeLocal), perspective);
+
+                ctx.globalAlpha = 0.8;
+                ctx.strokeStyle = '#d8e7ff';
+                ctx.lineWidth = 2 * sphereScale;
+                ctx.beginPath();
+                ctx.moveTo(centerX + outerPoint.x, centerY + outerPoint.y);
+                ctx.lineTo(centerX + innerPoint.x, centerY + innerPoint.y);
+                ctx.stroke();
+            }
+        }
+
+        function drawCore(centerX, centerY, perspective, time, sphereScale) {
+            const pulse = 10 + Math.sin(time * 0.002) * 2;
+            const coreRadius = 34 * sphereScale;
+            ctx.globalAlpha = 1;
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, coreRadius, 0, TAU);
+            ctx.fill();
+
+            const equator = { radius: (28 + pulse * 0.08) * sphereScale, tiltX: 0, tiltY: 0, speedX: 0, speedY: 0 };
+            let previous = null;
+            const segments = 160;
+
+            for (let i = 0; i <= segments; i++) {
+                const angle = (i / segments) * TAU;
+                let point = {
+                    x: Math.cos(angle) * equator.radius,
+                    y: Math.sin(angle) * equator.radius,
+                    z: 0
+                };
+
+                point = rotateX(point, equator.tiltX + time * equator.speedX);
+                point = rotateY(point, equator.tiltY + time * equator.speedY);
+
+                const projected = project(point, perspective);
+                const x = centerX + projected.x;
+                const y = centerY + projected.y;
+
+                if (previous) {
+                    ctx.globalAlpha = 0.9;
+                    ctx.strokeStyle = '#fff3bf';
+                    ctx.lineWidth = 1.4 * sphereScale;
+                    ctx.beginPath();
+                    ctx.moveTo(previous.x, previous.y);
+                    ctx.lineTo(x, y);
+                    ctx.stroke();
+                }
+
+                previous = { x, y };
+            }
+
+            ctx.fillStyle = '#ffffff';
+            ctx.globalAlpha = 1;
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, pulse * 0.42 * sphereScale, 0, TAU);
+            ctx.fill();
+        }
+
+        function render(time) {
+            const width = canvas.clientWidth;
+            const height = canvas.clientHeight;
+            const centerX = width / 2;
+            const centerY = height / 2;
+            const perspective = Math.min(width, height) * 1.35;
+            const sphereScale = Math.min(1, Math.min(width, height) / DESIGN_SPHERE_SIZE);
+
+            ctx.clearRect(0, 0, width, height);
+
+            drawRing(0, time, centerX, centerY, perspective, sphereScale);
+            drawConnectorPair(0, 1, time, centerX, centerY, perspective, sphereScale);
+            drawRing(1, time, centerX, centerY, perspective, sphereScale);
+            drawConnectorPair(1, 2, time, centerX, centerY, perspective, sphereScale, [Math.PI / 2, Math.PI * 1.5]);
+            drawRing(2, time, centerX, centerY, perspective, sphereScale);
+
+            drawCore(centerX, centerY, perspective, time, sphereScale);
+            requestAnimationFrame(render);
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+        requestAnimationFrame(render);
+    </script>
+</body>
+</html>
