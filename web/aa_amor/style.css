@@ -310,7 +310,8 @@ a {
 
 
 #menuBar > ul > a {
- display: block;
+ display: flex;
+ align-items: center;
  margin-bottom: 10px;
  height: 3rem;
 }
