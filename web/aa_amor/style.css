@@ -307,8 +307,6 @@ a {
   transform: none; */
 }
 
-
-
 #menuBar > ul > a {
  display: flex;
  align-items: center;

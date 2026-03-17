@@ -32,11 +32,9 @@
 
     <div id="consola">
         <p>FPS: </p>
-
     </div>
 
     <div id="chatBox">
-
         <div id="chatBoxOutput">
             <div>12:11 Server says: Hello World!</div>
             <div>12:28 Julius: I'm here!</div>
@@ -71,7 +69,7 @@
     </div>
 
     <div id="menuCentral" hidden>
-        <h1>Kolorlando</h1>
+        <h1 class="not-on-landscape">Kolorlando</h1>
         <div class="menu-tabs" role="tablist" aria-label="Main menu sections">
             <button class="menu-tab" type="button" data-menu-tab="creative">CREATIVE</button>
             <button class="menu-tab" type="button" data-menu-tab="inventory">INVENTORY</button>
@@ -89,81 +87,81 @@
 
         <section class="menu-panel" data-menu-panel="inventory">
             <h2>Inventory</h2>
-            <p id="playerInventorySummary">0 / 3168 items</p>
             <div id="playerInventorySlots"></div>
+            <p id="playerInventorySummary">0 / 3168 items</p>
             <p id="playerInventorySelection">Selected slot: 1</p>
             <p class="inventory-help">Click any slot to select its stack for Survival mode.</p>
             <p class="inventory-help">Press <code>I</code> to open this tab quickly.</p>
         </section>
 
-        
+
 
         <section class="menu-panel" data-menu-panel="character">
-        <h2>Character</h2>
-        <div id="kolorlandiaCharacterMenu">
-            <div id="kolorlandiaCharacterMenu_player">
+            <h2>Character</h2>
+            <div id="kolorlandiaCharacterMenu">
+                <div id="kolorlandiaCharacterMenu_player">
 
+                </div>
+
+                <div id="kolorlandiaCharacterMenu_slots">
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div>
+                        <img src="assets/armor/cape.png" alt="">
+                    </div>
+                    <div></div>
+                    <div></div>
+                    <div>
+                        <img src="assets/armor/crested-helmet.png" alt="">
+                    </div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div>
+                        <img src="assets/armor/spiked-shoulder-armor.png" alt="">
+                    </div>
+                    <div>
+                        <img src="assets/armor/chest-armor.png" alt="">
+                    </div>
+                    <div>
+                        <img class="inverted" src="assets/armor/spiked-shoulder-armor.png" alt="">
+
+                    </div>
+                    <div></div>
+                    <div></div>
+                    <div>
+                        <img class="inverted" src="assets/armor/gauntlet.png" alt="">
+                    </div>
+                    <div>
+                        <img src="assets/armor/armored-pants.png" alt="">
+                    </div>
+                    <div>
+                        <img src="assets/armor/gauntlet.png" alt="">
+
+                    </div>
+                    <div></div>
+                    <div>✋</div>
+                    <div></div>
+                    <div>
+                        <img src="assets/armor/steeltoe-boots.png" alt="">
+                    </div>
+                    <div></div>
+                    <div>🤚</div>
+
+                </div>
+
+                <div id="kolorlandiaCharacterMenu_info">
+                    <p>Name: singleplayer</p>
+                    <p>Life: 100/100</p>
+                    <p>Face: 😎</p>
+                    <p>Height: 1.70</p>
+                    <p>Health and selected block are shown in the HUD while playing.</p>
+
+                </div>
             </div>
-
-            <div id="kolorlandiaCharacterMenu_slots">
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div>
-                    <img src="assets/armor/cape.png" alt="">
-                </div>
-                <div></div>
-                <div></div>
-                <div>
-                    <img src="assets/armor/crested-helmet.png" alt="">
-                </div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div>
-                    <img src="assets/armor/spiked-shoulder-armor.png" alt="">
-                </div>
-                <div>
-                    <img src="assets/armor/chest-armor.png" alt="">
-                </div>
-                <div>
-                    <img class="inverted" src="assets/armor/spiked-shoulder-armor.png" alt="">
-
-                </div>
-                <div></div>
-                <div></div>
-                <div>
-                    <img class="inverted" src="assets/armor/gauntlet.png" alt="">
-                </div>
-                <div>
-                    <img src="assets/armor/armored-pants.png" alt="">
-                </div>
-                <div>
-                    <img src="assets/armor/gauntlet.png" alt="">
-
-                </div>
-                <div></div>
-                <div>✋</div>
-                <div></div>
-                <div>
-                    <img src="assets/armor/steeltoe-boots.png" alt="">
-                </div>
-                <div></div>
-                <div>🤚</div>
-
-            </div>
-
-            <div id="kolorlandiaCharacterMenu_info">
-                <p>Name: singleplayer</p>
-                <p>Life: 100/100</p>
-                <p>Face: 😎</p>
-                <p>Height: 1.70</p>
-                <p>Health and selected block are shown in the HUD while playing.</p>
-
-            </div>
-        </div>
-    </section>
+        </section>
 
         <section class="menu-panel is-active" data-menu-panel="settings">
             <h2>Settings</h2>
@@ -174,6 +172,22 @@
                 <button class="game-mode-button is-active" type="button" data-game-mode="survival">Survival</button>
             </div>
 
+            <div class="camera-mode-picker">
+                <fieldset>
+                    <legend>Camera mode</legend>
+
+                    <input type="radio" id="cameraModeSkyrim" name="cameraMode" value="skyrim">
+                    <label for="cameraModeSkyrim">Skyrim</label><br>
+
+                    <input type="radio" id="cameraModeWow" name="cameraMode" value="wow">
+                    <label for="cameraModeWow">WoW</label><br>
+
+                    <input type="radio" id="cameraModeLegoLol" name="cameraMode" value="legoLol">
+                    <label for="cameraModeLegoLol">Lego Lol</label>
+                </fieldset>
+            </div>
+            <hr>
+
             <div class="settings-toggle">
                 <input type="checkbox" name="fullScreen" id="settingsFullScreen">
                 <label for="settingsFullScreen">Full screen</label>
@@ -182,15 +196,15 @@
                 <input type="checkbox" name="menuThemeDark" id="settingsMenuThemeDark">
                 <label for="settingsMenuThemeDark">Dark menu theme</label>
             </div>
-            <br>
+
             <label for="volume">Volume</label>
             <input type="range">
             <br>
             <input type="checkbox" name="bgMusic" id="">
-            
+
             <label for="bgMusic">Background music</label>
 
-            
+
             <br>
 
             <h3>Controls</h3>

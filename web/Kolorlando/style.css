@@ -957,6 +957,7 @@ body[data-mode="mobile-landscape"] #menuInferior {
     align-items: end;
     background-color: unset;
     backdrop-filter: unset;
+    pointer-events: none;
 }
 
 body[data-mode="mobile-landscape"] {
@@ -972,6 +973,7 @@ body[data-mode="mobile-landscape"] #menuInferiorLeft {
     height: 50%;
     flex: 25%;
     max-width: 25%;
+    pointer-events: auto;
 }
 
 body[data-mode="mobile-landscape"] #menuInferiorRight {
@@ -979,6 +981,7 @@ body[data-mode="mobile-landscape"] #menuInferiorRight {
     flex: 25%;
     height: 50%;
     max-width: 25%;
+    pointer-events: auto;
 }
 
 body[data-mode="mobile-landscape"] #miniMap {
@@ -989,4 +992,8 @@ body[data-mode="mobile-landscape"] #miniMap {
 
 body[data-mode="mobile-landscape"] #playerHud {
     width: 50%;
+}
+
+body[data-mode="mobile-landscape"] .not-on-landscape{
+    display: none;
 }

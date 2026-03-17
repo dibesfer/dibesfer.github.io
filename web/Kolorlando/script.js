@@ -208,6 +208,21 @@ function handleChatAction() {
   return submitChatInput();
 }
 
+function handleChatToggleAction() {
+  if (!chatBoxInput) return false;
+  if (chatBoxInput.hidden) {
+    showChatInput();
+    return true;
+  }
+
+  if (!chatBoxInput.value.trim()) {
+    hideChatInput();
+    return true;
+  }
+
+  return submitChatInput();
+}
+
 function handleChatCommand(message) {
   const normalizedMessage = message.trim().toLowerCase();
   if (normalizedMessage !== '/debugmode') return false;
@@ -721,7 +736,7 @@ let gameMode = GAME_MODE_SURVIVAL;
 const playerInventory = Array.from({ length: PLAYER_INVENTORY_SLOT_COUNT }, () => null);
 let selectedInventorySlotIndex = 0;
 let selectedVoxelType = voxelTypes.find(type => type.name === 'green')?.name ?? voxelTypes[0]?.name ?? 'green';
-let selectedHotbarIndex = Math.max(0, voxelTypes.findIndex(type => type.name === selectedVoxelType));
+let selectedHotbarIndex = selectedInventorySlotIndex;
 const intersectMapColliderBox = typeof mapData.intersectColliderBox === 'function'
   ? mapData.intersectColliderBox
   : () => null;
@@ -2793,13 +2808,8 @@ if (buttonLeft0) {
   buttonLeft0.addEventListener('touchstart', event => {
     if (!mobileMode) return;
     event.preventDefault();
-    handleChatAction();
+    handleChatToggleAction();
   }, { passive: false });
-  buttonLeft0.addEventListener('click', event => {
-    if (!mobileMode) return;
-    event.preventDefault();
-    handleChatAction();
-  });
 }
 
 // Optional quick drop for mobile
@@ -3002,7 +3012,8 @@ function checkFPS(delta) {
     accTime = 0;
   }
 
-  const { x, y, z } = playerEye;
+  const { x, z } = playerEye;
+  const y = playerFoot.y;
   consola.textContent = 'FPS: ' + fps + ` XYZ: ${x.toFixed(2)} | ${y.toFixed(2)} | ${z.toFixed(2)}`;
 }
 
