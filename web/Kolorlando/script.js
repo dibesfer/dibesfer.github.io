@@ -1074,7 +1074,7 @@ function getSelectedInventoryLabel() {
   if (!selectedStack) {
     return `Selected slot: ${slotNumber} (empty)`;
   }
-  return `Selected slot: ${slotNumber} (${selectedStack.typeName} x${selectedStack.count})`;
+  return "Selected slot: " + slotNumber + " (" + selectedStack.typeName + (selectedStack.count > 1 ? " x" + selectedStack.count : "") + ")";
 }
 
 function updateGameModeUI() {
@@ -1343,7 +1343,7 @@ function renderPlayerInventorySlots() {
 
     const count = document.createElement('span');
     count.className = 'hotbar-slot-count';
-    count.textContent = stack ? String(stack.count) : '';
+    count.textContent = stack && stack.count > 1 ? String(stack.count) : '';
     slot.appendChild(count);
 
     slot.addEventListener('click', () => {
@@ -1370,7 +1370,7 @@ function updateInventorySelectionUI() {
   if (inventorySelected) {
     const selectedStack = getSelectedSurvivalStack();
     inventorySelected.textContent = selectedStack
-      ? `Selected: ${selectedStack.typeName} x${selectedStack.count}`
+      ? ("Selected: " + selectedStack.typeName + (selectedStack.count > 1 ? " x" + selectedStack.count : ""))
       : 'Selected: empty slot';
   }
   if (!inventorySlots) return;
@@ -1399,7 +1399,7 @@ function updateInventorySelectionUI() {
 
     const count = document.createElement('span');
     count.className = 'hotbar-slot-count';
-    count.textContent = String(stack.count);
+    count.textContent = stack.count > 1 ? String(stack.count) : '';
     hotbarSlotEls[i].appendChild(count);
   }
 
@@ -2166,8 +2166,22 @@ function projectileHitsEntity(position, radius) {
   return false;
 }
 
+function getPunchForwardDirection(outDir) {
+  if (currentThirdPersonDistance > 0.001) {
+    if (playerFacingDir.lengthSq() > 0.0001) {
+      outDir.copy(playerFacingDir).normalize();
+      return outDir;
+    }
+    outDir.set(Math.sin(playerBody.rotation.y), 0, Math.cos(playerBody.rotation.y)).normalize();
+    return outDir;
+  }
+
+  camera.getWorldDirection(outDir).normalize();
+  return outDir;
+}
+
 function spawnPunchHitbox(side) {
-  camera.getWorldDirection(punchForwardDir).normalize();
+  getPunchForwardDirection(punchForwardDir);
 
   punchRightDir.crossVectors(punchForwardDir, worldUpDir);
   if (punchRightDir.lengthSq() < 0.0001) {
@@ -2199,6 +2213,7 @@ function spawnPunchHitbox(side) {
     life: PUNCH_HITBOX_LIFETIME,
     sphere: new THREE.Sphere(punchHitboxPos.clone(), PUNCH_HITBOX_RADIUS),
     mesh,
+    forwardDir: punchForwardDir.clone(),
     hitEntities: new Set(),
     hitSomething: false,
   });
@@ -2223,7 +2238,7 @@ function updatePunchHitboxes(deltaTime) {
         entity.position.z - playerEye.z
       );
       if (punchPushDir.lengthSq() < 0.0001) {
-        punchPushDir.copy(punchForwardDir);
+        punchPushDir.copy(hitbox.forwardDir);
       } else {
         punchPushDir.normalize();
       }
