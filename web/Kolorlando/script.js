@@ -949,6 +949,37 @@ const getVoxelBoxFromRaycastHit = typeof mapData.getVoxelBoxFromRaycastHit === '
   : () => null;
 const voxelTypes = Array.isArray(mapData.voxelTypes) ? mapData.voxelTypes : [];
 const voxelTypeByName = new Map(voxelTypes.map(type => [type.name, type]));
+const entityRaycastPoint = new THREE.Vector3();
+
+function getEntityRaycastHit(origin, direction, maxDistance) {
+  let closestHit = null;
+  let closestDistance = maxDistance;
+
+  for (let i = 0; i < entities.length; i++) {
+    const entity = entities[i];
+    const collider = entity?.collider;
+    if (!collider) continue;
+    if (!cameraRaycaster.ray.intersectBox(collider, entityRaycastPoint)) continue;
+
+    const distance = origin.distanceTo(entityRaycastPoint);
+    if (!Number.isFinite(distance) || distance > maxDistance || distance >= closestDistance) {
+      continue;
+    }
+
+    const entityType = entity.typeLabel ?? 'Entity';
+    const entityName = entity.name ? ` (${entity.name})` : '';
+    closestDistance = distance;
+    closestHit = {
+      kind: 'entity',
+      label: `${entityType}${entityName}`,
+      entity,
+      distance,
+      point: entityRaycastPoint.clone(),
+    };
+  }
+
+  return closestHit;
+}
 const PLAYER_INVENTORY_SLOT_COUNT = 32;
 const PLAYER_STACK_LIMIT = 99;
 const GAME_MODE_CREATIVE = 'creative';
@@ -1575,8 +1606,11 @@ const previousFoot = new THREE.Vector3();
 const testBox = new THREE.Box3();
 const playerColliderMin = new THREE.Vector3();
 const playerColliderMax = new THREE.Vector3();
-const debugCollisionBoxes = [];
+const debugCollisionEntries = [];
 const DEBUG_COLLISION_RADIUS = 4;
+const DEBUG_COLLISION_COLOR_WORLD = 0x3ddcff;
+const DEBUG_COLLISION_COLOR_ENTITY = 0x52e38c;
+const DEBUG_COLLISION_COLOR_INTERSECTING = 0xff4d4d;
 const playerBody = new THREE.Group();
 const PLAYER_OUTFIT = {
   skin: 0xf0c9a5,
@@ -1753,11 +1787,20 @@ function setDebugMode(nextEnabled) {
   appendChatLine(`Debug mode ${nextEnabled ? 'enabled' : 'disabled'}.`);
 }
 
+function addDebugCollisionEntry(box, color = DEBUG_COLLISION_COLOR_WORLD) {
+  if (!box) return;
+  debugCollisionEntries.push({ box, color });
+}
+
 function collectNearbyCollisionBoxes() {
-  debugCollisionBoxes.length = 0;
+  debugCollisionEntries.length = 0;
 
   if (collectMapDebugCollisionBoxes) {
-    collectMapDebugCollisionBoxes(playerEye, DEBUG_COLLISION_RADIUS, debugCollisionBoxes);
+    const mapDebugBoxes = [];
+    collectMapDebugCollisionBoxes(playerEye, DEBUG_COLLISION_RADIUS, mapDebugBoxes);
+    for (let i = 0; i < mapDebugBoxes.length; i++) {
+      addDebugCollisionEntry(mapDebugBoxes[i], DEBUG_COLLISION_COLOR_WORLD);
+    }
   }
 
   for (let i = 0; i < buildingColliders.length; i++) {
@@ -1772,7 +1815,24 @@ function collectNearbyCollisionBoxes() {
     ) {
       continue;
     }
-    debugCollisionBoxes.push(collider);
+    addDebugCollisionEntry(collider, DEBUG_COLLISION_COLOR_WORLD);
+  }
+
+  for (let i = 0; i < entities.length; i++) {
+    const collider = entities[i]?.collider;
+    if (!collider) continue;
+
+    const centerX = (collider.min.x + collider.max.x) * 0.5;
+    const centerY = (collider.min.y + collider.max.y) * 0.5;
+    const centerZ = (collider.min.z + collider.max.z) * 0.5;
+    if (
+      Math.abs(centerX - playerEye.x) > DEBUG_COLLISION_RADIUS ||
+      Math.abs(centerY - playerEye.y) > DEBUG_COLLISION_RADIUS ||
+      Math.abs(centerZ - playerEye.z) > DEBUG_COLLISION_RADIUS
+    ) {
+      continue;
+    }
+    addDebugCollisionEntry(collider, DEBUG_COLLISION_COLOR_ENTITY);
   }
 }
 
@@ -1785,14 +1845,19 @@ function updateDebugCollisionVisuals() {
 
   collectNearbyCollisionBoxes();
 
-  for (let i = 0; i < debugCollisionBoxes.length; i++) {
+  for (let i = 0; i < debugCollisionEntries.length; i++) {
     const helper = getDebugCollisionHelper(i);
-    helper.box.copy(debugCollisionBoxes[i]);
+    const entry = debugCollisionEntries[i];
+    helper.box.copy(entry.box);
     helper.visible = true;
-    helper.material.color.setHex(playerCollider.intersectsBox(debugCollisionBoxes[i]) ? 0xff4d4d : 0x3ddcff);
+    helper.material.color.setHex(
+      playerCollider.intersectsBox(entry.box)
+        ? DEBUG_COLLISION_COLOR_INTERSECTING
+        : entry.color
+    );
   }
 
-  for (let i = debugCollisionBoxes.length; i < nearbyCollisionHelpers.length; i++) {
+  for (let i = debugCollisionEntries.length; i < nearbyCollisionHelpers.length; i++) {
     nearbyCollisionHelpers[i].visible = false;
   }
 }
@@ -2773,6 +2838,8 @@ const miniMapFacing = new THREE.Vector3();
 const miniMapProjectedPos = new THREE.Vector3();
 const currentRaycastState = {
   hit: null,
+  kind: null,
+  entity: null,
   voxelEditionMode: false,
 };
 
@@ -2851,24 +2918,37 @@ function updateVoxelRaycast() {
       : [];
   }
 
-  let voxelLabel = 'none';
+  const maxRayDistance = isLegoLolCameraMode() ? LEGO_LOL_RAYCAST_RANGE : CAMERA_RAYCAST_RANGE;
+  const voxelHit = intersections.length > 0 ? intersections[0] : null;
+  const voxelLabel = voxelHit ? resolveRaycastLabel(voxelHit) : null;
+  const voxelDistance = voxelHit ? cameraRayOrigin.distanceTo(voxelHit.point) : Infinity;
+  const entityHit = getEntityRaycastHit(cameraRayOrigin, cameraRayDirection, maxRayDistance);
+
+  let readoutLabel = 'none';
   let activeVoxelHit = null;
-  if (intersections.length > 0) {
-    const hit = intersections[0];
-    cameraRayEnd.copy(hit.point);
-    const resolvedLabel = resolveRaycastLabel(hit);
-    if (resolvedLabel) {
-      voxelLabel = resolvedLabel;
-      activeVoxelHit = hit;
-    }
+  let activeHit = null;
+  let activeHitKind = null;
+  let activeEntity = null;
+
+  if (voxelLabel && voxelDistance <= (entityHit?.distance ?? Infinity)) {
+    readoutLabel = voxelLabel;
+    activeVoxelHit = voxelHit;
+    activeHit = voxelHit;
+    activeHitKind = 'voxel';
+    cameraRayEnd.copy(voxelHit.point);
+  } else if (entityHit) {
+    readoutLabel = entityHit.label;
+    activeHit = entityHit;
+    activeHitKind = 'entity';
+    activeEntity = entityHit.entity;
+    cameraRayEnd.copy(entityHit.point);
   } else {
-    cameraRayEnd.copy(cameraRayOrigin).addScaledVector(
-      cameraRayDirection,
-      isLegoLolCameraMode() ? LEGO_LOL_RAYCAST_RANGE : CAMERA_RAYCAST_RANGE
-    );
+    cameraRayEnd.copy(cameraRayOrigin).addScaledVector(cameraRayDirection, maxRayDistance);
   }
 
-  currentRaycastState.hit = activeVoxelHit;
+  currentRaycastState.hit = activeHit;
+  currentRaycastState.kind = activeHitKind;
+  currentRaycastState.entity = activeEntity;
   currentRaycastState.voxelEditionMode = activeVoxelHit !== null;
 
   if (activeVoxelHit && getVoxelBoxFromRaycastHit(activeVoxelHit, voxelHighlightBox)) {
@@ -2889,7 +2969,12 @@ function updateVoxelRaycast() {
   cameraRayTip.position.copy(cameraRayEnd);
 
   if (voxelReadout) {
-    voxelReadout.textContent = `Voxel: ${voxelLabel}`;
+    const readoutPrefix = activeHitKind === 'entity'
+      ? 'Entity'
+      : activeHitKind === 'voxel'
+        ? 'Voxel'
+        : 'Target';
+    voxelReadout.textContent = `${readoutPrefix}: ${readoutLabel}`;
   }
 }
 
