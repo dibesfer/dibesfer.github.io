@@ -206,7 +206,7 @@ img {
     transform: translate(-50%, -50%);
     transform-origin: 50% 66%;
     filter: drop-shadow(0 0 4px rgba(0, 0, 0, 0.45));
-    z-index: 2;
+    z-index: 3;
 }
 
 .mini-map-entity-marker {
@@ -873,6 +873,12 @@ img {
     top: 5px;
 }
 
+#Left0.is-active,
+#Left1.is-active,
+#Right3.is-active {
+    background-color: green;
+}
+
 #Left1 {
     right: 5px;
     top: 5px;
@@ -907,7 +913,9 @@ img {
     padding: 5px;
 }
 
-#buttonShoot.is-shooting {
+#buttonShoot.is-shooting,
+#Right1.is-shooting,
+#Right2.is-shooting {
     background-color: rgb(210, 30, 30);
 }
 

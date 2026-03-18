@@ -300,6 +300,7 @@ function appendChatLine(message, speaker = 'System') {
 
 function showChatInput() {
   if (!chatBoxInput) return;
+  setMobileChatToggleState(true);
   if (!mobileMode && typeof controls !== 'undefined' && controls.isLocked) {
     openingChatFromPointerLock = true;
     controls.unlock();
@@ -312,6 +313,7 @@ function showChatInput() {
 
 function hideChatInput() {
   if (!chatBoxInput) return;
+  setMobileChatToggleState(false);
   setElementHidden(chatBoxInput, true);
   chatBox?.classList.remove('backgrounded');
   chatBoxInput.blur();
@@ -505,6 +507,7 @@ function setMenuCentralTab(tabName) {
 }
 
 function showMenuCentral(tabName = activeMenuCentralTab, { force = false } = {}) {
+  setMobileInventoryToggleState(true);
   if (!force && !mobileMode && typeof controls !== 'undefined' && controls.isLocked) {
     hideMenuCentral();
     return;
@@ -518,6 +521,7 @@ function showMenuCentral(tabName = activeMenuCentralTab, { force = false } = {})
 }
 
 function hideMenuCentral() {
+  setMobileInventoryToggleState(false);
   setElementHidden(menuCentral, true);
   document.body.classList.remove('menu-central-open');
 }
@@ -551,6 +555,7 @@ function applyMode(mode) {
   mobileShootPressed = false;
   mobileSprintEnabled = false;
   setShootButtonState(false);
+  setMobileChatToggleState(false);
   setMobileSprintState(false);
 }
 
@@ -2022,7 +2027,6 @@ const PUNCH_DAMAGE = 10;
 const PUNCH_PUSH_FORCE = 8;
 const CHASER_PUNCH_DAMAGE = 8;
 const CHASER_ATTACK_INTERVAL = 0.4;
-const CHASER_FRONT_DOT_THRESHOLD = 0.1;
 const CHASER_PUNCH_DURATION = 0.22;
 const CHASER_PUNCH_HITBOX_RADIUS = 0.5;
 const CHASER_PUNCH_HITBOX_LIFETIME = 0.12;
@@ -2076,8 +2080,6 @@ const punchUpDir = new THREE.Vector3();
 const punchHitboxPos = new THREE.Vector3();
 const punchPushDir = new THREE.Vector3();
 const worldUpDir = new THREE.Vector3(0, 1, 0);
-const playerLookForwardDir = new THREE.Vector3();
-const playerToChaserDir = new THREE.Vector3();
 const chaserToPlayerDir = new THREE.Vector3();
 const chaserAttackCooldowns = new WeakMap();
 const chaserAttackStates = new WeakMap();
@@ -2536,7 +2538,9 @@ function spawnChaserPunchHitbox(entity, side) {
   chaserPunchHitboxes.push({
     age: 0,
     life: CHASER_PUNCH_HITBOX_LIFETIME,
+    sphere: new THREE.Sphere(chaserPunchHitboxPos.clone(), CHASER_PUNCH_HITBOX_RADIUS),
     mesh,
+    hitPlayer: false,
   });
 }
 
@@ -2544,6 +2548,12 @@ function updateChaserPunchHitboxes(deltaTime) {
   for (let i = chaserPunchHitboxes.length - 1; i >= 0; i--) {
     const hitbox = chaserPunchHitboxes[i];
     hitbox.age += deltaTime;
+
+    if (!hitbox.hitPlayer && playerCollider.intersectsSphere(hitbox.sphere)) {
+      hitbox.hitPlayer = true;
+      applyPlayerDamage(CHASER_PUNCH_DAMAGE);
+    }
+
     if (hitbox.age < hitbox.life) continue;
 
     if (hitbox.mesh) {
@@ -2554,14 +2564,6 @@ function updateChaserPunchHitboxes(deltaTime) {
 }
 
 function updateChaserMeleeAttacks(deltaTime) {
-  camera.getWorldDirection(playerLookForwardDir);
-  playerLookForwardDir.y = 0;
-  if (playerLookForwardDir.lengthSq() > 0.0001) {
-    playerLookForwardDir.normalize();
-  } else {
-    playerLookForwardDir.set(0, 0, -1);
-  }
-
   for (let i = 0; i < entities.length; i++) {
     const entity = entities[i];
     if (!(entity instanceof HunterEntity)) continue;
@@ -2596,21 +2598,7 @@ function updateChaserMeleeAttacks(deltaTime) {
       continue;
     }
 
-    playerToChaserDir.copy(chaserToPlayerDir).multiplyScalar(-1);
-    if (playerToChaserDir.lengthSq() > 0.0001) {
-      playerToChaserDir.normalize();
-    } else {
-      playerToChaserDir.set(0, 0, 1);
-    }
-    const isInFrontOfPlayer = playerLookForwardDir.dot(playerToChaserDir) >= CHASER_FRONT_DOT_THRESHOLD;
-    if (!isInFrontOfPlayer) {
-      chaserAttackCooldowns.set(entity, cooldown);
-      chaserAttackStates.set(entity, state);
-      continue;
-    }
-
     if (cooldown <= 0) {
-      applyPlayerDamage(CHASER_PUNCH_DAMAGE);
       state.punchSide = state.nextPunchRight ? 'right' : 'left';
       state.nextPunchRight = !state.nextPunchRight;
       state.punchTimer = CHASER_PUNCH_DURATION;
@@ -3197,12 +3185,29 @@ const sensitivity = 0.002;
 const MOBILE_SHOOT_INTERVAL = 0.18;
 let mobileShootTimer = 0;
 
-function queueJump() {
+function queueJump(event) {
   gameAudio.unlockAudio(true);
+  if (event) event.preventDefault();
+  setMobilePressState(buttonUp, true);
   playerState.jumpQueued = true;
 }
 
-buttonUp.addEventListener('touchstart', queueJump);
+function stopQueueJump(event) {
+  if (event) event.preventDefault();
+  setMobilePressState(buttonUp, false);
+}
+
+buttonUp.addEventListener('touchstart', queueJump, { passive: false });
+buttonUp.addEventListener('touchend', stopQueueJump, { passive: false });
+buttonUp.addEventListener('touchcancel', stopQueueJump, { passive: false });
+buttonUp.addEventListener('pointerdown', event => {
+  if (!mobileMode) return;
+  queueJump(event);
+});
+buttonUp.addEventListener('pointerup', event => {
+  if (!mobileMode) return;
+  stopQueueJump(event);
+});
 
 if (buttonLeft0) {
   buttonLeft0.addEventListener('touchstart', event => {
@@ -3225,9 +3230,25 @@ function setShootButtonState(active) {
   buttonShoot.classList.toggle('is-shooting', active);
 }
 
+function setMobilePressState(button, active) {
+  if (!button) return;
+  button.classList.toggle('is-shooting', active);
+}
+
+
+function setMobileChatToggleState(active) {
+  if (!buttonLeft0) return;
+  buttonLeft0.classList.toggle('is-active', active);
+}
+
 function setMobileSprintState(active) {
   if (!buttonLeft1) return;
   buttonLeft1.classList.toggle('is-active', active);
+}
+
+function setMobileInventoryToggleState(active) {
+  if (!buttonRight3) return;
+  buttonRight3.classList.toggle('is-active', active);
 }
 
 function startMobileLeftClick(event) {
@@ -3247,7 +3268,13 @@ function startMobileRightClick(event) {
   gameAudio.unlockAudio(true);
   if (!mobileMode) return;
   if (event) event.preventDefault();
+  setMobilePressState(buttonRight1, true);
   triggerActionForMouseButton(2, { allowMobile: true });
+}
+
+function stopMobileRightClick(event) {
+  if (event) event.preventDefault();
+  setMobilePressState(buttonRight1, false);
 }
 
 function toggleMobileSprint(event) {
@@ -3281,6 +3308,16 @@ if (buttonShoot) {
 
 if (buttonRight1) {
   buttonRight1.addEventListener('touchstart', startMobileRightClick, { passive: false });
+  buttonRight1.addEventListener('touchend', stopMobileRightClick, { passive: false });
+  buttonRight1.addEventListener('touchcancel', stopMobileRightClick, { passive: false });
+  buttonRight1.addEventListener('pointerdown', event => {
+    if (!mobileMode) return;
+    startMobileRightClick(event);
+  });
+  buttonRight1.addEventListener('pointerup', event => {
+    if (!mobileMode) return;
+    stopMobileRightClick(event);
+  });
   buttonRight1.addEventListener('click', event => {
     if (!mobileMode) return;
     event.preventDefault();
