@@ -576,6 +576,7 @@ renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
 sceneView.appendChild(renderer.domElement);
+
 sceneView.addEventListener('pointermove', event => {
   updateWowCursorRaycastPointer(event.clientX, event.clientY);
   if (!wowCameraDragState || event.pointerId !== wowCameraDragState.pointerId || !isScreenDragCameraActive()) return;
