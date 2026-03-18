@@ -32,6 +32,7 @@ body[data-camera-mode="wow"] {
     cursor: url("assets/icons/cursor/Middle Ages--cursor--SweezyCursors.png") 0.1 0.1, auto;
 }
 
+
 body[data-camera-mode="wow"] button,
 body[data-camera-mode="wow"] a,
 body[data-camera-mode="wow"] label,
@@ -247,6 +248,7 @@ img {
     z-index: 25;
     pointer-events: none;
 }
+
 
 #menuCentral {
     --menu-surface: rgba(255, 255, 255, 0.9);

@@ -2805,8 +2805,13 @@ function updateVoxelRaycast() {
   if (isScreenDragCameraActive()) {
     if (wowCursorRaycastActive) {
       cameraRaycaster.setFromCamera(wowCursorNdc, camera);
-      cameraRayOrigin.copy(cameraRaycaster.ray.origin);
       cameraRayDirection.copy(cameraRaycaster.ray.direction).normalize();
+      if (currentThirdPersonDistance > 0.001) {
+        camera.getWorldPosition(cameraRayOrigin);
+        cameraRaycaster.set(cameraRayOrigin, cameraRayDirection);
+      } else {
+        cameraRayOrigin.copy(cameraRaycaster.ray.origin);
+      }
       intersections = raycastTargets.length > 0
         ? cameraRaycaster.intersectObjects(raycastTargets, true)
         : [];
