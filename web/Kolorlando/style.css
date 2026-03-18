@@ -40,7 +40,8 @@ body[data-camera-mode="wow"] select {
     cursor: url("assets/icons/cursor/Middle Ages--pointer--SweezyCursors.png") 0.1 0.1, pointer;
 }
 
-body[data-camera-mode="wow"] #crossHair {
+body[data-camera-mode="wow"] #crossHair,
+body[data-camera-mode="legoLol"] #crossHair {
     display: none;
 }
 

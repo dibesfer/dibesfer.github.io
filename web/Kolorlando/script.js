@@ -24,6 +24,7 @@ const MODE_MOBILE_LANDSCAPE = 'mobile-landscape';
 let activeMode = MODE_DESKTOP;
 const touchQuery = window.matchMedia('(hover: none) and (pointer: coarse)');
 const THIRD_PERSON_MAX_DISTANCE = 8;
+const LEGO_LOL_MIN_THIRD_PERSON_DISTANCE = 3;
 const THIRD_PERSON_DISTANCE_INPUT_SCALE = 0.01;
 const JOYSTICK_MAX_OFFSET = 50;
 const SUPPORT_EPSILON = 0.03;
@@ -87,6 +88,7 @@ const chatBoxInput = document.getElementById('chatBoxInput');
 const buttonLeft0 = document.getElementById('Left0');
 const cameraModeInputs = Array.from(document.querySelectorAll('input[name="cameraMode"]'));
 const cameraModeWowInput = document.getElementById('cameraModeWow');
+const cameraModeLegoLolInput = document.getElementById('cameraModeLegoLol');
 const inventoryDragPreview = document.createElement('div');
 let mobileShootPressed = false;
 let mobileSprintEnabled = false;
@@ -101,6 +103,7 @@ const systemMenuThemeQuery = window.matchMedia('(prefers-color-scheme: dark)');
 let menuThemePreference = 'system';
 const CAMERA_MODE_SKYRIM = 'skyrim';
 const CAMERA_MODE_WOW = 'wow';
+// Mirrors the current WoW camera behavior so both modes share the same screen-drag camera path.
 const CAMERA_MODE_LEGO_LOL = 'legoLol';
 const CAMERA_MODE_STORAGE_KEY = 'kolorlando.cameraMode';
 let wowCameraScreenActive = false;
@@ -117,20 +120,32 @@ let currentCameraMode = (() => {
   }
 })();
 
-function isWowCameraMode() {
-  return currentCameraMode === CAMERA_MODE_WOW && !mobileMode;
+function isLegoLolCameraMode() {
+  return currentCameraMode === CAMERA_MODE_LEGO_LOL;
 }
 
-function isWowCameraScreenActive() {
-  return isWowCameraMode() && wowCameraScreenActive;
+function usesCenteredThirdPersonCamera() {
+  return currentCameraMode === CAMERA_MODE_WOW || currentCameraMode === CAMERA_MODE_LEGO_LOL;
+}
+
+function isScreenDragCameraMode() {
+  return !mobileMode && currentCameraMode === CAMERA_MODE_WOW;
+}
+
+function isScreenDragCameraActive() {
+  return isScreenDragCameraMode() && wowCameraScreenActive;
 }
 
 function isDesktopGameplayActive() {
-  return !mobileMode && (controls.isLocked || isWowCameraScreenActive());
+  return !mobileMode && (
+    controls.isLocked
+    || isScreenDragCameraActive()
+    || (isLegoLolCameraMode() && !isMenuCentralVisible())
+  );
 }
 
 function shouldUsePointerLock() {
-  return !mobileMode && currentCameraMode !== CAMERA_MODE_WOW;
+  return !mobileMode && currentCameraMode === CAMERA_MODE_SKYRIM;
 }
 
 function syncDesktopLookAnglesFromCamera() {
@@ -139,7 +154,7 @@ function syncDesktopLookAnglesFromCamera() {
 }
 
 function setWowCameraScreenActive(nextActive) {
-  wowCameraScreenActive = Boolean(nextActive) && isWowCameraMode();
+  wowCameraScreenActive = Boolean(nextActive) && isScreenDragCameraMode();
   if (wowCameraScreenActive) {
     syncDesktopLookAnglesFromCamera();
     return;
@@ -151,7 +166,10 @@ function setWowCameraScreenActive(nextActive) {
 function activateDesktopScreenActivity() {
   if (mobileMode) return;
   hideMenuCentral();
-  if (isWowCameraMode()) {
+  if (isLegoLolCameraMode()) {
+    return;
+  }
+  if (isScreenDragCameraMode()) {
     setWowCameraScreenActive(true);
     return;
   }
@@ -162,7 +180,11 @@ function activateDesktopScreenActivity() {
 
 function deactivateDesktopScreenActivity(tabName = activeMenuCentralTab || 'settings') {
   if (mobileMode) return;
-  if (isWowCameraMode()) {
+  if (isLegoLolCameraMode()) {
+    showMenuCentral(tabName, { force: true });
+    return;
+  }
+  if (isScreenDragCameraMode()) {
     setWowCameraScreenActive(false);
     showMenuCentral(tabName, { force: true });
     return;
@@ -186,7 +208,7 @@ function applyCameraMode() {
   document.body.dataset.cameraMode = currentCameraMode;
   persistCameraModePreference();
   setWowCameraScreenActive(false);
-  if (isWowCameraMode() && typeof controls !== 'undefined' && controls.isLocked) {
+  if (isScreenDragCameraMode() && typeof controls !== 'undefined' && controls.isLocked) {
     controls.unlock();
   }
 }
@@ -207,6 +229,9 @@ function syncCameraModeAvailability() {
   const wowAvailable = !mobileMode;
   if (cameraModeWowInput) {
     cameraModeWowInput.disabled = !wowAvailable;
+  }
+  if (cameraModeLegoLolInput) {
+    cameraModeLegoLolInput.disabled = false;
   }
   if (!wowAvailable && currentCameraMode === CAMERA_MODE_WOW) {
     setCurrentCameraMode(CAMERA_MODE_SKYRIM);
@@ -484,7 +509,7 @@ function showMenuCentral(tabName = activeMenuCentralTab, { force = false } = {})
     hideMenuCentral();
     return;
   }
-  if (isWowCameraMode()) {
+  if (isScreenDragCameraMode()) {
     setWowCameraScreenActive(false);
   }
   setMenuCentralTab(tabName);
@@ -548,8 +573,9 @@ renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 sceneView.appendChild(renderer.domElement);
 sceneView.addEventListener('pointermove', event => {
   updateWowCursorRaycastPointer(event.clientX, event.clientY);
-  if (!wowCameraDragState || event.pointerId !== wowCameraDragState.pointerId || !isWowCameraScreenActive()) return;
+  if (!wowCameraDragState || event.pointerId !== wowCameraDragState.pointerId || !isScreenDragCameraActive()) return;
 
+  // WoW camera look is driven by drag deltas over the scene instead of pointer lock.
   const dx = event.clientX - wowCameraDragState.lastX;
   const dy = event.clientY - wowCameraDragState.lastY;
   wowCameraDragState.lastX = event.clientX;
@@ -568,7 +594,7 @@ sceneView.addEventListener('pointerleave', event => {
   clearWowCursorRaycastPointer();
 });
 sceneView.addEventListener('pointerdown', event => {
-  if (!isWowCameraScreenActive() || isMenuCentralVisible() || event.button !== 0) return;
+  if (!isScreenDragCameraActive() || isMenuCentralVisible() || event.button !== 0) return;
   wowCameraDragState = {
     pointerId: event.pointerId,
     lastX: event.clientX,
@@ -584,7 +610,8 @@ const stopWowCameraDrag = event => {
   sceneView.releasePointerCapture?.(event.pointerId);
   wowCameraDragState = null;
 
-  if (event.type === 'pointerup' && dragDistance < 6 && isWowCameraScreenActive() && !isMenuCentralVisible()) {
+  // A short click still acts like a gameplay click; only longer movement counts as camera dragging.
+  if (event.type === 'pointerup' && dragDistance < 6 && isScreenDragCameraActive() && !isMenuCentralVisible()) {
     updateWowCursorRaycastPointer(event.clientX, event.clientY);
     updateVoxelRaycast();
     triggerActionForMouseButton(0);
@@ -804,12 +831,16 @@ if (playButton) {
   playButton.addEventListener('click', event => {
     event.preventDefault();
     event.stopPropagation();
+    gameAudio.unlockAudio(true);
     activateDesktopScreenActivity();
   });
 }
 
 const keys = {};
-document.addEventListener('keydown', e => keys[e.code] = true);
+document.addEventListener('keydown', e => {
+  gameAudio.unlockAudio(true);
+  keys[e.code] = true;
+});
 document.addEventListener('keyup', e => keys[e.code] = false);
 
 const moveSpeed = 10;
@@ -1556,6 +1587,49 @@ const playerHumanoid = createHumanoidModel({
 playerBody.add(playerHumanoid.root);
 playerBody.scale.set(1, PLAYER_HEIGHT / playerHumanoid.baseHeight, 1);
 
+const PLAYER_DIRECTION_MARKER_DIAMETER = 1.5;
+const PLAYER_DIRECTION_MARKER_RADIUS = PLAYER_DIRECTION_MARKER_DIAMETER / 2;
+const playerDirectionMarker = new THREE.Group();
+const playerDirectionCircle = new THREE.Mesh(
+  new THREE.CircleGeometry(PLAYER_DIRECTION_MARKER_RADIUS, 48),
+  new THREE.MeshBasicMaterial({
+    color: 0x4da6ff,
+    transparent: true,
+    opacity: 0.6,
+    depthWrite: false,
+    side: THREE.DoubleSide,
+  })
+);
+playerDirectionCircle.rotation.x = Math.PI / 2;
+playerDirectionCircle.position.y = 0.03;
+playerDirectionCircle.renderOrder = 21;
+playerDirectionCircle.frustumCulled = false;
+playerDirectionMarker.add(playerDirectionCircle);
+
+const playerDirectionArrowShape = new THREE.Shape();
+playerDirectionArrowShape.moveTo(0, 0.34);
+playerDirectionArrowShape.lineTo(-0.2, -0.18);
+playerDirectionArrowShape.lineTo(0.2, -0.18);
+playerDirectionArrowShape.closePath();
+
+const playerDirectionArrow = new THREE.Mesh(
+  new THREE.ShapeGeometry(playerDirectionArrowShape),
+  new THREE.MeshBasicMaterial({
+    color: 0x7dc0ff,
+    transparent: true,
+    opacity: 0.6,
+    depthWrite: false,
+    side: THREE.DoubleSide,
+  })
+);
+playerDirectionArrow.rotation.x = Math.PI / 2;
+playerDirectionArrow.position.set(0, 0.035, PLAYER_DIRECTION_MARKER_RADIUS - 0.04);
+playerDirectionArrow.renderOrder = 22;
+playerDirectionArrow.frustumCulled = false;
+playerDirectionMarker.add(playerDirectionArrow);
+playerDirectionMarker.visible = false;
+playerBody.add(playerDirectionMarker);
+
 function createFirstPersonArmsRig() {
   const fpModel = createHumanoidModel({
     outfit: PLAYER_OUTFIT,
@@ -1720,6 +1794,7 @@ function syncPlayerBody() {
     playerCollider.min.y,
     playerEye.z
   );
+  playerDirectionMarker.visible = isLegoLolCameraMode();
 }
 
 function syncPlayerFacing(facingDirection) {
@@ -1745,6 +1820,10 @@ function animatePlayerBody(deltaTime, isMoving) {
 const thirdPersonOffsetDir = new THREE.Vector3();
 const thirdPersonRightDir = new THREE.Vector3();
 const thirdPersonTargetPos = new THREE.Vector3();
+const thirdPersonWorldUp = new THREE.Vector3(0, 1, 0);
+const legoLolForwardDir = new THREE.Vector3();
+const legoLolFocusPos = new THREE.Vector3();
+const LEGO_LOL_FIXED_ORBIT_ANGLE = THREE.MathUtils.degToRad(35);
 let thirdPersonDistance = 0;
 let currentThirdPersonDistance = 0;
 let currentShoulderOffset = 0;
@@ -1772,8 +1851,12 @@ const MOBILE_PINCH_BLOCK_SELECTOR = [
   'a',
 ].join(', ');
 
+function getMinThirdPersonDistance() {
+  return isLegoLolCameraMode() ? LEGO_LOL_MIN_THIRD_PERSON_DISTANCE : 0;
+}
+
 function setThirdPersonDistance(nextDistance) {
-  thirdPersonDistance = THREE.MathUtils.clamp(nextDistance, 0, THIRD_PERSON_MAX_DISTANCE);
+  thirdPersonDistance = THREE.MathUtils.clamp(nextDistance, getMinThirdPersonDistance(), THIRD_PERSON_MAX_DISTANCE);
 }
 
 function getTouchDistance(firstTouch, secondTouch) {
@@ -1838,20 +1921,42 @@ function handleMobilePinchEnd(event) {
 }
 
 function syncCameraToPlayerView(deltaTime = 0) {
+  const minThirdPersonDistance = getMinThirdPersonDistance();
+  if (thirdPersonDistance < minThirdPersonDistance) {
+    thirdPersonDistance = minThirdPersonDistance;
+  }
+  if (isLegoLolCameraMode() && currentThirdPersonDistance < minThirdPersonDistance) {
+    currentThirdPersonDistance = minThirdPersonDistance;
+  }
   const tDistance = 1 - Math.exp(-THIRD_PERSON_DISTANCE_LERP * deltaTime);
   const tShoulder = 1 - Math.exp(-THIRD_PERSON_SHOULDER_LERP * deltaTime);
   currentThirdPersonDistance = THREE.MathUtils.lerp(currentThirdPersonDistance, thirdPersonDistance, tDistance);
-  const targetShoulderOffset = thirdPersonDistance > 0.001 && !isWowCameraMode() ? THIRD_PERSON_MAX_SHOULDER_OFFSET : 0;
+  // Skyrim keeps the over-the-shoulder offset in third person; WoW and Lego Lol stay centered behind the player.
+  const targetShoulderOffset = thirdPersonDistance > 0.001 && !usesCenteredThirdPersonCamera() ? THIRD_PERSON_MAX_SHOULDER_OFFSET : 0;
   currentShoulderOffset = THREE.MathUtils.lerp(currentShoulderOffset, targetShoulderOffset, tShoulder);
 
   camera.position.copy(playerEye);
+  // Swap first-person arms for the full body mesh once the camera pulls back into third person.
   playerBody.visible = currentThirdPersonDistance > 0.001;
-  firstPersonArmsRig.root.visible = currentThirdPersonDistance <= 0.001;
+  firstPersonArmsRig.root.visible = currentThirdPersonDistance <= 0.001 && !isLegoLolCameraMode();
+
+  if (isLegoLolCameraMode() && currentThirdPersonDistance > 0.001) {
+    const horizontalDistance = currentThirdPersonDistance * Math.cos(LEGO_LOL_FIXED_ORBIT_ANGLE);
+    const verticalDistance = currentThirdPersonDistance * Math.sin(LEGO_LOL_FIXED_ORBIT_ANGLE);
+    legoLolForwardDir.set(Math.sin(playerBody.rotation.y), 0, Math.cos(playerBody.rotation.y));
+    thirdPersonTargetPos.copy(playerEye);
+    thirdPersonTargetPos.addScaledVector(legoLolForwardDir, -horizontalDistance);
+    thirdPersonTargetPos.y += verticalDistance;
+    camera.position.copy(thirdPersonTargetPos);
+    legoLolFocusPos.set(playerEye.x, playerBody.position.y + PLAYER_HEIGHT * 0.7, playerEye.z);
+    camera.lookAt(legoLolFocusPos);
+    return;
+  }
 
   if (currentThirdPersonDistance > 0.001) {
     // Move camera backward from the look direction to get a third-person view.
     camera.getWorldDirection(thirdPersonOffsetDir);
-    thirdPersonRightDir.crossVectors(thirdPersonOffsetDir, worldUp).normalize();
+    thirdPersonRightDir.crossVectors(thirdPersonOffsetDir, thirdPersonWorldUp).normalize();
     thirdPersonTargetPos.copy(playerEye);
     thirdPersonTargetPos.addScaledVector(thirdPersonOffsetDir, -currentThirdPersonDistance);
     thirdPersonTargetPos.addScaledVector(thirdPersonRightDir, currentShoulderOffset);
@@ -2308,7 +2413,7 @@ function handleDesktopAttack(event) {
   if (event.button !== 0 && event.button !== 2) return;
   if (mobileMode) return;
 
-  if (isWowCameraScreenActive()) {
+  if (isScreenDragCameraActive()) {
     updateWowCursorRaycastPointer(event.clientX, event.clientY);
     updateVoxelRaycast();
     if (event.button === 0) {
@@ -2664,7 +2769,7 @@ const currentRaycastState = {
 };
 
 function updateWowCursorRaycastPointer(clientX, clientY) {
-  if (!sceneView || mobileMode || !isWowCameraScreenActive()) {
+  if (!sceneView || mobileMode || !isScreenDragCameraActive()) {
     wowCursorRaycastActive = false;
     return;
   }
@@ -2688,7 +2793,7 @@ function clearWowCursorRaycastPointer() {
 function updateVoxelRaycast() {
   let intersections = [];
 
-  if (isWowCameraScreenActive()) {
+  if (isScreenDragCameraActive()) {
     if (wowCursorRaycastActive) {
       cameraRaycaster.setFromCamera(wowCursorNdc, camera);
       cameraRayOrigin.copy(cameraRaycaster.ray.origin);
@@ -2702,7 +2807,7 @@ function updateVoxelRaycast() {
       cameraRayDirection.normalize();
       cameraRayEnd.copy(cameraRayOrigin);
     }
-  } else if (isWowCameraMode()) {
+  } else if (isScreenDragCameraMode()) {
     camera.getWorldPosition(cameraRayOrigin);
     camera.getWorldDirection(cameraRayDirection);
     cameraRayDirection.normalize();
@@ -2755,7 +2860,7 @@ function updateVoxelRaycast() {
 }
 
 function updateDesktopLook() {
-  if (isWowCameraScreenActive()) {
+  if (isScreenDragCameraActive()) {
     camera.rotation.order = 'YXZ';
     camera.rotation.y = yaw;
     camera.rotation.x = pitch;
@@ -2946,6 +3051,7 @@ const leftJoy = document.querySelector('#menuInferiorLeft .joystick');
 const leftPad = leftJoy.querySelector('.pad');
 
 leftJoy.addEventListener('touchstart', e => {
+  gameAudio.unlockAudio(true);
   e.preventDefault();
   for (let t of e.changedTouches) {
     leftTouchId = t.identifier;
@@ -2988,6 +3094,7 @@ const rightJoy = document.querySelector('#menuInferiorRight .joystick');
 const rightPad = rightJoy.querySelector('.pad');
 
 rightJoy.addEventListener('touchstart', e => {
+  gameAudio.unlockAudio(true);
   e.preventDefault();
   for (let t of e.changedTouches) {
     rightTouchId = t.identifier;
@@ -3042,6 +3149,7 @@ const MOBILE_SHOOT_INTERVAL = 0.18;
 let mobileShootTimer = 0;
 
 function queueJump() {
+  gameAudio.unlockAudio(true);
   playerState.jumpQueued = true;
 }
 
@@ -3049,6 +3157,7 @@ buttonUp.addEventListener('touchstart', queueJump);
 
 if (buttonLeft0) {
   buttonLeft0.addEventListener('touchstart', event => {
+    gameAudio.unlockAudio(true);
     if (!mobileMode) return;
     event.preventDefault();
     handleChatToggleAction();
@@ -3073,6 +3182,7 @@ function setMobileSprintState(active) {
 }
 
 function startMobileLeftClick(event) {
+  gameAudio.unlockAudio(true);
   if (!mobileMode) return;
   if (event) event.preventDefault();
   setShootButtonState(true);
@@ -3085,12 +3195,14 @@ function stopMobileLeftClick(event) {
 }
 
 function startMobileRightClick(event) {
+  gameAudio.unlockAudio(true);
   if (!mobileMode) return;
   if (event) event.preventDefault();
   triggerActionForMouseButton(2, { allowMobile: true });
 }
 
 function toggleMobileSprint(event) {
+  gameAudio.unlockAudio(true);
   if (!mobileMode) return;
   if (event) event.preventDefault();
   mobileSprintEnabled = !mobileSprintEnabled;
@@ -3129,6 +3241,7 @@ if (buttonRight1) {
 
 if (buttonRight3) {
   buttonRight3.addEventListener('touchstart', event => {
+    gameAudio.unlockAudio(true);
     if (!mobileMode) return;
     event.preventDefault();
     event.stopPropagation();
@@ -3175,14 +3288,23 @@ function toggleMenuCentralTab(tabName) {
     controls.unlock();
     return;
   }
-  if (isWowCameraScreenActive()) {
+  if (isScreenDragCameraActive()) {
     deactivateDesktopScreenActivity(tabName);
     return;
   }
   showMenuCentral(activeMenuCentralTab);
 }
 
-document.addEventListener('mousedown', handleDesktopAttack);
+document.addEventListener('mousedown', event => {
+  gameAudio.unlockAudio(true);
+  handleDesktopAttack(event);
+});
+document.addEventListener('touchstart', () => {
+  gameAudio.unlockAudio(true);
+}, { passive: true });
+document.addEventListener('pointerdown', () => {
+  gameAudio.unlockAudio(true);
+}, { passive: true });
 document.addEventListener('contextmenu', event => event.preventDefault());
 
 document.addEventListener('keydown', e => {
@@ -3193,7 +3315,7 @@ document.addEventListener('keydown', e => {
     return;
   }
 
-  if (e.code === 'Escape' && isWowCameraScreenActive()) {
+  if (e.code === 'Escape' && isScreenDragCameraActive()) {
     e.preventDefault();
     e.stopPropagation();
     deactivateDesktopScreenActivity(activeMenuCentralTab || 'settings');
@@ -3280,16 +3402,18 @@ renderer.setAnimationLoop(() => {
   }
 
   if (mobileMode) {
-    if (rightTouchId !== null) {
+    if (!isLegoLolCameraMode() && rightTouchId !== null) {
       yaw -= lookDx * sensitivity;
       pitch -= lookDy * sensitivity;
       pitch = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, pitch));
     }
 
-    camera.rotation.order = 'YXZ';
-    camera.rotation.y = yaw;
-    camera.rotation.x = pitch;
-  } else {
+    if (!isLegoLolCameraMode()) {
+      camera.rotation.order = 'YXZ';
+      camera.rotation.y = yaw;
+      camera.rotation.x = pitch;
+    }
+  } else if (!isLegoLolCameraMode()) {
     updateDesktopLook();
   }
 

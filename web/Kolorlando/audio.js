@@ -5,26 +5,69 @@ const FOOTSTEP_DOUBLE_TAP_GAP = 0.055;
 
 export function createGameAudio() {
   let audioContext = null;
+  let audioUnlocked = false;
+  let audioUnlockPromise = null;
+  let audioUnlockRequested = false;
   let footstepTimer = 0;
   let footstepSwap = false;
+  const pendingAudioCallbacks = [];
 
   function ensureAudioContext() {
-    if (!audioContext) {
-      const AudioCtx = window.AudioContext || window.webkitAudioContext;
-      if (!AudioCtx) return null;
+    if (!audioUnlocked || !audioContext || audioContext.state !== 'running') return null;
+    return audioContext;
+  }
+
+  function flushPendingAudioCallbacks() {
+    if (!pendingAudioCallbacks.length) return;
+    const callbacks = pendingAudioCallbacks.splice(0, pendingAudioCallbacks.length);
+    for (let i = 0; i < callbacks.length; i++) {
+      callbacks[i]();
+    }
+  }
+
+  function runWhenAudioReady(callback) {
+    const ctx = ensureAudioContext();
+    if (ctx) {
+      callback();
+      return true;
+    }
+    pendingAudioCallbacks.push(callback);
+    return false;
+  }
+
+  function unlockAudio(fromGesture = false) {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return null;
+
+    audioUnlockRequested = true;
+    const activation = navigator.userActivation;
+    if (!fromGesture && activation && !activation.isActive) {
+      return audioUnlockPromise;
+    }
+
+    if (!audioContext || audioContext.state === 'closed') {
       audioContext = new AudioCtx();
     }
 
-    if (audioContext.state === 'suspended') {
-      audioContext.resume();
-    }
+    audioUnlockPromise = (audioContext.state === 'suspended' ? audioContext.resume() : Promise.resolve())
+      .catch(() => null)
+      .then(() => {
+        audioUnlocked = audioContext?.state === 'running';
+        if (audioUnlocked) {
+          flushPendingAudioCallbacks();
+        }
+        return audioContext;
+      });
 
-    return audioContext;
+    return audioUnlockPromise;
   }
 
   function playExplosionSound() {
     const ctx = ensureAudioContext();
-    if (!ctx) return;
+    if (!ctx) {
+      runWhenAudioReady(() => playExplosionSound());
+      return;
+    }
 
     const now = ctx.currentTime;
     const osc = ctx.createOscillator();
@@ -53,7 +96,10 @@ export function createGameAudio() {
 
   function playFootstepSound(speedFactor = 1) {
     const ctx = ensureAudioContext();
-    if (!ctx) return;
+    if (!ctx) {
+      runWhenAudioReady(() => playFootstepSound(speedFactor));
+      return;
+    }
 
     const now = ctx.currentTime;
     const baseFreq = (footstepSwap ? 165 : 190) * THREE.MathUtils.clamp(speedFactor, 0.8, 2.2);
@@ -90,7 +136,10 @@ export function createGameAudio() {
 
   function playJumpSound(isDoubleJump = false) {
     const ctx = ensureAudioContext();
-    if (!ctx) return;
+    if (!ctx) {
+      runWhenAudioReady(() => playJumpSound(isDoubleJump));
+      return;
+    }
 
     const now = ctx.currentTime;
     const osc = ctx.createOscillator();
@@ -128,7 +177,10 @@ export function createGameAudio() {
 
   function playPunchSound() {
     const ctx = ensureAudioContext();
-    if (!ctx) return;
+    if (!ctx) {
+      runWhenAudioReady(() => playPunchSound());
+      return;
+    }
 
     const now = ctx.currentTime;
     const osc = ctx.createOscillator();
@@ -172,6 +224,7 @@ export function createGameAudio() {
   }
 
   return {
+    unlockAudio,
     playExplosionSound,
     playJumpSound,
     playPunchSound,
