@@ -966,6 +966,16 @@ body[data-mode="mobile-portrait"] #menuCentral {
     max-height: 74dvh;
 }
 
+body[data-mode="mobile-portrait"] #menuInferiorLeft {
+    background-color: rgba(255, 0, 0, 0.377);
+    
+}
+
+body[data-mode="mobile-portrait"] #menuInferiorRight {
+    background-color: rgba(0, 96, 0, 0.493);
+    
+}
+
 /* MOBILE LANDSCAPE MODE */
 body[data-mode="mobile-landscape"] #menuInferior {
     top: 0;
@@ -987,7 +997,8 @@ body[data-mode="mobile-landscape"] #sceneView {
 }
 
 body[data-mode="mobile-landscape"] #menuInferiorLeft {
-    background-color: rgba(255, 0, 0, 0.25);
+    background-color: rgba(255, 0, 0, 0.377);
+    border-top-right-radius: 50%;
     height: 50%;
     flex: 25%;
     max-width: 25%;
@@ -995,7 +1006,8 @@ body[data-mode="mobile-landscape"] #menuInferiorLeft {
 }
 
 body[data-mode="mobile-landscape"] #menuInferiorRight {
-    background-color: rgba(0, 128, 0, 0.25);
+    background-color: rgba(0, 96, 0, 0.493);
+    border-top-left-radius: 50%;
     flex: 25%;
     height: 50%;
     max-width: 25%;

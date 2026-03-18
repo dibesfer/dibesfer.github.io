@@ -1487,6 +1487,8 @@ dir.shadow.camera.updateProjectionMatrix();
 
 const CAMERA_RAYCAST_RANGE = 18;
 const CAMERA_RAYCAST_START_OFFSET = 0.18;
+const LEGO_LOL_RAYCAST_HEIGHT = 1;
+const LEGO_LOL_RAYCAST_RANGE = 5;
 const cameraRaycaster = new THREE.Raycaster();
 cameraRaycaster.near = 0;
 cameraRaycaster.far = CAMERA_RAYCAST_RANGE;
@@ -1508,6 +1510,7 @@ const cameraRayLine = new THREE.Line(
 );
 cameraRayLine.frustumCulled = false;
 cameraRayLine.renderOrder = 999;
+cameraRayLine.visible = false;
 scene.add(cameraRayLine);
 const cameraRayTip = new THREE.Mesh(
   new THREE.SphereGeometry(0.045, 10, 10),
@@ -1520,6 +1523,7 @@ const cameraRayTip = new THREE.Mesh(
 );
 cameraRayTip.renderOrder = 1000;
 cameraRayTip.frustumCulled = false;
+cameraRayTip.visible = false;
 scene.add(cameraRayTip);
 
 const VOXEL_HIGHLIGHT_SCALE = 1.04;
@@ -1821,7 +1825,6 @@ const thirdPersonOffsetDir = new THREE.Vector3();
 const thirdPersonRightDir = new THREE.Vector3();
 const thirdPersonTargetPos = new THREE.Vector3();
 const thirdPersonWorldUp = new THREE.Vector3(0, 1, 0);
-const legoLolForwardDir = new THREE.Vector3();
 const legoLolFocusPos = new THREE.Vector3();
 const LEGO_LOL_FIXED_ORBIT_ANGLE = THREE.MathUtils.degToRad(35);
 let thirdPersonDistance = 0;
@@ -1943,10 +1946,11 @@ function syncCameraToPlayerView(deltaTime = 0) {
   if (isLegoLolCameraMode() && currentThirdPersonDistance > 0.001) {
     const horizontalDistance = currentThirdPersonDistance * Math.cos(LEGO_LOL_FIXED_ORBIT_ANGLE);
     const verticalDistance = currentThirdPersonDistance * Math.sin(LEGO_LOL_FIXED_ORBIT_ANGLE);
-    legoLolForwardDir.set(Math.sin(playerBody.rotation.y), 0, Math.cos(playerBody.rotation.y));
-    thirdPersonTargetPos.copy(playerEye);
-    thirdPersonTargetPos.addScaledVector(legoLolForwardDir, -horizontalDistance);
-    thirdPersonTargetPos.y += verticalDistance;
+    thirdPersonTargetPos.set(
+      playerEye.x,
+      playerEye.y + verticalDistance,
+      playerEye.z - horizontalDistance
+    );
     camera.position.copy(thirdPersonTargetPos);
     legoLolFocusPos.set(playerEye.x, playerBody.position.y + PLAYER_HEIGHT * 0.7, playerEye.z);
     camera.lookAt(legoLolFocusPos);
@@ -2760,6 +2764,7 @@ const tmpForward = new THREE.Vector3();
 const tmpRight = new THREE.Vector3();
 const horizontalMove = new THREE.Vector3();
 const playerMoveFacing = new THREE.Vector3();
+const playerAimFacing = new THREE.Vector3();
 const worldUp = new THREE.Vector3(0, 1, 0);
 const miniMapFacing = new THREE.Vector3();
 const miniMapProjectedPos = new THREE.Vector3();
@@ -2792,6 +2797,7 @@ function clearWowCursorRaycastPointer() {
 
 function updateVoxelRaycast() {
   let intersections = [];
+  cameraRaycaster.far = isLegoLolCameraMode() ? LEGO_LOL_RAYCAST_RANGE : CAMERA_RAYCAST_RANGE;
 
   if (isScreenDragCameraActive()) {
     if (wowCursorRaycastActive) {
@@ -2812,6 +2818,20 @@ function updateVoxelRaycast() {
     camera.getWorldDirection(cameraRayDirection);
     cameraRayDirection.normalize();
     cameraRayEnd.copy(cameraRayOrigin);
+  } else if (isLegoLolCameraMode()) {
+    if (playerFacingDir.lengthSq() > 0.0001) {
+      cameraRayDirection.copy(playerFacingDir);
+    } else {
+      cameraRayDirection.set(Math.sin(playerBody.rotation.y), 0, Math.cos(playerBody.rotation.y));
+    }
+    cameraRayDirection.y = 0;
+    cameraRayDirection.normalize();
+    cameraRayOrigin.set(playerEye.x, playerBody.position.y + LEGO_LOL_RAYCAST_HEIGHT, playerEye.z);
+    cameraRaycaster.far = LEGO_LOL_RAYCAST_RANGE;
+    cameraRaycaster.set(cameraRayOrigin, cameraRayDirection);
+    intersections = raycastTargets.length > 0
+      ? cameraRaycaster.intersectObjects(raycastTargets, true)
+      : [];
   } else {
     camera.getWorldDirection(cameraRayDirection);
     cameraRayDirection.normalize();
@@ -2834,7 +2854,10 @@ function updateVoxelRaycast() {
       activeVoxelHit = hit;
     }
   } else {
-    cameraRayEnd.copy(cameraRayOrigin).addScaledVector(cameraRayDirection, CAMERA_RAYCAST_RANGE);
+    cameraRayEnd.copy(cameraRayOrigin).addScaledVector(
+      cameraRayDirection,
+      isLegoLolCameraMode() ? LEGO_LOL_RAYCAST_RANGE : CAMERA_RAYCAST_RANGE
+    );
   }
 
   currentRaycastState.hit = activeVoxelHit;
@@ -2846,6 +2869,9 @@ function updateVoxelRaycast() {
   } else {
     voxelHighlightMesh.visible = false;
   }
+
+  cameraRayLine.visible = debugModeEnabled;
+  cameraRayTip.visible = debugModeEnabled;
 
   const linePosition = cameraRayLineGeometry.attributes.position;
   linePosition.setXYZ(0, cameraRayOrigin.x, cameraRayOrigin.y, cameraRayOrigin.z);
@@ -2944,7 +2970,11 @@ function updatePlayer(deltaTime) {
     const isMoving = horizontalMove.lengthSq() > 0.00001 || Math.abs(verticalDelta) > 0.00001;
     gameAudio.updateFootsteps(deltaTime, false, sprintMultiplier, false);
     syncPlayerBody();
-    if (horizontalMove.lengthSq() > 0.00001) {
+    const hasLegoLolAimInput = mobileMode && isLegoLolCameraMode() && Math.hypot(lookDx, lookDy) > JOYSTICK_MAX_OFFSET * 0.18;
+    if (hasLegoLolAimInput) {
+      playerAimFacing.set(-lookDx, 0, -lookDy);
+      syncPlayerFacing(playerAimFacing);
+    } else if (horizontalMove.lengthSq() > 0.00001) {
       syncPlayerFacing(horizontalMove);
     }
     animatePlayerBody(deltaTime, isMoving);
@@ -2971,7 +3001,11 @@ function updatePlayer(deltaTime) {
   const isMoving = horizontalMove.lengthSq() > 0.00001;
   gameAudio.updateFootsteps(deltaTime, isMoving, sprintMultiplier, playerState.onGround);
   syncPlayerBody();
-  if (isMoving) {
+  const hasLegoLolAimInput = mobileMode && isLegoLolCameraMode() && Math.hypot(lookDx, lookDy) > JOYSTICK_MAX_OFFSET * 0.18;
+  if (hasLegoLolAimInput) {
+    playerAimFacing.set(-lookDx, 0, -lookDy);
+    syncPlayerFacing(playerAimFacing);
+  } else if (isMoving) {
     playerMoveFacing.copy(horizontalMove);
     syncPlayerFacing(playerMoveFacing);
   }
@@ -3315,7 +3349,7 @@ document.addEventListener('keydown', e => {
     return;
   }
 
-  if (e.code === 'Escape' && isScreenDragCameraActive()) {
+  if (e.code === 'Escape' && (isScreenDragCameraActive() || (isLegoLolCameraMode() && !mobileMode && !isMenuCentralVisible()))) {
     e.preventDefault();
     e.stopPropagation();
     deactivateDesktopScreenActivity(activeMenuCentralTab || 'settings');
