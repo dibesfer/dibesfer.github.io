@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
-import { HunterEntity } from './entity.js';
+import { HunterEntity, TalkerEntity } from './entity.js';
 import {
   createHumanoidModel,
   applyHumanoidIdleAnimation,
@@ -715,6 +715,36 @@ function getEntityRaycastHit(origin, direction, maxDistance) {
 
   return closestHit;
 }
+
+const itemRaycastPoint = new THREE.Vector3();
+
+function getItemRaycastHit(origin, direction, maxDistance) {
+  let closestHit = null;
+  let closestDistance = maxDistance;
+
+  for (let i = 0; i < itemAppearances.length; i++) {
+    const itemAppearance = itemAppearances[i];
+    const raycastSphere = itemAppearance?.raycastSphere;
+    if (!raycastSphere || !(raycastSphere.radius > 0)) continue;
+    if (!cameraRaycaster.ray.intersectSphere(raycastSphere, itemRaycastPoint)) continue;
+
+    const distance = origin.distanceTo(itemRaycastPoint);
+    if (!Number.isFinite(distance) || distance > maxDistance || distance >= closestDistance) {
+      continue;
+    }
+
+    closestDistance = distance;
+    closestHit = {
+      kind: "item",
+      label: itemAppearance.label ?? "Item",
+      itemAppearance,
+      distance,
+      point: itemRaycastPoint.clone(),
+    };
+  }
+
+  return closestHit;
+}
 const intersectMapColliderBox = typeof mapData.intersectColliderBox === 'function'
   ? mapData.intersectColliderBox
   : () => null;
@@ -745,6 +775,15 @@ playerSpawnPoint.y += 1;
 playerEye.copy(playerSpawnPoint);
 camera.position.copy(playerEye);
 
+const spawnTalkerPosition = playerSpawnPoint.clone().add(new THREE.Vector3(2.5, -1, 1.5));
+entities.push(new TalkerEntity({
+  scene,
+  position: spawnTalkerPosition,
+  groundY: GROUND_Y,
+  name: 'Guide',
+  dialogLines: ['Welcome back to Kolorlando', 'Check the item appearances nearby', 'Debug mode shows the item spheres'],
+}));
+
 const itemAppearances = [];
 const TEST_ITEM_SPAWN_DISTANCE = 3;
 const TEST_ITEM_BEHIND_DISTANCE = 3;
@@ -753,6 +792,7 @@ const firstItemSpawnPosition = playerSpawnPoint.clone().add(new THREE.Vector3(0,
 itemAppearances.push(new ItemAppearance({
   scene,
   position: firstItemSpawnPosition,
+  label: 'Spawn Point',
   groundY: GROUND_Y,
 }));
 
@@ -760,10 +800,19 @@ const swordItemSpawnPosition = firstItemSpawnPosition.clone().add(new THREE.Vect
 itemAppearances.push(new ItemAppearance({
   scene,
   position: swordItemSpawnPosition,
+  label: 'Sword',
   groundY: GROUND_Y,
   modelUrl: 'assets/3D/weapons/sword.gltf',
-  modelTargetHeight: 1.8,
   modelRotation: new THREE.Euler(0, THREE.MathUtils.degToRad(90), 0),
+}));
+
+const gunItemSpawnPosition = firstItemSpawnPosition.clone().add(new THREE.Vector3(0, 0, 5));
+itemAppearances.push(new ItemAppearance({
+  scene,
+  position: gunItemSpawnPosition,
+  label: 'Gun',
+  groundY: GROUND_Y,
+  modelUrl: 'assets/3D/weapons/gun.gltf',
 }));
 
 
@@ -1078,6 +1127,27 @@ const playerColliderDebugHelper = new THREE.Box3Helper(playerCollider, 0xffdd33)
 debugCollisionGroup.add(playerColliderDebugHelper);
 
 const nearbyCollisionHelpers = [];
+const itemRaycastSphereHelpers = [];
+const debugItemSphereGeometry = new THREE.SphereGeometry(1, 14, 12);
+
+function getItemRaycastSphereHelper(index) {
+  if (!itemRaycastSphereHelpers[index]) {
+    const helper = new THREE.Mesh(
+      debugItemSphereGeometry,
+      new THREE.MeshBasicMaterial({
+        color: 0x7cf7ff,
+        wireframe: true,
+        transparent: true,
+        opacity: 0.75,
+        depthTest: false,
+      })
+    );
+    helper.renderOrder = 997;
+    itemRaycastSphereHelpers[index] = helper;
+    debugCollisionGroup.add(helper);
+  }
+  return itemRaycastSphereHelpers[index];
+}
 
 function getDebugCollisionHelper(index) {
   if (!nearbyCollisionHelpers[index]) {
@@ -1096,6 +1166,9 @@ function setDebugMode(nextEnabled) {
   if (!nextEnabled) {
     for (let i = 0; i < nearbyCollisionHelpers.length; i++) {
       nearbyCollisionHelpers[i].visible = false;
+    }
+    for (let i = 0; i < itemRaycastSphereHelpers.length; i++) {
+      itemRaycastSphereHelpers[i].visible = false;
     }
   }
   chatUI.appendLine(`Debug mode ${nextEnabled ? 'enabled' : 'disabled'}.`);
@@ -1173,6 +1246,21 @@ function updateDebugCollisionVisuals() {
 
   for (let i = debugCollisionEntries.length; i < nearbyCollisionHelpers.length; i++) {
     nearbyCollisionHelpers[i].visible = false;
+  }
+
+  let visibleItemSphereCount = 0;
+  for (let i = 0; i < itemAppearances.length; i++) {
+    const raycastSphere = itemAppearances[i]?.raycastSphere;
+    if (!raycastSphere || !(raycastSphere.radius > 0)) continue;
+
+    const helper = getItemRaycastSphereHelper(visibleItemSphereCount++);
+    helper.position.copy(raycastSphere.center);
+    helper.scale.setScalar(raycastSphere.radius);
+    helper.visible = true;
+  }
+
+  for (let i = visibleItemSphereCount; i < itemRaycastSphereHelpers.length; i++) {
+    itemRaycastSphereHelpers[i].visible = false;
   }
 }
 
@@ -2130,6 +2218,7 @@ const currentRaycastState = {
   hit: null,
   kind: null,
   entity: null,
+  item: null,
   voxelEditionMode: false,
 };
 
@@ -2213,6 +2302,7 @@ function updateVoxelRaycast() {
   const voxelLabel = voxelHit ? resolveRaycastLabel(voxelHit) : null;
   const voxelDistance = voxelHit ? cameraRayOrigin.distanceTo(voxelHit.point) : Infinity;
   const entityHit = getEntityRaycastHit(cameraRayOrigin, cameraRayDirection, maxRayDistance);
+  const itemHit = getItemRaycastHit(cameraRayOrigin, cameraRayDirection, maxRayDistance);
 
   let readoutLabel = 'none';
   let activeVoxelHit = null;
@@ -2220,18 +2310,23 @@ function updateVoxelRaycast() {
   let activeHitKind = null;
   let activeEntity = null;
 
-  if (voxelLabel && voxelDistance <= (entityHit?.distance ?? Infinity)) {
+  if (voxelLabel && voxelDistance <= Math.min(entityHit?.distance ?? Infinity, itemHit?.distance ?? Infinity)) {
     readoutLabel = voxelLabel;
     activeVoxelHit = voxelHit;
     activeHit = voxelHit;
     activeHitKind = 'voxel';
     cameraRayEnd.copy(voxelHit.point);
-  } else if (entityHit) {
+  } else if (entityHit && entityHit.distance <= (itemHit?.distance ?? Infinity)) {
     readoutLabel = entityHit.label;
     activeHit = entityHit;
     activeHitKind = 'entity';
     activeEntity = entityHit.entity;
     cameraRayEnd.copy(entityHit.point);
+  } else if (itemHit) {
+    readoutLabel = itemHit.label;
+    activeHit = itemHit;
+    activeHitKind = 'item';
+    cameraRayEnd.copy(itemHit.point);
   } else {
     cameraRayEnd.copy(cameraRayOrigin).addScaledVector(cameraRayDirection, maxRayDistance);
   }
@@ -2239,6 +2334,7 @@ function updateVoxelRaycast() {
   currentRaycastState.hit = activeHit;
   currentRaycastState.kind = activeHitKind;
   currentRaycastState.entity = activeEntity;
+  currentRaycastState.item = activeHitKind === 'item' ? activeHit?.itemAppearance ?? null : null;
   currentRaycastState.voxelEditionMode = activeVoxelHit !== null;
 
   if (activeVoxelHit && getVoxelBoxFromRaycastHit(activeVoxelHit, voxelHighlightBox)) {
@@ -2263,7 +2359,9 @@ function updateVoxelRaycast() {
       ? 'Entity'
       : activeHitKind === 'voxel'
         ? 'Voxel'
-        : 'Target';
+        : activeHitKind === 'item'
+          ? 'Item'
+          : 'Target';
     voxelReadout.textContent = `${readoutPrefix}: ${readoutLabel}`;
   }
 }

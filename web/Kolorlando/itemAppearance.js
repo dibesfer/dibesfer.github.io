@@ -23,6 +23,14 @@ function measureModelHeight(root) {
   return size.y;
 }
 
+function measureModelBoundingRadius(root) {
+  root.updateWorldMatrix(true, true);
+  const bounds = new THREE.Box3().setFromObject(root);
+  const sphere = new THREE.Sphere();
+  bounds.getBoundingSphere(sphere);
+  return sphere.radius;
+}
+
 function normalizeModelHeight(root, targetHeight) {
   if (!(targetHeight > 0)) {
     return measureModelHeight(root);
@@ -99,6 +107,7 @@ export class ItemAppearance {
   constructor({
     scene,
     position,
+    label = 'Item',
     model = null,
     modelUrl = null,
     modelTargetHeight = null,
@@ -111,10 +120,12 @@ export class ItemAppearance {
   }) {
     this.scene = scene;
     this.position = position.clone();
+    this.label = label;
     this.groundY = groundY;
     this.floatHeight = floatHeight;
     this.rotationSpeed = rotationSpeed;
     this.modelHeight = 0;
+    this.modelBoundingRadius = 0;
     this.modelRotation = modelRotation;
     this.castShadow = castShadow;
     this.receiveShadow = receiveShadow;
@@ -127,6 +138,7 @@ export class ItemAppearance {
     this.model = resolvedModel;
     this.group = new THREE.Group();
     this.group.position.copy(this.position);
+    this.raycastSphere = new THREE.Sphere(this.position.clone(), 0);
     this.scene.add(this.group);
 
     this.setModel(resolvedModel);
@@ -150,12 +162,16 @@ export class ItemAppearance {
       this.modelHeight = measureModelHeight(modelDefinition.root);
     }
 
+    this.modelBoundingRadius = measureModelBoundingRadius(modelDefinition.root);
+
     this.syncPosition();
   }
 
   syncPosition() {
     this.group.position.copy(this.position);
     this.group.position.y = this.groundY + this.floatHeight + this.modelHeight * 0.5;
+    this.raycastSphere.center.copy(this.group.position);
+    this.raycastSphere.radius = this.modelBoundingRadius;
   }
 
   loadModelFromUrl(modelUrl) {
@@ -169,18 +185,10 @@ export class ItemAppearance {
           return;
         }
 
-        root.updateWorldMatrix(true, true);
-        const bounds = new THREE.Box3().setFromObject(root);
-        const size = new THREE.Vector3();
-        bounds.getSize(size);
-
-        const sourceHeight = size.y > 0 ? size.y : 1;
-        const targetHeight = this.modelTargetHeight > 0 ? this.modelTargetHeight : sourceHeight;
-        const scale = targetHeight / sourceHeight;
-        root.scale.setScalar(scale);
+        const height = normalizeModelHeight(root, this.modelTargetHeight);
 
         applyShadows(root, this.castShadow, this.receiveShadow);
-        this.setModel({ root, height: targetHeight });
+        this.setModel({ root, height });
         console.info('Loaded item appearance model', modelUrl);
       },
       undefined,
