@@ -19,6 +19,7 @@ import {
 } from './code/UI/inventory.js';
 import { createChatUI } from './code/UI/chat.js';
 import { createPlayerHud } from './playerHud.js';
+import { ItemAppearance } from './itemAppearance.js';
 import { buildSimpleMap } from './maps/simpleMap.js';
 import { buildCityMap } from './maps/cityMap.js';
 import { buildVoxelandiaMap } from './maps/voxelandiaMap.js';
@@ -743,6 +744,28 @@ playerSpawnPoint.y += 1;
 
 playerEye.copy(playerSpawnPoint);
 camera.position.copy(playerEye);
+
+const itemAppearances = [];
+const TEST_ITEM_SPAWN_DISTANCE = 3;
+const TEST_ITEM_BEHIND_DISTANCE = 3;
+const TEST_ITEM_SIDE_OFFSET = 1.2;
+const firstItemSpawnPosition = playerSpawnPoint.clone().add(new THREE.Vector3(0, 0, -TEST_ITEM_SPAWN_DISTANCE));
+itemAppearances.push(new ItemAppearance({
+  scene,
+  position: firstItemSpawnPosition,
+  groundY: GROUND_Y,
+}));
+
+const swordItemSpawnPosition = firstItemSpawnPosition.clone().add(new THREE.Vector3(2.8, 0, -0.8));
+itemAppearances.push(new ItemAppearance({
+  scene,
+  position: swordItemSpawnPosition,
+  groundY: GROUND_Y,
+  modelUrl: 'assets/3D/weapons/sword.gltf',
+  modelTargetHeight: 1.8,
+  modelRotation: new THREE.Euler(0, THREE.MathUtils.degToRad(90), 0),
+}));
+
 
 const inventoryUI = createInventoryUI({
   inventorySlots,
@@ -1836,6 +1859,12 @@ function updateEntities(deltaTime) {
   }
 }
 
+function updateItemAppearances(deltaTime) {
+  for (let i = 0; i < itemAppearances.length; i++) {
+    itemAppearances[i].update(deltaTime);
+  }
+}
+
 function spawnChaserPunchHitbox(entity, side) {
   chaserPunchForwardDir.copy(entity.direction);
   if (chaserPunchForwardDir.lengthSq() < 0.0001) {
@@ -2806,6 +2835,7 @@ renderer.setAnimationLoop(() => {
   updatePunchHitboxes(delta);
   updateMobileShooting(delta);
   updateEntities(delta);
+  updateItemAppearances(delta);
   updateChaserMeleeAttacks(delta);
   updateChaserPunchHitboxes(delta);
   updateProjectilesAndExplosions(delta);
