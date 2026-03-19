@@ -433,7 +433,7 @@ img {
     width: 25%;
     aspect-ratio: 9/16;
     overflow: hidden;
-    touch-action: none;
+    touch-action: pan-y;
     cursor: grab;
 }
 
@@ -986,11 +986,12 @@ body[data-mode="mobile-portrait"] #menuInferior {
 body[data-mode="mobile-portrait"] #menuCentral {
     position: fixed;
     top: 4dvh;
+    bottom: 4dvh;
     left: 50%;
     transform: translateX(-50%);
     width: min(760px, calc(100vw - 20px));
-    height: 74dvh;
-    max-height: 74dvh;
+    height: 90dvh;
+    max-height: 90dvh;
 }
 
 body[data-mode="mobile-portrait"] #menuInferiorLeft {

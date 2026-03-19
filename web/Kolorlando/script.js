@@ -248,6 +248,7 @@ let characterPreviewIdleCycle = Math.random() * Math.PI * 2;
 let characterPreviewWidth = 0;
 let characterPreviewHeight = 0;
 const CHARACTER_PREVIEW_LOOK_Y = 1.26;
+const CHARACTER_PREVIEW_DRAG_THRESHOLD = 10;
 
 function updateCharacterPreviewSize() {
   if (!characterMenuPlayer || !characterPreviewRenderer || !characterPreviewCamera) return;
@@ -306,13 +307,44 @@ function initCharacterPreview() {
     if (event.button !== undefined && event.button !== 0) return;
     characterPreviewDragState = {
       pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
       lastX: event.clientX,
+      isRotating: !mobileMode,
+      captureActive: false,
     };
-    characterMenuPlayer.setPointerCapture?.(event.pointerId);
+
+    if (!mobileMode) {
+      characterMenuPlayer.setPointerCapture?.(event.pointerId);
+      characterPreviewDragState.captureActive = true;
+    }
   });
 
   characterMenuPlayer.addEventListener('pointermove', event => {
     if (!characterPreviewDragState || event.pointerId !== characterPreviewDragState.pointerId || !characterPreviewModelRoot) {
+      return;
+    }
+
+    if (mobileMode && !characterPreviewDragState.isRotating) {
+      const totalDeltaX = event.clientX - characterPreviewDragState.startX;
+      const totalDeltaY = event.clientY - characterPreviewDragState.startY;
+
+      if (Math.abs(totalDeltaX) < CHARACTER_PREVIEW_DRAG_THRESHOLD && Math.abs(totalDeltaY) < CHARACTER_PREVIEW_DRAG_THRESHOLD) {
+        return;
+      }
+
+      if (Math.abs(totalDeltaY) >= Math.abs(totalDeltaX)) {
+        characterPreviewDragState = null;
+        return;
+      }
+
+      characterPreviewDragState.isRotating = true;
+      characterPreviewDragState.lastX = event.clientX;
+      characterMenuPlayer.setPointerCapture?.(event.pointerId);
+      characterPreviewDragState.captureActive = true;
+    }
+
+    if (!characterPreviewDragState.isRotating) {
       return;
     }
 
@@ -324,7 +356,9 @@ function initCharacterPreview() {
 
   const stopCharacterPreviewDrag = event => {
     if (!characterPreviewDragState || event.pointerId !== characterPreviewDragState.pointerId) return;
-    characterMenuPlayer.releasePointerCapture?.(event.pointerId);
+    if (characterPreviewDragState.captureActive) {
+      characterMenuPlayer.releasePointerCapture?.(event.pointerId);
+    }
     characterPreviewDragState = null;
   };
 
