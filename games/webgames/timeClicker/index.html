@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⏱️Time Clicker👆</title>
+    <script src="/ferscript.js"></script>
+    <style>
+        body {
+            background-color: black;
+            color: white;
+            font-family: monospace;
+            text-align: center;
+        }
+
+        @media screen and (min-width: 800px) {
+            body {
+                font-size: x-large;
+            }
+        }
+
+        button {
+            font: unset;
+            border: solid 3px white;
+            background-color: black;
+            color: white;
+            padding: 15px;
+        }
+        button:hover{
+            border: dashed white 3px;
+        }
+        button:active {
+            background-color: white;
+            color: black;
+        }
+        .bar {
+            border: solid 3px white;
+            height: 50px;
+            padding: 5px;
+        }
+
+        .bar2 {
+            height: 100%;
+            background-color: white;
+            width: 0;
+            transition: 0.2s;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>⏱️Time Clicker👆</h1>
+    <p style="font-size:40px"><span id="displayPoints">Earn a point each hundred ticks</span></p>
+    <div class="bar">
+        <div id="bar2" class="bar2"></div>
+    </div>
+    <br>
+    <p>Counter: <span id="displayCounter">0</span></p>
+    <p>Clicks: <span id="displayClicks"></span></p>
+    <button onclick="clicker()">Click</button>
+    <p>Seconds: <span id="displaySeconds"></span></p>
+
+    <script>
+
+        var bar2 = getid("bar2")
+        var displaySeconds = getid("displaySeconds")
+        var displayClicks = getid("displayClicks")
+        var displayPoints = getid("displayPoints")
+        var displayCounter = getid("displayCounter")
+
+        var points = localStorage.getItem("points")
+        if (points == null) {
+            points = 0
+        }
+        displayPoints.textContent = points
+
+        var seconds = localStorage.getItem("seconds")
+        if (seconds == null) {
+            seconds = 0
+        }
+        displaySeconds.textContent = seconds
+
+        var clicks = localStorage.getItem("clicks")
+        if (clicks == null) {
+            clicks = 0
+        }
+        displayClicks.textContent = clicks
+
+        var counter = localStorage.getItem("counter")
+        if (counter == null) {
+            counter = 0
+        }
+        bar2.style.width = counter + "%"
+        displayCounter.textContent = counter
+        
+
+        var myInterval = setInterval(intervalFunction, 1000)
+
+        function intervalFunction() {
+            seconds++
+            displaySeconds.textContent = seconds
+            localStorage.setItem("seconds", seconds)
+            sumBar()
+        }
+
+        function clicker() {
+            clicks++
+            displayClicks.textContent = clicks
+            localStorage.setItem("clicks", clicks)
+
+            sumBar()
+        }
+        function sumBar() {
+            counter++
+            bar2.style.width = counter + "%"
+            displayCounter.textContent= counter
+            
+            if (counter == 100) {
+                counter = 0
+                points++
+                displayPoints.textContent = points
+                localStorage.setItem("points", points)
+            }
+            localStorage.setItem("counter", counter)
+            
+        }
+
+        function rewards(){
+            
+        }
+
+    </script>
+</body>
+
+</html>

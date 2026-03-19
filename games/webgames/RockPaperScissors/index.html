@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- You may want to put yours-->
+  <meta name="author" content="dibesfer" />
+  <meta name="description" content="Dibesfer Rock Paper Scissors Game" />
+
+  <title>Rock Paper Scissors</title>
+  <script src="/ferscript.js"></script>
+  <link rel="stylesheet" href="style.css" />
+
+</head>
+
+<body>
+  <section id="flexMain">
+    <header>
+      <h2 class="displayOnDesktop">Rock 🗿 Paper 📄 Scissors ✂️</h2>
+      <h1 class="displayOnMobile">🗿📄✂️</h1>
+    </header>
+    <main>
+      <div id="ranking">🤖 <span id="computerCounterDisplay">0</span> 👨 <span id="userCounterDisplay">0</span> Draws
+        <span id="drawsCounterDisplay">0</span>
+      </div>
+      <div>🤖 Computer choice: <span id="computerChoice"></span></div>
+      <div>👨 User choice: <span id="userChoice"></span></div>
+      <div id="resultContainer"><b><span id="result">Result</span></b></div>
+      <div id="userButtons">
+        <button data-type="🗿 Rock">🗿 Rock</button>
+        <button data-type="📄 Paper">📄 Paper</button>
+        <button data-type="✂️ Scissors">✂️ Scissors</button>
+      </div>
+    </main>
+    <footer>
+      <center>Made by <a href="https://dibesfer.com">dibesfer</a></center>
+    </footer>
+  </section>
+  <script src="script.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,78 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+}
+
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 5vmin;
+  line-height: 2.2;
+}
+img {
+  max-width: 100%;
+}
+footer,
+header {
+  text-align: center;
+  flex-grow: 0;
+}
+#flexMain {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  flex-direction: column;
+}
+main {
+  flex-grow: 1;
+  width: 100%;
+  max-width: 1000px;
+  padding: 15px;
+}
+
+#userButtons {
+  text-align: center;
+  margin: 20px 0;
+}
+button {
+  padding: 10px;
+  font-size: unset;
+  border: solid 3px black;
+  border-radius: 15px;
+}
+button:hover {
+  background-color: gray;
+  transition: 0.2s;
+}
+button:active {
+  filter: grayscale(1);
+  background-color: black;
+  color: white;
+  transition: 0.2s;
+}
+#ranking,
+#resultContainer {
+  text-align: center;
+  background-color: rgb(0, 0, 127);
+  box-shadow: inset 0 0 20px white;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.447);
+  color: white;
+  border-radius: 25px;
+}
+/* RESPONSIVE */
+@media only screen and (max-width: 600px) {
+  .displayOnMobile {
+    display: block;
+  }
+  .displayOnDesktop {
+    display: none;
+  }
+}
+@media only screen and (min-width: 600px) {
+  .displayOnMobile {
+    display: none;
+  }
+  .displayOnDesktop {
+    display: block;
+  }
+}

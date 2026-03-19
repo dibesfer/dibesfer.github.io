@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CDB Api</title>
+    <link href="/img/favicon.ico" rel="icon" type="image/x-icon">
+    <!--#region SEO  -->
+    <meta name="author" content="dibesfer - Ferrán Minero" />
+    <meta name="description"
+        content="Dibujos y escritos de Fer. Dev Illustrauthor. Ningún espacio es limitado si caben ideas en él." />
+    <meta name="keywords"
+        content="dibesfer página web website. Ferrán Minero. Developer Illustrator Writer. Dev Illustrauthor. Symbocracy." />
+    <!--#endregion -->
+    <!--#region META  -->
+    <!-- Meta imágen y descripción que aparecerá embebida en algunas redes sociales -->
+    <meta property='og:image' content='/img/dibesfer-logo-whiteinside.png' />
+    <meta property='og:description'
+        content='Dibujos y escritos de Fer. Dev Illustrauthor. Ningún espacio es limitado si caben ideas en él.' />
+    <meta property="og:title" content="dibesfer">
+    <!--#endregion  -->
+    <!-- STYLE CSS -->
+    <link href="/style.css" rel="stylesheet" type="text/css">
+    <!-- FERSCRIPT.JS -->
+    <script src="/ferscript.js"></script>
+    <!-- SUPABASE cdn -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+    <style>
+        details summary {
+            list-style: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="loadingScreen" class="flexCenter fullScreen">
+        <img width="200px" class="icon" src="/img/dibesfer-logo.png" alt="dibesfer logo">
+    </div>
+    <!-- <header class="flexBetween"></header> -->
+    <div id="navBars">
+
+    </div>
+
+    <main>
+        <section class="maxWidth">
+
+
+            <h1 class="textCenter">ContentDB Api</h1>
+            <p>Total mods: <span id="totalMods"></span></p>
+            <p>Total games: <span id="totalGames"></span></p>
+            <p>Top contributed games:</p>
+            <p>top contributor (num of mods)</p>
+            <p>All modders:</p>
+            <ol id="allModders">
+ 
+            </ol>
+           
+        <p><a href="https://content.luanti.org/help/api/" target="_blank">Help Api</a></p>
+        <script>
+            let moddersObjects = []
+            let modders = []
+            let modCount = []
+            let apiPackages
+        function readJson () {
+            //fetch('https://content.minetest.net/api/dependencies/?page=2')
+            //https://content.minetest.net/api/packages/?type=game
+           fetch('https://content.luanti.org/api/packages/')
+           //,{method: 'get'})
+           .then(response => {
+               if (!response.ok) {
+                   throw new Error("HTTP error " + response.status);
+               }
+            return response.json();
+               
+           })
+           .then(json => {
+               apiPackages = json
+               
+               totalMods.textContent = json.length
+
+               let newjson = json.filter(item => item.type == "game")
+                totalGames.textContent = newjson.length
+               console.log(newjson)
+               
+               apiPackages.forEach(element => {
+                if (!modders.includes(element.author)){
+                    //modderObject.name = element.author
+                    modders.push(element.author)
+                    modCount.push(1)
+                }
+                else {
+                    modCount[modders.indexOf(element.author)]++
+                }
+               });
+               //console.log(modders)
+               //console.log(modCount)
+               for (let i = 0; i < modders.length; i++) {
+                moddersObjects.push({name : modders[i], packageCount : modCount[i]})               
+               }
+               moddersObjects.sort(function(a, b){
+                    return  b.packageCount - a.packageCount;
+                });
+               moddersObjects.forEach(element => {
+                allModders.innerHTML += "<li>" + element.name + ": " + element.packageCount + "</li>"
+               });
+               console.log(apiPackages)
+               
+               //document.write(this);
+           })
+           .catch(function () {
+               this.dataError = true;
+               //document.write("nope");
+           })
+        }
+        readJson()
+        </script>
+
+        <footer></footer>
+    </main>
+    <script src="/script.js"></script>
+    <script src="/scripts/supabase.js"></script>
+
+</body>
+
+</html>
+
+
+

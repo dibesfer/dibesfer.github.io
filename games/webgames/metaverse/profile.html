@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://dibesfer.com/ferscript.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+</head>
+
+<body>
+    <h1>Username</h1>
+    <p>Bio: Hi! My name is Fer and I love 3D modeling.</p>
+    <p>Website: dibesfer.com</p>
+    <p>Your avatar</p>
+    <li>clothes</li>
+    <p>Your money</p>
+    <p>Friends:</p>
+    <div id="showTest"></div>
+    <div id="consola"></div>
+    <input type="text" name="chat" id="chat"><button>Send</button><br>
+    <input type="text" name="name" id="nameInput">
+    <input type="password" name="password" id="passwordInput">
+    <button onclick="createNewUser()">Sign in</button>
+    <button onclick="logIn()">Log in</button>
+    <script>
+        const supabaseUrl = 'https://qugihsopwjemzakhrbvw.supabase.co'
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF1Z2loc29wd2plbXpha2hyYnZ3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE2OTg0OTQxMDksImV4cCI6MjAxNDA3MDEwOX0.1q5fBic1cjueaiP2-p6W19C68ye8FTPLFne2a-fKwZ8'
+        const database = supabase.createClient(supabaseUrl, supabaseKey)
+
+        var showTest = getid("showTest")
+        var consola = getid("consola")
+        var formattedName;
+        function createNewUser() {
+            let nameInput = getid("nameInput")
+            let passwordInput = getid("passwordInput")
+
+            if (nameInput.value != "") {
+
+                formattedName = nameInput.value.toLowerCase()
+                formattedName = formattedName.normalize("NFD").replace(/\p{Diacritic}/gu, "").replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"").replace(/\s{2,}/g," ");
+                 //link https://stackoverflow.com/questions/990904/remove-accents-diacritics-in-a-string-in-javascript
+                // https://stackoverflow.com/questions/4328500/how-can-i-strip-all-punctuation-from-a-string-in-javascript-using-regex
+                consola.innerHTML = formattedName
+                compareUsername(formattedName, passwordInput.value)
+
+            }
+
+        }
+
+        async function insertResources(tableName, name, password) {
+            const { data, error } = await database
+                .from(tableName)
+                .insert([
+                    {
+                        name: name,
+                        password: password,
+                        //email: param1,
+                        //username: param1.split("@")[0]
+                    },
+                ])
+                .select()
+        }
+
+        getResources("metaverse", "*")
+
+        async function compareUsername(name, password) {
+            const res = await database.from("metaverse").select("name").eq("name", name)
+            if (res.data[0] != undefined) {
+                consola.innerHTML = "User already signed"
+                
+            }
+            else if (passwordInput.value != "") {
+                insertResources("metaverse", name, password)
+
+            }
+        }
+
+
+        async function getResources(tableName, rowName) {
+            const res = await database.from(tableName).select(rowName)
+
+            res.data.forEach(element => {
+                showTest.innerHTML += element.name + "<br>"
+            });
+
+
+            /*if (res.data[0] != undefined) {
+                feed.innerHTML = "<p>" + res.data[0].created_at.split("T")[0] + "</p>"
+
+                res.data.forEach(element => {
+                    feed.innerHTML += "<i>" + element.created_at.split("T")[1].split(".")[0] + "</i> <b>" + element.author + "</b>: " + element.message + "</br>"
+                });
+            }
+            feed.scrollTop = feed.scrollHeight*/
+        }
+
+        function logIn() {
+            let nameInput = getid("nameInput")
+            let passwordInput = getid("passwordInput")
+
+            checkPassword("metaverse", "*", nameInput.value, passwordInput.value)
+
+        }
+
+        async function checkPassword(tableName, rowName, name, password) {
+            const res = await database.from(tableName).select(rowName).eq("name", name).eq("password", password)
+            if (res.data[0] != undefined) {
+                consola.innerHTML = "Logged in!"
+            }
+            else {
+                consola.innerHTML = "Something went wrong!"
+            }
+        }
+
+
+    </script>
+</body>
+
+</html>

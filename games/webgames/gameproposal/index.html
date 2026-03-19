@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <h1>Game Proposal</h1>
+    <ul>
+        <li>Browser playable</li>
+        <li>Both mobile and desktop</li>
+        <li>Incremental progression</li>
+        <li>Customizable character</li>
+        <li>Upgrades / Improvements</li>
+        <li>Farm</li>
+        <li>Clicker mechanic</li>
+        <div id="consola"></div>
+    </ul>
+
+    <script>
+        var counter = 0 
+        var myInterval = setInterval(myIntervalFunction, 1000)
+        function myIntervalFunction(){
+            counter++
+            consola.innerText = counter + " hello"
+        }
+
+    </script>
+
+</body>
+
+</html>

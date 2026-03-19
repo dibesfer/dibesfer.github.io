@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Epic Server List</title>
+    <link href="/img/favicon.ico" rel="icon" type="image/x-icon">
+    <!--#region SEO  -->
+    <meta name="author" content="dibesfer - Ferrán Minero" />
+    <meta name="description"
+        content="Dibujos y escritos de Fer. Dev Illustrauthor. Ningún espacio es limitado si caben ideas en él." />
+    <meta name="keywords"
+        content="dibesfer página web website. Ferrán Minero. Developer Illustrator Writer. Dev Illustrauthor. Symbocracy." />
+    <!--#endregion -->
+    <!--#region META  -->
+    <!-- Meta imágen y descripción que aparecerá embebida en algunas redes sociales -->
+    <meta property='og:image' content='/img/dibesfer-logo-whiteinside.png' />
+    <meta property='og:description' content='Luanti Epic Server List - Top 100 luanti / minetest servers.' />
+    <meta property="og:title" content="Luanti Epic Server List">
+    <!--#endregion  -->
+    <!-- STYLE CSS -->
+    <link href="/style.css" rel="stylesheet" type="text/css">
+    <!-- FERSCRIPT.JS -->
+    <script src="/ferscript.js"></script>
+    <!-- SUPABASE cdn -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+    <style>
+        details {
+            padding: 15px;
+            border: solid 3px white;
+            border-radius: 15px;
+            overflow: auto;
+        }
+
+        details summary {
+            list-style: none;
+            cursor: pointer;
+            text-align: center;
+
+        }
+
+        .serverName {
+
+
+            border-radius: 15px;
+            margin: 10px;
+            font-size: larger;
+            /*background-image: linear-gradient(90deg, black, white);*/
+            overflow: auto;
+            background-color: rgb(62, 62, 62);
+            box-shadow: 0 0 5px white;
+        }
+
+        .serverTitle {
+            width: 100%;
+            font-family: serif;
+            font-size: x-large;
+
+            text-shadow: 0 5px 5px black;
+
+        }
+
+        .separator {
+
+            border: solid 4px white;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="loadingScreen" class="flexCenter fullScreen">
+        <img width="200px" class="icon" src="/img/dibesfer-logo.png" alt="dibesfer logo">
+    </div>
+    <!-- <header class="flexBetween"></header>
+ -->
+    <div id="navBars">
+
+    </div>
+
+    <main>
+        <section class="maxWidth">
+            <div style="text-align: center;">
+                <img src="art/menu_header.png" alt="">
+            </div>
+            <img src="/p/games/minetest/art/epicserverlist_wordart.png" alt="Epic Server List">
+            <h3 class="textCenter">Top 100 luanti / minetest servers</h3>
+            <div style="text-align: center;">
+                <p>Total players: <span id="totalPlayers"></span></p>
+                <p>Total servers: <span id="totalServers"></span></p>
+                <label for="cars">Servers sorted by population</label>
+            </div>
+
+
+
+            <!-- <select name="cars" id="cars">
+          <option value="volvo">Population</option>
+          <option value="saab">Lag</option>
+          <option value="mercedes">Ping</option>
+          <option value="audi">Age</option>
+          <option value="audi">Creative</option>
+          <option value="audi">PvP</option>
+        </select> -->
+
+            <div id="serverList"></div>
+            <p><a href="">Show more</a></p>
+
+            <script>
+
+                var serverListNewHtml = ""
+
+                function readJson() {
+                    // http://localhost:8080
+                    fetch('https://servers.minetest.net/list')
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error("HTTP error " + response.status);
+                            }
+                            return response.json();
+
+                        })
+                        .then(json => {
+
+                            let list = json;
+                            totalPlayers.textContent = json.total.clients
+                            totalServers.textContent = json.total.servers
+
+                            json.list.sort(function (a, b) {
+                                return b.clients - a.clients;
+                            });
+                            let slicedList = json.list.slice(0, 100)
+                            console.log(slicedList)
+                            let counter = 1
+                            slicedList.forEach(element => {
+                                if (counter == 11) {
+                                    serverListNewHtml += "<hr class='separator'>"
+                                }
+
+
+
+                                serverListNewHtml +=
+                                    "<li class='serverName'><details open><summary><span class='serverTitle'>" + counter + ". " + element.name +
+                                    "</span> <br> Players: " + element.clients +
+                                    " </summary>"
+
+
+
+                                if (element.name == "Your Land") {
+                                    serverListNewHtml += `
+                        
+                        <img src="ESL-Assets/ESL-YL.png">
+
+                        `
+                                }
+
+                                if (element.name == "SquareOne") {
+                                    serverListNewHtml += `
+                        
+                        <img src="ESL-Assets/ESL-SO.png">
+
+                        `
+                                }
+                                if (element.name == "NASA-G0V.COM") {
+                                    serverListNewHtml += `
+                        
+                        <img src="ESL-Assets/ESL-NG.png">
+
+                        `
+                                }
+
+                                if (element.name == "banana.minetest.land") {
+                                    serverListNewHtml += `
+                        
+                        <img src="ESL-Assets/ESL-BN.png">
+
+                        `
+                                }
+
+                                if (element.name == "Blocky Survival") {
+                                    serverListNewHtml += `
+                        
+                        <img src="ESL-Assets/ESL-BS.png">
+
+                        `
+                                }
+
+                                if (element.name == "Lost Kingdoms") {
+                                    serverListNewHtml += `
+                        
+                        <img src="ESL-Assets/ESL-LK.png">
+
+                        `
+                                }
+
+                                if (element.name == "¡Colorlandia!") {
+                                    serverListNewHtml += `
+                        
+                        <img src="ESL-Assets/ESL-CL.png">
+
+                        `
+                                }
+
+                                if (element.name == "Versus Town ツ") {
+                                    serverListNewHtml += `
+                        
+                        <img src="ESL-Assets/ESL-VT.png">
+
+                        `
+                                }
+
+                                if (element.name == "[JMA] Capture the Flag") {
+                                    serverListNewHtml += `
+                        
+                        <img src="ESL-Assets/ESL-CTF.png">
+
+                        `
+                                }
+
+                                if (element.name == "Minimalism") {
+                                    serverListNewHtml += `
+                        
+                        <img src="ESL-Assets/ESL-MM.png">
+
+                        `
+                                }
+
+                                if (element.name == "Jisk and Cow's FFA Skywars") {
+                                    serverListNewHtml += `
+                        
+                        <img src="ESL-Assets/ESL-SW.png">
+
+                        `
+                                }
+
+                                
+
+                                if (element.name == "Tunnelers' Abyss") {
+                                    serverListNewHtml += `
+                        
+                        <img src="ESL-Assets/ESL-TA.png">
+
+                        `
+                                }
+
+                                if (element.name == "BlockCity Creative [0.4, 5.x]") {
+                                    serverListNewHtml += `
+                        
+                        <img src="ESL-Assets/ESL-BC.png">
+
+                        `
+                                }
+
+                                if (element.name == "JT2") {
+                                    serverListNewHtml += `
+                        
+                        <img src="ESL-Assets/ESL-JT.png">
+
+                        `
+                                }
+                                
+                                serverListNewHtml += "<b>Description</b>: " + element.description +
+                                    "<br><b>Game</b>: " + element.gameid + "</details></li>"
+
+                                serverList.innerHTML = serverListNewHtml
+
+                                counter++
+
+
+
+                            });
+
+
+                            console.log(list)
+
+                            //document.write(this);
+                        })
+                        .catch(function () {
+                            this.dataError = true;
+                            document.write("nope");
+                        })
+                }
+                readJson()
+            </script>
+
+            <footer></footer>
+    </main>
+    <script src="/script.js"></script>
+    <script src="/scripts/supabase.js"></script>
+
+</body>
+
+</html>

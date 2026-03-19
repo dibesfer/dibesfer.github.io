@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>¡Colorlandia!</title>
+    <link href="/img/favicon.ico" rel="icon" type="image/x-icon">
+    <!--#region SEO  -->
+    <meta name="author" content="dibesfer - Ferrán Minero" />
+    <meta name="description" content="Colorlandia minetest game and server by dibesfer" />
+    <meta name="keywords" content="Colorlandia minetest game and server by dibesfer." />
+    <!--#endregion -->
+    <!--#region META  -->
+    <!-- Meta imágen y descripción que aparecerá embebida en algunas redes sociales -->
+    <meta property='og:image' content='/p/games/minetest/colorlandia/art/map_spawn.png' />
+    <meta property='og:description' content='Colorlandia minetest game and server by dibesfer.' />
+    <meta property="og:title" content="Colorlandia">
+    <!--#endregion  -->
+    <!-- STYLE CSS -->
+    <link href="/style.css" rel="stylesheet" type="text/css">
+    <!-- FERSCRIPT.JS -->
+    <script src="/ferscript.js"></script>
+    <!-- SUPABASE cdn -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+
+    <style>
+        .container {
+            position: relative;
+            text-align: center;
+            color: white;
+        }
+
+        .centered {
+            width: 100%;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+    </style>
+</head>
+
+<body>
+    <div id="loadingScreen" class="flexCenter fullScreen">
+        <img width="200px" class="icon" src="/img/dibesfer-logo.png" alt="dibesfer logo">
+    </div>
+    <!-- <header class="flexBetween"></header>
+ -->
+    <div id="navBars">
+
+    </div>
+
+    <main>
+
+        <div class="container">
+            <img src="art/colorlandia_sunrise.png" alt="Colorlandia Landscape" style="width:100%;">
+
+            <div class="centered">
+                <img width="100%" src="art/colorlandia_title.png" alt="Minetest logo titulo">
+                <p class="textCenter" style="background-color:rgba(255, 255, 255, 0.609); color: black"> - A colorful
+                    cubic creative
+                    experience -</p>
+            </div>
+        </div>
+
+        <div class="container">
+            <img src="art/colorlandia-colorful.png" alt="Colorlandia Landscape" style="width:100%;">
+
+            <div class="centered">
+                
+                <h2 class="textCenter" style="background-color:rgba(255, 255, 255, 0.609); color: black"> - The Server -</h2>
+            </div>
+        </div>
+
+       
+
+
+        <!--             <ul>
+                <li><a href="pdf/Minetest Server with playitgg.pdf" target="_blank">Crear un servidor con playit.gg<a>
+                </li>
+                      <li><a href="/PDF/minetest/minetest_design_ideas5.pdf" target="_blank">Ideas de diseño menú inicial y menú de pausa<a></li>
+      <li><a href="/PDF/minetest/Minetest_game_loop.pdf" target="_blank">Bucle de juego o Game Loop<a></li>
+            </ul> -->
+        <section class="maxWidth textOverlay">
+            <h1>¿Qué es?</h1>
+
+            <p>Colorlandia es un mundo de bloques o vóxeles. Mide 2048³ bloques. Tiene 18 biomas de diferentes colores y
+                temáticas. En él podrás crear construcciones de todo tipo con todos los bloques que te ofrece.</p>
+
+        
+
+            <p>Juega solo descargando el juego o juega con personas online en el servidor ¡Colorlandia!</p>
+
+            <h1>¿Cómo jugar?</h1>
+            <h2>Offline</h2>
+            <ol>
+                <li>Descarga <a href="https://www.luanti.org/downloads/">luanti</a></li>
+                <li>Instalar juego</li>
+                <li>Buscar "color" y seleccionar Colorlandia</li>
+                <li>Instalar</li>
+                <li>Seleccionar el juego</li>
+                <li><b>Crear mundo</b></li>
+            </ol>
+            <h2>Online</h2>
+            <ol>
+                <li>Descarga <a href="https://www.luanti.org/downloads/">luanti</a></li>
+                <li>Haz click en unirse al juego</li>
+                <li>Buscar y seleccionar "¡Colorlandia!"</li>
+                <li>Haz click en registrarse</li>
+                <li>Introduce tu nombre y contraseña</li>
+                <li><b>Registrarse</b></li>
+
+            </ol>
+
+            <br>
+            <h2 class="textCenter">Server' Spawn</h2>
+            <div class="flexCenter"><img src="art/map_spawn.png" alt=""></div>
+            <h2 class="textCenter">Server map</h2>
+            <img src="art/Planos_Mapview2.png" alt="Colorlandia Server Spawn Map">
+
+        </section>
+
+        <img src="art/colorlandia_long_landscape.png" alt="">
+
+    <section class="maxWidth" >
+
+            <details>
+                <summary>Server description:</summary>
+
+                <pre>
+
+English: ¡You can fly fast! Build along your friends with blocks of all shapes and colors. Protect your buildings with areas /protect! Unleash your creative side in a world of pure imagination.
+
+Español: ¡Puedes volar rápido! Construye junto a tus amigos con bloques de todas las formas y colores. Protege tu construcciones con el mod de áreas. Saca tu lado creativo en un mundo de pura imaginación.
+
+        Server born in january 16 2024 
+                    
+                 </pre>
+            </details>
+
+            <h1>Enlaces de interés</h1>
+            <p>Minetest contentdb <a href="https://content.minetest.net/packages/dibesfer/colorlandia/">link</a> </p>
+
+
+
+            <p>Colorlandia's spawn first version was shown in <a
+                    href="https://blog.minetest.net/2024/01/29/January/#art-and-builds">Minetest blog</a> </p>
+            <style>
+                .discordContainer {
+                    border: solid 3px white;
+                    border-radius: 15px;
+                    padding: 10px;
+                    background-color: #1e1f22;
+                    width: max-content;
+                    margin: auto;
+                    font-size: x-large;
+
+                }
+
+                .mylink {
+                    color: unset;
+                    font-family: unset;
+                }
+            </style>
+            <br><a class="mylink" href="https://discord.gg/tUHBS9eERn">
+                <div class="discordContainer textCenter">
+                    <p> - - - Discord server - - - <br> 🏳️‍🌈 ¡Colorlandia! </p>
+                </div>
+            </a><br>
+
+        </section>
+        <img src="art/colorlandia_spawn.GIF" alt="Colorlandia trailer">
+
+        <img src="art/norte.png" width="100%" alt="">
+        <img src="art/este.png" width="100%" alt="">
+        <img src="art/sur.png" width="100%" alt="">
+        <img src="art/oeste.png" width="100%" alt="">
+        <img src="art/centro.png" width="100%" alt="">
+        <br><br><a class="mylink" href="https://discord.gg/tUHBS9eERn">
+            <div class="discordContainer textCenter">
+                <p> - - - Discord server - - - <br> 🏳️‍🌈 ¡Colorlandia! </p>
+            </div>
+        </a>
+        <!--<iframe
+            src="https://docs.google.com/presentation/d/e/2PACX-1vRjfSPBQTvCgJ2Y5qRJ8d3NEnDckVdu4MP9nWuBkg6cIUCWRumIPzLFPRQ9UfFB8rS0cqG64YZI6gUQ/embed?start=true&loop=true&delayms=2000&rm=minimal"
+            frameborder="0" style="width: 100%;aspect-ratio: 16/9;" allowfullscreen="true" mozallowfullscreen="true"
+            webkitallowfullscreen="true"></iframe> -->
+
+        <section class="maxWidth">
+            <br>
+            <img width="100%" src="art/Screenshot_minetest.jpg" alt="">
+            <h2 class="textCenter"><a href="gallery.html">🖼️ More photos</a></h2>
+            <h2 class="textCenter"><a href="journal/">📙 Journal</a></h2>
+        </section>
+
+        <footer></footer>
+    </main>
+    <script src="/script.js"></script>
+    <script src="/scripts/supabase.js"></script>
+
+</body>
+
+</html>

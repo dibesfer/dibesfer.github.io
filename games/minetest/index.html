@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>luanti ⛏️</title>
+    <link href="/img/favicon.ico" rel="icon" type="image/x-icon">
+    <!--#region SEO  -->
+    <meta name="author" content="dibesfer - Ferrán Minero" />
+    <meta name="description" content="minetest or luanti voxel game engine" />
+    <meta name="keywords" content="dibesfer minetest luanti guide free host server" />
+    <!--#endregion -->
+    <!--#region META  -->
+    <!-- Meta imágen y descripción que aparecerá embebida en algunas redes sociales -->
+    <meta property='og:image' content='/p/games/minetest/art/escritorioEspacial.png' />
+    <meta property='og:description' content='minetest or luanti voxel game engine' />
+    <meta property="og:title" content="luanti - minetest">
+    <!--#endregion  -->
+    <!-- STYLE CSS -->
+    <link href="/style.css" rel="stylesheet" type="text/css">
+    <!-- FERSCRIPT.JS -->
+    <script src="/ferscript.js"></script>
+    <!-- SUPABASE cdn -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+
+</head>
+
+<body>
+    <div id="loadingScreen" class="flexCenter fullScreen">
+        <img width="200px" class="icon" src="/img/dibesfer-logo.png" alt="dibesfer logo">
+    </div>
+    <!-- <header class="flexBetween"></header>
+ -->
+    <div id="navBars">
+
+    </div>
+
+    <main>
+        <section class="maxWidth">
+
+            
+
+            <img src="art/wordart-luanti-general.png">
+            <p>Minetest/Luanti es un motor de videjuegos voxel. Se trata de un proyecto de <a
+                    href="https://github.com/minetest/minetest" target="_blank">código abierto</a>.</p>
+
+
+                    <img src="/art/minetest/luanti-landscape.png" alt="">
+
+            <h3 class="textCenter">Welcome to the </h3>
+            <img src="art/mineverse.png" alt="Mineverse slogan in voxels">
+
+
+            
+            <p>Algunos de los juegos más conocidos hechos con el motor son
+                <style>
+                    #gamesContainer {
+                        display: flex;
+                        text-align: center;
+                    }
+
+                    #gamesContainer div {
+                        flex: 50%;
+                        margin: 5px;
+                        overflow: auto;
+                        background-color: darkgreen;
+                    }
+
+                    #gamesContainer div:hover {
+                        background-color: darkblue;
+                        transition: 0.2s;
+                    }
+
+                    #gamesContainer div a {
+                        color: unset;
+                    }
+
+                    /*
+                    #gamesContainer div:nth-child(odd){
+                        background-color: purple;
+                    }
+                    #gamesContainer div:nth-child(even){
+                        background-color: darkgreen;
+                    }*/
+                    #gamesContainer div img {
+                        object-fit: cover;
+                        aspect-ratio: 16/9;
+                        width: 100%;
+                        
+                    }
+                </style>
+            <div id="gamesContainer">
+                <div>
+                    <a href="https://github.com/minetest/minetest_game" target="_blank">
+                        <img src="/p/games/minetest/art/mtg.jpg" alt="">
+                        Minetest Game</a>
+                </div>
+                <div>
+                    <a href="https://content.minetest.net/packages/Wuzzy/mineclone2" target="_blank"><img
+                            src="/p/games/minetest/art/vl.jpg" alt="">
+                        VoxeLibre
+                        (Mineclone2)</a></p>
+                </div>
+            </div>
+
+            <div id="gamesContainer">
+                <div>
+                    <a href="https://content.minetest.net/packages/Linuxdirk/void/" target="_blank">
+                        <img src="/p/games/minetest/art/void.jpg" alt="">
+                        Void</a>
+                </div>
+                <div>
+                    <a href="https://content.minetest.net/packages/GoodClover/cavegame/" target="_blank"><img
+                            src="/p/games/minetest/art/cavegame.png" alt="">
+                        Cavegame</a></p>
+                </div>
+            </div>
+
+            <div id="gamesContainer">
+                <div>
+                    <a href="/p/games/minetest/colorlandia/">
+                        <img src="/p/games/minetest/colorlandia/art/colorlandia-spawn.png" alt="">
+                        Colorlandia</a>
+                </div>
+
+            </div>
+
+
+            <style>
+                #discordContainer {
+                    border: solid 3px white;
+                    border-radius: 15px;
+                    padding: 10px;
+                    background-color: #1e1f22;
+                    width: max-content;
+                    margin: auto;
+                }
+            </style>
+            <br>
+            <div id="discordContainer">
+                <p>Servidores de discord</p>
+                <p>
+                    <a href="https://discord.gg/q98CUnE3AG">🇪🇸 Miñetest comunidad hispana </a>
+                </p>
+                <p>
+                    <a href="https://discord.gg/tUHBS9eERn">
+                        🏳️‍🌈 ¡Colorlandia! The Game</a>
+                </p>
+            </div>
+            <br>
+            <!--        <p>Todo: Add three.js skin preview</p>
+ -->
+
+            <style>
+                .mySlides {
+                    display: none
+                }
+
+                .mySlides img {
+                    object-fit: cover;
+                    aspect-ratio: 16/9
+                }
+
+                /* Slideshow container */
+                .slideshow-container {
+                    max-width: 1000px;
+                    position: relative;
+                    margin: auto;
+                }
+
+                /* Next & previous buttons */
+                .prev,
+                .next {
+                    cursor: pointer;
+                    position: absolute;
+                    top: 50%;
+                    width: auto;
+                    padding: 16px;
+                    margin-top: -22px;
+                    color: white;
+                    font-weight: bold;
+                    font-size: 18px;
+                    transition: 0.6s ease;
+                    border-radius: 0 3px 3px 0;
+                    user-select: none;
+                }
+
+                /* Position the "next button" to the right */
+                .next {
+                    right: 0;
+                    border-radius: 3px 0 0 3px;
+                }
+
+                /* On hover, add a black background color with a little bit see-through */
+                .prev:hover,
+                .next:hover {
+                    background-color: rgba(0, 0, 0, 0.8);
+                }
+
+                /* Caption text */
+                .text {
+                    color: #f2f2f2;
+                    font-size: 15px;
+                    padding: 8px 12px;
+                    position: absolute;
+                    bottom: 8px;
+                    width: 100%;
+                    text-align: center;
+                    background-color: rgba(0, 0, 0, 0.668);
+                }
+
+                /* Number text (1/3 etc) */
+                .numbertext {
+                    color: #f2f2f2;
+                    font-size: 12px;
+                    padding: 8px 12px;
+                    position: absolute;
+                    top: 0;
+                }
+
+                /* The dots/bullets/indicators */
+                .dot {
+                    cursor: pointer;
+                    height: 15px;
+                    width: 15px;
+                    margin: 0 2px;
+                    background-color: #bbb;
+                    border-radius: 50%;
+                    display: inline-block;
+                    transition: background-color 0.6s ease;
+                }
+
+                .active,
+                .dot:hover {
+                    background-color: #717171;
+                }
+
+                /* Fading animation */
+                .fade {
+                    animation-name: fade;
+                    animation-duration: 1.5s;
+                }
+
+                @keyframes fade {
+                    from {
+                        opacity: .4
+                    }
+
+                    to {
+                        opacity: 1
+                    }
+                }
+
+                /* On smaller screens, decrease text size */
+                @media only screen and (max-width: 300px) {
+
+                    .prev,
+                    .next,
+                    .text {
+                        font-size: 11px
+                    }
+                }
+            </style>
+
+            <div class="slideshow-container">
+
+                <div class="mySlides fade">
+                    <div class="numbertext">1 / 3</div>
+                    <img src="art/escritorioEspacial.png" style="width:100%" alt="Block City - Escritorio espacial">
+                    <div class="text">Block City - Escritorio espacial</div>
+                </div>
+
+                <div class="mySlides fade">
+                    <div class="numbertext">2 / 3</div>
+                    <img src="art/torresArcoiris.png" style="width:100%" alt="The Voxelmanip Classic Server - Torres Arcoiris">
+                    <div class="text">The Voxelmanip Classic Server - Torres Arcoiris</div>
+                </div>
+
+                <div class="mySlides fade">
+                    <div class="numbertext">3 / 3</div>
+                    <img src="art/pajarodemadera-benavente.png" style="width:100%" alt="Your Land - Benavente, Pájaro de Madera Volador, por tururrum">
+                    <div class="text">Your Land - Benavente, Pájaro de Madera Volador, por <i>tururrum</i></div>
+                </div>
+
+                <a class="prev" onclick="plusSlides(-1)">❮</a>
+                <a class="next" onclick="plusSlides(1)">❯</a>
+
+            </div>
+            <br>
+
+            <div style="text-align:center">
+                <span class="dot" onclick="currentSlide(1)"></span>
+                <span class="dot" onclick="currentSlide(2)"></span>
+                <span class="dot" onclick="currentSlide(3)"></span>
+            </div>
+
+            <script>
+                let slideIndex = 1;
+                showSlides(slideIndex);
+
+                function plusSlides(n) {
+                    showSlides(slideIndex += n);
+                }
+
+                function currentSlide(n) {
+                    showSlides(slideIndex = n);
+                }
+
+                function showSlides(n) {
+                    let i;
+                    let slides = document.getElementsByClassName("mySlides");
+                    let dots = document.getElementsByClassName("dot");
+                    if (n > slides.length) { slideIndex = 1 }
+                    if (n < 1) { slideIndex = slides.length }
+                    for (i = 0; i < slides.length; i++) {
+                        slides[i].style.display = "none";
+                    }
+                    for (i = 0; i < dots.length; i++) {
+                        dots[i].className = dots[i].className.replace(" active", "");
+                    }
+                    slides[slideIndex - 1].style.display = "block";
+                    dots[slideIndex - 1].className += " active";
+                }
+            </script>
+
+            
+            
+
+
+
+
+            <!--             <ul>
+                <li><a href="pdf/Minetest Server with playitgg.pdf" target="_blank">Crear un servidor con playit.gg<a>
+                </li>
+                      <li><a href="/PDF/minetest/minetest_design_ideas5.pdf" target="_blank">Ideas de diseño menú inicial y menú de pausa<a></li>
+      <li><a href="/PDF/minetest/Minetest_game_loop.pdf" target="_blank">Bucle de juego o Game Loop<a></li>
+            </ul> -->
+            <br>
+            <!--  <iframe
+                src="https://docs.google.com/presentation/d/e/2PACX-1vRjfSPBQTvCgJ2Y5qRJ8d3NEnDckVdu4MP9nWuBkg6cIUCWRumIPzLFPRQ9UfFB8rS0cqG64YZI6gUQ/embed?start=true&loop=true&delayms=2000&rm=minimal"
+                frameborder="0" style="width: 100%;aspect-ratio: 16/9;" allowfullscreen="true" mozallowfullscreen="true"
+                webkitallowfullscreen="true"></iframe> -->
+            <hr>
+
+
+
+
+            <h2>Enlaces de interés</h2><br>
+            <ul>
+
+                <li><a href="http://info.dibesfer.com/games/luanti">Luanti Guide</a></li>
+                <li><a href="/p/games/luanti/gallery/index.html">Luanti gallery</a></li>
+                <li>Página oficial <a href="https://www.minetest.net/" target="_blank">minetest.net</a></li>
+                <li>Juega desde tu navegador <a href="https://minetest.dustlabs.io/">link</a></li>
+                <li><a href="epicserverlist.html">Epic Server List</a></li>
+                <li><a href="contentdbapi.html">CDB Api</a></li>
+
+                <li><a href="pdf/Minetest Server with playitgg.pdf">Guía para crear tu servidor público gratis con
+                        playit.gg</a></li>
+                <li><a href="https://blockexchange.minetest.ch/schema/dibesfer" target="_blank">Block
+                        Exchange</a>: Es un mod y una plataforma en la nube para compartir schematics o construcciones
+                    creadas
+                    en minetest.</li>
+                <li><a href="https://mtplace.voxelmanip.se/" target="_blank">mtPlace</a>: Un servidor con un canvas
+                    donde la gente iba dejando su huella. Si te fijas en la parte superior izquierda, a la izquierda de
+                    "PRIDE" logré dibujar un corazón lila con e mensaje "Love is the coin" (el amor es la moneda) y al
+                    lado mi logo y nombre.</li>
+                <li><a href="https://zmv7.github.io/findmtplayer" target="_blank">findmtplayer</a>: Encuentra servidores
+                    por nombre de jugador (conectado en el momento actual) o por mods: </li>
+            </ul>
+
+            <details>
+                <summary>Cosas que creo que le faltan a Minetest</summary>
+                <p>Para el modo creativo</p>
+                <p>Mods que repliquen los siguientes mods que existen en minecraft.</p>
+                <ul>
+                    <li>EffortlessBuilding, o construcción sin esfuerzo. Te permite hacer clic, mantener y arrastrar
+                        para
+                        dibujar líneas, muros o cubos en el espacio. Facilitando enormemente la construcción.</li>
+                    <p>Ahora hay un mod muy similar llamado <a
+                            href="https://content.minetest.net/packages/epCode/mt_build_easy/">Build Easy</a></p>
+                    <li>Chisel and bits. Parecido al anterior pero a la escala de un solo nodo o bloque. Te permite
+                        "esculpir" micro voxel a voxel. La forma de un bloque, añadiendo un nivel de detalle muy
+                        profundo
+                        <br>
+                        Por ahora existe un mod llamado <a
+                            href="https://content.minetest.net/packages/entuland/wesh/">Wesh</a>
+                        que te permite hacer algo parecido a Chisel and Bits, aunque
+                        requiere primero construir una construcción a tamaño real que luego escalará al tamaño de un
+                        bloque.
+                        Además requiere cerrar y abrir el mundo para acceder a tu nuevo bloque esculpido. <br>
+                        También existe <a href="https://content.minetest.net/packages/SFENCE/sculpture/">Sculpture</a>
+                    </li>
+                </ul>
+
+                <p>Unificar las funcionalidades de los siguientes mods en uno solo: </p>
+                <ul>
+                    <li>World Edit, Terraform, SchemeEditor, Wesh, Meshport, BlockExchange</li>
+                    <li>Skindb, editskin.</li>
+                </ul>
+                <p>Y retomar la descontinuada base de datos online de Skindb. Por ahora disponemos de <a
+                        href="https://skinsdb.terraqueststudios.net/">esta colección</a> en formato solo lectura</p>
+            </details>
+            <img src="art/voxelmanip-tower-entrance.png" alt="The Voxelmanip Classic Server - Torre Dibesfer">
+            <p>The Voxelmanip Classic Server - Torre Dibesfer</p>
+            <br>
+            <h2 class="textCenter">🗿Stone Golems</h2>
+            <br>
+
+            <style>
+                #golems {
+                    display: flex;
+                    flex-wrap: wrap;
+                }
+                #golems div {
+                    flex: 50%;
+                    padding: 5px;
+                }
+                #golems div img {
+                    object-fit: cover;
+                    border-radius: 5px;
+                    aspect-ratio: 1;
+                    width: 100%;
+                }
+
+                #golems div p{
+                    height: 10%;
+                }
+            </style>
+            <div id="golems" style="text-align: center;">
+
+                <div>
+                    <img src="art/golems/golem_voxelmanip.png" alt="">
+                    <p>Voxelmanip</p>
+                </div>
+
+                <div>
+                    <img src="art/golems/golem_colorlandia.png" alt="">
+                    <p>Colorlandia</p>
+                </div>
+
+                <div>
+                    <img src="art/golems/golem_blockcity.png" alt="">
+                    <p>Block City</p>
+                </div>
+
+                <div>
+                    <img src="art/golems/golem_voxelibre.png" alt="">
+                    <p>VoxeLibre</p>
+                </div>
+
+                <div>
+                    <img src="art/golems/golem_cavegame.png" alt="">
+                    <p>Cave Game</p>
+                </div>
+
+                <div>
+                    <img src="art/golems/golem_void.png" alt="">
+                    <p>Void</p>
+                </div>
+
+            </div>
+            <br>
+            <p>WIP: </p>
+            <ul>
+                <li><a href="minitest/">Minitest</a></li>
+            </ul>
+            <br>
+            <img width="100%" src="art/minetest_header.png" alt="old luanti Minetest logo titulo" class="pixel">
+
+        </section>
+
+        <footer></footer>
+    </main>
+    <script src="/script.js"></script>
+    <script src="/scripts/supabase.js"></script>
+
+</body>
+
+</html>
