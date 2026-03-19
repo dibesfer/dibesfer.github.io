@@ -9,6 +9,14 @@ import {
   applyHumanoidLeftPunchAnimation,
 } from './entityModel.js';
 import { createGameAudio } from './audio.js';
+import { createMiniMapUI } from './code/UI/minimap.js';
+import { createMenuUI } from './code/UI/menu.js';
+import { createCameraModeController } from './code/graphics/camera.js';
+import {
+  createInventoryUI,
+  GAME_MODE_SURVIVAL,
+} from './code/UI/inventory.js';
+import { createChatUI } from './code/UI/chat.js';
 import { createPlayerHud } from './playerHud.js';
 import { buildSimpleMap } from './maps/simpleMap.js';
 import { buildCityMap } from './maps/cityMap.js';
@@ -89,51 +97,30 @@ const buttonLeft0 = document.getElementById('Left0');
 const cameraModeInputs = Array.from(document.querySelectorAll('input[name="cameraMode"]'));
 const cameraModeWowInput = document.getElementById('cameraModeWow');
 const cameraModeLegoLolInput = document.getElementById('cameraModeLegoLol');
-const inventoryDragPreview = document.createElement('div');
 let mobileShootPressed = false;
 let mobileSprintEnabled = false;
-let activeMenuCentralTab = 'settings';
 let openingChatFromPointerLock = false;
-let inventorySlotEls = [];
-let inventoryDragState = null;
-let suppressInventorySlotClick = false;
 let characterPreviewDragState = null;
 const gameAudio = createGameAudio();
 const systemMenuThemeQuery = window.matchMedia('(prefers-color-scheme: dark)');
-let menuThemePreference = 'system';
-const CAMERA_MODE_SKYRIM = 'skyrim';
-const CAMERA_MODE_WOW = 'wow';
-// Mirrors the current WoW camera behavior so both modes share the same screen-drag camera path.
-const CAMERA_MODE_LEGO_LOL = 'legoLol';
-const CAMERA_MODE_STORAGE_KEY = 'kolorlando.cameraMode';
-let wowCameraScreenActive = false;
 let wowCameraDragState = null;
 let wowCursorRaycastActive = false;
-let currentCameraMode = (() => {
-  try {
-    const savedCameraMode = window.localStorage.getItem(CAMERA_MODE_STORAGE_KEY);
-    return savedCameraMode === CAMERA_MODE_WOW || savedCameraMode === CAMERA_MODE_LEGO_LOL || savedCameraMode === CAMERA_MODE_SKYRIM
-      ? savedCameraMode
-      : CAMERA_MODE_SKYRIM;
-  } catch (error) {
-    return CAMERA_MODE_SKYRIM;
-  }
-})();
+let cameraModeController = null;
 
 function isLegoLolCameraMode() {
-  return currentCameraMode === CAMERA_MODE_LEGO_LOL;
+  return cameraModeController ? cameraModeController.isLegoLolCameraMode() : false;
 }
 
 function usesCenteredThirdPersonCamera() {
-  return currentCameraMode === CAMERA_MODE_WOW || currentCameraMode === CAMERA_MODE_LEGO_LOL;
+  return cameraModeController ? cameraModeController.usesCenteredThirdPersonCamera() : false;
 }
 
 function isScreenDragCameraMode() {
-  return !mobileMode && currentCameraMode === CAMERA_MODE_WOW;
+  return cameraModeController ? cameraModeController.isScreenDragCameraMode() : false;
 }
 
 function isScreenDragCameraActive() {
-  return isScreenDragCameraMode() && wowCameraScreenActive;
+  return cameraModeController ? cameraModeController.isScreenDragCameraActive() : false;
 }
 
 function isDesktopGameplayActive() {
@@ -145,7 +132,7 @@ function isDesktopGameplayActive() {
 }
 
 function shouldUsePointerLock() {
-  return !mobileMode && currentCameraMode === CAMERA_MODE_SKYRIM;
+  return cameraModeController ? cameraModeController.shouldUsePointerLock() : false;
 }
 
 function syncDesktopLookAnglesFromCamera() {
@@ -154,15 +141,19 @@ function syncDesktopLookAnglesFromCamera() {
 }
 
 function setWowCameraScreenActive(nextActive) {
-  wowCameraScreenActive = Boolean(nextActive) && isScreenDragCameraMode();
-  if (wowCameraScreenActive) {
-    syncDesktopLookAnglesFromCamera();
-    return;
-  }
-  wowCameraDragState = null;
-  clearWowCursorRaycastPointer();
+  if (!cameraModeController) return;
+  cameraModeController.setWowCameraScreenActive(nextActive);
 }
 
+function setCurrentCameraMode(nextCameraMode) {
+  if (!cameraModeController) return;
+  cameraModeController.setCurrentCameraMode(nextCameraMode);
+}
+
+function syncCameraModeAvailability() {
+  if (!cameraModeController) return;
+  cameraModeController.syncCameraModeAvailability();
+}
 function activateDesktopScreenActivity() {
   if (mobileMode) return;
   hideMenuCentral();
@@ -177,8 +168,7 @@ function activateDesktopScreenActivity() {
     controls.lock();
   }
 }
-
-function deactivateDesktopScreenActivity(tabName = activeMenuCentralTab || 'settings') {
+function deactivateDesktopScreenActivity(tabName = getActiveMenuCentralTab() || 'settings') {
   if (mobileMode) return;
   if (isLegoLolCameraMode()) {
     showMenuCentral(tabName, { force: true });
@@ -196,57 +186,8 @@ function deactivateDesktopScreenActivity(tabName = activeMenuCentralTab || 'sett
   showMenuCentral(tabName, { force: true });
 }
 
-function persistCameraModePreference() {
-  try {
-    window.localStorage.setItem(CAMERA_MODE_STORAGE_KEY, currentCameraMode);
-  } catch (error) {
-    // Ignore persistence failures.
-  }
-}
 
-function applyCameraMode() {
-  document.body.dataset.cameraMode = currentCameraMode;
-  persistCameraModePreference();
-  setWowCameraScreenActive(false);
-  if (isScreenDragCameraMode() && typeof controls !== 'undefined' && controls.isLocked) {
-    controls.unlock();
-  }
-}
 
-function setCurrentCameraMode(nextCameraMode) {
-  if (!nextCameraMode) return;
-  if (nextCameraMode === CAMERA_MODE_WOW && mobileMode) {
-    nextCameraMode = CAMERA_MODE_SKYRIM;
-  }
-  currentCameraMode = nextCameraMode;
-  for (let i = 0; i < cameraModeInputs.length; i++) {
-    cameraModeInputs[i].checked = cameraModeInputs[i].value === currentCameraMode;
-  }
-  applyCameraMode();
-}
-
-function syncCameraModeAvailability() {
-  const wowAvailable = !mobileMode;
-  if (cameraModeWowInput) {
-    cameraModeWowInput.disabled = !wowAvailable;
-  }
-  if (cameraModeLegoLolInput) {
-    cameraModeLegoLolInput.disabled = false;
-  }
-  if (!wowAvailable && currentCameraMode === CAMERA_MODE_WOW) {
-    setCurrentCameraMode(CAMERA_MODE_SKYRIM);
-    return;
-  }
-  applyCameraMode();
-}
-
-const miniMapPlayerMarker = document.createElement('div');
-miniMapPlayerMarker.id = 'miniMapPlayerMarker';
-miniMap.appendChild(miniMapPlayerMarker);
-const entityMiniMapMarkers = new Map();
-inventoryDragPreview.className = 'inventory-drag-preview';
-inventoryDragPreview.hidden = true;
-document.body.appendChild(inventoryDragPreview);
 
 function isTypingTarget(target) {
   return Boolean(
@@ -263,110 +204,6 @@ function setElementHidden(element, hidden) {
   element.hidden = hidden;
 }
 
-function resolveMenuTheme() {
-  if (menuThemePreference === 'dark') return 'dark';
-  if (menuThemePreference === 'light') return 'light';
-  return systemMenuThemeQuery.matches ? 'dark' : 'light';
-}
-
-function syncMenuThemeSetting() {
-  if (!settingsMenuThemeDark) return;
-  settingsMenuThemeDark.checked = resolveMenuTheme() === 'dark';
-}
-
-function applyMenuTheme() {
-  if (!menuCentral) return;
-  menuCentral.dataset.theme = resolveMenuTheme();
-  syncMenuThemeSetting();
-}
-
-function setMenuThemePreference(nextPreference) {
-  menuThemePreference = nextPreference;
-  applyMenuTheme();
-}
-
-function scrollChatToBottom() {
-  if (!chatBoxOutput) return;
-  chatBoxOutput.scrollTop = chatBoxOutput.scrollHeight;
-}
-
-function appendChatLine(message, speaker = 'System') {
-  if (!chatBoxOutput) return;
-  const line = document.createElement('div');
-  line.textContent = `${speaker}: ${message}`;
-  chatBoxOutput.appendChild(line);
-  scrollChatToBottom();
-}
-
-function showChatInput() {
-  if (!chatBoxInput) return;
-  setMobileChatToggleState(true);
-  if (!mobileMode && typeof controls !== 'undefined' && controls.isLocked) {
-    openingChatFromPointerLock = true;
-    controls.unlock();
-  }
-  setElementHidden(chatBoxInput, false);
-  chatBox?.classList.add('backgrounded');
-  chatBoxInput.focus();
-  chatBoxInput.select();
-}
-
-function hideChatInput() {
-  if (!chatBoxInput) return;
-  setMobileChatToggleState(false);
-  setElementHidden(chatBoxInput, true);
-  chatBox?.classList.remove('backgrounded');
-  chatBoxInput.blur();
-  if (shouldUsePointerLock() && typeof controls !== 'undefined' && !controls.isLocked && !isMenuCentralVisible()) {
-    controls.lock();
-  }
-}
-
-function submitChatInput() {
-  if (!chatBoxInput || !chatBoxOutput) return false;
-  const message = chatBoxInput.value.trim();
-  if (!message) return false;
-
-  if (handleChatCommand(message)) {
-    chatBoxInput.value = '';
-    hideChatInput();
-    scrollChatToBottom();
-    return true;
-  }
-
-  const line = document.createElement('div');
-  line.textContent = `You: ${message}`;
-  chatBoxOutput.appendChild(line);
-  chatBoxInput.value = '';
-  hideChatInput();
-  scrollChatToBottom();
-  return true;
-}
-
-function handleChatAction() {
-  if (!chatBoxInput) return false;
-  if (chatBoxInput.hidden) {
-    showChatInput();
-    return true;
-  }
-
-  return submitChatInput();
-}
-
-function handleChatToggleAction() {
-  if (!chatBoxInput) return false;
-  if (chatBoxInput.hidden) {
-    showChatInput();
-    return true;
-  }
-
-  if (!chatBoxInput.value.trim()) {
-    hideChatInput();
-    return true;
-  }
-
-  return submitChatInput();
-}
 
 function handleChatCommand(message) {
   const normalizedMessage = message.trim().toLowerCase();
@@ -375,15 +212,35 @@ function handleChatCommand(message) {
   return true;
 }
 
-if (chatBoxInput) {
-  chatBoxInput.addEventListener('keydown', event => {
-    if (event.key !== 'Enter') return;
-    event.preventDefault();
-    event.stopPropagation();
-    handleChatAction();
-  });
-}
+const chatUI = createChatUI({
+  chatBox,
+  chatBoxOutput,
+  chatBoxInput,
+  onCommand: handleChatCommand,
+  onShow: () => {
+    setMobileChatToggleState(true);
+    if (!mobileMode && typeof controls !== 'undefined' && controls.isLocked) {
+      openingChatFromPointerLock = true;
+      controls.unlock();
+    }
+  },
+  onHide: () => {
+    setMobileChatToggleState(false);
+    if (shouldUsePointerLock() && typeof controls !== 'undefined' && !controls.isLocked && !isMenuCentralVisible()) {
+      controls.lock();
+    }
+  },
+});
 
+const menuUI = createMenuUI({
+  menuCentral,
+  menuTabButtons,
+  menuPanels,
+  settingsFullScreen,
+  settingsMenuThemeDark,
+  systemMenuThemeQuery,
+  initialTab: 'settings',
+});
 let characterPreviewRenderer = null;
 let characterPreviewScene = null;
 let characterPreviewCamera = null;
@@ -490,23 +347,19 @@ function resolveMode() {
   return windowWidth > windowHeight ? MODE_MOBILE_LANDSCAPE : MODE_MOBILE_PORTRAIT;
 }
 
+function getActiveMenuCentralTab() {
+  return menuUI.getActiveTab();
+}
+
 function isMenuCentralVisible() {
-  return !menuCentral.hidden;
+  return menuUI.isVisible();
 }
 
 function setMenuCentralTab(tabName) {
-  activeMenuCentralTab = tabName;
-  for (let i = 0; i < menuTabButtons.length; i++) {
-    const isActive = menuTabButtons[i].dataset.menuTab === tabName;
-    menuTabButtons[i].classList.toggle('is-active', isActive);
-  }
-  for (let i = 0; i < menuPanels.length; i++) {
-    const isActive = menuPanels[i].dataset.menuPanel === tabName;
-    menuPanels[i].classList.toggle('is-active', isActive);
-  }
+  menuUI.setTab(tabName);
 }
 
-function showMenuCentral(tabName = activeMenuCentralTab, { force = false } = {}) {
+function showMenuCentral(tabName = getActiveMenuCentralTab(), { force = false } = {}) {
   setMobileInventoryToggleState(true);
   if (!force && !mobileMode && typeof controls !== 'undefined' && controls.isLocked) {
     hideMenuCentral();
@@ -515,15 +368,12 @@ function showMenuCentral(tabName = activeMenuCentralTab, { force = false } = {})
   if (isScreenDragCameraMode()) {
     setWowCameraScreenActive(false);
   }
-  setMenuCentralTab(tabName);
-  setElementHidden(menuCentral, false);
-  document.body.classList.add('menu-central-open');
+  menuUI.show(tabName);
 }
 
 function hideMenuCentral() {
   setMobileInventoryToggleState(false);
-  setElementHidden(menuCentral, true);
-  document.body.classList.remove('menu-central-open');
+  menuUI.hide();
 }
 
 function applyMode(mode) {
@@ -544,11 +394,11 @@ function applyMode(mode) {
     return;
   }
 
-  setMenuCentralTab(activeMenuCentralTab || 'settings');
+  setMenuCentralTab(getActiveMenuCentralTab() || 'settings');
   if (controls.isLocked) {
     hideMenuCentral();
   } else {
-    showMenuCentral(activeMenuCentralTab || 'settings');
+    showMenuCentral(getActiveMenuCentralTab() || 'settings');
   }
   setElementHidden(menuInferior, true);
   menuInferior.classList.remove('flex');
@@ -634,34 +484,6 @@ function updateSceneViewSize() {
   renderer.setSize(width, height, false);
 }
 
-function syncFullScreenSetting() {
-  if (!settingsFullScreen) return;
-  settingsFullScreen.checked = document.fullscreenElement != null;
-}
-
-async function setFullScreenEnabled(nextEnabled) {
-  if (nextEnabled) {
-    if (document.fullscreenElement) return true;
-    try {
-      await document.documentElement.requestFullscreen();
-      return true;
-    } catch (error) {
-      console.error('Failed to enter fullscreen mode.', error);
-      syncFullScreenSetting();
-      return false;
-    }
-  }
-
-  if (!document.fullscreenElement) return true;
-  try {
-    await document.exitFullscreen();
-    return true;
-  } catch (error) {
-    console.error('Failed to exit fullscreen mode.', error);
-    syncFullScreenSetting();
-    return false;
-  }
-}
 
 function updateLoadingUI(loaded, total) {
   const safeTotal = Math.max(1, total);
@@ -674,11 +496,6 @@ function updateLoadingUI(loaded, total) {
   }
 }
 
-for (let i = 0; i < gameModeButtons.length; i++) {
-  gameModeButtons[i].addEventListener('click', () => {
-    setGameMode(gameModeButtons[i].dataset.gameMode);
-  });
-}
 
 THREE.DefaultLoadingManager.onStart = (_url, itemsLoaded, itemsTotal) => {
   updateLoadingUI(itemsLoaded, itemsTotal);
@@ -721,11 +538,6 @@ spawnPadTexture.wrapS = THREE.ClampToEdgeWrapping;
 spawnPadTexture.wrapT = THREE.ClampToEdgeWrapping;
 spawnPadTexture.anisotropy = maxAnisotropy;
 
-const miniMapRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-miniMapRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-miniMapRenderer.shadowMap.enabled = false;
-miniMap.appendChild(miniMapRenderer.domElement);
-
 // --------------------
 // CONTROLS
 // --------------------
@@ -738,12 +550,12 @@ controls.addEventListener('unlock', () => {
     openingChatFromPointerLock = false;
     return;
   }
-  if (chatBoxInput && !chatBoxInput.hidden) {
-    hideChatInput();
+  if (chatUI.isInputOpen()) {
+    chatUI.hideInput();
     return;
   }
   if (!mobileMode) {
-    showMenuCentral(activeMenuCentralTab || 'settings', { force: true });
+    showMenuCentral(getActiveMenuCentralTab() || 'settings', { force: true });
   }
 });
 
@@ -780,58 +592,28 @@ function setInventoryPanelOpen(nextOpen, { allowMobile = false } = {}) {
   showMenuCentral('creative');
 }
 
-setCurrentCameraMode(currentCameraMode);
+cameraModeController = createCameraModeController({
+  cameraModeInputs,
+  cameraModeWowInput,
+  cameraModeLegoLolInput,
+  getIsMobile: () => mobileMode,
+  isPointerLocked: () => typeof controls !== 'undefined' && controls.isLocked,
+  onSyncDesktopLookAngles: syncDesktopLookAnglesFromCamera,
+  onDeactivateScreenDrag: () => {
+    wowCameraDragState = null;
+    clearWowCursorRaycastPointer();
+  },
+  onRequestUnlock: () => {
+    if (typeof controls !== 'undefined' && controls.isLocked) {
+      controls.unlock();
+    }
+  },
+});
+setCurrentCameraMode(cameraModeController.getCurrentCameraMode());
 updateModeFromViewport();
 syncAppHeight();
 updateSceneViewSize();
-setMenuCentralTab('settings');
-syncFullScreenSetting();
-applyMenuTheme();
-scrollChatToBottom();
-document.addEventListener('click', controlLocker);
-document.addEventListener('touchstart', controlLocker, { passive: true });
-document.addEventListener('fullscreenchange', syncFullScreenSetting);
-if (typeof systemMenuThemeQuery.addEventListener === 'function') {
-  systemMenuThemeQuery.addEventListener('change', () => {
-    if (menuThemePreference !== 'system') return;
-    applyMenuTheme();
-  });
-}
 
-if (menuCentral) {
-  menuCentral.addEventListener('click', event => {
-    event.stopPropagation();
-  });
-}
-
-if (settingsFullScreen) {
-  settingsFullScreen.addEventListener('change', () => {
-    setFullScreenEnabled(settingsFullScreen.checked);
-  });
-}
-
-if (settingsMenuThemeDark) {
-  settingsMenuThemeDark.addEventListener('change', () => {
-    setMenuThemePreference(settingsMenuThemeDark.checked ? 'dark' : 'light');
-  });
-}
-
-for (let i = 0; i < cameraModeInputs.length; i++) {
-  cameraModeInputs[i].addEventListener('change', () => {
-    if (!cameraModeInputs[i].checked || cameraModeInputs[i].disabled) return;
-    setCurrentCameraMode(cameraModeInputs[i].value);
-  });
-}
-
-for (let i = 0; i < menuTabButtons.length; i++) {
-  menuTabButtons[i].addEventListener('click', event => {
-    event.preventDefault();
-    event.stopPropagation();
-    const nextTab = menuTabButtons[i].dataset.menuTab;
-    if (!nextTab) return;
-    setMenuCentralTab(nextTab);
-  });
-}
 
 if (playButton) {
   playButton.addEventListener('click', event => {
@@ -949,7 +731,6 @@ const getVoxelBoxFromRaycastHit = typeof mapData.getVoxelBoxFromRaycastHit === '
   ? mapData.getVoxelBoxFromRaycastHit
   : () => null;
 const voxelTypes = Array.isArray(mapData.voxelTypes) ? mapData.voxelTypes : [];
-const voxelTypeByName = new Map(voxelTypes.map(type => [type.name, type]));
 const entityRaycastPoint = new THREE.Vector3();
 
 function getEntityRaycastHit(origin, direction, maxDistance) {
@@ -981,15 +762,6 @@ function getEntityRaycastHit(origin, direction, maxDistance) {
 
   return closestHit;
 }
-const PLAYER_INVENTORY_SLOT_COUNT = 32;
-const PLAYER_STACK_LIMIT = 99;
-const GAME_MODE_CREATIVE = 'creative';
-const GAME_MODE_SURVIVAL = 'survival';
-let gameMode = GAME_MODE_SURVIVAL;
-const playerInventory = Array.from({ length: PLAYER_INVENTORY_SLOT_COUNT }, () => null);
-let selectedInventorySlotIndex = 0;
-let selectedVoxelType = voxelTypes.find(type => type.name === 'green')?.name ?? voxelTypes[0]?.name ?? 'green';
-let selectedHotbarIndex = selectedInventorySlotIndex;
 const intersectMapColliderBox = typeof mapData.intersectColliderBox === 'function'
   ? mapData.intersectColliderBox
   : () => null;
@@ -1003,6 +775,16 @@ const SHADOW_RANGE = mapData.shadowRange ?? 80;
 const MINI_MAP_VIEW_SIZE = mapData.miniMapViewSize ?? 90;
 const MINI_MAP_HEIGHT = mapData.miniMapHeight ?? 130;
 const HAS_INFINITE_GROUND = mapData.hasInfiniteGround ?? true;
+const miniMapUI = createMiniMapUI({
+  miniMap,
+  scene,
+  camera,
+  entities,
+  playerEye,
+  groundY: GROUND_Y,
+  miniMapViewSize: MINI_MAP_VIEW_SIZE,
+  miniMapHeight: MINI_MAP_HEIGHT,
+});
 const FALL_RESPAWN_Y = -100;
 const playerSpawnPoint = mapData.spawnPoint.clone();
 playerSpawnPoint.y += 1;
@@ -1010,510 +792,17 @@ playerSpawnPoint.y += 1;
 playerEye.copy(playerSpawnPoint);
 camera.position.copy(playerEye);
 
-function getVoxelTypeColor(typeName) {
-  return voxelTypeByName.get(typeName)?.color ?? 0xffffff;
-}
-
-function getVoxelTypeHexColor(typeName) {
-  return `#${getVoxelTypeColor(typeName).toString(16).padStart(6, '0')}`;
-}
-
-function mixColorChannel(channel, target, amount) {
-  return Math.round(channel + (target - channel) * amount);
-}
-
-function tintHexColor(hexColor, amount) {
-  const normalized = hexColor.replace('#', '');
-  const color = Number.parseInt(normalized, 16);
-  const r = (color >> 16) & 0xff;
-  const g = (color >> 8) & 0xff;
-  const b = color & 0xff;
-  const target = amount >= 0 ? 255 : 0;
-  const strength = Math.abs(amount);
-
-  const tinted = (mixColorChannel(r, target, strength) << 16)
-    | (mixColorChannel(g, target, strength) << 8)
-    | mixColorChannel(b, target, strength);
-
-  return `#${tinted.toString(16).padStart(6, '0')}`;
-}
-
-function createVoxelIcon(hexColor) {
-  const icon = document.createElement('span');
-  icon.className = 'voxel-icon item-slot-icon';
-  const svgNamespace = 'http://www.w3.org/2000/svg';
-  const svg = document.createElementNS(svgNamespace, 'svg');
-  svg.setAttribute('viewBox', '0 0 64 64');
-  svg.setAttribute('aria-hidden', 'true');
-  svg.classList.add('voxel-icon__svg');
-
-  const top = document.createElementNS(svgNamespace, 'polygon');
-  top.setAttribute('points', '32,6 54,19 32,32 10,19');
-  top.setAttribute('fill', tintHexColor(hexColor, 0.38));
-  top.setAttribute('stroke', 'rgba(15, 18, 22, 0.92)');
-  top.setAttribute('stroke-width', '2');
-  top.setAttribute('stroke-linejoin', 'round');
-  svg.appendChild(top);
-
-  const left = document.createElementNS(svgNamespace, 'polygon');
-  left.setAttribute('points', '10,19 32,32 32,57 10,44');
-  left.setAttribute('fill', tintHexColor(hexColor, 0.1));
-  left.setAttribute('stroke', 'rgba(15, 18, 22, 0.92)');
-  left.setAttribute('stroke-width', '2');
-  left.setAttribute('stroke-linejoin', 'round');
-  svg.appendChild(left);
-
-  const right = document.createElementNS(svgNamespace, 'polygon');
-  right.setAttribute('points', '54,19 32,32 32,57 54,44');
-  right.setAttribute('fill', tintHexColor(hexColor, -0.18));
-  right.setAttribute('stroke', 'rgba(15, 18, 22, 0.92)');
-  right.setAttribute('stroke-width', '2');
-  right.setAttribute('stroke-linejoin', 'round');
-  svg.appendChild(right);
-
-  const edge = document.createElementNS(svgNamespace, 'polyline');
-  edge.setAttribute('points', '32,32 32,57');
-  edge.setAttribute('fill', 'none');
-  edge.setAttribute('stroke', 'rgba(15, 18, 22, 0.92)');
-  edge.setAttribute('stroke-width', '2');
-  edge.setAttribute('stroke-linecap', 'round');
-  edge.setAttribute('stroke-linejoin', 'round');
-  svg.appendChild(edge);
-
-  icon.appendChild(svg);
-
-  return icon;
-}
-
-function getSelectedSurvivalStack() {
-  return playerInventory[selectedInventorySlotIndex];
-}
-
-function findInventorySlotIndexByType(typeName) {
-  if (!typeName) return -1;
-  return playerInventory.findIndex(stack => stack?.typeName === typeName);
-}
-
-function inventoryHasType(typeName) {
-  return findInventorySlotIndexByType(typeName) >= 0;
-}
-
-function syncSelectedVoxelTypeFromMode() {
-  const selectedStack = getSelectedSurvivalStack();
-  if (selectedStack?.typeName) {
-    selectedVoxelType = selectedStack.typeName;
-  }
-}
-
-function getSelectedInventoryLabel() {
-  const slotNumber = selectedInventorySlotIndex + 1;
-  const selectedStack = getSelectedSurvivalStack();
-  if (!selectedStack) {
-    return `Selected slot: ${slotNumber} (empty)`;
-  }
-  return "Selected slot: " + slotNumber + " (" + selectedStack.typeName + (selectedStack.count > 1 ? " x" + selectedStack.count : "") + ")";
-}
-
-function updateGameModeUI() {
-  if (gameModeReadout) {
-    const modeLabel = gameMode === GAME_MODE_SURVIVAL ? 'Survival' : 'Creative';
-    gameModeReadout.textContent = `Mode: ${modeLabel}`;
-  }
-
-  for (let i = 0; i < gameModeButtons.length; i++) {
-    const isActive = gameModeButtons[i].dataset.gameMode === gameMode;
-    gameModeButtons[i].classList.toggle('is-active', isActive);
-  }
-}
-
-function setGameMode(nextMode) {
-  const normalizedMode = nextMode === GAME_MODE_SURVIVAL ? GAME_MODE_SURVIVAL : GAME_MODE_CREATIVE;
-  if (gameMode === normalizedMode) {
-    updateGameModeUI();
-    updateInventorySelectionUI();
-    renderPlayerInventorySlots();
-    return;
-  }
-
-  gameMode = normalizedMode;
-  if (gameMode === GAME_MODE_SURVIVAL) {
-    selectedHotbarIndex = selectedInventorySlotIndex < hotbarSlotEls.length ? selectedInventorySlotIndex : -1;
-  }
-  syncSelectedVoxelTypeFromMode();
-  updateGameModeUI();
-  updateInventorySelectionUI();
-  renderPlayerInventorySlots();
-}
-
-function addItemToInventory(typeName, amount = 1) {
-  if (!typeName || amount <= 0) return 0;
-
-  let remaining = amount;
-
-  for (let i = 0; i < playerInventory.length && remaining > 0; i++) {
-    const stack = playerInventory[i];
-    if (!stack || stack.typeName !== typeName || stack.count >= PLAYER_STACK_LIMIT) continue;
-    const freeSpace = PLAYER_STACK_LIMIT - stack.count;
-    const movedAmount = Math.min(freeSpace, remaining);
-    stack.count += movedAmount;
-    remaining -= movedAmount;
-  }
-
-  for (let i = 0; i < playerInventory.length && remaining > 0; i++) {
-    if (playerInventory[i]) continue;
-    const movedAmount = Math.min(PLAYER_STACK_LIMIT, remaining);
-    playerInventory[i] = { typeName, count: movedAmount };
-    remaining -= movedAmount;
-  }
-
-  renderPlayerInventorySlots();
-  updateInventorySelectionUI();
-  return amount - remaining;
-}
-
-function consumeSelectedInventoryItem(amount = 1) {
-  const selectedStack = getSelectedSurvivalStack();
-  if (!selectedStack || amount <= 0) return false;
-  if (selectedStack.count < amount) return false;
-
-  selectedStack.count -= amount;
-  if (selectedStack.count <= 0) {
-    playerInventory[selectedInventorySlotIndex] = null;
-  }
-
-  syncSelectedVoxelTypeFromMode();
-  renderPlayerInventorySlots();
-  updateInventorySelectionUI();
-  return true;
-}
-
-function selectInventorySlot(index) {
-  if (index < 0 || index >= playerInventory.length) return;
-  selectedInventorySlotIndex = index;
-  selectedHotbarIndex = index < hotbarSlotEls.length ? index : -1;
-  syncSelectedVoxelTypeFromMode();
-  renderPlayerInventorySlots();
-  updateInventorySelectionUI();
-}
-
-function handlePlayerInventorySlotClick(index) {
-  if (suppressInventorySlotClick) {
-    suppressInventorySlotClick = false;
-    return;
-  }
-  selectInventorySlot(index);
-}
-
-function clearInventoryDragPreview() {
-  inventoryDragPreview.hidden = true;
-  inventoryDragPreview.textContent = '';
-}
-
-function updateInventoryDragPreviewPosition(clientX, clientY) {
-  inventoryDragPreview.style.transform = `translate(${clientX - 32}px, ${clientY - 32}px)`;
-}
-
-function stopInventoryDrag() {
-  if (!inventoryDragState) return;
-  inventoryDragState.sourceElement?.classList.remove('is-drag-source');
-  inventoryDragState = null;
-  clearInventoryDragPreview();
-}
-
-function moveInventoryStack(sourceIndex, targetIndex) {
-  if (sourceIndex === targetIndex) return;
-  if (sourceIndex < 0 || sourceIndex >= playerInventory.length) return;
-  if (targetIndex < 0 || targetIndex >= playerInventory.length) return;
-
-  const movedStack = playerInventory[sourceIndex];
-  playerInventory[sourceIndex] = playerInventory[targetIndex];
-  playerInventory[targetIndex] = movedStack;
-
-  if (selectedInventorySlotIndex === sourceIndex) {
-    selectedInventorySlotIndex = targetIndex;
-  } else if (selectedInventorySlotIndex === targetIndex) {
-    selectedInventorySlotIndex = sourceIndex;
-  }
-
-  selectedHotbarIndex = selectedInventorySlotIndex < hotbarSlotEls.length ? selectedInventorySlotIndex : -1;
-  syncSelectedVoxelTypeFromMode();
-  renderPlayerInventorySlots();
-  updateInventorySelectionUI();
-}
-
-function beginInventorySlotDrag(index, event, element) {
-  if (!playerInventory[index]) return;
-  if (event.button !== undefined && event.button !== 0) return;
-
-  inventoryDragState = {
-    pointerId: event.pointerId,
-    sourceIndex: index,
-    sourceElement: element,
-    startX: event.clientX,
-    startY: event.clientY,
-    lastX: event.clientX,
-    lastY: event.clientY,
-    dragging: false,
-  };
-}
-
-function handleInventoryDragMove(event) {
-  if (!inventoryDragState || event.pointerId !== inventoryDragState.pointerId) return;
-
-  inventoryDragState.lastX = event.clientX;
-  inventoryDragState.lastY = event.clientY;
-
-  if (!inventoryDragState.dragging) {
-    const deltaX = event.clientX - inventoryDragState.startX;
-    const deltaY = event.clientY - inventoryDragState.startY;
-    if (Math.hypot(deltaX, deltaY) < 8) return;
-
-    inventoryDragState.dragging = true;
-    suppressInventorySlotClick = true;
-    inventoryDragState.sourceElement?.classList.add('is-drag-source');
-    const previewSlot = inventoryDragState.sourceElement?.cloneNode(true);
-    if (previewSlot) {
-      inventoryDragPreview.textContent = '';
-      inventoryDragPreview.appendChild(previewSlot);
-    }
-    inventoryDragPreview.hidden = false;
-  }
-
-  event.preventDefault();
-  updateInventoryDragPreviewPosition(event.clientX, event.clientY);
-}
-
-function handleInventoryDragEnd(event) {
-  if (!inventoryDragState || event.pointerId !== inventoryDragState.pointerId) return;
-
-  const { dragging, sourceIndex, lastX, lastY } = inventoryDragState;
-  const clientX = event.clientX ?? lastX;
-  const clientY = event.clientY ?? lastY;
-
-  if (dragging) {
-    event.preventDefault();
-    const dropTarget = document.elementFromPoint(clientX, clientY)?.closest?.('.inventory-menu-slot');
-    const targetIndex = Number(dropTarget?.dataset.slotIndex);
-    if (Number.isInteger(targetIndex)) {
-      moveInventoryStack(sourceIndex, targetIndex);
-    }
-    window.setTimeout(() => {
-      suppressInventorySlotClick = false;
-    }, 0);
-  }
-
-  stopInventoryDrag();
-}
-
-function addCreativeInventoryItem(typeName) {
-  const added = addItemToInventory(typeName, 1);
-  if (added <= 0) return;
-
-  const slotIndex = findInventorySlotIndexByType(typeName);
-  if (slotIndex >= 0) {
-    selectInventorySlot(slotIndex);
-  }
-}
-
-function renderInventorySlots() {
-  if (!inventorySlots) return;
-  inventorySlots.textContent = '';
-  inventorySlotEls = [];
-
-  for (let i = 0; i < voxelTypes.length; i++) {
-    const voxelType = voxelTypes[i];
-    const slot = document.createElement('button');
-    slot.type = 'button';
-    slot.className = 'hotbar-slot creative-slot';
-    slot.dataset.voxelType = voxelType.name;
-
-    const swatch = createVoxelIcon(getVoxelTypeHexColor(voxelType.name));
-    slot.appendChild(swatch);
-
-    const label = document.createElement('span');
-    label.className = 'hotbar-slot-label';
-    label.textContent = voxelType.name;
-    slot.appendChild(label);
-
-    slot.addEventListener('click', () => {
-      if (gameMode === GAME_MODE_CREATIVE) {
-        addCreativeInventoryItem(voxelType.name);
-        return;
-      }
-      selectedVoxelType = voxelType.name;
-      updateInventorySelectionUI();
-    });
-
-    inventorySlots.appendChild(slot);
-    inventorySlotEls.push(slot);
-  }
-
-  updateInventorySelectionUI();
-}
-
-function renderPlayerInventorySlots() {
-  if (!playerInventorySlots) return;
-  playerInventorySlots.textContent = '';
-
-  for (let i = 0; i < PLAYER_INVENTORY_SLOT_COUNT; i++) {
-    const stack = playerInventory[i];
-    const slot = document.createElement('button');
-    slot.type = 'button';
-    slot.className = 'hotbar-slot inventory-menu-slot';
-    slot.dataset.slotIndex = String(i);
-    if (!stack) {
-      slot.classList.add('is-empty');
-    }
-    if (i === selectedInventorySlotIndex) {
-      slot.classList.add('is-selected');
-    }
-
-    if (stack) {
-      const swatch = createVoxelIcon(getVoxelTypeHexColor(stack.typeName));
-      slot.appendChild(swatch);
-    }
-
-    const label = document.createElement('span');
-    label.className = 'hotbar-slot-label';
-    label.textContent = stack ? stack.typeName : 'empty';
-    slot.appendChild(label);
-
-    const count = document.createElement('span');
-    count.className = 'hotbar-slot-count';
-    count.textContent = stack && stack.count > 1 ? String(stack.count) : '';
-    slot.appendChild(count);
-
-    slot.addEventListener('click', () => {
-      handlePlayerInventorySlotClick(i);
-    });
-    slot.addEventListener('pointerdown', event => {
-      beginInventorySlotDrag(i, event, slot);
-    });
-
-    playerInventorySlots.appendChild(slot);
-  }
-
-  if (playerInventorySummary) {
-    const totalItems = playerInventory.reduce((sum, stack) => sum + (stack?.count ?? 0), 0);
-    playerInventorySummary.textContent = `${totalItems} / ${PLAYER_INVENTORY_SLOT_COUNT * PLAYER_STACK_LIMIT} items`;
-  }
-
-  if (playerInventorySelection) {
-    playerInventorySelection.textContent = getSelectedInventoryLabel();
-  }
-}
-
-function updateInventorySelectionUI() {
-  if (inventorySelected) {
-    const selectedStack = getSelectedSurvivalStack();
-    inventorySelected.textContent = selectedStack
-      ? ("Selected: " + selectedStack.typeName + (selectedStack.count > 1 ? " x" + selectedStack.count : ""))
-      : 'Selected: empty slot';
-  }
-  if (!inventorySlots) return;
-
-  for (let i = 0; i < inventorySlotEls.length; i++) {
-    const slot = inventorySlotEls[i];
-    const selectedStack = getSelectedSurvivalStack();
-    const isSelected = slot.dataset.voxelType === selectedStack?.typeName;
-    slot.classList.toggle('is-selected', isSelected);
-  }
-
-  for (let i = 0; i < hotbarSlotEls.length; i++) {
-    hotbarSlotEls[i].classList.toggle('is-selected', i === selectedHotbarIndex);
-    hotbarSlotEls[i].textContent = '';
-
-    const stack = playerInventory[i];
-    if (!stack) continue;
-
-    const swatch = createVoxelIcon(getVoxelTypeHexColor(stack.typeName));
-    hotbarSlotEls[i].appendChild(swatch);
-
-    const label = document.createElement('span');
-    label.className = 'hotbar-slot-label';
-    label.textContent = stack.typeName;
-    hotbarSlotEls[i].appendChild(label);
-
-    const count = document.createElement('span');
-    count.className = 'hotbar-slot-count';
-    count.textContent = stack.count > 1 ? String(stack.count) : '';
-    hotbarSlotEls[i].appendChild(count);
-  }
-
-  if (playerInventorySelection) {
-    playerInventorySelection.textContent = getSelectedInventoryLabel();
-  }
-}
-
-function selectHotbarSlot(index) {
-  if (index < 0 || index >= hotbarSlotEls.length) return;
-  selectedHotbarIndex = index;
-  selectedInventorySlotIndex = index;
-  selectedHotbarIndex = index;
-  syncSelectedVoxelTypeFromMode();
-  updateInventorySelectionUI();
-  renderPlayerInventorySlots();
-}
-
-for (let i = 0; i < hotbarSlotEls.length; i++) {
-  const slot = hotbarSlotEls[i];
-  slot.setAttribute('role', 'button');
-  slot.setAttribute('tabindex', '0');
-  slot.setAttribute('aria-label', `Select hotbar slot ${i + 1}`);
-
-  slot.addEventListener('mousedown', event => {
-    event.preventDefault();
-    event.stopPropagation();
-    selectHotbarSlot(i);
-  });
-
-  slot.addEventListener('touchstart', event => {
-    event.preventDefault();
-    event.stopPropagation();
-    selectHotbarSlot(i);
-  }, { passive: false });
-
-  slot.addEventListener('click', event => {
-    event.preventDefault();
-    event.stopPropagation();
-    selectHotbarSlot(i);
-  });
-
-  slot.addEventListener('keydown', event => {
-    if (event.key !== 'Enter' && event.key !== ' ') return;
-    event.preventDefault();
-    selectHotbarSlot(i);
-  });
-}
-
-document.addEventListener('pointermove', handleInventoryDragMove, { passive: false });
-document.addEventListener('pointerup', handleInventoryDragEnd);
-document.addEventListener('pointercancel', handleInventoryDragEnd);
-
-renderInventorySlots();
-renderPlayerInventorySlots();
-updateGameModeUI();
-
-const miniMapCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 500);
-miniMapCamera.up.set(0, 0, -1);
-scene.add(miniMapCamera);
-
-function updateMiniMapSize() {
-  const width = miniMap.clientWidth || 200;
-  const height = miniMap.clientHeight || 200;
-  const aspect = width / height;
-  const halfHeight = MINI_MAP_VIEW_SIZE * 0.5;
-  const halfWidth = halfHeight * aspect;
-
-  miniMapCamera.left = -halfWidth;
-  miniMapCamera.right = halfWidth;
-  miniMapCamera.top = halfHeight;
-  miniMapCamera.bottom = -halfHeight;
-  miniMapCamera.updateProjectionMatrix();
-
-  miniMapRenderer.setSize(width, height, false);
-}
-
+const inventoryUI = createInventoryUI({
+  inventorySlots,
+  inventorySelected,
+  playerInventorySlots,
+  playerInventorySummary,
+  playerInventorySelection,
+  hotbarSlotEls,
+  gameModeReadout,
+  gameModeButtons,
+  voxelTypes,
+});
 dir.shadow.camera.left = -SHADOW_RANGE;
 dir.shadow.camera.right = SHADOW_RANGE;
 dir.shadow.camera.top = SHADOW_RANGE;
@@ -1785,7 +1074,7 @@ function setDebugMode(nextEnabled) {
       nearbyCollisionHelpers[i].visible = false;
     }
   }
-  appendChatLine(`Debug mode ${nextEnabled ? 'enabled' : 'disabled'}.`);
+  chatUI.appendLine(`Debug mode ${nextEnabled ? 'enabled' : 'disabled'}.`);
 }
 
 function addDebugCollisionEntry(box, color = DEBUG_COLLISION_COLOR_WORLD) {
@@ -2056,34 +1345,6 @@ document.addEventListener('touchcancel', handleMobilePinchEnd, { passive: false 
 updatePlayerCollider(playerEye);
 syncPlayerBody();
 syncCameraToPlayerView();
-
-function getEntityMiniMapMarkerClass(entity) {
-  if (entity.miniMapType === 'chaser') return 'mini-map-marker--chaser';
-  if (entity.miniMapType === 'talker') return 'mini-map-marker--talker';
-  return 'mini-map-marker--walker';
-}
-
-function syncEntityMiniMapMarkers() {
-  const aliveEntities = new Set(entities);
-
-  for (let i = 0; i < entities.length; i++) {
-    const entity = entities[i];
-    let marker = entityMiniMapMarkers.get(entity);
-    if (!marker) {
-      marker = document.createElement('div');
-      marker.className = `mini-map-entity-marker ${getEntityMiniMapMarkerClass(entity)}`;
-      miniMap.appendChild(marker);
-      entityMiniMapMarkers.set(entity, marker);
-    }
-  }
-
-  for (const [entity, marker] of entityMiniMapMarkers.entries()) {
-    if (!aliveEntities.has(entity)) {
-      marker.remove();
-      entityMiniMapMarkers.delete(entity);
-    }
-  }
-}
 
 const PROJECTILE_RADIUS = 0.14;
 const PROJECTILE_SPEED = 42;
@@ -2393,10 +1654,10 @@ function triggerActionForMouseButton(button, options = {}) {
       const removedVoxelType = resolveRaycastLabel(currentRaycastState.hit);
       const removed = removeVoxelAtRaycastHit(currentRaycastState.hit);
       if (removed && removedVoxelType) {
-        if (gameMode === GAME_MODE_SURVIVAL) {
-          addItemToInventory(removedVoxelType, 1);
-        } else if (!inventoryHasType(removedVoxelType)) {
-          addCreativeInventoryItem(removedVoxelType);
+        if (inventoryUI.getGameMode() === GAME_MODE_SURVIVAL) {
+          inventoryUI.addItemToInventory(removedVoxelType, 1);
+        } else if (!inventoryUI.inventoryHasType(removedVoxelType)) {
+          inventoryUI.addCreativeInventoryItem(removedVoxelType);
         }
       }
       return;
@@ -2407,15 +1668,15 @@ function triggerActionForMouseButton(button, options = {}) {
 
   if (button === 2) {
     if (currentRaycastState.voxelEditionMode) {
-      const selectedStack = getSelectedSurvivalStack();
+      const selectedStack = inventoryUI.getSelectedSurvivalStack();
       if (!selectedStack?.typeName) return;
 
       const added = addVoxelAtRaycastHit(currentRaycastState.hit, {
         playerCollider,
         voxelType: selectedStack.typeName,
       });
-      if (added && gameMode === GAME_MODE_SURVIVAL) {
-          consumeSelectedInventoryItem(1);
+      if (added && inventoryUI.getGameMode() === GAME_MODE_SURVIVAL) {
+          inventoryUI.consumeSelectedInventoryItem(1);
       }
       return;
     }
@@ -2835,8 +2096,6 @@ const horizontalMove = new THREE.Vector3();
 const playerMoveFacing = new THREE.Vector3();
 const playerAimFacing = new THREE.Vector3();
 const worldUp = new THREE.Vector3(0, 1, 0);
-const miniMapFacing = new THREE.Vector3();
-const miniMapProjectedPos = new THREE.Vector3();
 const currentRaycastState = {
   hit: null,
   kind: null,
@@ -3107,51 +2366,6 @@ function updatePlayer(deltaTime) {
   syncCameraToPlayerView(deltaTime);
 }
 
-function updateMiniMap() {
-  miniMapCamera.position.set(playerEye.x, playerEye.y + MINI_MAP_HEIGHT, playerEye.z);
-  miniMapCamera.lookAt(playerEye.x, GROUND_Y, playerEye.z);
-
-  camera.getWorldDirection(miniMapFacing);
-  miniMapFacing.y = 0;
-
-  if (miniMapFacing.lengthSq() > 0.0001) {
-    miniMapFacing.normalize();
-    const markerAngle = Math.atan2(miniMapFacing.x, -miniMapFacing.z);
-    miniMapPlayerMarker.style.transform = `translate(-50%, -50%) rotate(${markerAngle}rad)`;
-  }
-
-  syncEntityMiniMapMarkers();
-  const width = miniMap.clientWidth || 200;
-  const height = miniMap.clientHeight || 200;
-
-  for (let i = 0; i < entities.length; i++) {
-    const entity = entities[i];
-    const marker = entityMiniMapMarkers.get(entity);
-    if (!marker) continue;
-
-    miniMapProjectedPos.set(entity.position.x, GROUND_Y, entity.position.z).project(miniMapCamera);
-    const insideView =
-      miniMapProjectedPos.z >= -1 &&
-      miniMapProjectedPos.z <= 1 &&
-      Math.abs(miniMapProjectedPos.x) <= 1 &&
-      Math.abs(miniMapProjectedPos.y) <= 1;
-    marker.style.display = insideView ? 'block' : 'none';
-    if (!insideView) continue;
-
-    const x = (miniMapProjectedPos.x * 0.5 + 0.5) * width;
-    const y = (-miniMapProjectedPos.y * 0.5 + 0.5) * height;
-    let markerAngle = 0;
-    if (entity.direction && entity.direction.lengthSq() > 0.0001) {
-      markerAngle = Math.atan2(entity.direction.x, -entity.direction.z);
-    }
-    marker.style.left = `${x}px`;
-    marker.style.top = `${y}px`;
-    marker.style.transform = `translate(-50%, -50%) rotate(${markerAngle}rad)`;
-  }
-
-  miniMapRenderer.render(scene, miniMapCamera);
-}
-
 // --------------------
 // RESIZE
 // --------------------
@@ -3161,14 +2375,14 @@ window.addEventListener('resize', () => {
 
   syncAppHeight();
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-  miniMapRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  miniMapUI.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   if (characterPreviewRenderer) {
     characterPreviewRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     updateCharacterPreviewSize();
   }
   updateModeFromViewport();
   updateSceneViewSize();
-  updateMiniMapSize();
+  miniMapUI.updateMiniMapSize();
   updatePlayerHealthUI();
 });
 
@@ -3305,7 +2519,7 @@ if (buttonLeft0) {
     gameAudio.unlockAudio(true);
     if (!mobileMode) return;
     event.preventDefault();
-    handleChatToggleAction();
+    chatUI.handleToggleAction();
   }, { passive: false });
 }
 
@@ -3453,7 +2667,7 @@ function updateMobileShooting(deltaTime) {
 function toggleMenuCentralTab(tabName) {
   if (mobileMode) return;
 
-  const sameTabOpen = isMenuCentralVisible() && activeMenuCentralTab === tabName;
+  const sameTabOpen = isMenuCentralVisible() && getActiveMenuCentralTab() === tabName;
   if (sameTabOpen) {
     activateDesktopScreenActivity();
     return;
@@ -3469,7 +2683,7 @@ function toggleMenuCentralTab(tabName) {
     deactivateDesktopScreenActivity(tabName);
     return;
   }
-  showMenuCentral(activeMenuCentralTab);
+  showMenuCentral(getActiveMenuCentralTab());
 }
 
 document.addEventListener('mousedown', event => {
@@ -3485,17 +2699,17 @@ document.addEventListener('pointerdown', () => {
 document.addEventListener('contextmenu', event => event.preventDefault());
 
 document.addEventListener('keydown', e => {
-  if (e.code === 'Escape' && chatBoxInput && !chatBoxInput.hidden) {
+  if (e.code === 'Escape' && chatUI.isInputOpen()) {
     e.preventDefault();
     e.stopPropagation();
-    hideChatInput();
+    chatUI.hideInput();
     return;
   }
 
   if (e.code === 'Escape' && (isScreenDragCameraActive() || (isLegoLolCameraMode() && !mobileMode && !isMenuCentralVisible()))) {
     e.preventDefault();
     e.stopPropagation();
-    deactivateDesktopScreenActivity(activeMenuCentralTab || 'settings');
+    deactivateDesktopScreenActivity(getActiveMenuCentralTab() || 'settings');
     return;
   }
 
@@ -3503,7 +2717,7 @@ document.addEventListener('keydown', e => {
     if (e.repeat) return;
     if (e.target === chatBoxInput || !isTypingTarget(e.target)) {
       e.preventDefault();
-      handleChatAction();
+      chatUI.handleAction();
       return;
     }
   }
@@ -3534,7 +2748,7 @@ document.addEventListener('keydown', e => {
     e.preventDefault();
     if (e.repeat) return;
     const slotIndex = Number(e.key) - 1;
-    selectHotbarSlot(slotIndex);
+    inventoryUI.selectHotbarSlot(slotIndex);
     return;
   }
 
@@ -3550,7 +2764,7 @@ let frames = 0;
 let accTime = 0;
 let fps = 0;
 
-updateMiniMapSize();
+miniMapUI.updateMiniMapSize();
 updatePlayerHealthUI();
 updateVoxelRaycast();
 
@@ -3613,7 +2827,7 @@ renderer.setAnimationLoop(() => {
     && characterPreviewCamera
     && characterPreviewModel
     && isMenuCentralVisible()
-    && activeMenuCentralTab === 'character'
+    && getActiveMenuCentralTab() === 'character'
   ) {
     updateCharacterPreviewSize();
     characterPreviewIdleCycle += delta * 0.65;
@@ -3622,5 +2836,5 @@ renderer.setAnimationLoop(() => {
   }
 
   renderer.render(scene, camera);
-  updateMiniMap();
+  miniMapUI.updateMiniMap();
 });
