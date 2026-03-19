@@ -57,6 +57,7 @@ scene.add(camera);
 const consola = document.getElementById('consola');
 const miniMap = document.getElementById('miniMap');
 const menuCentral = document.getElementById('menuCentral');
+const menuCloseButton = document.getElementById('menuCloseButton');
 const menuTabButtons = Array.from(document.querySelectorAll('#menuCentral .menu-tab'));
 const menuPanels = Array.from(document.querySelectorAll('#menuCentral .menu-panel'));
 const playButton = document.getElementById('playButton');
@@ -368,6 +369,18 @@ function showMenuCentral(tabName = getActiveMenuCentralTab(), { force = false } 
 function hideMenuCentral() {
   setMobileInventoryToggleState(false);
   menuUI.hide();
+}
+
+if (menuCloseButton) {
+  menuCloseButton.addEventListener('pointerdown', event => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (mobileMode) {
+      hideMenuCentral();
+      return;
+    }
+    activateDesktopScreenActivity();
+  });
 }
 
 const sceneView = document.getElementById('sceneView');
