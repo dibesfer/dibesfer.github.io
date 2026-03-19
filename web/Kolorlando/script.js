@@ -12,6 +12,7 @@ import { createGameAudio } from './audio.js';
 import { createMiniMapUI } from './code/UI/minimap.js';
 import { createMenuUI } from './code/UI/menu.js';
 import { createCameraModeController } from './code/graphics/camera.js';
+import { createScreenController } from './code/graphics/screen.js';
 import {
   createInventoryUI,
   GAME_MODE_SURVIVAL,
@@ -23,13 +24,6 @@ import { buildCityMap } from './maps/cityMap.js';
 import { buildVoxelandiaMap } from './maps/voxelandiaMap.js';
 
 let mobileMode = false;
-let windowWidth = window.innerWidth;
-let windowHeight = window.innerHeight;
-const MOBILE_BREAKPOINT = 900;
-const MODE_DESKTOP = 'desktop';
-const MODE_MOBILE_PORTRAIT = 'mobile-portrait';
-const MODE_MOBILE_LANDSCAPE = 'mobile-landscape';
-let activeMode = MODE_DESKTOP;
 const touchQuery = window.matchMedia('(hover: none) and (pointer: coarse)');
 const THIRD_PERSON_MAX_DISTANCE = 8;
 const LEGO_LOL_MIN_THIRD_PERSON_DISTANCE = 3;
@@ -99,6 +93,7 @@ const cameraModeWowInput = document.getElementById('cameraModeWow');
 const cameraModeLegoLolInput = document.getElementById('cameraModeLegoLol');
 let mobileShootPressed = false;
 let mobileSprintEnabled = false;
+let suppressRight3Click = false;
 let openingChatFromPointerLock = false;
 let characterPreviewDragState = null;
 const gameAudio = createGameAudio();
@@ -106,6 +101,7 @@ const systemMenuThemeQuery = window.matchMedia('(prefers-color-scheme: dark)');
 let wowCameraDragState = null;
 let wowCursorRaycastActive = false;
 let cameraModeController = null;
+let screenController = null;
 
 function isLegoLolCameraMode() {
   return cameraModeController ? cameraModeController.isLegoLolCameraMode() : false;
@@ -335,16 +331,13 @@ function initCharacterPreview() {
 }
 
 function syncAppHeight() {
-  document.documentElement.style.setProperty('--app-height', `${window.innerHeight}px`);
+  if (!screenController) return;
+  screenController.syncAppHeight();
 }
 
-function resolveMode() {
-  const hasTouchScreen = (navigator.maxTouchPoints ?? 0) > 1;
-  const isCoarsePointer = touchQuery.matches;
-  const touchMobileViewport = (hasTouchScreen || isCoarsePointer) && Math.max(windowWidth, windowHeight) <= 1400;
-  const isMobile = windowWidth < MOBILE_BREAKPOINT || touchMobileViewport;
-  if (!isMobile) return MODE_DESKTOP;
-  return windowWidth > windowHeight ? MODE_MOBILE_LANDSCAPE : MODE_MOBILE_PORTRAIT;
+function updateModeFromViewport() {
+  if (!screenController) return;
+  screenController.updateModeFromViewport();
 }
 
 function getActiveMenuCentralTab() {
@@ -374,47 +367,6 @@ function showMenuCentral(tabName = getActiveMenuCentralTab(), { force = false } 
 function hideMenuCentral() {
   setMobileInventoryToggleState(false);
   menuUI.hide();
-}
-
-function applyMode(mode) {
-  activeMode = mode;
-  document.body.dataset.mode = mode;
-
-  const shouldUseMobile = mode !== MODE_DESKTOP;
-  mobileMode = shouldUseMobile;
-  syncCameraModeAvailability();
-
-  if (shouldUseMobile) {
-    if (controls.isLocked) {
-      controls.unlock();
-    }
-    hideMenuCentral();
-    setElementHidden(menuInferior, false);
-    menuInferior.classList.add('flex');
-    return;
-  }
-
-  setMenuCentralTab(getActiveMenuCentralTab() || 'settings');
-  if (controls.isLocked) {
-    hideMenuCentral();
-  } else {
-    showMenuCentral(getActiveMenuCentralTab() || 'settings');
-  }
-  setElementHidden(menuInferior, true);
-  menuInferior.classList.remove('flex');
-  mobileShootPressed = false;
-  mobileSprintEnabled = false;
-  setShootButtonState(false);
-  setMobileChatToggleState(false);
-  setMobileSprintState(false);
-}
-
-function updateModeFromViewport() {
-  const nextMode = resolveMode();
-  if (nextMode !== activeMode) {
-    console.log(`Mode changed: ${activeMode} -> ${nextMode}`);
-  }
-  applyMode(nextMode);
 }
 
 const sceneView = document.getElementById('sceneView');
@@ -562,7 +514,8 @@ controls.addEventListener('unlock', () => {
 function controlLocker(event) {
   if (!isMenuCentralVisible()) return;
   const clickedInsideMenu = Boolean(event?.target?.closest?.('#menuCentral'));
-  if (clickedInsideMenu) return;
+  const clickedMenuToggleButton = Boolean(event?.target?.closest?.('#Right3'));
+  if (clickedInsideMenu || clickedMenuToggleButton) return;
 
   if (mobileMode) {
     hideMenuCentral();
@@ -573,6 +526,8 @@ function controlLocker(event) {
 
   activateDesktopScreenActivity();
 }
+
+document.addEventListener('pointerdown', controlLocker);
 
 function setInventoryPanelOpen(nextOpen, { allowMobile = false } = {}) {
   if (mobileMode) {
@@ -610,9 +565,6 @@ cameraModeController = createCameraModeController({
   },
 });
 setCurrentCameraMode(cameraModeController.getCurrentCameraMode());
-updateModeFromViewport();
-syncAppHeight();
-updateSceneViewSize();
 
 
 if (playButton) {
@@ -889,6 +841,55 @@ const playerHud = createPlayerHud({
   textEl: playerHealthText,
   maxHealth: PLAYER_MAX_HEALTH,
 });
+
+screenController = createScreenController({
+  touchQuery,
+  onMobileModeChange: nextMobileMode => {
+    mobileMode = nextMobileMode;
+  },
+  onSyncCameraModeAvailability: () => {
+    syncCameraModeAvailability();
+  },
+  onEnterMobileMode: () => {
+    if (controls.isLocked) {
+      controls.unlock();
+    }
+    hideMenuCentral();
+    setElementHidden(menuInferior, false);
+    menuInferior.classList.add('flex');
+  },
+  onEnterDesktopMode: () => {
+    setMenuCentralTab(getActiveMenuCentralTab() || 'settings');
+    if (controls.isLocked) {
+      hideMenuCentral();
+    } else {
+      showMenuCentral(getActiveMenuCentralTab() || 'settings');
+    }
+    setElementHidden(menuInferior, true);
+    menuInferior.classList.remove('flex');
+    mobileShootPressed = false;
+    mobileSprintEnabled = false;
+    setShootButtonState(false);
+    setMobileChatToggleState(false);
+    setMobileSprintState(false);
+  },
+  onPixelRatioChange: pixelRatio => {
+    renderer.setPixelRatio(pixelRatio);
+    miniMapUI.setPixelRatio(pixelRatio);
+    if (characterPreviewRenderer) {
+      characterPreviewRenderer.setPixelRatio(pixelRatio);
+      updateCharacterPreviewSize();
+    }
+  },
+  onResizeLayout: () => {
+    updateSceneViewSize();
+    miniMapUI.updateMiniMapSize();
+    updatePlayerHealthUI();
+  },
+});
+updateModeFromViewport();
+syncAppHeight();
+updateSceneViewSize();
 
 const playerCollider = new THREE.Box3();
 const playerFoot = new THREE.Vector3();
@@ -2369,22 +2370,6 @@ function updatePlayer(deltaTime) {
 // --------------------
 // RESIZE
 // --------------------
-window.addEventListener('resize', () => {
-  windowWidth = window.innerWidth;
-  windowHeight = window.innerHeight;
-
-  syncAppHeight();
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-  miniMapUI.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-  if (characterPreviewRenderer) {
-    characterPreviewRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    updateCharacterPreviewSize();
-  }
-  updateModeFromViewport();
-  updateSceneViewSize();
-  miniMapUI.updateMiniMapSize();
-  updatePlayerHealthUI();
-});
 
 let leftTouchId = null;
 let rightTouchId = null;
@@ -2634,6 +2619,7 @@ if (buttonRight3) {
   buttonRight3.addEventListener('touchstart', event => {
     gameAudio.unlockAudio(true);
     if (!mobileMode) return;
+    suppressRight3Click = true;
     event.preventDefault();
     event.stopPropagation();
     setInventoryPanelOpen(!isMenuCentralVisible(), { allowMobile: true });
@@ -2645,6 +2631,12 @@ if (buttonRight3) {
   }, { passive: false });
   buttonRight3.addEventListener('click', event => {
     if (!mobileMode) return;
+    if (suppressRight3Click) {
+      suppressRight3Click = false;
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
     event.preventDefault();
     event.stopPropagation();
     setInventoryPanelOpen(!isMenuCentralVisible(), { allowMobile: true });
