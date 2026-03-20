@@ -1,3 +1,5 @@
+import { createImageIcon, createVoxelIcon } from './icon.js';
+
 export const GAME_MODE_CREATIVE = 'creative';
 export const GAME_MODE_SURVIVAL = 'survival';
 
@@ -5,6 +7,7 @@ export function createInventoryUI(options) {
   const inventorySlots = options.inventorySlots;
   const inventorySelected = options.inventorySelected;
   const playerInventorySlots = options.playerInventorySlots;
+  const itemEncyclopediaSlots = options.itemEncyclopediaSlots;
   const playerInventorySummary = options.playerInventorySummary;
   const playerInventorySelection = options.playerInventorySelection;
   const hotbarSlotEls = options.hotbarSlotEls;
@@ -24,6 +27,13 @@ export function createInventoryUI(options) {
   let suppressInventorySlotClick = false;
   const inventoryDragPreview = document.createElement('div');
 
+  const encyclopediaItems = [
+    { name: 'Spawn Point', iconSrc: 'assets/icons/diamonds.png' },
+    { name: 'Gun', iconSrc: 'assets/weapons/pistol-gun.png' },
+    { name: 'Sword', iconSrc: 'assets/weapons/gladius.png' },
+  ];
+  const ENCYCLOPEDIA_ITEM_SLOT_COUNT = 16;
+
   inventoryDragPreview.className = 'inventory-drag-preview';
   inventoryDragPreview.hidden = true;
   document.body.appendChild(inventoryDragPreview);
@@ -37,59 +47,7 @@ export function createInventoryUI(options) {
     return '#' + getVoxelTypeColor(typeName).toString(16).padStart(6, '0');
   }
 
-  function mixColorChannel(channel, target, amount) {
-    return Math.round(channel + (target - channel) * amount);
-  }
 
-  function tintHexColor(hexColor, amount) {
-    const cleanHex = hexColor.replace('#', '');
-    const parsed = Number.parseInt(cleanHex, 16);
-    if (!Number.isFinite(parsed)) return hexColor;
-
-    const r = (parsed >> 16) & 0xff;
-    const g = (parsed >> 8) & 0xff;
-    const b = parsed & 0xff;
-    const tinted = (
-      (mixColorChannel(r, 255, amount) << 16)
-      | (mixColorChannel(g, 255, amount) << 8)
-      | mixColorChannel(b, 255, amount)
-    );
-
-    return '#' + tinted.toString(16).padStart(6, '0');
-  }
-
-  function createVoxelIcon(hexColor) {
-    const icon = document.createElement('span');
-    const svgNs = 'http://www.w3.org/2000/svg';
-    const svg = document.createElementNS(svgNs, 'svg');
-    const top = document.createElementNS(svgNs, 'polygon');
-    const left = document.createElementNS(svgNs, 'polygon');
-    const right = document.createElementNS(svgNs, 'polygon');
-    const edge = document.createElementNS(svgNs, 'path');
-
-    icon.className = 'hotbar-slot-swatch';
-    icon.setAttribute('aria-hidden', 'true');
-    svg.setAttribute('viewBox', '0 0 64 64');
-
-    top.setAttribute('points', '32,6 56,18 32,30 8,18');
-    top.setAttribute('fill', tintHexColor(hexColor, 0.22));
-    left.setAttribute('points', '8,18 32,30 32,56 8,44');
-    left.setAttribute('fill', tintHexColor(hexColor, 0.06));
-    right.setAttribute('points', '56,18 32,30 32,56 56,44');
-    right.setAttribute('fill', hexColor);
-    edge.setAttribute('d', 'M32 6L56 18L32 30L8 18ZM32 30V56M8 18V44L32 56L56 44V18');
-    edge.setAttribute('fill', 'none');
-    edge.setAttribute('stroke', 'rgba(15,23,42,0.35)');
-    edge.setAttribute('stroke-width', '3');
-    edge.setAttribute('stroke-linejoin', 'round');
-
-    svg.appendChild(top);
-    svg.appendChild(left);
-    svg.appendChild(right);
-    svg.appendChild(edge);
-    icon.appendChild(svg);
-    return icon;
-  }
 
   function getSelectedSurvivalStack() {
     return playerInventory[selectedInventorySlotIndex];
@@ -393,6 +351,31 @@ export function createInventoryUI(options) {
     if (slotIndex >= 0) selectInventorySlot(slotIndex);
   }
 
+  function renderItemEncyclopediaSlots() {
+    if (!itemEncyclopediaSlots) return;
+    itemEncyclopediaSlots.textContent = '';
+
+    for (let i = 0; i < ENCYCLOPEDIA_ITEM_SLOT_COUNT; i += 1) {
+      const itemEntry = encyclopediaItems[i] || null;
+      const slot = document.createElement('button');
+      const label = document.createElement('span');
+
+      slot.type = 'button';
+      slot.className = 'hotbar-slot encyclopedia-item-slot';
+      if (!itemEntry) slot.classList.add('is-empty');
+
+      if (itemEntry) {
+        slot.appendChild(createImageIcon(itemEntry.iconSrc, itemEntry.name));
+      }
+
+      label.className = 'hotbar-slot-label';
+      label.textContent = itemEntry ? itemEntry.name : 'empty';
+      slot.appendChild(label);
+
+      itemEncyclopediaSlots.appendChild(slot);
+    }
+  }
+
   function renderInventorySlots() {
     if (!inventorySlots) return;
     inventorySlots.textContent = '';
@@ -479,6 +462,7 @@ export function createInventoryUI(options) {
   document.addEventListener('pointercancel', handleInventoryDragEnd);
 
   renderInventorySlots();
+  renderItemEncyclopediaSlots();
   renderPlayerInventorySlots();
   updateGameModeUI();
 

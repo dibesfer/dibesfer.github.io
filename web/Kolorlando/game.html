@@ -74,7 +74,7 @@
         <div id="menuCloseButton" >X</div>
         <h1 class="not-on-landscape">Kolorlando</h1>
         <div class="menu-tabs" role="tablist" aria-label="Main menu sections">
-            <button class="menu-tab" type="button" data-menu-tab="creative">CREATIVE</button>
+            <button class="menu-tab" type="button" data-menu-tab="creative">ENCYCLOPEDIA</button>
             <button class="menu-tab" type="button" data-menu-tab="inventory">INVENTORY</button>
             <button class="menu-tab" type="button" data-menu-tab="character">CHARACTER</button>
             <button class="menu-tab is-active" type="button" data-menu-tab="settings">SETTINGS</button>
@@ -82,10 +82,16 @@
         </div>
 
         <section class="menu-panel" data-menu-panel="creative">
-            <h2>Creative</h2>
+            <h2>Encyclopedia</h2>
+            <h3>Voxels</h3>
             <div id="inventorySlots"></div>
+            
+            <h3>Items</h3>
+            <div id="itemEncyclopediaSlots"></div>
+
             <p id="inventorySelected">Selected: green</p>
-            <p class="inventory-help">Press <code>C</code> to open this tab quickly.</p>
+            
+            <p class="inventory-help">Press <code>C</code> to open Encyclopedia quickly.</p>
         </section>
 
         <section class="menu-panel" data-menu-panel="inventory">
@@ -215,7 +221,7 @@
             <p>Click PLAY to lock your cursor and drive the camera.</p>
             <p>Move with WASD</p>
             <p>Jump with Space</p>
-            <p>Press <code>C</code> for Creative</p>
+            <p>Press <code>C</code> for Encyclopedia</p>
             <p>Press <code>I</code> for Inventory</p>
             <p>Type <code>/debugmode</code> in chat to toggle collision debug boxes.</p>
             <p>Desktop: clicking outside this menu closes it and returns to cursor lock.</p>

@@ -23,27 +23,20 @@ function measureModelHeight(root) {
   return size.y;
 }
 
-function measureModelBoundingRadius(root) {
+function centerModelOnBounds(root, { x = false, y = false, z = false } = {}) {
   root.updateWorldMatrix(true, true);
   const bounds = new THREE.Box3().setFromObject(root);
-  const sphere = new THREE.Sphere();
-  bounds.getBoundingSphere(sphere);
-  return sphere.radius;
-}
-
-function normalizeModelHeight(root, targetHeight) {
-  if (!(targetHeight > 0)) {
-    return measureModelHeight(root);
-  }
-
-  const currentHeight = measureModelHeight(root);
-  if (!(currentHeight > 0)) return 0;
-
-  const scale = targetHeight / currentHeight;
-  root.scale.multiplyScalar(scale);
+  const center = new THREE.Vector3();
+  bounds.getCenter(center);
+  if (x) root.position.x -= center.x;
+  if (y) root.position.y -= center.y;
+  if (z) root.position.z -= center.z;
   root.updateWorldMatrix(true, true);
-  return measureModelHeight(root);
 }
+
+const DEFAULT_RAYCAST_SPHERE_RADIUS = 0.9;
+const DEFAULT_ITEM_PLACEMENT_HEIGHT = 1;
+const GOXEL_MODEL_SCALE = 0.1;
 
 function createDefaultItemModel({
   color = 0xffcf4a,
@@ -110,13 +103,16 @@ export class ItemAppearance {
     label = 'Item',
     model = null,
     modelUrl = null,
-    modelTargetHeight = null,
     modelRotation = null,
     groundY = 0,
     floatHeight = 0.5,
     rotationSpeed = 0.55,
     castShadow = true,
     receiveShadow = false,
+    raycastSphereRadius = DEFAULT_RAYCAST_SPHERE_RADIUS,
+    modelScale = 1,
+    placementHeight = DEFAULT_ITEM_PLACEMENT_HEIGHT,
+    centerModel = false,
   }) {
     this.scene = scene;
     this.position = position.clone();
@@ -125,11 +121,13 @@ export class ItemAppearance {
     this.floatHeight = floatHeight;
     this.rotationSpeed = rotationSpeed;
     this.modelHeight = 0;
-    this.modelBoundingRadius = 0;
     this.modelRotation = modelRotation;
     this.castShadow = castShadow;
     this.receiveShadow = receiveShadow;
-    this.modelTargetHeight = modelTargetHeight ?? (modelUrl ? 1.2 : null);
+    this.raycastSphereRadius = raycastSphereRadius;
+    this.modelScale = modelScale;
+    this.placementHeight = placementHeight;
+    this.centerModel = centerModel;
 
     const resolvedModel = model ?? (modelUrl
       ? createLoadingPlaceholder({ castShadow, receiveShadow })
@@ -162,16 +160,15 @@ export class ItemAppearance {
       this.modelHeight = measureModelHeight(modelDefinition.root);
     }
 
-    this.modelBoundingRadius = measureModelBoundingRadius(modelDefinition.root);
-
     this.syncPosition();
   }
 
   syncPosition() {
     this.group.position.copy(this.position);
-    this.group.position.y = this.groundY + this.floatHeight + this.modelHeight * 0.5;
+    const placementHeight = this.placementHeight > 0 ? this.placementHeight : this.modelHeight;
+    this.group.position.y = this.groundY + this.floatHeight + placementHeight * 0.5;
     this.raycastSphere.center.copy(this.group.position);
-    this.raycastSphere.radius = this.modelBoundingRadius;
+    this.raycastSphere.radius = this.raycastSphereRadius;
   }
 
   loadModelFromUrl(modelUrl) {
@@ -185,7 +182,16 @@ export class ItemAppearance {
           return;
         }
 
-        const height = normalizeModelHeight(root, this.modelTargetHeight);
+        if (this.modelScale !== 1) {
+          root.scale.multiplyScalar(this.modelScale);
+          root.updateWorldMatrix(true, true);
+        }
+
+        if (this.centerModel) {
+          centerModelOnBounds(root, { x: true, y: true, z: true });
+        }
+
+        const height = measureModelHeight(root);
 
         applyShadows(root, this.castShadow, this.receiveShadow);
         this.setModel({ root, height });
@@ -200,5 +206,16 @@ export class ItemAppearance {
 
   update(deltaTime) {
     this.group.rotation.y += this.rotationSpeed * deltaTime;
+  }
+}
+
+
+export class GoxelItemAppearance extends ItemAppearance {
+  constructor(options) {
+    super({
+      ...options,
+      modelScale: GOXEL_MODEL_SCALE,
+      centerModel: true,
+    });
   }
 }

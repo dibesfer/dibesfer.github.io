@@ -565,6 +565,7 @@ img {
 
 #playerInventorySlots,
 #inventorySlots,
+#itemEncyclopediaSlots,
 #hotbar {
     display: grid;
     grid-template-columns: repeat(8, minmax(0, 1fr));
@@ -577,7 +578,8 @@ img {
 }
 
 #playerInventorySlots,
-#inventorySlots {
+#inventorySlots,
+#itemEncyclopediaSlots {
     margin-top: 10px;
 }
 
@@ -596,12 +598,34 @@ img {
     padding: 8px 10px;
 }
 
-.voxel-icon {
+.icon-chip {
     position: relative;
     width: 46px;
     height: 46px;
     flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     filter: drop-shadow(1px 2px 0 rgba(0, 0, 0, 0.3));
+}
+
+.icon-chip__square {
+    display: block;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    background: #4a90ff;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 0 0 2px rgba(15, 23, 42, 0.18);
+}
+
+.image-icon__img {
+    display: block;
+    width: 34px;
+    height: 34px;
+    object-fit: contain;
+}
+
+.voxel-icon {
 }
 
 .voxel-icon__svg {
@@ -752,13 +776,15 @@ img {
 }
 
 .creative-slot,
-.inventory-menu-slot {
+.inventory-menu-slot,
+.encyclopedia-item-slot {
     border-color: rgba(255, 255, 255, 0.45);
     background: rgba(255, 255, 255, 0.08);
 }
 
 .creative-slot:hover,
-.inventory-menu-slot:hover {
+.inventory-menu-slot:hover,
+.encyclopedia-item-slot:hover {
     background: rgba(255, 248, 188, 0.14);
 }
 

@@ -19,7 +19,7 @@ import {
 } from './code/UI/inventory.js';
 import { createChatUI } from './code/UI/chat.js';
 import { createPlayerHud } from './playerHud.js';
-import { ItemAppearance } from './itemAppearance.js';
+import { GoxelItemAppearance, ItemAppearance } from './itemAppearance.js';
 import { buildSimpleMap } from './maps/simpleMap.js';
 import { buildCityMap } from './maps/cityMap.js';
 import { buildVoxelandiaMap } from './maps/voxelandiaMap.js';
@@ -65,6 +65,7 @@ const menuInferior = document.getElementById('menuInferior');
 const inventorySlots = document.getElementById('inventorySlots');
 const inventorySelected = document.getElementById('inventorySelected');
 const playerInventorySlots = document.getElementById('playerInventorySlots');
+const itemEncyclopediaSlots = document.getElementById('itemEncyclopediaSlots');
 const playerInventorySummary = document.getElementById('playerInventorySummary');
 const playerInventorySelection = document.getElementById('playerInventorySelection');
 const hotbarSlotEls = Array.from(document.querySelectorAll('#hotbar .hotbar-slot'));
@@ -844,17 +845,16 @@ itemAppearances.push(new ItemAppearance({
 }));
 
 const swordItemSpawnPosition = firstItemSpawnPosition.clone().add(new THREE.Vector3(2.8, 0, -0.8));
-itemAppearances.push(new ItemAppearance({
+itemAppearances.push(new GoxelItemAppearance({
   scene,
   position: swordItemSpawnPosition,
   label: 'Sword',
   groundY: GROUND_Y,
   modelUrl: 'assets/3D/weapons/sword.gltf',
-  modelRotation: new THREE.Euler(0, THREE.MathUtils.degToRad(90), 0),
 }));
 
 const gunItemSpawnPosition = firstItemSpawnPosition.clone().add(new THREE.Vector3(0, 0, 5));
-itemAppearances.push(new ItemAppearance({
+itemAppearances.push(new GoxelItemAppearance({
   scene,
   position: gunItemSpawnPosition,
   label: 'Gun',
@@ -867,6 +867,7 @@ const inventoryUI = createInventoryUI({
   inventorySlots,
   inventorySelected,
   playerInventorySlots,
+  itemEncyclopediaSlots,
   playerInventorySummary,
   playerInventorySelection,
   hotbarSlotEls,
@@ -1186,7 +1187,7 @@ function getItemRaycastSphereHelper(index) {
         wireframe: true,
         transparent: true,
         opacity: 0.75,
-        depthTest: false,
+        depthWrite: false,
       })
     );
     helper.renderOrder = 997;
