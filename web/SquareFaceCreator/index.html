@@ -6,13 +6,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>dbf - SFC</title>
     <style>
-
         * {
             box-sizing: border-box;
         }
+
         img {
             max-width: 100%;
         }
+
         body {
             font-family: sans-serif;
         }
@@ -25,7 +26,7 @@
         main {
             max-width: 500px;
             margin: auto;
-            
+
         }
 
         .canvas-wrapper {
@@ -35,11 +36,14 @@
         }
 
         .categoryPicker {
-            background-color: gray;
             
-            width: 600px;
+            overflow: auto;
+        }
+
+        .category-wrapper {
             display: flex;
-            
+            width: 600px;
+            background-color: gray;
         }
 
         .faceItemGrid {
@@ -47,14 +51,16 @@
             display: flex;
             flex-wrap: wrap;
         }
-        .category , .faceItem {
+
+        .category,
+        .faceItem {
             border: solid 1px white;
             width: 25%;
             flex: 25%;
             aspect-ratio: 1;
         }
 
-        .faceItem > img {
+        .faceItem>img {
             height: 100%;
             object-fit: contain;
         }
@@ -70,26 +76,44 @@
             <canvas></canvas>
         </div>
         <div class="categoryPicker">
-            <div class="category"></div>
-            <div class="category"></div>
-            <div class="category"></div>
-            <div class="category"></div>
-            <div class="category"></div>
-            <div class="category"></div>
+            <div class="category-wrapper">
+                <div class="category">
+                    Eyes
+                </div>
+                <div class="category">
+                    Eyebrows
+                </div>
+                <div class="category">
+                    Nose
+                </div>
+                <div class="category">
+                    mouth
+                </div>
+                <div class="category">
+                    ears
+                </div>
+                <div class="category">
+                    hair
+                </div>
+            </div>
         </div>
         <div class="faceItemGrid">
 
             <div class="faceItem">
-                <img src="https://t4.ftcdn.net/jpg/05/15/85/45/360_F_515854547_vG0mwDLMAtxwvjTME7kkbGu0rX5Fp0d3.jpg" alt="">
+                <img src="https://t4.ftcdn.net/jpg/05/15/85/45/360_F_515854547_vG0mwDLMAtxwvjTME7kkbGu0rX5Fp0d3.jpg"
+                    alt="">
             </div>
             <div class="faceItem">
-                <img src="https://static.vecteezy.com/system/resources/thumbnails/038/557/145/small/anime-girl-s-eyes-in-a-manga-comic-book-frame-fancy-illustration-in-cartoon-style-vector.jpg" alt="">
+                <img src="https://static.vecteezy.com/system/resources/thumbnails/038/557/145/small/anime-girl-s-eyes-in-a-manga-comic-book-frame-fancy-illustration-in-cartoon-style-vector.jpg"
+                    alt="">
             </div>
             <div class="faceItem">
-                <img src="https://www.shutterstock.com/image-vector/crying-eyes-anime-manga-girls-260nw-783306307.jpg" alt="">
+                <img src="https://www.shutterstock.com/image-vector/crying-eyes-anime-manga-girls-260nw-783306307.jpg"
+                    alt="">
             </div>
             <div class="faceItem">
-                <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRYsDuHNL4TPq7wN195KM2cjMrmXimbgY8mMA&s" alt="">
+                <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRYsDuHNL4TPq7wN195KM2cjMrmXimbgY8mMA&s"
+                    alt="">
             </div>
             <div class="faceItem"></div>
             <div class="faceItem"></div>
