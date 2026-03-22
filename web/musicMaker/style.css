@@ -9,6 +9,7 @@ body {
     font-family: sans-serif;
     background-color: rgb(0, 81, 152);
     color: white;
+    line-height: 1.7;
 }
 
 hr {
@@ -23,11 +24,22 @@ header , footer {
     display: flex;
     justify-content: center;
     align-items: center;
+    flex-wrap: wrap;
     gap: 10px;
     margin-bottom: 12px;
 }
-#musicSettings select {
+#musicSettings select,
+#musicSettings input {
     font-size: 1rem;
+}
+
+#volumeRange {
+    width: 140px;
+}
+
+#volumeValue {
+    min-width: 3.5rem;
+    font-weight: 700;
 }
 #musicBox {
     border: solid 3px white;
@@ -110,3 +122,59 @@ header , footer {
 .fiveNotesNote:nth-child(3) { background: #009900; } /* F# from F */
 .fiveNotesNote:nth-child(4) { background: #000099; } /* G# from G */
 .fiveNotesNote:nth-child(5) { background: #2f0050; } /* A# from A */
+
+
+#randomPlayer , #reader, #backgroundMusic {
+    background-color: #2f0050;
+    border: solid 3px white;
+    border-radius: 15px;
+    padding: 15px;
+    background-color: rgb(0, 48, 0);
+}
+
+#randomToggle,
+#readerToggle,
+#bgMusicToggle {
+    margin-top: 12px;
+    border: solid 3px white;
+    border-radius: 12px;
+    padding: 10px;
+    text-align: center;
+    font-weight: 700;
+    cursor: pointer;
+    user-select: none;
+}
+
+#randomToggle:hover,
+#readerToggle:hover,
+#bgMusicToggle:hover {
+    background-color: rgba(255, 255, 255, 0.15);
+}
+
+#randomToggle.isPlaying,
+#readerToggle.isPlaying,
+#bgMusicToggle.isPlaying {
+    background-color: rgba(255, 255, 255, 0.25);
+}
+
+.nowPlaying {
+    margin-top: 12px;
+    border: solid 3px white;
+    border-radius: 12px;
+    padding: 10px;
+    text-align: center;
+    font-weight: 700;
+    background-color: rgba(255, 255, 255, 0.08);
+}
+
+#reader textarea {
+    width: 100%;
+    min-height: 220px;
+    margin-top: 10px;
+    padding: 10px;
+    border: solid 3px white;
+    border-radius: 12px;
+    background-color: rgba(255, 255, 255, 0.08);
+    color: white;
+    resize: vertical;
+}
