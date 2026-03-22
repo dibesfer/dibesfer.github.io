@@ -16,6 +16,7 @@
 
         body {
             font-family: sans-serif;
+            user-select: none;
         }
 
         header,
@@ -30,10 +31,19 @@
         }
 
         .canvas-wrapper {
-            background-color: blue;
+            position: relative;
+            border: solid 2px black;
             width: 100%;
             aspect-ratio: 1;
         }
+
+        .canvas-wrapper > canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+
 
         .categoryPicker {
             
@@ -52,6 +62,12 @@
             flex-wrap: wrap;
         }
 
+        .category {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
         .category,
         .faceItem {
             border: solid 1px white;
@@ -64,6 +80,40 @@
             height: 100%;
             object-fit: contain;
         }
+
+        .faceItem.selected {
+            background-color: gold;
+            border-color: black;
+            box-shadow: inset 0 0 0 4px red;
+        }
+
+        .canvas-background-picker {
+            position: absolute;
+            right: 5px;
+            bottom: 5px;
+            width: 48px;
+            height: 48px;
+            border: solid 2px black;
+            border-radius: 50%;
+            background: none;
+            padding: 0;
+            cursor: pointer;
+            overflow: hidden;
+        }
+
+        .canvas-background-picker::-webkit-color-swatch-wrapper {
+            padding: 0;
+        }
+
+        .canvas-background-picker::-webkit-color-swatch {
+            border: none;
+            border-radius: 50%;
+        }
+
+        .canvas-background-picker::-moz-color-swatch {
+            border: none;
+            border-radius: 50%;
+        }
     </style>
 </head>
 
@@ -74,25 +124,26 @@
     <main>
         <div class="canvas-wrapper">
             <canvas></canvas>
+            <input class="canvas-background-picker" type="color" value="#ffffff" aria-label="Canvas background color">
         </div>
         <div class="categoryPicker">
             <div class="category-wrapper">
-                <div class="category">
+                <div class="category" data-category="eyes">
                     Eyes
                 </div>
-                <div class="category">
+                <div class="category" data-category="eyebrows">
                     Eyebrows
                 </div>
-                <div class="category">
+                <div class="category" data-category="nose">
                     Nose
                 </div>
-                <div class="category">
+                <div class="category" data-category="mouth">
                     mouth
                 </div>
-                <div class="category">
+                <div class="category" data-category="ears">
                     ears
                 </div>
-                <div class="category">
+                <div class="category" data-category="hair">
                     hair
                 </div>
             </div>
@@ -133,6 +184,489 @@
     <footer>
         <p>made by dibesfer</p>
     </footer>
+    <script>
+        const canvasWrapper = document.querySelector(".canvas-wrapper");
+        const canvas = document.querySelector("canvas");
+        const context = canvas.getContext("2d");
+        const faceItems = document.querySelectorAll(".faceItem");
+        const categoryElements = document.querySelectorAll(".category");
+        const backgroundColorInput = document.querySelector(".canvas-background-picker");
+        let currentCategory = "eyes";
+        const selectedCategoryImages = {};
+        const loadedImageCache = {};
+        let canvasBackgroundColor = backgroundColorInput.value;
+
+        const categoryItems = {
+            // Each category keeps a fixed list of 16 item slots.
+            // Replace the example imgUrl values with your real image URLs.
+            eyes: [
+                { imgUrl: "assets/categories/eyes/SFC_eyes1.png" },
+                { imgUrl: "https://static.vecteezy.com/system/resources/thumbnails/038/557/145/small/anime-girl-s-eyes-in-a-manga-comic-book-frame-fancy-illustration-in-cartoon-style-vector.jpg" },
+                { imgUrl: "https://www.shutterstock.com/image-vector/crying-eyes-anime-manga-girls-260nw-783306307.jpg" },
+                { imgUrl: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRYsDuHNL4TPq7wN195KM2cjMrmXimbgY8mMA&s" },
+                { imgUrl: "REPLACE_WITH_EYES_05_URL" },
+                { imgUrl: "REPLACE_WITH_EYES_06_URL" },
+                { imgUrl: "REPLACE_WITH_EYES_07_URL" },
+                { imgUrl: "REPLACE_WITH_EYES_08_URL" },
+                { imgUrl: "REPLACE_WITH_EYES_09_URL" },
+                { imgUrl: "REPLACE_WITH_EYES_10_URL" },
+                { imgUrl: "REPLACE_WITH_EYES_11_URL" },
+                { imgUrl: "REPLACE_WITH_EYES_12_URL" },
+                { imgUrl: "REPLACE_WITH_EYES_13_URL" },
+                { imgUrl: "REPLACE_WITH_EYES_14_URL" },
+                { imgUrl: "REPLACE_WITH_EYES_15_URL" },
+                { imgUrl: "REPLACE_WITH_EYES_16_URL" }
+            ],
+            eyebrows: [
+                { imgUrl: "assets/categories/eyebrows/SFC_eyebrows1.png" },
+                { imgUrl: "https://t4.ftcdn.net/jpg/02/22/46/71/360_F_222467124_aRXcPPbG0hgJbCCCDGCwtsTFs465Rh6s.jpg" },
+                { imgUrl: "https://easydrawingart.com/wp-content/uploads/2019/08/eyebrows-drawing-example.jpg" },
+                { imgUrl: "https://cdn.renderhub.com/nickianimations/basic-cartoon-eyebrow-112-108-this-file-contains-one-basic-c/basic-cartoon-eyebrow-112-108-this-file-contains-one-basic-c-04.jpg" },
+                { imgUrl: "REPLACE_WITH_EYEBROWS_05_URL" },
+                { imgUrl: "REPLACE_WITH_EYEBROWS_06_URL" },
+                { imgUrl: "REPLACE_WITH_EYEBROWS_07_URL" },
+                { imgUrl: "REPLACE_WITH_EYEBROWS_08_URL" },
+                { imgUrl: "REPLACE_WITH_EYEBROWS_09_URL" },
+                { imgUrl: "REPLACE_WITH_EYEBROWS_10_URL" },
+                { imgUrl: "REPLACE_WITH_EYEBROWS_11_URL" },
+                { imgUrl: "REPLACE_WITH_EYEBROWS_12_URL" },
+                { imgUrl: "REPLACE_WITH_EYEBROWS_13_URL" },
+                { imgUrl: "REPLACE_WITH_EYEBROWS_14_URL" },
+                { imgUrl: "REPLACE_WITH_EYEBROWS_15_URL" },
+                { imgUrl: "REPLACE_WITH_EYEBROWS_16_URL" }
+            ],
+            nose: [
+                { imgUrl: "assets/categories/nose/SFC_nose1.png" },
+                { imgUrl: "https://img.freepik.com/premium-vector/nose-vector-cartoon-illustration-isolated-white-background_338371-2333.jpg?semt=ais_hybrid&w=740&q=80" },
+                { imgUrl: "https://t4.ftcdn.net/jpg/06/13/71/13/360_F_613711374_9axvxd7yPbrXDb4dMvRT6xqOsMKv4Em2.jpg" },
+                { imgUrl: "https://static.vecteezy.com/system/resources/previews/051/187/989/non_2x/a-cartoon-nose-with-a-red-nose-free-vector.jpg" },
+                { imgUrl: "REPLACE_WITH_NOSE_05_URL" },
+                { imgUrl: "REPLACE_WITH_NOSE_06_URL" },
+                { imgUrl: "REPLACE_WITH_NOSE_07_URL" },
+                { imgUrl: "REPLACE_WITH_NOSE_08_URL" },
+                { imgUrl: "REPLACE_WITH_NOSE_09_URL" },
+                { imgUrl: "REPLACE_WITH_NOSE_10_URL" },
+                { imgUrl: "REPLACE_WITH_NOSE_11_URL" },
+                { imgUrl: "REPLACE_WITH_NOSE_12_URL" },
+                { imgUrl: "REPLACE_WITH_NOSE_13_URL" },
+                { imgUrl: "REPLACE_WITH_NOSE_14_URL" },
+                { imgUrl: "REPLACE_WITH_NOSE_15_URL" },
+                { imgUrl: "REPLACE_WITH_NOSE_16_URL" }
+            ],
+            mouth: [
+                { imgUrl: "assets/categories/mouth/SFC_mouth1.png" },
+                { imgUrl: "https://www.shutterstock.com/shutterstock/videos/1101631611/thumb/1.jpg" },
+                { imgUrl: "https://img.freepik.com/premium-vector/mouth-lips-cartoon-vector-illustration-cute-mouth-lips-cartoon-drawing-playful-facial-feat_648083-526.jpg" },
+                { imgUrl: "https://static.vecteezy.com/system/resources/previews/029/890/072/non_2x/mouth-cartoon-icon-free-vector.jpg" },
+                { imgUrl: "REPLACE_WITH_MOUTH_05_URL" },
+                { imgUrl: "REPLACE_WITH_MOUTH_06_URL" },
+                { imgUrl: "REPLACE_WITH_MOUTH_07_URL" },
+                { imgUrl: "REPLACE_WITH_MOUTH_08_URL" },
+                { imgUrl: "REPLACE_WITH_MOUTH_09_URL" },
+                { imgUrl: "REPLACE_WITH_MOUTH_10_URL" },
+                { imgUrl: "REPLACE_WITH_MOUTH_11_URL" },
+                { imgUrl: "REPLACE_WITH_MOUTH_12_URL" },
+                { imgUrl: "REPLACE_WITH_MOUTH_13_URL" },
+                { imgUrl: "REPLACE_WITH_MOUTH_14_URL" },
+                { imgUrl: "REPLACE_WITH_MOUTH_15_URL" },
+                { imgUrl: "REPLACE_WITH_MOUTH_16_URL" }
+            ],
+            ears: [
+                { imgUrl: "https://static.vecteezy.com/system/resources/thumbnails/023/877/704/small/colorful-ear-cartoon-art-isolated-illustration-vector.jpg" },
+                { imgUrl: "https://static.vecteezy.com/system/resources/thumbnails/041/916/043/small_2x/ear-illustration-isolated-on-white-background-cartoon-vector.jpg" },
+                { imgUrl: "https://easydrawingguides.com/wp-content/uploads/2023/04/how-to-draw-a-cartoon-ear-featured-image-1200.png" },
+                { imgUrl: "https://cdn.vectorstock.com/i/1000v/23/22/cartoon-human-ear-illustration-vector-14242322.jpg" },
+                { imgUrl: "REPLACE_WITH_EARS_05_URL" },
+                { imgUrl: "REPLACE_WITH_EARS_06_URL" },
+                { imgUrl: "REPLACE_WITH_EARS_07_URL" },
+                { imgUrl: "REPLACE_WITH_EARS_08_URL" },
+                { imgUrl: "REPLACE_WITH_EARS_09_URL" },
+                { imgUrl: "REPLACE_WITH_EARS_10_URL" },
+                { imgUrl: "REPLACE_WITH_EARS_11_URL" },
+                { imgUrl: "REPLACE_WITH_EARS_12_URL" },
+                { imgUrl: "REPLACE_WITH_EARS_13_URL" },
+                { imgUrl: "REPLACE_WITH_EARS_14_URL" },
+                { imgUrl: "REPLACE_WITH_EARS_15_URL" },
+                { imgUrl: "REPLACE_WITH_EARS_16_URL" }
+            ],
+            hair: [
+                { imgUrl: "assets/categories/hair/SFC_hair1.png" },
+                { imgUrl: "https://www.nicepng.com/png/detail/57-575548_cartoon-hair-png-parts-of-body-hair.png" },
+                { imgUrl: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTsGPeVZkQr7q1E5znFHjpRjkmsZ9x-9B8Nzg&s" },
+                { imgUrl: "https://i.pinimg.com/564x/9c/db/43/9cdb435823e315ad4767e0c8e424b8f3.jpg" },
+                { imgUrl: "REPLACE_WITH_HAIR_05_URL" },
+                { imgUrl: "REPLACE_WITH_HAIR_06_URL" },
+                { imgUrl: "REPLACE_WITH_HAIR_07_URL" },
+                { imgUrl: "REPLACE_WITH_HAIR_08_URL" },
+                { imgUrl: "REPLACE_WITH_HAIR_09_URL" },
+                { imgUrl: "REPLACE_WITH_HAIR_10_URL" },
+                { imgUrl: "REPLACE_WITH_HAIR_11_URL" },
+                { imgUrl: "REPLACE_WITH_HAIR_12_URL" },
+                { imgUrl: "REPLACE_WITH_HAIR_13_URL" },
+                { imgUrl: "REPLACE_WITH_HAIR_14_URL" },
+                { imgUrl: "REPLACE_WITH_HAIR_15_URL" },
+                { imgUrl: "REPLACE_WITH_HAIR_16_URL" }
+            ]
+        };
+
+        const categoryDrawSettings = {
+            // Each category gets its own normalized layout values so you can
+            // tweak placement quickly without touching the drawing math below.
+            eyes: {
+                layerOrder: 4,
+                widthRatio: 0.6,
+                heightRatio: 0.6,
+                centerXRatio: 0.5,
+                centerYRatio: 1 / 3
+            },
+            eyebrows: {
+                layerOrder: 5,
+                widthRatio: 0.7,
+                heightRatio: 0.7,
+                centerXRatio: 0.5,
+                centerYRatio: 0.20
+            },
+            nose: {
+                layerOrder: 6,
+                widthRatio: 0.4,
+                heightRatio: 0.4,
+                centerXRatio: 0.5,
+                centerYRatio: 0.58
+            },
+            mouth: {
+                layerOrder: 3,
+                widthRatio: 0.7,
+                heightRatio: 0.7,
+                centerXRatio: 0.5,
+                centerYRatio: 0.80
+            },
+            ears: {
+                layerOrder: 2,
+                widthRatio: 0.24,
+                heightRatio: 0.32,
+                placements: [
+                    {
+                        // Right ear sits flush against the right edge and is
+                        // vertically centered halfway down the canvas.
+                        anchorXRatio: 1,
+                        centerYRatio: 0.5,
+                        flipX: false
+                    },
+                    {
+                        // Left ear mirrors the same source image so you only
+                        // need one asset for both sides of the head.
+                        anchorXRatio: 0,
+                        centerYRatio: 0.5,
+                        flipX: true
+                    }
+                ]
+            },
+            hair: {
+                layerOrder: 1,
+                widthRatio: 1,
+                heightRatio: 1,
+                centerXRatio: 0.5,
+                centerYRatio: 0.5
+            }
+        };
+
+        function resizeCanvasToWrapper() {
+            // Keep the canvas internal pixel size aligned with the wrapper size
+            // so anything we draw stays sharp and lands in the expected position.
+            const wrapperWidth = canvasWrapper.clientWidth;
+            const wrapperHeight = canvasWrapper.clientHeight;
+            const pixelRatio = window.devicePixelRatio || 1;
+
+            canvas.width = Math.max(1, Math.round(wrapperWidth * pixelRatio));
+            canvas.height = Math.max(1, Math.round(wrapperHeight * pixelRatio));
+
+            // Reset the transform after resizing, then scale drawing operations
+            // back into CSS pixels so positioning math stays simple.
+            context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+            redrawCanvas();
+        }
+
+        function isRealImageUrl(imgUrl) {
+            // Placeholder values are useful while building the catalog, but
+            // they should not create broken <img> tags in the visible grid.
+            return Boolean(imgUrl) && !imgUrl.startsWith("REPLACE_WITH_");
+        }
+
+        function renderCategoryItems(categoryName) {
+            // Read the selected category from the source object and push those
+            // values into the 16 existing DOM slots before any click logic runs.
+            const itemsForCategory = categoryItems[categoryName] || [];
+
+            faceItems.forEach((faceItem, index) => {
+                // Storing the index on the element keeps click handling simple
+                // if you later want to know exactly which slot was selected.
+                faceItem.dataset.itemIndex = index;
+
+                const itemData = itemsForCategory[index];
+                const imgUrl = itemData?.imgUrl || "";
+
+                // Clearing the slot first guarantees old category images do not
+                // leak into the new category when switching tabs.
+                faceItem.innerHTML = "";
+                faceItem.dataset.imgUrl = imgUrl;
+
+                if (!isRealImageUrl(imgUrl)) {
+                    return;
+                }
+
+                const image = document.createElement("img");
+
+                // The image source comes from the category object, making the
+                // object the single source of truth for every face item slot.
+                image.src = imgUrl;
+                image.alt = "";
+                faceItem.appendChild(image);
+            });
+
+            updateSelectedFaceItemStyles();
+        }
+
+        function updateSelectedFaceItemStyles() {
+            const selectedImgUrl = selectedCategoryImages[currentCategory] || "";
+
+            faceItems.forEach(faceItem => {
+                // The visible highlight follows the selected item for the
+                // currently open category so the grid shows what is active now.
+                const isSelected = faceItem.dataset.imgUrl === selectedImgUrl && Boolean(selectedImgUrl);
+                faceItem.classList.toggle("selected", isSelected);
+            });
+        }
+
+        function loadDefaultSelections() {
+            Object.keys(categoryItems).forEach(categoryName => {
+                const defaultItem = categoryItems[categoryName]?.[0];
+                const defaultImgUrl = defaultItem?.imgUrl || "";
+
+                // Only real URLs should become default layers so unfinished
+                // placeholder slots do not appear selected on first load.
+                if (!isRealImageUrl(defaultImgUrl)) {
+                    return;
+                }
+
+                selectedCategoryImages[categoryName] = defaultImgUrl;
+            });
+        }
+
+        function drawFacePart(categoryName, image) {
+            const canvasWidth = canvasWrapper.clientWidth;
+            const canvasHeight = canvasWrapper.clientHeight;
+            const currentSettings =
+                categoryDrawSettings[categoryName] || categoryDrawSettings.eyes;
+
+            // Limit the drawn image so it fits comfortably inside the square
+            // preview while keeping the original image proportions. These
+            // limits come from the active category config for easy tweaking.
+            const maxDrawWidth = canvasWidth * currentSettings.widthRatio;
+            const maxDrawHeight = canvasHeight * currentSettings.heightRatio;
+            const imageRatio = image.naturalWidth / image.naturalHeight;
+
+            let drawWidth = maxDrawWidth;
+            let drawHeight = drawWidth / imageRatio;
+
+            if (drawHeight > maxDrawHeight) {
+                drawHeight = maxDrawHeight;
+                drawWidth = drawHeight * imageRatio;
+            }
+
+            if (Array.isArray(currentSettings.placements) && currentSettings.placements.length > 0) {
+                currentSettings.placements.forEach(placement => {
+                    const drawX = canvasWidth * placement.anchorXRatio -
+                        (placement.flipX ? 0 : drawWidth);
+                    const drawY = canvasHeight * placement.centerYRatio - drawHeight / 2;
+
+                    // Flipping the left ear in canvas space keeps the source
+                    // art reusable while still placing it flush to the edge.
+                    if (placement.flipX) {
+                        context.save();
+                        context.translate(drawX + drawWidth, 0);
+                        context.scale(-1, 1);
+                        context.drawImage(image, 0, drawY, drawWidth, drawHeight);
+                        context.restore();
+                        return;
+                    }
+
+                    context.drawImage(image, drawX, drawY, drawWidth, drawHeight);
+                });
+                return;
+            }
+
+            // Position the image from category-specific center ratios so each
+            // face part can be moved independently with a couple of numbers.
+            const drawX = canvasWidth * currentSettings.centerXRatio - drawWidth / 2;
+            const drawY = canvasHeight * currentSettings.centerYRatio - drawHeight / 2;
+
+            context.drawImage(image, drawX, drawY, drawWidth, drawHeight);
+        }
+
+        function drawStoredCategoryImage(categoryName, image) {
+            drawFacePart(categoryName, image);
+        }
+
+        function getImageForCategory(imgUrl) {
+            const cachedGridImage = document.querySelector(
+                `.faceItem[data-img-url="${imgUrl}"] img`
+            );
+
+            // Reusing an already rendered grid image avoids extra network work
+            // when the selected category is currently visible in the picker.
+            if (cachedGridImage && cachedGridImage.complete && cachedGridImage.naturalWidth > 0) {
+                loadedImageCache[imgUrl] = cachedGridImage;
+                return Promise.resolve(cachedGridImage);
+            }
+
+            const cachedImage = loadedImageCache[imgUrl];
+
+            if (cachedImage && cachedImage.complete && cachedImage.naturalWidth > 0) {
+                return Promise.resolve(cachedImage);
+            }
+
+            if (cachedImage?.dataset.loading === "true") {
+                return new Promise(resolve => {
+                    cachedImage.addEventListener("load", () => {
+                        resolve(cachedImage);
+                    }, { once: true });
+                });
+            }
+
+            const image = new Image();
+            image.dataset.loading = "true";
+            loadedImageCache[imgUrl] = image;
+
+            // Off-DOM images let us redraw saved selections even when their
+            // category is not the one currently displayed in the grid.
+            return new Promise(resolve => {
+                image.addEventListener("load", () => {
+                    delete image.dataset.loading;
+                    resolve(image);
+                }, { once: true });
+                image.addEventListener("error", () => {
+                    delete loadedImageCache[imgUrl];
+                    resolve(null);
+                }, { once: true });
+                image.src = imgUrl;
+            });
+        }
+
+        async function redrawCanvas() {
+            const canvasWidth = canvasWrapper.clientWidth;
+            const canvasHeight = canvasWrapper.clientHeight;
+
+            // Repainting from saved selections lets parts from different
+            // categories coexist instead of the newest click wiping the rest.
+            context.clearRect(0, 0, canvasWidth, canvasHeight);
+
+            // Filling the canvas first makes the chosen background color act
+            // like the base layer under every face part category.
+            context.fillStyle = canvasBackgroundColor;
+            context.fillRect(0, 0, canvasWidth, canvasHeight);
+
+            const sortedCategoryNames = Object.keys(categoryDrawSettings).sort((leftCategory, rightCategory) => {
+                const leftOrder = categoryDrawSettings[leftCategory]?.layerOrder ?? 0;
+                const rightOrder = categoryDrawSettings[rightCategory]?.layerOrder ?? 0;
+
+                // Lower layer numbers are painted first so higher numbers stay
+                // visually on top when different category parts overlap.
+                return leftOrder - rightOrder;
+            });
+
+            const imagesToDraw = await Promise.all(sortedCategoryNames.map(async categoryName => {
+                const imgUrl = selectedCategoryImages[categoryName];
+
+                if (!imgUrl) {
+                    return null;
+                }
+
+                const image = await getImageForCategory(imgUrl);
+
+                if (!image) {
+                    return null;
+                }
+
+                return { categoryName, image };
+            }));
+
+            // Drawing only after every selected image is ready preserves the
+            // configured layer order instead of letting network timing decide.
+            imagesToDraw.forEach(imageData => {
+                if (!imageData) {
+                    return;
+                }
+
+                drawStoredCategoryImage(imageData.categoryName, imageData.image);
+            });
+        }
+
+        categoryElements.forEach(categoryElement => {
+            categoryElement.addEventListener("click", () => {
+                // Reading the category from HTML keeps the mapping simple and
+                // makes future category switching work without hardcoded indexes.
+                currentCategory = categoryElement.dataset.category || "eyes";
+
+                // Rebuilding the grid here ensures the visible item list always
+                // matches the currently selected category before the next click.
+                renderCategoryItems(currentCategory);
+            });
+        });
+
+        faceItems.forEach(faceItem => {
+            faceItem.addEventListener("click", () => {
+                const image = faceItem.querySelector("img");
+                const clickedImgUrl = faceItem.dataset.imgUrl || "";
+
+                // Ignore empty slots until they have real art assigned.
+                if (!image) {
+                    return;
+                }
+
+                // Clicking the same item again removes that category layer
+                // so the user can toggle individual parts on and off easily.
+                if (selectedCategoryImages[currentCategory] === clickedImgUrl) {
+                    delete selectedCategoryImages[currentCategory];
+                    updateSelectedFaceItemStyles();
+                    redrawCanvas();
+                    return;
+                }
+
+                // If the browser has already loaded the image we can draw it
+                // immediately, otherwise we wait for it to finish loading once.
+                if (image.complete && image.naturalWidth > 0) {
+                    // Saving the URL instead of the DOM node keeps the selected
+                    // layer stable even when the grid is rebuilt for categories.
+                    selectedCategoryImages[currentCategory] = clickedImgUrl;
+                    updateSelectedFaceItemStyles();
+                    redrawCanvas();
+                    return;
+                }
+
+                image.addEventListener("load", () => {
+                    // Delayed loads still commit the selected image URL before
+                    // the combined canvas is repainted with all layers.
+                    selectedCategoryImages[currentCategory] = clickedImgUrl;
+                    updateSelectedFaceItemStyles();
+                    redrawCanvas();
+                }, { once: true });
+            });
+        });
+
+        backgroundColorInput.addEventListener("input", () => {
+            // Keeping the selected color in a variable makes future redraws
+            // reuse the same background without reading the DOM each time.
+            canvasBackgroundColor = backgroundColorInput.value;
+            redrawCanvas();
+        });
+
+        // Rendering once at startup makes the initial "eyes" category come
+        // from the data object instead of relying on hardcoded HTML images.
+        loadDefaultSelections();
+        renderCategoryItems(currentCategory);
+        resizeCanvasToWrapper();
+        window.addEventListener("resize", resizeCanvasToWrapper);
+    </script>
 </body>
 
 </html>
