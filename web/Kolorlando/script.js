@@ -1884,12 +1884,14 @@ function triggerActionForMouseButton(button, options = {}) {
 
   if (button === 2) {
     if (currentRaycastState.voxelEditionMode) {
-      const selectedStack = inventoryUI.getSelectedSurvivalStack();
-      if (!selectedStack?.typeName) return;
+      // Placement must only consume actual voxel stacks. Non-build items can share
+      // the hotbar, so we resolve a voxel-safe selection before touching the world.
+      const selectedVoxelType = inventoryUI.getSelectedPlaceableVoxelType();
+      if (!selectedVoxelType) return;
 
       const added = addVoxelAtRaycastHit(currentRaycastState.hit, {
         playerCollider,
-        voxelType: selectedStack.typeName,
+        voxelType: selectedVoxelType,
       });
       if (added && inventoryUI.getGameMode() === GAME_MODE_SURVIVAL) {
           inventoryUI.consumeSelectedInventoryItem(1);

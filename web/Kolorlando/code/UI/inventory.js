@@ -14,6 +14,7 @@ export function createInventoryUI(options) {
   const gameModeReadout = options.gameModeReadout;
   const gameModeButtons = options.gameModeButtons;
   const voxelTypes = options.voxelTypes;
+  const voxelTypeNames = new Set(voxelTypes.map(function (type) { return type.name; }));
 
   const PLAYER_INVENTORY_SLOT_COUNT = 32;
   const PLAYER_STACK_LIMIT = 99;
@@ -86,6 +87,17 @@ export function createInventoryUI(options) {
     return playerInventory[selectedInventorySlotIndex];
   }
 
+  function getSelectedPlaceableVoxelType() {
+    const selectedStack = getSelectedSurvivalStack();
+    if (!selectedStack?.typeName) return null;
+
+    // Only real voxel entries may be used by the world placement flow.
+    // Inventory collectibles like coins, guns, and swords should stay intact
+    // even when the player right-clicks while aiming at an editable block.
+    if (!voxelTypeNames.has(selectedStack.typeName)) return null;
+    return selectedStack.typeName;
+  }
+
   function findInventorySlotIndexByType(typeName) {
     if (!typeName) return -1;
     return playerInventory.findIndex(function (stack) { return stack && stack.typeName === typeName; });
@@ -93,6 +105,10 @@ export function createInventoryUI(options) {
 
   function inventoryHasType(typeName) {
     return findInventorySlotIndexByType(typeName) >= 0;
+  }
+
+  function isVoxelInventoryType(typeName) {
+    return voxelTypeNames.has(typeName);
   }
 
   function syncSelectedVoxelTypeFromMode() {
@@ -542,8 +558,10 @@ export function createInventoryUI(options) {
     addItemToInventory: addItemToInventory,
     consumeSelectedInventoryItem: consumeSelectedInventoryItem,
     getGameMode: function () { return gameMode; },
+    getSelectedPlaceableVoxelType: getSelectedPlaceableVoxelType,
     getSelectedSurvivalStack: getSelectedSurvivalStack,
     inventoryHasType: inventoryHasType,
+    isVoxelInventoryType: isVoxelInventoryType,
     selectHotbarSlot: selectHotbarSlot,
     setGameMode: setGameMode,
   };
