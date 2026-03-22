@@ -19,7 +19,7 @@ import {
 } from './code/UI/inventory.js';
 import { createChatUI } from './code/UI/chat.js';
 import { createPlayerHud } from './playerHud.js';
-import { GoxelItemAppearance, ItemAppearance } from './itemAppearance.js';
+import { CoinItemAppearance, GoxelItemAppearance, ItemAppearance } from './itemAppearance.js';
 import { buildSimpleMap } from './maps/simpleMap.js';
 import { buildCityMap } from './maps/cityMap.js';
 import { buildVoxelandiaMap } from './maps/voxelandiaMap.js';
@@ -833,34 +833,73 @@ entities.push(new TalkerEntity({
 }));
 
 const itemAppearances = [];
+const PICKUP_ITEM_TYPES = new Set(['Sword', 'Gun', 'Coin']);
+const PLAYER_PICKUP_RADIUS = 3;
+const PLAYER_PICKUP_RADIUS_SQ = PLAYER_PICKUP_RADIUS * PLAYER_PICKUP_RADIUS;
+const ITEM_PICKUP_COLLISION_RADIUS = 0.45;
+const ITEM_PICKUP_MAGNET_MIN_SPEED = 1.6;
+const ITEM_PICKUP_MAGNET_MAX_SPEED = 10.5;
 const TEST_ITEM_SPAWN_DISTANCE = 3;
-const TEST_ITEM_BEHIND_DISTANCE = 3;
-const TEST_ITEM_SIDE_OFFSET = 1.2;
+const TEST_ITEM_BEHIND_DISTANCE = 10;
+const TEST_ITEM_SIDE_OFFSET = 2.8;
 const firstItemSpawnPosition = playerSpawnPoint.clone().add(new THREE.Vector3(0, 0, -TEST_ITEM_SPAWN_DISTANCE));
 itemAppearances.push(new ItemAppearance({
   scene,
   position: firstItemSpawnPosition,
   label: 'Spawn Point',
+  inventoryType: 'Spawn Point',
+  pickable: false,
   groundY: GROUND_Y,
 }));
 
-const swordItemSpawnPosition = firstItemSpawnPosition.clone().add(new THREE.Vector3(2.8, 0, -0.8));
+const swordItemSpawnPosition = playerSpawnPoint.clone().add(new THREE.Vector3(TEST_ITEM_SIDE_OFFSET, 0, -TEST_ITEM_BEHIND_DISTANCE));
 itemAppearances.push(new GoxelItemAppearance({
   scene,
   position: swordItemSpawnPosition,
   label: 'Sword',
+  inventoryType: 'Sword',
+  pickable: true,
   groundY: GROUND_Y,
   modelUrl: 'assets/3D/weapons/sword.gltf',
 }));
 
-const gunItemSpawnPosition = firstItemSpawnPosition.clone().add(new THREE.Vector3(0, 0, 5));
+const gunItemSpawnPosition = playerSpawnPoint.clone().add(new THREE.Vector3(-TEST_ITEM_SIDE_OFFSET, 0, -TEST_ITEM_BEHIND_DISTANCE));
 itemAppearances.push(new GoxelItemAppearance({
   scene,
   position: gunItemSpawnPosition,
   label: 'Gun',
+  inventoryType: 'Gun',
+  pickable: true,
   groundY: GROUND_Y,
   modelUrl: 'assets/3D/weapons/gun.gltf',
 }));
+
+const coinSpawnOffsets = [
+  new THREE.Vector3(0, 0, -10),
+  new THREE.Vector3(3.2, 0, -9.4),
+  new THREE.Vector3(-3.2, 0, -9.4),
+  new THREE.Vector3(6.2, 0, -7.5),
+  new THREE.Vector3(-6.2, 0, -7.5),
+  new THREE.Vector3(8.1, 0, -4.2),
+  new THREE.Vector3(-8.1, 0, -4.2),
+  new THREE.Vector3(8.4, 0, 0.5),
+  new THREE.Vector3(-8.4, 0, 0.5),
+  new THREE.Vector3(0, 0, 9.5),
+];
+
+for (let i = 0; i < coinSpawnOffsets.length; i++) {
+  // These fixed offsets keep the coins around the same outer starter ring as the
+  // sword and gun so players naturally encounter them while exploring the area.
+  const coinPosition = playerSpawnPoint.clone().add(coinSpawnOffsets[i]);
+  itemAppearances.push(new CoinItemAppearance({
+    scene,
+    position: coinPosition,
+    label: 'Coin',
+    inventoryType: 'Coin',
+    pickable: true,
+    groundY: GROUND_Y,
+  }));
+}
 
 
 const inventoryUI = createInventoryUI({
@@ -1173,6 +1212,20 @@ scene.add(debugCollisionGroup);
 
 const playerColliderDebugHelper = new THREE.Box3Helper(playerCollider, 0xffdd33);
 debugCollisionGroup.add(playerColliderDebugHelper);
+const playerPickupSphere = new THREE.Sphere(playerEye.clone(), PLAYER_PICKUP_RADIUS);
+const playerPickupRadiusHelper = new THREE.Mesh(
+  new THREE.SphereGeometry(1, 24, 18),
+  new THREE.MeshBasicMaterial({
+    color: 0xff9a3d,
+    wireframe: true,
+    transparent: true,
+    opacity: 0.3,
+    depthWrite: false,
+  })
+);
+playerPickupRadiusHelper.renderOrder = 996;
+playerPickupRadiusHelper.visible = false;
+debugCollisionGroup.add(playerPickupRadiusHelper);
 
 const nearbyCollisionHelpers = [];
 const itemRaycastSphereHelpers = [];
@@ -1277,6 +1330,9 @@ function updateDebugCollisionVisuals() {
   playerColliderDebugHelper.box.copy(playerCollider);
   playerColliderDebugHelper.visible = true;
   playerColliderDebugHelper.material.color.setHex(0xffdd33);
+  playerPickupRadiusHelper.position.copy(playerPickupSphere.center);
+  playerPickupRadiusHelper.scale.setScalar(playerPickupSphere.radius);
+  playerPickupRadiusHelper.visible = true;
 
   collectNearbyCollisionBoxes();
 
@@ -1995,9 +2051,75 @@ function updateEntities(deltaTime) {
   }
 }
 
+const itemPickupOffset = new THREE.Vector3();
+const itemPickupDirection = new THREE.Vector3();
+const itemPickupColliderSphere = new THREE.Sphere(new THREE.Vector3(), ITEM_PICKUP_COLLISION_RADIUS);
+
+function updatePlayerPickupSphere() {
+  // Centering the pickup sphere around the player's torso keeps the debug visualization
+  // aligned with the actual magnetic pickup area players will feel while walking around.
+  playerPickupSphere.center.set(playerEye.x, playerCollider.min.y + PLAYER_HEIGHT * 0.5, playerEye.z);
+  playerPickupSphere.radius = PLAYER_PICKUP_RADIUS;
+}
+
+function canPlayerPickUpItem(itemAppearance) {
+  return !!(itemAppearance && itemAppearance.pickable && !itemAppearance.collected && PICKUP_ITEM_TYPES.has(itemAppearance.inventoryType));
+}
+
+function tryCollectItemAppearance(itemAppearance) {
+  if (!canPlayerPickUpItem(itemAppearance)) return false;
+
+  const addedAmount = inventoryUI.addItemToInventory(itemAppearance.inventoryType, 1);
+  if (addedAmount <= 0) return false;
+
+  itemAppearance.collect();
+  return true;
+}
+
 function updateItemAppearances(deltaTime) {
+  updatePlayerPickupSphere();
+
   for (let i = 0; i < itemAppearances.length; i++) {
-    itemAppearances[i].update(deltaTime);
+    const itemAppearance = itemAppearances[i];
+    if (!itemAppearance) continue;
+
+    if (canPlayerPickUpItem(itemAppearance)) {
+      // The magnetic pickup pull becomes stronger as the item gets closer to the
+      // player, so the last stretch feels noticeably snappier than the outer edge.
+      itemPickupOffset.set(
+        playerPickupSphere.center.x - itemAppearance.position.x,
+        playerPickupSphere.center.y - itemAppearance.group.position.y,
+        playerPickupSphere.center.z - itemAppearance.position.z
+      );
+      const distanceSq = itemPickupOffset.lengthSq();
+
+      if (distanceSq <= PLAYER_PICKUP_RADIUS_SQ) {
+        const normalizedDistance = Math.min(1, Math.sqrt(distanceSq) / PLAYER_PICKUP_RADIUS);
+        const pullStrength = 1 - normalizedDistance;
+        if (pullStrength > 0.0001) {
+          itemPickupDirection.copy(itemPickupOffset).normalize();
+          const travelSpeed = THREE.MathUtils.lerp(
+            ITEM_PICKUP_MAGNET_MIN_SPEED,
+            ITEM_PICKUP_MAGNET_MAX_SPEED,
+            pullStrength
+          );
+          itemAppearance.position.addScaledVector(itemPickupDirection, travelSpeed * deltaTime);
+          itemAppearance.syncPosition();
+        }
+      }
+
+      // A smaller collision sphere on the item itself decides the actual pickup moment.
+      // Once it touches the player's collider, the world model disappears and the stack
+      // is transferred into the player's inventory UI.
+      itemPickupColliderSphere.center.copy(itemAppearance.group.position);
+      itemPickupColliderSphere.radius = ITEM_PICKUP_COLLISION_RADIUS;
+      if (playerCollider.intersectsSphere(itemPickupColliderSphere)) {
+        tryCollectItemAppearance(itemAppearance);
+        continue;
+      }
+    }
+
+    itemAppearance.update(deltaTime);
   }
 }
 

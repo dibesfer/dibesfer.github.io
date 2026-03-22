@@ -1,4 +1,4 @@
-import { createImageIcon, createVoxelIcon } from './icon.js';
+import { createCircleIcon, createImageIcon, createVoxelIcon } from './icon.js';
 
 export const GAME_MODE_CREATIVE = 'creative';
 export const GAME_MODE_SURVIVAL = 'survival';
@@ -26,12 +26,18 @@ export function createInventoryUI(options) {
   let inventoryDragState = null;
   let suppressInventorySlotClick = false;
   const inventoryDragPreview = document.createElement('div');
+  const INVENTORY_DRAG_START_DISTANCE = 6;
 
   const encyclopediaItems = [
     { name: 'Spawn Point', iconSrc: 'assets/icons/diamonds.png' },
     { name: 'Gun', iconSrc: 'assets/weapons/pistol-gun.png' },
     { name: 'Sword', iconSrc: 'assets/weapons/gladius.png' },
+    { name: 'Coin', iconKind: 'coin' },
   ];
+  const itemIconByName = encyclopediaItems.reduce(function (lookup, item) {
+    lookup[item.name] = item;
+    return lookup;
+  }, {});
   const ENCYCLOPEDIA_ITEM_SLOT_COUNT = 16;
 
   inventoryDragPreview.className = 'inventory-drag-preview';
@@ -45,6 +51,33 @@ export function createInventoryUI(options) {
 
   function getVoxelTypeHexColor(typeName) {
     return '#' + getVoxelTypeColor(typeName).toString(16).padStart(6, '0');
+  }
+
+  function createInventoryStackIcon(typeName) {
+    const iconDefinition = itemIconByName[typeName];
+    if (iconDefinition?.iconKind === 'coin') {
+      return createCircleIcon('#d4af37', '#ffe08a');
+    }
+    if (iconDefinition?.iconSrc) {
+      // Item pickups like sword and gun should keep their authored icons in both
+      // the inventory window and the hotbar instead of falling back to voxel cubes.
+      return createImageIcon(iconDefinition.iconSrc, typeName);
+    }
+    return createVoxelIcon(getVoxelTypeHexColor(typeName));
+  }
+
+  function createEncyclopediaItemIcon(itemEntry) {
+    if (!itemEntry) return null;
+
+    // Reusing the same icon resolution rules keeps the encyclopedia aligned with
+    // the inventory and hotbar, including generated icons like the coin circle.
+    if (itemEntry.iconKind === 'coin') {
+      return createCircleIcon('#d4af37', '#ffe08a');
+    }
+    if (itemEntry.iconSrc) {
+      return createImageIcon(itemEntry.iconSrc, itemEntry.name);
+    }
+    return null;
   }
 
 
@@ -102,9 +135,10 @@ export function createInventoryUI(options) {
       slot.type = 'button';
       slot.className = 'hotbar-slot inventory-menu-slot';
       slot.dataset.slotIndex = String(i);
+      if (i < hotbarSlotEls.length) slot.classList.add('inventory-hotbar-slot');
       if (!stack) slot.classList.add('is-empty');
       if (i === selectedInventorySlotIndex) slot.classList.add('is-selected');
-      if (stack) slot.appendChild(createVoxelIcon(getVoxelTypeHexColor(stack.typeName)));
+      if (stack) slot.appendChild(createInventoryStackIcon(stack.typeName));
 
       label.className = 'hotbar-slot-label';
       label.textContent = stack ? stack.typeName : 'empty';
@@ -122,6 +156,9 @@ export function createInventoryUI(options) {
         selectInventorySlot(i);
       });
       slot.addEventListener('pointerdown', function (event) {
+        // Preventing default keeps the browser from competing with the custom inventory
+        // drag interaction through text selection or native button drag behavior.
+        event.preventDefault();
         beginInventorySlotDrag(i, event, slot);
       });
 
@@ -159,7 +196,7 @@ export function createInventoryUI(options) {
       hotbarSlotEls[i].textContent = '';
       if (!stack) continue;
 
-      hotbarSlotEls[i].appendChild(createVoxelIcon(getVoxelTypeHexColor(stack.typeName)));
+      hotbarSlotEls[i].appendChild(createInventoryStackIcon(stack.typeName));
 
       const label = document.createElement('span');
       label.className = 'hotbar-slot-label';
@@ -249,6 +286,12 @@ export function createInventoryUI(options) {
     if (!playerInventory[index]) return;
     if (event.button !== undefined && event.button !== 0) return;
 
+    // Capturing the pointer on the source slot makes fast drag motions much more stable,
+    // because move and release events continue to arrive even after leaving the element.
+    if (element.setPointerCapture && event.pointerId !== undefined) {
+      element.setPointerCapture(event.pointerId);
+    }
+
     inventoryDragState = {
       pointerId: event.pointerId,
       sourceIndex: index,
@@ -258,6 +301,7 @@ export function createInventoryUI(options) {
       lastX: event.clientX,
       lastY: event.clientY,
       dragging: false,
+      activeDropTarget: null,
     };
   }
 
@@ -266,9 +310,27 @@ export function createInventoryUI(options) {
     inventoryDragPreview.textContent = '';
   }
 
+  function setInventoryDropTarget(element) {
+    if (inventoryDragState?.activeDropTarget === element) return;
+
+    // Highlighting the current destination while dragging gives immediate feedback
+    // about where the stack will land before the player releases the pointer.
+    if (inventoryDragState?.activeDropTarget) {
+      inventoryDragState.activeDropTarget.classList.remove('is-drop-target');
+    }
+    if (element) {
+      element.classList.add('is-drop-target');
+    }
+    if (inventoryDragState) {
+      inventoryDragState.activeDropTarget = element;
+    }
+  }
+
   function stopInventoryDrag() {
     if (!inventoryDragState) return;
     inventoryDragState.sourceElement.classList.remove('is-drag-source');
+    inventoryDragState.sourceElement.releasePointerCapture?.(inventoryDragState.pointerId);
+    setInventoryDropTarget(null);
     inventoryDragState = null;
     clearInventoryDragPreview();
   }
@@ -298,6 +360,14 @@ export function createInventoryUI(options) {
     inventoryDragPreview.style.transform = 'translate(' + (clientX - 32) + 'px, ' + (clientY - 32) + 'px)';
   }
 
+  function resolveInventoryDropTarget(clientX, clientY) {
+    const target = document.elementFromPoint(clientX, clientY);
+    const dropTarget = target && target.closest ? target.closest('.inventory-menu-slot') : null;
+    if (!dropTarget || !inventoryDragState) return null;
+    if (dropTarget === inventoryDragState.sourceElement) return null;
+    return dropTarget;
+  }
+
   function handleInventoryDragMove(event) {
     if (!inventoryDragState || event.pointerId !== inventoryDragState.pointerId) return;
 
@@ -307,7 +377,7 @@ export function createInventoryUI(options) {
     if (!inventoryDragState.dragging) {
       const deltaX = event.clientX - inventoryDragState.startX;
       const deltaY = event.clientY - inventoryDragState.startY;
-      if (Math.hypot(deltaX, deltaY) < 8) return;
+      if (Math.hypot(deltaX, deltaY) < INVENTORY_DRAG_START_DISTANCE) return;
 
       inventoryDragState.dragging = true;
       suppressInventorySlotClick = true;
@@ -320,6 +390,7 @@ export function createInventoryUI(options) {
 
     event.preventDefault();
     updateInventoryDragPreviewPosition(event.clientX, event.clientY);
+    setInventoryDropTarget(resolveInventoryDropTarget(event.clientX, event.clientY));
   }
 
   function handleInventoryDragEnd(event) {
@@ -330,8 +401,7 @@ export function createInventoryUI(options) {
 
     if (inventoryDragState.dragging) {
       event.preventDefault();
-      const target = document.elementFromPoint(clientX, clientY);
-      const dropTarget = target && target.closest ? target.closest('.inventory-menu-slot') : null;
+      const dropTarget = resolveInventoryDropTarget(clientX, clientY);
       const targetIndex = Number(dropTarget && dropTarget.dataset ? dropTarget.dataset.slotIndex : NaN);
       if (Number.isInteger(targetIndex)) {
         moveInventoryStack(inventoryDragState.sourceIndex, targetIndex);
@@ -365,7 +435,8 @@ export function createInventoryUI(options) {
       if (!itemEntry) slot.classList.add('is-empty');
 
       if (itemEntry) {
-        slot.appendChild(createImageIcon(itemEntry.iconSrc, itemEntry.name));
+        const icon = createEncyclopediaItemIcon(itemEntry);
+        if (icon) slot.appendChild(icon);
       }
 
       label.className = 'hotbar-slot-label';

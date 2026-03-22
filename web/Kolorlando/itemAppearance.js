@@ -96,11 +96,66 @@ function createLoadingPlaceholder({ castShadow = true, receiveShadow = false } =
   });
 }
 
+function createCoinItemModel({ castShadow = true, receiveShadow = false } = {}) {
+  const root = new THREE.Group();
+
+  // The coin uses a flattened cylinder as the main silhouette so it reads clearly
+  // as a classic collectible coin even from a distance and while rotating in place.
+  const coinMaterial = new THREE.MeshStandardMaterial({
+    color: 0xd6a523,
+    roughness: 0.22,
+    metalness: 0.92,
+    emissive: new THREE.Color(0xd6a523).multiplyScalar(0.08),
+  });
+  const rimMaterial = new THREE.MeshStandardMaterial({
+    color: 0xffd766,
+    roughness: 0.16,
+    metalness: 1,
+    emissive: new THREE.Color(0xffd766).multiplyScalar(0.12),
+  });
+
+  const body = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.34, 0.34, 0.08, 36),
+    coinMaterial
+  );
+  body.rotation.z = Math.PI * 0.5;
+  setShadow(body, castShadow, receiveShadow);
+  root.add(body);
+
+  // Front and back faces add a subtle embossed look so the item feels metallic
+  // and less like a plain primitive once lighting hits it in the world.
+  const faceGeometry = new THREE.CylinderGeometry(0.26, 0.26, 0.02, 24);
+  const frontFace = new THREE.Mesh(faceGeometry, rimMaterial);
+  frontFace.rotation.z = Math.PI * 0.5;
+  frontFace.position.x = 0.025;
+  setShadow(frontFace, castShadow, receiveShadow);
+  root.add(frontFace);
+
+  const backFace = frontFace.clone();
+  backFace.position.x = -0.025;
+  root.add(backFace);
+
+  const groove = new THREE.Mesh(
+    new THREE.TorusGeometry(0.24, 0.02, 10, 30),
+    rimMaterial
+  );
+  groove.rotation.y = Math.PI * 0.5;
+  setShadow(groove, castShadow, receiveShadow);
+  root.add(groove);
+
+  return {
+    root,
+    height: measureModelHeight(root),
+  };
+}
+
 export class ItemAppearance {
   constructor({
     scene,
     position,
     label = 'Item',
+    inventoryType = null,
+    pickable = false,
     model = null,
     modelUrl = null,
     modelRotation = null,
@@ -117,6 +172,9 @@ export class ItemAppearance {
     this.scene = scene;
     this.position = position.clone();
     this.label = label;
+    this.inventoryType = inventoryType ?? label;
+    this.pickable = pickable;
+    this.collected = false;
     this.groundY = groundY;
     this.floatHeight = floatHeight;
     this.rotationSpeed = rotationSpeed;
@@ -168,7 +226,7 @@ export class ItemAppearance {
     const placementHeight = this.placementHeight > 0 ? this.placementHeight : this.modelHeight;
     this.group.position.y = this.groundY + this.floatHeight + placementHeight * 0.5;
     this.raycastSphere.center.copy(this.group.position);
-    this.raycastSphere.radius = this.raycastSphereRadius;
+    this.raycastSphere.radius = this.collected ? 0 : this.raycastSphereRadius;
   }
 
   loadModelFromUrl(modelUrl) {
@@ -205,7 +263,18 @@ export class ItemAppearance {
   }
 
   update(deltaTime) {
+    if (this.collected) return;
     this.group.rotation.y += this.rotationSpeed * deltaTime;
+  }
+
+  collect() {
+    if (this.collected) return;
+
+    // Removing the rendered model and shrinking the interaction sphere makes the pickup
+    // immediately disappear from the world while keeping the object instance reusable.
+    this.collected = true;
+    this.group.visible = false;
+    this.raycastSphere.radius = 0;
   }
 }
 
@@ -216,6 +285,22 @@ export class GoxelItemAppearance extends ItemAppearance {
       ...options,
       modelScale: GOXEL_MODEL_SCALE,
       centerModel: true,
+    });
+  }
+}
+
+export class CoinItemAppearance extends ItemAppearance {
+  constructor(options) {
+    super({
+      ...options,
+      model: createCoinItemModel({
+        castShadow: options?.castShadow,
+        receiveShadow: options?.receiveShadow,
+      }),
+      raycastSphereRadius: options?.raycastSphereRadius ?? 0.7,
+      placementHeight: options?.placementHeight ?? 0.7,
+      floatHeight: options?.floatHeight ?? 0.45,
+      rotationSpeed: options?.rotationSpeed ?? 1.8,
     });
   }
 }

@@ -35,6 +35,20 @@ export function createSquareIcon(color = '#4a90ff') {
   return icon;
 }
 
+export function createCircleIcon(color = '#d4af37', borderColor = '#ffe08a') {
+  const icon = createIcon('icon-chip item-slot-icon');
+  const fill = document.createElement('span');
+  fill.className = 'icon-chip__square';
+
+  // Reusing the existing square icon element and overriding it inline keeps the coin
+  // icon compact while rendering as a simple golden circular token in the UI.
+  fill.style.background = 'radial-gradient(circle at 30% 30%, ' + borderColor + ' 0%, ' + color + ' 58%, #9a7412 100%)';
+  fill.style.borderRadius = '50%';
+  fill.style.boxShadow = 'inset 0 0 0 2px rgba(255, 232, 138, 0.75)';
+  icon.appendChild(fill);
+  return icon;
+}
+
 export function createImageIcon(src, alt = '') {
   const icon = createIcon('icon-chip item-slot-icon image-icon');
   const image = document.createElement('img');
