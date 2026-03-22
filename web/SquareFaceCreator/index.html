@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>dbf - SFC</title>
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+        img {
+            max-width: 100%;
+        }
+        body {
+            font-family: sans-serif;
+        }
+
+        header,
+        footer {
+            text-align: center;
+        }
+
+        main {
+            max-width: 500px;
+            margin: auto;
+            
+        }
+
+        .canvas-wrapper {
+            background-color: blue;
+            width: 100%;
+            aspect-ratio: 1;
+        }
+
+        .categoryPicker {
+            background-color: gray;
+            
+            width: 600px;
+            display: flex;
+            
+        }
+
+        .faceItemGrid {
+            background-color: green;
+            display: flex;
+            flex-wrap: wrap;
+        }
+        .category , .faceItem {
+            border: solid 1px white;
+            width: 25%;
+            flex: 25%;
+            aspect-ratio: 1;
+        }
+
+        .faceItem > img {
+            height: 100%;
+            object-fit: contain;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>Square Face Creator</h1>
+    </header>
+    <main>
+        <div class="canvas-wrapper">
+            <canvas></canvas>
+        </div>
+        <div class="categoryPicker">
+            <div class="category"></div>
+            <div class="category"></div>
+            <div class="category"></div>
+            <div class="category"></div>
+            <div class="category"></div>
+            <div class="category"></div>
+        </div>
+        <div class="faceItemGrid">
+
+            <div class="faceItem">
+                <img src="https://t4.ftcdn.net/jpg/05/15/85/45/360_F_515854547_vG0mwDLMAtxwvjTME7kkbGu0rX5Fp0d3.jpg" alt="">
+            </div>
+            <div class="faceItem">
+                <img src="https://static.vecteezy.com/system/resources/thumbnails/038/557/145/small/anime-girl-s-eyes-in-a-manga-comic-book-frame-fancy-illustration-in-cartoon-style-vector.jpg" alt="">
+            </div>
+            <div class="faceItem">
+                <img src="https://www.shutterstock.com/image-vector/crying-eyes-anime-manga-girls-260nw-783306307.jpg" alt="">
+            </div>
+            <div class="faceItem">
+                <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRYsDuHNL4TPq7wN195KM2cjMrmXimbgY8mMA&s" alt="">
+            </div>
+            <div class="faceItem"></div>
+            <div class="faceItem"></div>
+            <div class="faceItem"></div>
+            <div class="faceItem"></div>
+            <div class="faceItem"></div>
+            <div class="faceItem"></div>
+            <div class="faceItem"></div>
+            <div class="faceItem"></div>
+            <div class="faceItem"></div>
+            <div class="faceItem"></div>
+            <div class="faceItem"></div>
+            <div class="faceItem"></div>
+
+        </div>
+    </main>
+    <footer>
+        <p>made by dibesfer</p>
+    </footer>
+</body>
+
+</html>
