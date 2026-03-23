@@ -1123,8 +1123,10 @@ const HELD_ITEM_DEFINITIONS = {
 const heldItemTemplateCache = new Map();
 let activeHeldItemType = null;
 let activeHeldItemRoot = null;
+let firstPersonHeldItemRoot = null;
 let pendingHeldItemType = null;
 let heldItemLoadRequestId = 0;
+let firstPersonArmsRig = null;
 
 function applyHeldItemShadows(root, castShadow, receiveShadow) {
   root.traverse(part => {
@@ -1181,11 +1183,14 @@ function alignHeldItemPivot(root, pivotMode = 'boundsCenter') {
 function buildHeldItemMount(templateRoot, definition) {
   const mount = new THREE.Group();
   // The pivot group stays attached to the hand slot while the aligned mesh sits
-  // beneath it. Rotating the pivot keeps the chosen grip point fixed in place.
+  // beneath it. An extra correction node lets first-person apply view-specific
+  // flips without changing the shared authored transform.
   const pivotRoot = new THREE.Group();
+  const correctionRoot = new THREE.Group();
   const itemRoot = templateRoot.clone(true);
   mount.add(pivotRoot);
-  pivotRoot.add(itemRoot);
+  pivotRoot.add(correctionRoot);
+  correctionRoot.add(itemRoot);
 
   // Apply any authored hand offset before resolving the chosen grip anchor.
   pivotRoot.position.copy(definition.position ?? new THREE.Vector3());
@@ -1193,6 +1198,7 @@ function buildHeldItemMount(templateRoot, definition) {
 
   // Rotate the anchor, not the aligned mesh, so the grip point does not drift.
   pivotRoot.rotation.copy(definition.rotation ?? new THREE.Euler());
+  correctionRoot.rotation.copy(definition.correctionRotation ?? new THREE.Euler());
   pivotRoot.updateWorldMatrix(true, true);
 
   return mount;
@@ -1237,9 +1243,31 @@ function clearActiveHeldItem() {
   if (activeHeldItemRoot?.parent) {
     activeHeldItemRoot.parent.remove(activeHeldItemRoot);
   }
+  if (firstPersonHeldItemRoot?.parent) {
+    firstPersonHeldItemRoot.parent.remove(firstPersonHeldItemRoot);
+  }
   activeHeldItemRoot = null;
+  firstPersonHeldItemRoot = null;
   activeHeldItemType = null;
   pendingHeldItemType = null;
+}
+
+function getFirstPersonHeldItemSlotName(slotName) {
+  // The first-person arms are viewed from the opposite side of the naming
+  // convention used on the world rig, so hand slots need to be mirrored there.
+  if (slotName === 'rightHandSlot') return 'leftHandSlot';
+  if (slotName === 'leftHandSlot') return 'rightHandSlot';
+  return slotName;
+}
+
+function getFirstPersonHeldItemDefinition(definition) {
+  // The first-person hand slots currently point local Z toward the floor, so
+  // held items need a 180 degree flip around that local axis to match the
+  // expected orientation from the player's view.
+  return {
+    ...definition,
+    correctionRotation: new THREE.Euler(0, 0, Math.PI),
+  };
 }
 
 async function mountHeldItem(itemType) {
@@ -1248,13 +1276,20 @@ async function mountHeldItem(itemType) {
   const definition = HELD_ITEM_DEFINITIONS[itemType]
     ? { ...HELD_ITEM_DEFAULTS, ...HELD_ITEM_DEFINITIONS[itemType] }
     : null;
-  const slot = definition ? playerHumanoid.joints[definition.slotName] : null;
-  if (!definition || !slot) {
+  const worldSlot = definition ? playerHumanoid.joints[definition.slotName] : null;
+  const firstPersonSlot = definition && firstPersonArmsRig
+    ? firstPersonArmsRig.joints[getFirstPersonHeldItemSlotName(definition.slotName)]
+    : null;
+  if (!definition || !worldSlot) {
     clearActiveHeldItem();
     return;
   }
 
-  if (activeHeldItemType === itemType && activeHeldItemRoot?.parent === slot) return;
+  if (
+    activeHeldItemType === itemType
+    && activeHeldItemRoot?.parent === worldSlot
+    && (!firstPersonArmsRig || firstPersonHeldItemRoot?.parent === firstPersonSlot)
+  ) return;
 
   const requestId = ++heldItemLoadRequestId;
   clearActiveHeldItem();
@@ -1265,9 +1300,18 @@ async function mountHeldItem(itemType) {
     if (requestId !== heldItemLoadRequestId) return;
 
     const heldRoot = buildHeldItemMount(templateRoot, definition);
-    slot.add(heldRoot);
+    worldSlot.add(heldRoot);
+
+    let fpHeldRoot = null;
+    if (firstPersonSlot) {
+      const firstPersonDefinition = getFirstPersonHeldItemDefinition(definition);
+      fpHeldRoot = buildHeldItemMount(templateRoot, firstPersonDefinition);
+      firstPersonSlot.add(fpHeldRoot);
+    }
+
     activeHeldItemType = itemType;
     activeHeldItemRoot = heldRoot;
+    firstPersonHeldItemRoot = fpHeldRoot;
     pendingHeldItemType = null;
   } catch (error) {
     console.error('Failed to mount held item', itemType, error);
@@ -1390,8 +1434,80 @@ function createFirstPersonArmsRig() {
   };
 }
 
-const firstPersonArmsRig = createFirstPersonArmsRig();
+function createFirstPersonHandAxisHelper(size = 0.18) {
+  // Reusing Three's built-in axes colors makes the debug readout easy to parse:
+  // X = red, Y = green, Z = blue. Depth testing is disabled so the helper stays
+  // visible even when the held item or hand geometry sits directly in front of it.
+  const helper = new THREE.AxesHelper(size);
+  helper.traverse(part => {
+    if (!part.isLine) return;
+    part.renderOrder = 999;
+    part.frustumCulled = false;
+    part.material.depthTest = false;
+    part.material.depthWrite = false;
+    part.material.transparent = true;
+    part.material.opacity = 0.95;
+  });
+
+  // Tiny sprite labels at each axis tip remove guesswork while tuning held-item
+  // transforms from the first-person camera.
+  helper.add(createAxisLabelSprite('X', '#ff5555', new THREE.Vector3(size + 0.035, 0, 0)));
+  helper.add(createAxisLabelSprite('Y', '#55ff55', new THREE.Vector3(0, size + 0.035, 0)));
+  helper.add(createAxisLabelSprite('Z', '#5599ff', new THREE.Vector3(0, 0, size + 0.035)));
+  return helper;
+}
+
+function createAxisLabelSprite(text, color, position) {
+  // A small canvas sprite keeps the axis labels readable without needing extra
+  // HTML UI, and disabling depth testing prevents the letters from disappearing
+  // behind the hand or weapon while debugging.
+  const canvas = document.createElement('canvas');
+  canvas.width = 64;
+  canvas.height = 64;
+  const context = canvas.getContext('2d');
+  if (!context) {
+    const fallback = new THREE.Sprite(new THREE.SpriteMaterial({ color: 0xffffff }));
+    fallback.position.copy(position);
+    fallback.scale.setScalar(0.05);
+    return fallback;
+  }
+
+  context.clearRect(0, 0, canvas.width, canvas.height);
+  context.font = 'bold 42px monospace';
+  context.textAlign = 'center';
+  context.textBaseline = 'middle';
+  context.lineWidth = 8;
+  context.strokeStyle = 'rgba(0, 0, 0, 0.9)';
+  context.strokeText(text, canvas.width / 2, canvas.height / 2);
+  context.fillStyle = color;
+  context.fillText(text, canvas.width / 2, canvas.height / 2);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  const material = new THREE.SpriteMaterial({
+    map: texture,
+    transparent: true,
+    depthTest: false,
+    depthWrite: false,
+  });
+  const sprite = new THREE.Sprite(material);
+  sprite.renderOrder = 1000;
+  sprite.frustumCulled = false;
+  sprite.position.copy(position);
+  sprite.scale.set(0.08, 0.08, 0.08);
+  return sprite;
+}
+
+firstPersonArmsRig = createFirstPersonArmsRig();
 camera.add(firstPersonArmsRig.root);
+updateHeldItemSelection();
+
+const firstPersonRightHandAxisHelper = createFirstPersonHandAxisHelper();
+const firstPersonLeftHandAxisHelper = createFirstPersonHandAxisHelper();
+firstPersonArmsRig.joints.rightHandSlot.add(firstPersonRightHandAxisHelper);
+firstPersonArmsRig.joints.leftHandSlot.add(firstPersonLeftHandAxisHelper);
+firstPersonRightHandAxisHelper.visible = false;
+firstPersonLeftHandAxisHelper.visible = false;
 
 const RIGHT_PUNCH_DURATION = 0.2;
 let rightPunchTimer = 0;
@@ -1484,6 +1600,8 @@ let debugModeEnabled = false;
 function setDebugMode(nextEnabled) {
   debugModeEnabled = nextEnabled;
   debugCollisionGroup.visible = nextEnabled;
+  firstPersonRightHandAxisHelper.visible = nextEnabled;
+  firstPersonLeftHandAxisHelper.visible = nextEnabled;
   if (!nextEnabled) {
     for (let i = 0; i < nearbyCollisionHelpers.length; i++) {
       nearbyCollisionHelpers[i].visible = false;
