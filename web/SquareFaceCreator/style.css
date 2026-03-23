@@ -38,12 +38,13 @@ main {
 
 .categoryPicker {
     overflow: auto;
+    background-color: rgb(52, 52, 52);
+
 }
 
 .category-wrapper {
     display: flex;
-    width: 600px;
-    background-color: rgb(52, 52, 52);
+    width: 100%;
     user-select: none;
 }
 
@@ -52,6 +53,7 @@ main {
     display: flex;
     flex-wrap: wrap;
     user-select: none;
+    width: 100%;
 }
 
 .category {
@@ -71,13 +73,18 @@ main {
 .faceItem {
     border: solid 3px white;
     width: 25%;
-    flex: 25%;
+    flex: 0 0 25%;
+    max-width: 25%;
     aspect-ratio: 1;
     cursor: pointer;
 }
 
 .faceItem {
+    display: flex;
+    justify-content: center;
+    align-items: center;
     padding: 15px;
+    overflow: hidden;
 }
 .faceItem > img {
     height: 100%;
@@ -139,4 +146,42 @@ main {
 .canvas-secondary-picker::-moz-color-swatch {
     border: none;
     border-radius: 50%;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .categoryPicker {
+        cursor: grab;
+        scrollbar-width: none;
+    }
+
+    .categoryPicker.dragging {
+        cursor: grabbing;
+    }
+
+    .categoryPicker::-webkit-scrollbar {
+        display: none;
+    }
+}
+
+#saveData {
+    margin-top: 20px;
+}
+
+#saveData > pre {
+    min-height: 96px;
+    margin: 0 0 12px;
+    padding: 12px;
+    border: solid 3px white;
+    background-color: rgba(0, 0, 0, 0.25);
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+#saveData > button {
+    margin-right: 10px;
+    padding: 8px 14px;
+    border: solid 2px white;
+    background-color: transparent;
+    color: white;
+    cursor: pointer;
 }

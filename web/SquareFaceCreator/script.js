@@ -2,16 +2,24 @@ const canvasWrapper = document.querySelector(".canvas-wrapper");
 const canvas = document.querySelector("canvas");
 const context = canvas.getContext("2d");
 const faceItems = document.querySelectorAll(".faceItem");
+const categoryPicker = document.querySelector(".categoryPicker");
+const categoryWrapper = document.querySelector(".category-wrapper");
 const categoryElements = document.querySelectorAll(".category");
 const backgroundColorInput = document.querySelector(".canvas-background-picker");
 const secondaryColorInput = document.querySelector(".canvas-secondary-picker");
 const combinationsTitle = document.querySelector(".combinations-title");
+const saveDataContainer = document.querySelector("#saveData");
+const saveDataPre = saveDataContainer?.querySelector("pre");
+const saveDataButton = saveDataContainer?.querySelector(".save-data-button");
+const readDataButton = saveDataContainer?.querySelector(".read-data-button");
 let currentCategory = "eyes";
 const selectedCategoryImages = {};
 const selectedCategoryColors = {};
 const loadedImageCache = {};
 const recoloredImageCache = {};
 let canvasBackgroundColor = backgroundColorInput.value;
+const saveCodeVersion = "SFC1";
+const desktopPointerMediaQuery = window.matchMedia("(hover: hover) and (pointer: fine)");
 
 const categoryItems = {
     // Each category keeps a fixed list of 16 item slots.
@@ -74,12 +82,13 @@ const categoryItems = {
     ],
     mouth: [
         { imgUrl: "assets/categories/mouth/SFC_mouth1.png" },
-        { imgUrl: "assets/categories/mouth/SFC_mouth2.svg" },
+        
         { imgUrl: "https://images.vexels.com/media/users/3/252302/isolated/preview/49cb11a5214ad6339f540faf86a91c01-anime-open-mouth.png" },
         { imgUrl: "https://static.vecteezy.com/system/resources/thumbnails/025/868/361/small/happy-smile-046-png.png" },
         { imgUrl: "https://www.pngall.com/wp-content/uploads/15/Anime-Mouth-PNG-Image-File.png" },
         { imgUrl: "https://images.vexels.com/media/users/3/252487/isolated/preview/d9b94e35af6fb920c619807df06c9c75-boca-de-sonrisa-feliz.png" },
         { imgUrl: "https://images.vexels.com/media/users/3/252291/isolated/preview/bbd9948356d3fdd2f162226b7f1fe78c-anime-smile-color-stroke.png" },
+        { imgUrl: "" },
         { imgUrl: "REPLACE_WITH_MOUTH_07_URL" },
         { imgUrl: "REPLACE_WITH_MOUTH_08_URL" },
         { imgUrl: "REPLACE_WITH_MOUTH_09_URL" },
@@ -112,9 +121,9 @@ const categoryItems = {
     ],
     hair: [
         { imgUrl: "assets/categories/hair/SFC_hair1.png" },
-        { imgUrl: "https://www.nicepng.com/png/detail/57-575548_cartoon-hair-png-parts-of-body-hair.png" },
-        { imgUrl: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTsGPeVZkQr7q1E5znFHjpRjkmsZ9x-9B8Nzg&s" },
-        { imgUrl: "https://i.pinimg.com/564x/9c/db/43/9cdb435823e315ad4767e0c8e424b8f3.jpg" },
+        { imgUrl: "" },
+        { imgUrl: "" },
+        { imgUrl: "" },
         { imgUrl: "REPLACE_WITH_HAIR_05_URL" },
         { imgUrl: "REPLACE_WITH_HAIR_06_URL" },
         { imgUrl: "REPLACE_WITH_HAIR_07_URL" },
@@ -127,6 +136,42 @@ const categoryItems = {
         { imgUrl: "REPLACE_WITH_HAIR_14_URL" },
         { imgUrl: "REPLACE_WITH_HAIR_15_URL" },
         { imgUrl: "REPLACE_WITH_HAIR_16_URL" }
+    ],
+    glasses: [
+        { imgUrl: "/web/SquareFaceCreator/assets/categories/glasses/SFC_glasses1.png" },
+        { imgUrl: "" },
+        { imgUrl: "" },
+        { imgUrl: "" },
+        { imgUrl: "" },
+        { imgUrl: "" },
+        { imgUrl: "" },
+        { imgUrl: "" },
+        { imgUrl: "" },
+        { imgUrl: "" },
+        { imgUrl: "" },
+        { imgUrl: "" },
+        { imgUrl: "" },
+        { imgUrl: "" },
+        { imgUrl: "" },
+        { imgUrl: "" }
+    ],
+    beard: [
+        { imgUrl: "/web/SquareFaceCreator/assets/categories/beard/SFC_beard1.png" },
+        { imgUrl: "" },
+        { imgUrl: "" },
+        { imgUrl: "" },
+        { imgUrl: "" },
+        { imgUrl: "" },
+        { imgUrl: "" },
+        { imgUrl: "" },
+        { imgUrl: "" },
+        { imgUrl: "" },
+        { imgUrl: "" },
+        { imgUrl: "" },
+        { imgUrl: "" },
+        { imgUrl: "" },
+        { imgUrl: "" },
+        { imgUrl: "" }
     ]
 };
 
@@ -187,7 +232,7 @@ const categoryDrawSettings = {
         widthRatio: 0.5,
         heightRatio: 0.5,
         centerXRatio: 0.5,
-        centerYRatio: 0.80
+        centerYRatio: 0.75
     },
     ears: {
         layerOrder: 2,
@@ -216,6 +261,48 @@ const categoryDrawSettings = {
         heightRatio: 1,
         centerXRatio: 0.5,
         centerYRatio: 0.5
+    },
+    glasses: {
+        layerOrder: 7,
+        widthRatio: 0.27,
+        heightRatio: 0.27,
+        placements: [
+            {
+                // The right glasses lens follows the same eye-row height so
+                // eyewear can sit naturally over the existing eye placement.
+                centerXRatio: 0.635,
+                centerYRatio: 1 / 3,
+                flipX: false
+            },
+            {
+                // The left lens mirrors the same source art so one glasses
+                // asset can render as a matching side-by-side pair.
+                centerXRatio: 0.365,
+                centerYRatio: 1 / 3,
+                flipX: true
+            }
+        ]
+    },
+    beard: {
+        layerOrder: 8,
+        widthRatio: 0.38,
+        heightRatio: 0.38,
+        placements: [
+            {
+                // The right beard half uses the shared mirrored layout so a
+                // single beard asset can be duplicated into a centered pair.
+                centerXRatio: 0.688,
+                centerYRatio: 0.81,
+                flipX: false
+            },
+            {
+                // The left beard half mirrors the same source image so both
+                // sides meet cleanly in the middle under the mouth.
+                centerXRatio: 0.312,
+                centerYRatio: 0.81,
+                flipX: true
+            }
+        ]
     }
 };
 
@@ -336,6 +423,191 @@ function loadDefaultSelections() {
 
         selectedCategoryImages[categoryName] = defaultImgUrl;
     });
+}
+
+function getSelectedItemIndexForCategory(categoryName) {
+    const selectedImgUrl = selectedCategoryImages[categoryName] || "";
+    const categoryEntries = categoryItems[categoryName] || [];
+
+    // Saving the selected slot index instead of the full URL keeps the
+    // code shorter while still mapping back to the current local catalog.
+    return categoryEntries.findIndex(item => item?.imgUrl === selectedImgUrl);
+}
+
+function buildSaveDataPayload() {
+    const items = {};
+    const colors = {};
+
+    Object.keys(categoryItems).forEach(categoryName => {
+        // Using -1 for empty categories makes "no item selected" explicit
+        // in the code instead of silently dropping the category entirely.
+        items[categoryName] = getSelectedItemIndexForCategory(categoryName);
+
+        // Every category keeps its own tint entry so the read action can
+        // restore custom recolors even if that category is not open yet.
+        colors[categoryName] = selectedCategoryColors[categoryName] || "";
+    });
+
+    return {
+        version: saveCodeVersion,
+        background: canvasBackgroundColor,
+        currentCategory,
+        items,
+        colors
+    };
+}
+
+function generateSaveCode() {
+    // A JSON string keeps the code human-readable inside the editable
+    // <pre> while staying simple to parse back into app state later.
+    return JSON.stringify(buildSaveDataPayload());
+}
+
+function applySaveDataPayload(saveData) {
+    const savedItems = saveData?.items || {};
+    const savedColors = saveData?.colors || {};
+    const categoryNames = Object.keys(categoryItems);
+
+    // Clear prior selections first so missing entries in the incoming code
+    // truly remove layers instead of leaving stale state behind.
+    categoryNames.forEach(categoryName => {
+        delete selectedCategoryImages[categoryName];
+        delete selectedCategoryColors[categoryName];
+    });
+
+    categoryNames.forEach(categoryName => {
+        const savedIndex = Number.parseInt(savedItems[categoryName], 10);
+        const categoryEntries = categoryItems[categoryName] || [];
+        const savedItem = Number.isInteger(savedIndex)
+            ? categoryEntries[savedIndex]
+            : null;
+        const savedImgUrl = savedItem?.imgUrl || "";
+
+        // Only real URLs should become active layers so malformed codes or
+        // placeholder catalog slots do not break the restored face.
+        if (isRealImageUrl(savedImgUrl)) {
+            selectedCategoryImages[categoryName] = savedImgUrl;
+        }
+
+        // Valid hex colors are restored category by category so the color
+        // picker can immediately reflect the active category tint again.
+        if (/^#[0-9a-f]{6}$/i.test(savedColors[categoryName] || "")) {
+            selectedCategoryColors[categoryName] = savedColors[categoryName];
+        }
+    });
+
+    // Restoring the background input keeps the saved skin/base color visible
+    // in both the UI control and the painted canvas after a read action.
+    if (/^#[0-9a-f]{6}$/i.test(saveData?.background || "")) {
+        canvasBackgroundColor = saveData.background;
+        backgroundColorInput.value = saveData.background;
+    }
+
+    // Falling back to the current category prevents broken tab state when
+    // the pasted code references a category name that no longer exists.
+    if (categoryNames.includes(saveData?.currentCategory)) {
+        currentCategory = saveData.currentCategory;
+    }
+
+    renderCategoryItems(currentCategory);
+    updateSelectedCategoryStyles();
+    updateSelectedFaceItemStyles();
+    syncSecondaryColorInput();
+    redrawCanvas();
+}
+
+function readSaveCodeFromPre() {
+    const rawSaveCode = saveDataPre?.textContent?.trim() || "";
+
+    // Empty save text should not trigger a noisy parse failure when the
+    // user presses Read before any code has been generated or pasted in.
+    if (!rawSaveCode) {
+        return;
+    }
+
+    let parsedSaveData;
+
+    try {
+        parsedSaveData = JSON.parse(rawSaveCode);
+    } catch {
+        return;
+    }
+
+    // Version-gating the payload gives the format room to evolve later
+    // without trying to load incompatible codes into the current app.
+    if (parsedSaveData?.version !== saveCodeVersion) {
+        return;
+    }
+
+    applySaveDataPayload(parsedSaveData);
+}
+
+function enableDesktopCategoryDragScroll() {
+    if (!categoryPicker || !categoryWrapper) {
+        return;
+    }
+
+    let isMouseDown = false;
+    let isDragging = false;
+    let shouldSuppressClick = false;
+    let dragStartX = 0;
+    let scrollStartX = 0;
+
+    const stopDragging = () => {
+        shouldSuppressClick = isDragging;
+        isMouseDown = false;
+        isDragging = false;
+        categoryPicker.classList.remove("dragging");
+    };
+
+    // Mouse-only drag scrolling avoids interfering with touch scrolling and
+    // keeps normal category clicks intact on desktop browsers.
+    categoryWrapper.addEventListener("mousedown", event => {
+        if (!desktopPointerMediaQuery.matches || event.button !== 0) {
+            return;
+        }
+
+        isMouseDown = true;
+        isDragging = false;
+        dragStartX = event.clientX;
+        scrollStartX = categoryPicker.scrollLeft;
+    });
+
+    // The threshold avoids turning a simple click into a drag when the
+    // mouse wiggles by a couple of pixels during a normal category click.
+    window.addEventListener("mousemove", event => {
+        if (!isMouseDown || !desktopPointerMediaQuery.matches) {
+            return;
+        }
+
+        const dragDistanceX = event.clientX - dragStartX;
+
+        if (Math.abs(dragDistanceX) > 6) {
+            isDragging = true;
+            categoryPicker.classList.add("dragging");
+        }
+
+        if (!isDragging) {
+            return;
+        }
+
+        categoryPicker.scrollLeft = scrollStartX - dragDistanceX;
+        event.preventDefault();
+    });
+
+    window.addEventListener("mouseup", stopDragging);
+
+    // Cancelling the click right after a drag keeps the strip from selecting
+    // a category accidentally when the user only meant to scroll sideways.
+    categoryPicker.addEventListener("click", event => {
+        if (!shouldSuppressClick) {
+            return;
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+        shouldSuppressClick = false;
+    }, true);
 }
 
 function hexToRgb(hexColor) {
@@ -740,6 +1012,22 @@ secondaryColorInput.addEventListener("input", () => {
     redrawCanvas();
 });
 
+saveDataButton?.addEventListener("click", () => {
+    // Writing the latest code into the editable <pre> makes saving and
+    // manual sharing a single action without needing a separate textarea.
+    if (!saveDataPre) {
+        return;
+    }
+
+    saveDataPre.textContent = generateSaveCode();
+});
+
+readDataButton?.addEventListener("click", () => {
+    // Reading directly from the <pre> lets pasted codes and freshly saved
+    // codes follow the same restore path and UI refresh behavior.
+    readSaveCodeFromPre();
+});
+
 // Rendering once at startup makes the initial "eyes" category come
 // from the data object instead of relying on hardcoded HTML images.
 updatePossibleCombinationsTitle();
@@ -748,4 +1036,5 @@ renderCategoryItems(currentCategory);
 updateSelectedCategoryStyles();
 syncSecondaryColorInput();
 resizeCanvasToWrapper();
+enableDesktopCategoryDragScroll();
 window.addEventListener("resize", resizeCanvasToWrapper);
