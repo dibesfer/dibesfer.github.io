@@ -208,9 +208,21 @@ function setElementHidden(element, hidden) {
 
 function handleChatCommand(message) {
   const normalizedMessage = message.trim().toLowerCase();
-  if (normalizedMessage !== '/debugmode') return false;
-  setDebugMode(!debugModeEnabled);
-  return true;
+  // Keep chat-command toggles centralized here so console-style commands reuse
+  // the same state-changing helpers as keyboard shortcuts.
+  if (normalizedMessage === '/debugmode') {
+    setDebugMode(!debugModeEnabled);
+    return true;
+  }
+
+  // Reuse the dedicated fly-mode setter so chat toggles keep jump/velocity
+  // cleanup behavior identical to the keyboard shortcut.
+  if (normalizedMessage === '/flymode') {
+    setFlyMode(!flyMode);
+    return true;
+  }
+
+  return false;
 }
 
 const chatUI = createChatUI({
@@ -1266,7 +1278,7 @@ function getFirstPersonHeldItemDefinition(definition) {
   // expected orientation from the player's view.
   return {
     ...definition,
-    correctionRotation: new THREE.Euler(0, 0, Math.PI),
+    correctionRotation: new THREE.Euler(0, Math.PI * 1, Math.PI),
   };
 }
 
@@ -3349,6 +3361,21 @@ document.addEventListener('keydown', e => {
       chatUI.handleAction();
       return;
     }
+  }
+
+  // Let desktop players hit "/" to jump straight into command entry with the
+  // slash already inserted, while leaving normal typing fields untouched.
+  // Using the produced key instead of the physical key code keeps this working
+  // across keyboard layouts and prevents the browser quick-search shortcut.
+  if (!mobileMode && e.key === '/' && !e.repeat && !chatUI.isInputOpen() && !isTypingTarget(e.target)) {
+    e.preventDefault();
+    e.stopPropagation();
+    chatUI.showInput();
+    if (chatBoxInput) {
+      chatBoxInput.value = '/';
+      chatBoxInput.setSelectionRange(1, 1);
+    }
+    return;
   }
 
   if (isTypingTarget(e.target)) return;
