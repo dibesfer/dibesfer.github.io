@@ -924,7 +924,7 @@ img {
 
 #Left0,
 #Left1,
-#buttonDown,
+#Left2,
 #buttonUp,
 #buttonShoot,
 #Right1,
@@ -939,7 +939,7 @@ img {
 
 }
 
-#buttonDown {
+#Left2 {
     left: 5px;
     bottom: 5px;
 }

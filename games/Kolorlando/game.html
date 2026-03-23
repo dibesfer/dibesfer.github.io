@@ -8,12 +8,13 @@
     <link rel="stylesheet" href="style.css">
 
     <link rel="shortcut icon" href="assets/icons/favicon/android-chrome-512x512.png" type="image/x-icon">
-    
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Ubuntu+Sans+Mono:ital,wght@0,400..700;1,400..700&display=swap" rel="stylesheet">
-    
-    
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Ubuntu+Sans+Mono:ital,wght@0,400..700;1,400..700&display=swap"
+        rel="stylesheet">
+
+
     <script type="importmap">
     {
     "imports": {
@@ -77,7 +78,7 @@
 
     <div id="menuCentral" hidden>
 
-        <div id="menuCloseButton" >X</div>
+        <div id="menuCloseButton">X</div>
         <h1 class="not-on-landscape">Kolorlando</h1>
         <div class="menu-tabs" role="tablist" aria-label="Main menu sections">
             <button class="menu-tab" type="button" data-menu-tab="creative">ENCYCLOPEDIA</button>
@@ -91,7 +92,7 @@
             <h2>Encyclopedia</h2>
             <h3>Voxels</h3>
             <div id="inventorySlots"></div>
-            
+
             <h3>Items</h3>
             <div id="itemEncyclopediaSlots"></div>
 
@@ -103,7 +104,7 @@
             </ul>
 
             <p id="inventorySelected">Selected: green</p>
-            
+
             <p class="inventory-help">Press <code>C</code> to open Encyclopedia quickly.</p>
         </section>
 
@@ -219,6 +220,10 @@
                 <input type="checkbox" name="menuThemeDark" id="settingsMenuThemeDark">
                 <label for="settingsMenuThemeDark">Dark menu theme</label>
             </div>
+            <div class="settings-toggle">
+                <input type="checkbox" name="shadows" id="settingsShadows" checked>
+                <label for="settingsShadows">Shadows</label>
+            </div>
 
             <label for="volume">Volume</label>
             <input type="range">
@@ -268,7 +273,7 @@
                 </div>
             </div>
 
-            <div id="buttonDown" class="button">
+            <div id="Left2" class="button">
                 down
             </div>
             <div id="buttonUp" class="button">

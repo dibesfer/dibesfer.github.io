@@ -78,13 +78,14 @@ const loadingScreen = document.getElementById('loadingScreen');
 const loadingBarFill = document.getElementById('loadingBarFill');
 const loadingText = document.getElementById('loadingText');
 const buttonUp = document.getElementById('Right2');
-const buttonDown = document.getElementById('buttonDown');
+const buttonDown = document.getElementById('Left2');
 const buttonLeft1 = document.getElementById('Left1');
 const buttonShoot = document.getElementById('buttonShoot');
 const buttonRight1 = document.getElementById('Right1');
 const buttonRight3 = document.getElementById('Right3');
 const settingsFullScreen = document.getElementById('settingsFullScreen');
 const settingsMenuThemeDark = document.getElementById('settingsMenuThemeDark');
+const settingsShadows = document.getElementById('settingsShadows');
 const playerHealthFill = document.getElementById('playerHealthFill');
 const playerHealthText = document.getElementById('playerHealthText');
 const voxelReadout = document.getElementById('voxelReadout');
@@ -98,6 +99,8 @@ const cameraModeWowInput = document.getElementById('cameraModeWow');
 const cameraModeLegoLolInput = document.getElementById('cameraModeLegoLol');
 let mobileShootPressed = false;
 let mobileSprintEnabled = false;
+let mobileFlyUpPressed = false;
+let mobileFlyDownPressed = false;
 let suppressRight3Click = false;
 let openingChatFromPointerLock = false;
 let characterPreviewDragState = null;
@@ -107,6 +110,7 @@ let wowCameraDragState = null;
 let wowCursorRaycastActive = false;
 let cameraModeController = null;
 let screenController = null;
+const SHADOWS_STORAGE_KEY = 'kolorlando.settings.shadows';
 
 function isLegoLolCameraMode() {
   return cameraModeController ? cameraModeController.isLegoLolCameraMode() : false;
@@ -646,7 +650,7 @@ document.addEventListener('keydown', e => {
 });
 document.addEventListener('keyup', e => keys[e.code] = false);
 
-const moveSpeed = 10;
+const moveSpeed = 5;
 const flySpeed = 10;
 const gravity = 30;
 const jumpSpeed = 11;
@@ -709,6 +713,63 @@ dir.shadow.bias = -0.0002;
 dir.shadow.normalBias = 0.02;
 scene.add(dir);
 scene.add(dir.target);
+
+function persistShadowsPreference(nextEnabled) {
+  try {
+    window.localStorage.setItem(SHADOWS_STORAGE_KEY, nextEnabled ? 'true' : 'false');
+  } catch (error) {
+    // Ignore persistence failures so the setting still works for the session.
+  }
+}
+
+function readSavedShadowsPreference() {
+  try {
+    return window.localStorage.getItem(SHADOWS_STORAGE_KEY);
+  } catch (error) {
+    return null;
+  }
+}
+
+function setShadowsEnabled(nextEnabled, options = {}) {
+  const shouldPersist = options.persist !== false;
+  const enabled = nextEnabled !== false;
+
+  // Toggling both the renderer shadow map and the sun light shadow casting is
+  // enough to disable the expensive shadow pass while keeping the rest of the
+  // lighting and scene setup intact.
+  renderer.shadowMap.enabled = enabled;
+  dir.castShadow = enabled;
+
+  // Some Three.js shadow-map state is cached internally, so marking materials
+  // for update helps the scene react immediately after the checkbox changes.
+  scene.traverse(part => {
+    if (!part?.isMesh) return;
+    if (part.material) {
+      part.material.needsUpdate = true;
+    }
+  });
+
+  if (settingsShadows) {
+    settingsShadows.checked = enabled;
+  }
+
+  if (shouldPersist) {
+    persistShadowsPreference(enabled);
+  }
+}
+
+const savedShadowsPreference = readSavedShadowsPreference();
+if (savedShadowsPreference === 'true' || savedShadowsPreference === 'false') {
+  setShadowsEnabled(savedShadowsPreference === 'true', { persist: false });
+} else {
+  setShadowsEnabled(true, { persist: false });
+}
+
+if (settingsShadows) {
+  settingsShadows.addEventListener('change', function () {
+    setShadowsEnabled(settingsShadows.checked);
+  });
+}
 
 // --------------------
 // GROUND
@@ -3030,6 +3091,10 @@ function updatePlayer(deltaTime) {
       if (keys['Space']) inputVertical += 1;
       if (keys['ShiftLeft'] || keys['ShiftRight']) inputVertical -= 1;
     }
+    if (mobileMode) {
+      if (mobileFlyUpPressed) inputVertical += 1;
+      if (mobileFlyDownPressed) inputVertical -= 1;
+    }
 
     const verticalDelta = inputVertical * flySpeed * deltaTime;
     resolveVertical(verticalDelta);
@@ -3195,12 +3260,21 @@ function queueJump(event) {
   gameAudio.unlockAudio(true);
   if (event) event.preventDefault();
   setMobilePressState(buttonUp, true);
+
+  // In fly mode the mobile jump button becomes the upward thruster instead of
+  // queueing a grounded jump, so vertical motion stays continuous while held.
+  if (flyMode) {
+    mobileFlyUpPressed = true;
+    return;
+  }
+
   playerState.jumpQueued = true;
 }
 
 function stopQueueJump(event) {
   if (event) event.preventDefault();
   setMobilePressState(buttonUp, false);
+  mobileFlyUpPressed = false;
 }
 
 buttonUp.addEventListener('touchstart', queueJump, { passive: false });
@@ -3224,12 +3298,42 @@ if (buttonLeft0) {
   }, { passive: false });
 }
 
-// Optional quick drop for mobile
-buttonDown.addEventListener('touchstart', () => {
+function startMobileDownAction(event) {
+  gameAudio.unlockAudio(true);
+  if (event) event.preventDefault();
+  setMobilePressState(buttonDown, true);
+
+  // In fly mode the left down button should continuously drive descent instead
+  // of doing the old one-shot fast-fall behavior used for grounded jumping.
+  if (flyMode) {
+    mobileFlyDownPressed = true;
+    return;
+  }
+
   if (!playerState.onGround) {
     playerState.velocity.y = Math.min(playerState.velocity.y, -8);
   }
-});
+}
+
+function stopMobileDownAction(event) {
+  if (event) event.preventDefault();
+  setMobilePressState(buttonDown, false);
+  mobileFlyDownPressed = false;
+}
+
+if (buttonDown) {
+  buttonDown.addEventListener('touchstart', startMobileDownAction, { passive: false });
+  buttonDown.addEventListener('touchend', stopMobileDownAction, { passive: false });
+  buttonDown.addEventListener('touchcancel', stopMobileDownAction, { passive: false });
+  buttonDown.addEventListener('pointerdown', event => {
+    if (!mobileMode) return;
+    startMobileDownAction(event);
+  });
+  buttonDown.addEventListener('pointerup', event => {
+    if (!mobileMode) return;
+    stopMobileDownAction(event);
+  });
+}
 
 function setShootButtonState(active) {
   if (!buttonShoot) return;
