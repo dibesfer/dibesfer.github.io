@@ -1956,7 +1956,10 @@ function syncCameraToPlayerView(deltaTime = 0) {
     thirdPersonTargetPos.set(
       playerEye.x,
       playerEye.y + verticalDistance,
-      playerEye.z - horizontalDistance
+      // Flipping the sign rotates the fixed Lego Lol orbit 180 degrees around
+      // the world's vertical axis, moving the camera to the opposite side of
+      // the player while preserving the same height and orbit distance.
+      playerEye.z + horizontalDistance
     );
     camera.position.copy(thirdPersonTargetPos);
     legoLolFocusPos.set(playerEye.x, playerBody.position.y + PLAYER_HEIGHT * 0.7, playerEye.z);
