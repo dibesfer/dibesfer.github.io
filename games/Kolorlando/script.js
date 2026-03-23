@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { HunterEntity, TalkerEntity } from './entity.js';
 import {
   createHumanoidModel,
@@ -31,6 +32,7 @@ const LEGO_LOL_MIN_THIRD_PERSON_DISTANCE = 3;
 const THIRD_PERSON_DISTANCE_INPUT_SCALE = 0.01;
 const JOYSTICK_MAX_OFFSET = 50;
 const SUPPORT_EPSILON = 0.03;
+const gltfLoader = new GLTFLoader();
 
 // --------------------
 // SCENE
@@ -914,6 +916,7 @@ const inventoryUI = createInventoryUI({
   gameModeButtons,
   voxelTypes,
 });
+
 dir.shadow.camera.left = -SHADOW_RANGE;
 dir.shadow.camera.right = SHADOW_RANGE;
 dir.shadow.camera.top = SHADOW_RANGE;
@@ -1079,6 +1082,167 @@ const playerHumanoid = createHumanoidModel({
 });
 playerBody.add(playerHumanoid.root);
 playerBody.scale.set(1, PLAYER_HEIGHT / playerHumanoid.baseHeight, 1);
+
+// Held-item definitions keep placement data close to the player rig so each item
+// can choose its own hand slot and custom local transform in the future.
+const HELD_ITEM_DEFINITIONS = {
+  Sword: {
+    slotName: 'leftHandSlot',
+    modelUrl: 'assets/3D/weapons/sword.gltf',
+    modelScale: 0.1,
+    pivotMode: 'baseCenter',
+    position: new THREE.Vector3(0, 0, 0),
+    // The sword now snaps by the center of its base footprint instead of the full
+    // bounds center, so the hand placeholder sits on the middle of the model base.
+    rotation: new THREE.Euler(Math.PI * 0.5, 0, 0),
+  },
+};
+const heldItemTemplateCache = new Map();
+let activeHeldItemType = null;
+let activeHeldItemRoot = null;
+let pendingHeldItemType = null;
+let heldItemLoadRequestId = 0;
+
+function applyHeldItemShadows(root, castShadow, receiveShadow) {
+  root.traverse(part => {
+    if (!part.isMesh) return;
+    part.castShadow = castShadow;
+    part.receiveShadow = receiveShadow;
+  });
+}
+
+function centerHeldItemModelOnBounds(root) {
+  const bounds = new THREE.Box3().setFromObject(root);
+  const center = new THREE.Vector3();
+  bounds.getCenter(center);
+  root.position.sub(center);
+  root.updateWorldMatrix(true, true);
+}
+
+function alignHeldItemPivot(root, pivotMode = 'boundsCenter') {
+  const bounds = new THREE.Box3().setFromObject(root);
+  const center = new THREE.Vector3();
+  bounds.getCenter(center);
+
+  // Different held items may need different authored grip pivots. For swords we
+  // currently want the placeholder to hit the middle of the model base instead of
+  // the exact volumetric center, so Y uses the bottom bound while X/Z stay centered.
+  if (pivotMode === 'baseCenter') {
+    root.position.x -= center.x;
+    root.position.y -= bounds.min.y;
+    root.position.z -= center.z;
+    root.updateWorldMatrix(true, true);
+    return;
+  }
+
+  centerHeldItemModelOnBounds(root);
+}
+
+function loadHeldItemTemplate(definition) {
+  const cachedTemplatePromise = heldItemTemplateCache.get(definition.modelUrl);
+  if (cachedTemplatePromise) return cachedTemplatePromise;
+
+  // Caching the load promise avoids duplicate GLTF requests when the player
+  // flips across hotbar slots and later returns to the same held item.
+  const templatePromise = new Promise((resolve, reject) => {
+    gltfLoader.load(
+      definition.modelUrl,
+      gltf => {
+        const root = gltf.scene ?? gltf.scenes?.[0];
+        if (!root) {
+          reject(new Error('Held item GLTF did not contain a scene root.'));
+          return;
+        }
+
+        if (definition.modelScale !== 1) {
+          root.scale.multiplyScalar(definition.modelScale ?? 1);
+          root.updateWorldMatrix(true, true);
+        }
+
+        // The imported mesh is normalized around the requested attachment pivot
+        // before per-item offsets/rotations are applied, so hand-slot placement
+        // stays consistent even when source assets use different origins.
+        alignHeldItemPivot(root, definition.pivotMode);
+        applyHeldItemShadows(root, true, false);
+        resolve(root);
+      },
+      undefined,
+      error => reject(error)
+    );
+  });
+
+  heldItemTemplateCache.set(definition.modelUrl, templatePromise);
+  return templatePromise;
+}
+
+function clearActiveHeldItem() {
+  if (activeHeldItemRoot?.parent) {
+    activeHeldItemRoot.parent.remove(activeHeldItemRoot);
+  }
+  activeHeldItemRoot = null;
+  activeHeldItemType = null;
+  pendingHeldItemType = null;
+}
+
+async function mountHeldItem(itemType) {
+  const definition = HELD_ITEM_DEFINITIONS[itemType];
+  const slot = definition ? playerHumanoid.joints[definition.slotName] : null;
+  if (!definition || !slot) {
+    clearActiveHeldItem();
+    return;
+  }
+
+  if (activeHeldItemType === itemType && activeHeldItemRoot?.parent === slot) return;
+
+  const requestId = ++heldItemLoadRequestId;
+  clearActiveHeldItem();
+  pendingHeldItemType = itemType;
+
+  try {
+    const templateRoot = await loadHeldItemTemplate(definition);
+    if (requestId !== heldItemLoadRequestId) return;
+
+    const heldRoot = templateRoot.clone(true);
+
+    // Per-item transforms are applied after centering so future items can tweak
+    // their grip without having to rebake the source model asset itself.
+    heldRoot.position.copy(definition.position ?? new THREE.Vector3());
+    heldRoot.rotation.copy(definition.rotation ?? new THREE.Euler());
+
+    slot.add(heldRoot);
+    activeHeldItemType = itemType;
+    activeHeldItemRoot = heldRoot;
+    pendingHeldItemType = null;
+  } catch (error) {
+    console.error('Failed to mount held item', itemType, error);
+    if (requestId === heldItemLoadRequestId) {
+      clearActiveHeldItem();
+    }
+  }
+}
+
+function updateHeldItemSelection() {
+  const selectedStack = inventoryUI.getGameMode() === GAME_MODE_SURVIVAL
+    ? inventoryUI.getSelectedSurvivalStack()
+    : null;
+  const selectedItemType = selectedStack?.typeName ?? null;
+
+  if (!selectedItemType || !HELD_ITEM_DEFINITIONS[selectedItemType]) {
+    if (activeHeldItemRoot || activeHeldItemType || pendingHeldItemType) {
+      // Bumping the request id invalidates any late async load from an older
+      // selection so stale weapons do not appear after the player switched away.
+      heldItemLoadRequestId += 1;
+      clearActiveHeldItem();
+    }
+    return;
+  }
+
+  if (pendingHeldItemType === selectedItemType) return;
+  if (activeHeldItemType === selectedItemType && activeHeldItemRoot) return;
+  mountHeldItem(selectedItemType);
+}
+
+updateHeldItemSelection();
 
 const PLAYER_DIRECTION_MARKER_DIAMETER = 1.5;
 const PLAYER_DIRECTION_MARKER_RADIUS = PLAYER_DIRECTION_MARKER_DIAMETER / 2;
@@ -3100,6 +3264,7 @@ renderer.setAnimationLoop(() => {
   }
 
   updatePlayer(delta);
+  updateHeldItemSelection();
   updateRightPunch(delta);
   updateLeftPunch(delta);
   updatePunchHitboxes(delta);

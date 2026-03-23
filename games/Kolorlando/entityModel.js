@@ -147,11 +147,25 @@ export function createHumanoidModel({
   setShadow(leftHand, castShadow, receiveShadow);
   leftElbow.add(leftHand);
 
+  // Placeholder mount centered inside the hand mesh.
+  // Future held-item models can be parented here so they automatically follow
+  // every arm pose and animation without needing custom transform syncing.
+  const leftHandSlot = new THREE.Group();
+  leftHandSlot.name = 'leftHandSlot';
+  leftHand.add(leftHandSlot);
+
   const rightHand = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.12, 0.17), skinMat);
   rightHand.name = 'rightHand';
   rightHand.position.set(0, -0.41, 0.015);
   setShadow(rightHand, castShadow, receiveShadow);
   rightElbow.add(rightHand);
+
+  // Matching placeholder mount for the right hand.
+  // Keeping it at the exact center of the hand makes it a neutral attachment
+  // point that can be fine-tuned later per item type if needed.
+  const rightHandSlot = new THREE.Group();
+  rightHandSlot.name = 'rightHandSlot';
+  rightHand.add(rightHandSlot);
 
   const leftHip = new THREE.Group();
   leftHip.position.set(-0.12, 0.82, 0);
@@ -221,6 +235,8 @@ export function createHumanoidModel({
       rightHip,
       leftKnee,
       rightKnee,
+      leftHandSlot,
+      rightHandSlot,
     },
     baseHeight: 1.9,
   };
