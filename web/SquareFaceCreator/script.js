@@ -10,7 +10,6 @@ const secondaryColorInput = document.querySelector(".canvas-secondary-picker");
 const combinationsTitle = document.querySelector(".combinations-title");
 const saveDataContainer = document.querySelector("#saveData");
 const saveDataPre = saveDataContainer?.querySelector("pre");
-const saveDataButton = saveDataContainer?.querySelector(".save-data-button");
 const readDataButton = saveDataContainer?.querySelector(".read-data-button");
 let currentCategory = "eyes";
 const selectedCategoryImages = {};
@@ -463,6 +462,16 @@ function generateSaveCode() {
     return JSON.stringify(buildSaveDataPayload());
 }
 
+function updateSaveDataPre() {
+    // The save-code preview should always reflect the live face state so
+    // users do not need a separate save click before copying the code.
+    if (!saveDataPre) {
+        return;
+    }
+
+    saveDataPre.textContent = generateSaveCode();
+}
+
 function applySaveDataPayload(saveData) {
     const savedItems = saveData?.items || {};
     const savedColors = saveData?.colors || {};
@@ -513,6 +522,7 @@ function applySaveDataPayload(saveData) {
     updateSelectedCategoryStyles();
     updateSelectedFaceItemStyles();
     syncSecondaryColorInput();
+    updateSaveDataPre();
     redrawCanvas();
 }
 
@@ -955,6 +965,7 @@ categoryElements.forEach(categoryElement => {
         renderCategoryItems(currentCategory);
         updateSelectedCategoryStyles();
         syncSecondaryColorInput();
+        updateSaveDataPre();
     });
 });
 
@@ -973,6 +984,7 @@ faceItems.forEach(faceItem => {
         if (selectedCategoryImages[currentCategory] === clickedImgUrl) {
             delete selectedCategoryImages[currentCategory];
             updateSelectedFaceItemStyles();
+            updateSaveDataPre();
             redrawCanvas();
             return;
         }
@@ -984,6 +996,7 @@ faceItems.forEach(faceItem => {
             // layer stable even when the grid is rebuilt for categories.
             selectedCategoryImages[currentCategory] = clickedImgUrl;
             updateSelectedFaceItemStyles();
+            updateSaveDataPre();
             redrawCanvas();
             return;
         }
@@ -993,6 +1006,7 @@ faceItems.forEach(faceItem => {
             // the combined canvas is repainted with all layers.
             selectedCategoryImages[currentCategory] = clickedImgUrl;
             updateSelectedFaceItemStyles();
+            updateSaveDataPre();
             redrawCanvas();
         }, { once: true });
     });
@@ -1002,6 +1016,7 @@ backgroundColorInput.addEventListener("input", () => {
     // Keeping the selected color in a variable makes future redraws
     // reuse the same background without reading the DOM each time.
     canvasBackgroundColor = backgroundColorInput.value;
+    updateSaveDataPre();
     redrawCanvas();
 });
 
@@ -1009,17 +1024,8 @@ secondaryColorInput.addEventListener("input", () => {
     // The tint belongs to the currently active category so the user can pick
     // a part, choose a color, and immediately see that specific layer change.
     selectedCategoryColors[currentCategory] = secondaryColorInput.value;
+    updateSaveDataPre();
     redrawCanvas();
-});
-
-saveDataButton?.addEventListener("click", () => {
-    // Writing the latest code into the editable <pre> makes saving and
-    // manual sharing a single action without needing a separate textarea.
-    if (!saveDataPre) {
-        return;
-    }
-
-    saveDataPre.textContent = generateSaveCode();
 });
 
 readDataButton?.addEventListener("click", () => {
@@ -1035,6 +1041,7 @@ loadDefaultSelections();
 renderCategoryItems(currentCategory);
 updateSelectedCategoryStyles();
 syncSecondaryColorInput();
+updateSaveDataPre();
 resizeCanvasToWrapper();
 enableDesktopCategoryDragScroll();
 window.addEventListener("resize", resizeCanvasToWrapper);

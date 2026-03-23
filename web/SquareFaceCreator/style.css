@@ -58,8 +58,13 @@ main {
 
 .category {
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
+}
+
+.emojicon {
+    font-size: 3rem;
 }
 
 .category.selected , 
