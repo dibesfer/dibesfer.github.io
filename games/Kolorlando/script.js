@@ -1096,6 +1096,16 @@ const HELD_ITEM_DEFINITIONS = {
     // bounds center, so the hand placeholder sits on the middle of the model base.
     rotation: new THREE.Euler(Math.PI * 0.5, 0, 0),
   },
+  Gun: {
+    slotName: 'leftHandSlot',
+    modelUrl: 'assets/3D/weapons/gun.gltf',
+    modelScale: 0.1,
+    pivotMode: 'horizontalCenter',
+    position: new THREE.Vector3(0, 0, 0),
+    // The gun should snap to the placeholder by its horizontal middle only, so
+    // X/Z are centered while the original vertical placement remains untouched.
+    rotation: new THREE.Euler(0, 0, 0),
+  },
 };
 const heldItemTemplateCache = new Map();
 let activeHeldItemType = null;
@@ -1135,7 +1145,30 @@ function alignHeldItemPivot(root, pivotMode = 'boundsCenter') {
     return;
   }
 
+  if (pivotMode === 'horizontalCenter') {
+    root.position.x -= center.x;
+    root.position.z -= center.z;
+    root.updateWorldMatrix(true, true);
+    return;
+  }
+
   centerHeldItemModelOnBounds(root);
+}
+
+function buildHeldItemMount(templateRoot, definition) {
+  const mount = new THREE.Group();
+  const itemRoot = templateRoot.clone(true);
+  mount.add(itemRoot);
+
+  // Placement must be resolved on the equipped instance itself so each held item
+  // uses its final authored transform at the placeholder instead of relying on
+  // cached source-scene offsets from the original imported root.
+  itemRoot.rotation.copy(definition.rotation ?? new THREE.Euler());
+  itemRoot.position.copy(definition.position ?? new THREE.Vector3());
+  alignHeldItemPivot(itemRoot, definition.pivotMode);
+  itemRoot.updateWorldMatrix(true, true);
+
+  return mount;
 }
 
 function loadHeldItemTemplate(definition) {
@@ -1159,10 +1192,8 @@ function loadHeldItemTemplate(definition) {
           root.updateWorldMatrix(true, true);
         }
 
-        // The imported mesh is normalized around the requested attachment pivot
-        // before per-item offsets/rotations are applied, so hand-slot placement
-        // stays consistent even when source assets use different origins.
-        alignHeldItemPivot(root, definition.pivotMode);
+        // Keep the cached template close to the authored asset. Each equipped
+        // instance resolves its final placeholder alignment separately.
         applyHeldItemShadows(root, true, false);
         resolve(root);
       },
@@ -1202,13 +1233,7 @@ async function mountHeldItem(itemType) {
     const templateRoot = await loadHeldItemTemplate(definition);
     if (requestId !== heldItemLoadRequestId) return;
 
-    const heldRoot = templateRoot.clone(true);
-
-    // Per-item transforms are applied after centering so future items can tweak
-    // their grip without having to rebake the source model asset itself.
-    heldRoot.position.copy(definition.position ?? new THREE.Vector3());
-    heldRoot.rotation.copy(definition.rotation ?? new THREE.Euler());
-
+    const heldRoot = buildHeldItemMount(templateRoot, definition);
     slot.add(heldRoot);
     activeHeldItemType = itemType;
     activeHeldItemRoot = heldRoot;
