@@ -141,31 +141,29 @@ export function createHumanoidModel({
   setShadow(rightForearm, castShadow, receiveShadow);
   rightElbow.add(rightForearm);
 
-  const leftHand = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.12, 0.17), skinMat);
-  leftHand.name = 'leftHand';
-  leftHand.position.set(0, -0.41, 0.015);
-  setShadow(leftHand, castShadow, receiveShadow);
-  leftElbow.add(leftHand);
+  const backViewRightHand = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.12, 0.17), skinMat);
+  // Names follow the player's back-view reading: negative X is exposed as right.
+  backViewRightHand.name = 'rightHand';
+  backViewRightHand.position.set(0, -0.41, 0.015);
+  setShadow(backViewRightHand, castShadow, receiveShadow);
+  leftElbow.add(backViewRightHand);
 
-  // Placeholder mount centered inside the hand mesh.
-  // Future held-item models can be parented here so they automatically follow
-  // every arm pose and animation without needing custom transform syncing.
-  const leftHandSlot = new THREE.Group();
-  leftHandSlot.name = 'leftHandSlot';
-  leftHand.add(leftHandSlot);
+  // The slot keeps its original physical location; only the exposed name changed.
+  const backViewRightHandSlot = new THREE.Group();
+  backViewRightHandSlot.name = 'rightHandSlot';
+  backViewRightHand.add(backViewRightHandSlot);
 
-  const rightHand = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.12, 0.17), skinMat);
-  rightHand.name = 'rightHand';
-  rightHand.position.set(0, -0.41, 0.015);
-  setShadow(rightHand, castShadow, receiveShadow);
-  rightElbow.add(rightHand);
+  const backViewLeftHand = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.12, 0.17), skinMat);
+  // Positive X is exposed as left under the same back-view convention.
+  backViewLeftHand.name = 'leftHand';
+  backViewLeftHand.position.set(0, -0.41, 0.015);
+  setShadow(backViewLeftHand, castShadow, receiveShadow);
+  rightElbow.add(backViewLeftHand);
 
-  // Matching placeholder mount for the right hand.
-  // Keeping it at the exact center of the hand makes it a neutral attachment
-  // point that can be fine-tuned later per item type if needed.
-  const rightHandSlot = new THREE.Group();
-  rightHandSlot.name = 'rightHandSlot';
-  rightHand.add(rightHandSlot);
+  // Matching slot for the mirrored side of the rig.
+  const backViewLeftHandSlot = new THREE.Group();
+  backViewLeftHandSlot.name = 'leftHandSlot';
+  backViewLeftHand.add(backViewLeftHandSlot);
 
   const leftHip = new THREE.Group();
   leftHip.position.set(-0.12, 0.82, 0);
@@ -235,8 +233,9 @@ export function createHumanoidModel({
       rightHip,
       leftKnee,
       rightKnee,
-      leftHandSlot,
-      rightHandSlot,
+      // Slot keys follow the same back-view naming exposed by the hand meshes.
+      leftHandSlot: backViewLeftHandSlot,
+      rightHandSlot: backViewRightHandSlot,
     },
     baseHeight: 1.9,
   };

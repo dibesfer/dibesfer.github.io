@@ -22,9 +22,14 @@ body {
 }
 
 body {
-font-family: "Ubuntu Sans Mono", monospace;    height: 100vh;
+    font-family: "Ubuntu Sans Mono", monospace;
+    height: 100vh;
     overflow: hidden;
     background: #5aa8d4;
+}
+
+input {
+    font-family: "Ubuntu Sans Mono", monospace;
 }
 
 body[data-camera-mode="wow"] {
@@ -54,6 +59,7 @@ a {
 a:hover {
     font-weight: bold;
 }
+
 #loadingScreen {
     position: fixed;
     inset: 0;
@@ -78,7 +84,7 @@ a:hover {
     border: 1px solid rgba(255, 255, 255, 0.4);
     background: rgba(14, 25, 34, 0.6);
     backdrop-filter: blur(4px);
-    
+
 }
 
 #loadingContent h1 {
@@ -132,7 +138,7 @@ img {
     top: 0;
     left: 0;
     background-color: rgba(74, 74, 74, 0.426);
-    
+
     font-size: 1rem;
     padding: 5px;
     height: 2rem;
@@ -148,7 +154,7 @@ img {
     z-index: 1;
     padding: 5px;
     overflow: auto;
-    
+
     font-size: 1rem;
     transition: 0.2s;
 }
@@ -299,7 +305,7 @@ img {
 }
 
 #menuCentral h1 {
-    
+
     margin-bottom: 10px;
     text-align: center;
 }
@@ -318,7 +324,7 @@ img {
 }
 
 #menuCloseButton:active {
-    
+
     color: rgb(255, 0, 0);
 }
 
@@ -336,7 +342,7 @@ img {
     border: 2px solid var(--menu-control-border);
     border-radius: 999px;
     padding: 6px 14px;
-    
+
     font-weight: 700;
     background-color: var(--menu-tab-bg);
     color: var(--menu-tab-text);
@@ -372,7 +378,7 @@ img {
 
 .menu-panel h2,
 .menu-panel h3 {
-    
+
     margin-bottom: 8px;
 }
 
@@ -551,7 +557,7 @@ img {
 #gameModeReadout,
 #voxelReadout {
     text-align: center;
-    
+
     font-size: 0.9rem;
     font-weight: 700;
     color: #ffebeb;
@@ -590,7 +596,7 @@ img {
     align-items: center;
     justify-content: flex-start;
     background: rgba(255, 255, 255, 0.65);
-    
+
     color: #1f2630;
     cursor: pointer;
     gap: 8px;
@@ -624,8 +630,7 @@ img {
     object-fit: contain;
 }
 
-.voxel-icon {
-}
+.voxel-icon {}
 
 .voxel-icon__svg {
     display: block;
@@ -645,19 +650,19 @@ img {
 
 #inventorySelected {
     margin-top: 10px;
-    
+
     font-weight: 700;
 }
 
 #playerInventorySummary,
 #playerInventorySelection {
-    
+
     font-weight: 700;
 }
 
 .inventory-help {
     margin-top: 10px;
-    
+
     opacity: 0.9;
 }
 
@@ -690,7 +695,7 @@ img {
     display: flex;
     align-items: center;
     justify-content: center;
-    
+
     font-size: 0.95rem;
     font-weight: 700;
     color: #fff;
@@ -748,7 +753,7 @@ img {
     position: absolute;
     left: 4px;
     right: 4px;
-    
+
     font-size: 0.7rem;
     font-weight: 700;
     color: #fff;
@@ -801,7 +806,7 @@ img {
     box-shadow: 0 0 0 2px rgba(86, 187, 255, 0.18);
 }
 
-#playerInventorySlots > .inventory-menu-slot:nth-child(-n+8) {
+#playerInventorySlots>.inventory-menu-slot:nth-child(-n+8) {
     border-color: rgba(148, 221, 255, 1) !important;
     background: rgba(84, 188, 255, 0.4) !important;
     box-shadow: 0 0 0 2px rgba(84, 188, 255, 0.24) !important;
@@ -843,7 +848,7 @@ img {
     gap: 8px;
     flex-wrap: wrap;
     margin-bottom: 12px;
-    
+
     font-weight: 700;
 }
 
@@ -855,7 +860,7 @@ img {
     background-color: var(--menu-control-bg);
     color: var(--menu-control-text);
     cursor: pointer;
-    
+
     font-weight: 700;
     padding: 4px 12px;
 }
@@ -904,7 +909,7 @@ img {
     min-width: 220px;
     font: unset;
     font-size: 2rem;
-    
+
     transition: 0.2s;
 }
 
@@ -1053,12 +1058,12 @@ body[data-mode="mobile-portrait"] #menuCentral {
 
 body[data-mode="mobile-portrait"] #menuInferiorLeft {
     background-color: rgba(255, 0, 0, 0.377);
-    
+
 }
 
 body[data-mode="mobile-portrait"] #menuInferiorRight {
     background-color: rgba(0, 96, 0, 0.493);
-    
+
 }
 
 /* MOBILE LANDSCAPE MODE */
@@ -1109,6 +1114,6 @@ body[data-mode="mobile-landscape"] #playerHud {
     width: 50%;
 }
 
-body[data-mode="mobile-landscape"] .not-on-landscape{
+body[data-mode="mobile-landscape"] .not-on-landscape {
     display: none;
 }

@@ -1083,28 +1083,41 @@ const playerHumanoid = createHumanoidModel({
 playerBody.add(playerHumanoid.root);
 playerBody.scale.set(1, PLAYER_HEIGHT / playerHumanoid.baseHeight, 1);
 
-// Held-item definitions keep placement data close to the player rig so each item
-// can choose its own hand slot and custom local transform in the future.
+// Neutral defaults keep every held item consistent when first equipped.
+// Individual items can still override any of these fields later if they need
+// a custom grip, offset, or authored pivot rule.
+const HELD_ITEM_DEFAULTS = {
+  slotName: 'rightHandSlot',
+  modelScale: 0.1,
+  pivotMode: 'boundsCenter',
+  position: new THREE.Vector3(0, 0, 0),
+  rotation: new THREE.Euler(0, 0, 0),
+};
+
+// Held-item definitions now only need to provide asset-specific data unless an
+// item wants to opt out of the neutral defaults above.
 const HELD_ITEM_DEFINITIONS = {
   Sword: {
-    slotName: 'leftHandSlot',
+    // Swords use the middle of their base footprint as the hand anchor, then
+    // rotate around that anchored point.
     modelUrl: 'assets/3D/weapons/sword.gltf',
-    modelScale: 0.1,
     pivotMode: 'baseCenter',
-    position: new THREE.Vector3(0, 0, 0),
-    // The sword now snaps by the center of its base footprint instead of the full
-    // bounds center, so the hand placeholder sits on the middle of the model base.
+    // Negative Y lifts the sword upward relative to the base-center hand anchor
+    // so the grip point can sit a bit higher on the handle while preserving the
+    // same base-derived attachment logic.
+    position: new THREE.Vector3(0,0,  -0.2),
+    // Adjust this authored hand rotation per sword if needed.
     rotation: new THREE.Euler(Math.PI * 0.5, 0, 0),
   },
   Gun: {
-    slotName: 'leftHandSlot',
+    // Guns can grip more naturally from the bottom-back of the model, so this
+    // pivot uses the base center on X, the bottom on Y, and the back face on Z.
     modelUrl: 'assets/3D/weapons/gun.gltf',
-    modelScale: 0.1,
-    pivotMode: 'horizontalCenter',
-    position: new THREE.Vector3(0, 0, 0),
-    // The gun should snap to the placeholder by its horizontal middle only, so
-    // X/Z are centered while the original vertical placement remains untouched.
-    rotation: new THREE.Euler(0, 0, 0),
+    modelScale: 0.05,
+    pivotMode: 'baseCenter',
+    position: new THREE.Vector3(0,-0.2,0),
+
+    rotation: new THREE.Euler(0, -Math.PI * 0.5, -Math.PI * 0.5),
   },
 };
 const heldItemTemplateCache = new Map();
@@ -1145,6 +1158,16 @@ function alignHeldItemPivot(root, pivotMode = 'boundsCenter') {
     return;
   }
 
+  if (pivotMode === 'baseBackCenter') {
+    // This places the hand anchor at the middle of the model base while using
+    // the back-most bound on Z, which is useful for gun-style grips.
+    root.position.x -= center.x;
+    root.position.y -= bounds.min.y;
+    root.position.z -= bounds.min.z;
+    root.updateWorldMatrix(true, true);
+    return;
+  }
+
   if (pivotMode === 'horizontalCenter') {
     root.position.x -= center.x;
     root.position.z -= center.z;
@@ -1157,16 +1180,20 @@ function alignHeldItemPivot(root, pivotMode = 'boundsCenter') {
 
 function buildHeldItemMount(templateRoot, definition) {
   const mount = new THREE.Group();
+  // The pivot group stays attached to the hand slot while the aligned mesh sits
+  // beneath it. Rotating the pivot keeps the chosen grip point fixed in place.
+  const pivotRoot = new THREE.Group();
   const itemRoot = templateRoot.clone(true);
-  mount.add(itemRoot);
+  mount.add(pivotRoot);
+  pivotRoot.add(itemRoot);
 
-  // Placement must be resolved on the equipped instance itself so each held item
-  // uses its final authored transform at the placeholder instead of relying on
-  // cached source-scene offsets from the original imported root.
-  itemRoot.rotation.copy(definition.rotation ?? new THREE.Euler());
-  itemRoot.position.copy(definition.position ?? new THREE.Vector3());
+  // Apply any authored hand offset before resolving the chosen grip anchor.
+  pivotRoot.position.copy(definition.position ?? new THREE.Vector3());
   alignHeldItemPivot(itemRoot, definition.pivotMode);
-  itemRoot.updateWorldMatrix(true, true);
+
+  // Rotate the anchor, not the aligned mesh, so the grip point does not drift.
+  pivotRoot.rotation.copy(definition.rotation ?? new THREE.Euler());
+  pivotRoot.updateWorldMatrix(true, true);
 
   return mount;
 }
@@ -1216,7 +1243,11 @@ function clearActiveHeldItem() {
 }
 
 async function mountHeldItem(itemType) {
-  const definition = HELD_ITEM_DEFINITIONS[itemType];
+  // Merge item-specific data onto the shared neutral defaults so every item
+  // starts with the same in-hand placement unless it explicitly overrides it.
+  const definition = HELD_ITEM_DEFINITIONS[itemType]
+    ? { ...HELD_ITEM_DEFAULTS, ...HELD_ITEM_DEFINITIONS[itemType] }
+    : null;
   const slot = definition ? playerHumanoid.joints[definition.slotName] : null;
   if (!definition || !slot) {
     clearActiveHeldItem();
