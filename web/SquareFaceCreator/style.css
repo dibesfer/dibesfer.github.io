@@ -39,6 +39,7 @@ main {
 .categoryPicker {
     overflow: auto;
     background-color: rgb(52, 52, 52);
+    border: solid 3px white;
 
 }
 
@@ -54,6 +55,7 @@ main {
     flex-wrap: wrap;
     user-select: none;
     width: 100%;
+    border: solid 3px white;
 }
 
 .category {

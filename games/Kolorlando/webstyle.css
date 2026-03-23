@@ -1,0 +1,150 @@
+* {
+    margin: 0;
+    box-sizing: border-box;
+}
+
+img {
+    max-width: 100%;
+}
+
+a {
+    text-decoration: none;
+    color: blue;
+    transition: 0.2s;
+}
+
+a:hover {
+    font-weight: bold;
+}
+
+body {
+    font-family: sans-serif;
+    text-align: center;
+    line-height: 2;
+}
+
+header {
+    background-image: url(assets/grid-bg-ChatGPT\ Image\ 14\ mar\ 2026\,\ 22_49_52.png);
+    background-size: cover;
+    background-position: center;
+    filter: saturate(0);
+    color: white;
+    text-shadow: 0 0 4px 0px black;
+}
+
+header,
+footer {
+    padding: 40px;
+    background-color: rgb(255, 225, 168);
+}
+
+#info {
+    padding: 40px;
+    background-color: rosybrown;
+}
+
+#playButton {
+    border: solid 6px green;
+    color: rgb(0, 52, 0);
+    background-color: rgb(72, 255, 72);
+    margin-top: 10px;
+    padding: 5px;
+    min-width: 220px;
+    font: unset;
+    font-size: 2rem;
+    font-family: var(--uiFont);
+    transition: 0.2s;
+}
+
+#playButton:hover {
+    color: white;
+}
+
+#playButton:active {
+    color: red;
+}
+
+/* Shared gallery row used by both the landing page screenshots and the hall cards. */
+#kImages {
+    width: 100%;
+    padding: 40px 10px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-evenly;
+    align-items: center;
+}
+
+/* Landing page screenshot cards keep the simpler outer frame style. */
+#kImages > div {
+    width: 30%;
+    
+    overflow: hidden;
+    background-color: rgb(215, 96, 96);
+    border: solid 3px black;
+}
+
+#kImages > div > img {
+    transition: 0.2s;
+}
+
+#kImages > div > img:hover {
+    transform: scale(1.25);
+}
+
+/* Hall cards add their own card shell while still living inside #kImages. */
+#kLevels {
+    width: 30%;
+    
+    height: 100%;
+    overflow: hidden;
+    background-color: rgb(180, 136, 136);
+    border: solid 2px;
+    border-radius: 15px;
+    transition: 0.2s;
+}
+
+#kLevels > div {
+   
+    height: 100%;
+    width: 100%;
+    transition: 0.2s;
+    overflow: hidden;
+}
+
+#kLevels > div > img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: 0.2s;
+    overflow: hidden;
+    display: block;
+}
+
+#kLevels:hover {
+    box-shadow: inset 0 0 25px white;
+    background-color: rgb(219, 187, 187);
+}
+
+#kLevels > div > img:hover {
+    transform: scale(1.25);
+}
+
+@media screen and (max-width: 1000px) {
+    #kImages > div,
+    #kLevels {
+        width: 40%;
+        margin: 10px;
+    }
+}
+
+@media screen and (max-width: 800px) {
+    #kImages {
+        padding: 0;
+    }
+
+    #kImages > div,
+    #kLevels {
+        width: 100%;
+        margin: 10px;
+    }
+}

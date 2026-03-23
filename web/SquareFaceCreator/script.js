@@ -410,7 +410,15 @@ function syncSecondaryColorInput() {
 }
 
 function loadDefaultSelections() {
+    const categoriesWithoutDefaultSelection = ["glasses", "beard"];
+
     Object.keys(categoryItems).forEach(categoryName => {
+        // Some optional categories should start empty so the opening face
+        // keeps its simpler default look until the user opts into them.
+        if (categoriesWithoutDefaultSelection.includes(categoryName)) {
+            return;
+        }
+
         const defaultItem = categoryItems[categoryName]?.[0];
         const defaultImgUrl = defaultItem?.imgUrl || "";
 
