@@ -6,6 +6,7 @@ export function createMiniMapUI(options) {
   const camera = options.camera;
   const entities = options.entities;
   const playerEye = options.playerEye;
+  const getPlayerFacingDirection = options.getPlayerFacingDirection;
   const groundY = options.groundY;
   const miniMapViewSize = options.miniMapViewSize;
   const miniMapHeight = options.miniMapHeight;
@@ -72,7 +73,16 @@ export function createMiniMapUI(options) {
     miniMapCamera.position.set(playerEye.x, playerEye.y + miniMapHeight, playerEye.z);
     miniMapCamera.lookAt(playerEye.x, groundY, playerEye.z);
 
-    camera.getWorldDirection(miniMapFacing);
+    if (typeof getPlayerFacingDirection === 'function') {
+      const facingDirection = getPlayerFacingDirection();
+      if (facingDirection) {
+        miniMapFacing.copy(facingDirection);
+      } else {
+        camera.getWorldDirection(miniMapFacing);
+      }
+    } else {
+      camera.getWorldDirection(miniMapFacing);
+    }
     miniMapFacing.y = 0;
 
     if (miniMapFacing.lengthSq() > 0.0001) {

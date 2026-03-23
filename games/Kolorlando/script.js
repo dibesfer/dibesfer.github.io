@@ -826,6 +826,7 @@ const miniMapUI = createMiniMapUI({
   camera,
   entities,
   playerEye,
+  getPlayerFacingDirection: () => playerFacingDir,
   groundY: GROUND_Y,
   miniMapViewSize: MINI_MAP_VIEW_SIZE,
   miniMapHeight: MINI_MAP_HEIGHT,
@@ -1118,6 +1119,9 @@ const HELD_ITEM_DEFINITIONS = {
     // so the grip point can sit a bit higher on the handle while preserving the
     // same base-derived attachment logic.
     position: new THREE.Vector3(0,0,  -0.2),
+    // First-person uses its own placement so the base of the sword can sit
+    // directly on the hand placeholder without changing the third-person grip.
+    firstPersonPosition: new THREE.Vector3(0, 0, 0.2),
     // Adjust this authored hand rotation per sword if needed.
     rotation: new THREE.Euler(Math.PI * 0.5, 0, 0),
   },
@@ -1128,6 +1132,7 @@ const HELD_ITEM_DEFINITIONS = {
     modelScale: 0.05,
     pivotMode: 'baseCenter',
     position: new THREE.Vector3(0,-0.2,0),
+    firstPersonPosition: new THREE.Vector3(0, -0.2, 0.15),
 
     rotation: new THREE.Euler(0, -Math.PI * 0.5, -Math.PI * 0.5),
   },
@@ -1276,8 +1281,13 @@ function getFirstPersonHeldItemDefinition(definition) {
   // The first-person hand slots currently point local Z toward the floor, so
   // held items need a 180 degree flip around that local axis to match the
   // expected orientation from the player's view.
+  //
+  // First-person can also override the authored hand offset and rotation per
+  // item so we can tune viewmodel placement without disturbing the world rig.
   return {
     ...definition,
+    position: definition.firstPersonPosition ?? definition.position,
+    rotation: definition.firstPersonRotation ?? definition.rotation,
     correctionRotation: new THREE.Euler(0, Math.PI * 1, Math.PI),
   };
 }
@@ -1411,12 +1421,22 @@ function createFirstPersonArmsRig() {
     if (!part.isMesh) return;
     part.visible = visibleParts.has(part.name);
     if (!part.visible) return;
-    part.renderOrder = 30;
+
+    // Treat first-person arms like regular scene geometry so they can share the
+    // same depth buffer behavior as held items. This lets the hand and sword
+    // visually intersect in a natural way instead of forcing the hands to sit
+    // in a fake overlay above everything else in view.
+    part.renderOrder = 0;
     part.frustumCulled = false;
     part.castShadow = false;
     part.receiveShadow = false;
-    part.material.depthWrite = false;
-    part.material.depthTest = false;
+
+    // Re-enable normal depth participation for the first-person arm materials.
+    // With depth test/write turned back on, the arms can be hidden by nearby
+    // world geometry and can also occlude or be occluded by the held item just
+    // like the third-person rig does.
+    part.material.depthWrite = true;
+    part.material.depthTest = true;
   });
 
   // First-person fists pose using the same skeleton parts as the player model.
@@ -1966,6 +1986,7 @@ const explosions = [];
 
 const projectileSpawnPos = new THREE.Vector3();
 const projectileDirection = new THREE.Vector3();
+const projectileAimOffset = new THREE.Vector3();
 const projectileSphere = new THREE.Sphere();
 const punchForwardDir = new THREE.Vector3();
 const punchRightDir = new THREE.Vector3();
@@ -2167,8 +2188,35 @@ function updatePunchHitboxes(deltaTime) {
   }
 }
 
+function resolveProjectileDirection(outDir) {
+  // Lego Lol uses avatar-facing controls, so ranged attacks should follow the
+  // player heading instead of the offset orbit camera direction.
+  if (isLegoLolCameraMode()) {
+    if (playerFacingDir.lengthSq() > 0.0001) {
+      outDir.copy(playerFacingDir);
+    } else {
+      outDir.set(Math.sin(playerBody.rotation.y), 0, Math.cos(playerBody.rotation.y));
+    }
+    outDir.y = 0;
+    return outDir.normalize();
+  }
+
+  // WoW screen-drag mode aims through the current cursor raycast hit. Using the
+  // resolved hit point makes clicking an on-screen target shoot toward that
+  // target instead of blindly following the camera center line.
+  if (isScreenDragCameraMode() && currentRaycastState.hit?.point) {
+    projectileAimOffset.copy(currentRaycastState.hit.point).sub(playerEye);
+    if (projectileAimOffset.lengthSq() > 0.0001) {
+      return outDir.copy(projectileAimOffset).normalize();
+    }
+  }
+
+  camera.getWorldDirection(outDir).normalize();
+  return outDir;
+}
+
 function shootProjectileFromPlayer() {
-  camera.getWorldDirection(projectileDirection).normalize();
+  resolveProjectileDirection(projectileDirection);
   projectileSpawnPos.copy(playerEye).addScaledVector(projectileDirection, 1.0);
 
   const mesh = new THREE.Mesh(projectileGeo, projectileMat.clone());
@@ -2212,10 +2260,29 @@ function startLeftPunch(options = {}) {
   spawnPunchHitbox('left');
 }
 
+function getSelectedActionItemType() {
+  // Action bindings follow the currently selected survival stack because the
+  // hotbar is the source of truth for equipped hand items and build materials.
+  const selectedStack = inventoryUI.getSelectedSurvivalStack();
+  return selectedStack?.typeName ?? null;
+}
+
+function isGunSelectedForAction() {
+  return getSelectedActionItemType() === 'Gun';
+}
+
 function triggerActionForMouseButton(button, options = {}) {
   const allowMobile = options.allowMobile === true;
 
   if (button === 0) {
+    // Guns take over the right-hand action completely so selecting a firearm
+    // feels like equipping a weapon rather than keeping the build/punch action
+    // on the same button. This intentionally bypasses voxel editing too.
+    if (isGunSelectedForAction()) {
+      shootProjectileFromPlayer();
+      return;
+    }
+
     if (currentRaycastState.voxelEditionMode) {
       const removedVoxelType = resolveRaycastLabel(currentRaycastState.hit);
       const removed = removeVoxelAtRaycastHit(currentRaycastState.hit);
