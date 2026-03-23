@@ -8,7 +8,8 @@ img {
 
 body {
     font-family: sans-serif;
-    
+    background-color: rgb(142, 53, 67);
+    color: white;
 }
 
 header,
@@ -19,12 +20,12 @@ footer {
 main {
     max-width: 500px;
     margin: auto;
-    user-select: none;
+    
 }
 
 .canvas-wrapper {
     position: relative;
-    border: solid 2px black;
+    border: solid 3px white;
     width: 100%;
     aspect-ratio: 1;
 }
@@ -42,13 +43,15 @@ main {
 .category-wrapper {
     display: flex;
     width: 600px;
-    background-color: gray;
+    background-color: rgb(52, 52, 52);
+    user-select: none;
 }
 
 .faceItemGrid {
     background-color: green;
     display: flex;
     flex-wrap: wrap;
+    user-select: none;
 }
 
 .category {
@@ -57,18 +60,20 @@ main {
     align-items: center;
 }
 
-.category.selected {
-    background-color: gold;
-    border-color: black;
-    box-shadow: inset 0 0 0 4px red;
+.category.selected , 
+.faceItem.selected {
+    background-color: rgba(255, 217, 0, 0.318);
+    border: solid 6px black;
+    
 }
 
 .category,
 .faceItem {
-    border: solid 1px white;
+    border: solid 3px white;
     width: 25%;
     flex: 25%;
     aspect-ratio: 1;
+    cursor: pointer;
 }
 
 .faceItem {
@@ -78,12 +83,6 @@ main {
     height: 100%;
     width: 100%;
     object-fit: contain;
-}
-
-.faceItem.selected {
-    background-color: gold;
-    border-color: black;
-    box-shadow: inset 0 0 0 4px red;
 }
 
 .canvas-background-picker {

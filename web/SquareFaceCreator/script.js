@@ -232,14 +232,17 @@ function resizeCanvasToWrapper() {
     // Reset the transform after resizing, then scale drawing operations
     // back into CSS pixels so positioning math stays simple.
     context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
-    applyCanvasRenderQuality();
+    applyCanvasSmoothing();
     redrawCanvas();
 }
 
-function applyCanvasRenderQuality() {
-    // One shared render-quality setup keeps every category using the same
-    // interpolation rules instead of mixing different category exceptions.
+function applyCanvasSmoothing() {
+    // Reapply smoothing on the shared 2D context so every image draw on
+    // this canvas follows the same browser smoothing behavior.
     context.imageSmoothingEnabled = true;
+
+    // Ask the browser for the smoothest interpolation it offers when
+    // face parts are scaled during preview rendering.
     context.imageSmoothingQuality = "high";
 }
 
@@ -317,7 +320,7 @@ function updateSelectedCategoryStyles() {
 function syncSecondaryColorInput() {
     // The right-hand color picker reflects the tint assigned to the currently
     // open category so switching tabs always shows the active recolor state.
-    secondaryColorInput.value = selectedCategoryColors[currentCategory] || "#000000";
+    secondaryColorInput.value = selectedCategoryColors[currentCategory] || "#d4af37";
 }
 
 function loadDefaultSelections() {
@@ -626,7 +629,7 @@ async function redrawCanvas() {
     // Repainting from saved selections lets parts from different
     // categories coexist instead of the newest click wiping the rest.
     context.clearRect(0, 0, canvasWidth, canvasHeight);
-    applyCanvasRenderQuality();
+    applyCanvasSmoothing();
 
     // Filling the canvas first makes the chosen background color act
     // like the base layer under every face part category.
