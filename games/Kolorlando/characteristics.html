@@ -12,28 +12,48 @@
         rel="stylesheet">
 
     <style>
+        * {
+            margin: 0;
+            box-sizing: border-box;
+        }
+
         body {
             font-family: "Ubuntu Sans Mono", monospace;
             font-optical-sizing: auto;
-
+            background-color: black;
+            color: white;
             font-style: normal;
+            line-height: 2;
+            padding: 15px;
+        }
+
+        hr {
+            border: solid 3px white;
         }
 
         a {
             text-decoration: none;
-            color: blue;
+            color: rgb(0, 255, 213);
+        }
+
+        ol {
+            line-height: unset;
         }
 
         .done {
-            color: green;
+            color: rgb(81, 255, 81);
         }
 
         .not-used {
-            color: purple;
+            color: rgb(255, 28, 255);
         }
 
         .not-done {
-            color: red
+            color: rgb(255, 66, 66)
+        }
+
+        .to-improve {
+            color: rgb(255, 225, 57);
         }
     </style>
 </head>
@@ -48,22 +68,34 @@
             (done but not implemented)</span></P>
     <h2>Characteristics</h2>
     <ol>
-        <li class="done">3D Camera</li>
-        <li class="done">Desktop mode, mobile-portrait mode and mobile-landscape mode</li>
-        <li class="done">Skyrim Camera: Zoomable camera from First Person mode to Third Person Mode</li>
-
-        <li class="done">WoW Camera</li>
-        <li class="done">Lego LoL Camera</li>
+        
         <li class="done">Movement, double jump and <span class="not-done">crouch</span>.</li>
         <li class="done">Fly mode</li>
         <li class="done">Debug mode (see collisions)</li>
         <li class="done">Hotbar for quick item selection</li>
         <li class="not-used">Chat box</li>
-        <li class="not-used">NPCs (walker, chaser, talker)</li>
+        <li class="done">NPCs (walker, chaser, talker)</li>
         <li class="done">Minimap</li>
         <li class="not-done">Animals</li>
         <li class="not-done">Pets</li>
         <li class="not-done">Mounts / Vehicles</li>
+    </ol>
+
+    <h3>Screen</h3>
+
+    <ol>
+        <li class="done">Resizing</li>
+        <li class="done">Desktop mode, mobile-portrait mode and mobile-landscape mode</li>
+
+    </ol>
+
+    <h3>Camera</h3>
+    <ol>
+        <li class="done">3D Camera</li>
+        <li class="done">Skyrim Camera</li>
+        <p>Zoomable camera from First Person mode to Third Person Mode</p>
+        <li class="done">WoW Camera</li>
+        <li class="done">Lego LoL Camera</li>
     </ol>
 
     <h3>User Interface (UI)</h3>
@@ -79,13 +111,13 @@
     <h3>Player</h3>
     <ol>
         <li class="done">Inventory</li>
-        <li class="not-done">Customizable characters</li>
+        <li class="not-used">Customizable characters</li>
         <li class="not-done">Equipment/wearables</li>
-        <li class="not-used">Tools/weapons/goxels (gltf models scaled 0.1 and centered on X Y Z)</li>
+        <li class="to-improve">Tools/weapons/goxels (gltf models scaled 0.1 and centered on X Y Z)</li>
         <li class="done">HUD with health bar, selected voxel and game mode</li>
         <li class="done">Step-up movement over one-block obstacles</li>
         <li class="done">Left and right punch</li>
-        <li class="not-used">Shooting</li>
+        <li class="done">Shooting</li>
     </ol>
     <h3>Mobile mode</h3>
     <ol>
@@ -100,10 +132,19 @@
         <li class="done">Creative mode and Survival mode</li>
     </ol>
 
+    <h3>Commands</h3>
+    <ol>
+        <li class="done">/debugmode</li>
+        <p>Shows debug information like collisions or raycasts</p>
+        <li class="done">/flymode </li>
+        <p>(enables flying)</p>
+        <li class="done">/spawn </li>
+        <p>(respawns player)</p>
+    </ol>
 
     <h3>Multiplayer</h3>
     <ol>
-        <li class="not-done">Presence</li>
+        <li class="done">Presence</li>
         <li class="not-done">Broadcasting</li>
         <li class="not-done">Authentication</li>
         <li class="not-used">Chat</li>
@@ -119,8 +160,8 @@
     <hr>
     <h2>Links</h2>
     <ul>
-        <li><a href="/games/Kolorlando/characteristics.html">Characteristics</a></li>
         <li><a href="/web/SquareFaceCreator/">Square Face Creator</a></li>
+        <li><a href="/games/Kolorlando/characteristics.html">Characteristics</a></li>
         <li><a href="/games/Kolorlando/">Landing Page</a></li>
         <li><a href="/games/Kolorlando/game.html">Game</a></li>
     </ul>
