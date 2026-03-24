@@ -25,6 +25,17 @@
             font-style: normal;
             line-height: 2;
             padding: 15px;
+            max-width: 800px;
+            margin: auto;
+        }
+
+        header {
+            text-align: center;
+        }
+
+        details {
+            border: solid 3px white;
+            padding: 15px;
         }
 
         hr {
@@ -61,27 +72,28 @@
 <body>
     <header>
         <h1>Kolorlando</h1>
+        <h2>Characteristics</h2>
+        <br>
         <hr>
+        <br>
     </header>
-    <p>Definition: Kolorlando is a 3D game. A voxel world in which you play a voxel character.</p>
-    <P>Legend: <span class="done">done</span> <span class="not-done">not done</span> <span class="not-used">not used
-            (done but not implemented)</span></P>
-    <h2>Characteristics</h2>
-    <ol>
-        
-        <li class="done">Movement, double jump and <span class="not-done">crouch</span>.</li>
-        <li class="done">Fly mode</li>
-        <li class="done">Debug mode (see collisions)</li>
-        <li class="done">Hotbar for quick item selection</li>
-        <li class="not-used">Chat box</li>
-        <li class="done">NPCs (walker, chaser, talker)</li>
-        <li class="done">Minimap</li>
-        <li class="not-done">Animals</li>
-        <li class="not-done">Pets</li>
-        <li class="not-done">Mounts / Vehicles</li>
-    </ol>
 
-    <h3>Screen</h3>
+    <p>Definition: Kolorlando is a 3D game. A voxel world in which you play a voxel character.</p>
+
+    <br>
+
+    <details>
+        <summary>Legend</summary>
+        <p class="done">done</p>
+        <p class="not-done">not done</p>
+        <p class="not-used">not used
+            (done but not implemented)</p>
+        <p class="to-improve">to-improve</p>
+    </details>
+
+    <br>
+
+    <h2>Screen</h2>
 
     <ol>
         <li class="done">Resizing</li>
@@ -89,7 +101,7 @@
 
     </ol>
 
-    <h3>Camera</h3>
+    <h2>Camera</h2>
     <ol>
         <li class="done">3D Camera</li>
         <li class="done">Skyrim Camera</li>
@@ -98,41 +110,68 @@
         <li class="done">Lego LoL Camera</li>
     </ol>
 
-    <h3>User Interface (UI)</h3>
+    <h2>User Interface (UI)</h2>
     <ol>
         <li class="done">Hotbar</li>
+        <p>8 item slots</p>
         <li class="done">Minimap</li>
-        <li class="done">Chat</li>
+        <li class="not-used">Chat</li>
         <li class="done">Consola</li>
+        <p>Shows FPS (Frames per second) and player coords (XYZ)</p>
         <li class="done">Joysticks</li>
+        <p>Mobile only
+        </p>
         <li class="done">Panel menu</li>
+        <p>Shows Encyclopedia, Inventory, Character, Settings and About</p>
     </ol>
 
-    <h3>Player</h3>
+    <h2>Player</h2>
     <ol>
+        <li class="done">Movement, double jump and <span class="not-done">crouch</span>.</li>
+        <li class="done">Step-up movement over one-block obstacles</li>
+        <li class="done">Fly mode</li>
+        <li class="done">Debug mode (see collisions)</li>
         <li class="done">Inventory</li>
         <li class="not-used">Customizable characters</li>
         <li class="not-done">Equipment/wearables</li>
-        <li class="to-improve">Tools/weapons/goxels (gltf models scaled 0.1 and centered on X Y Z)</li>
-        <li class="done">HUD with health bar, selected voxel and game mode</li>
-        <li class="done">Step-up movement over one-block obstacles</li>
+        <li class="to-improve">Tools</li>
+        <p>weapons/goxels (gltf models scaled 0.1 and centered on X Y Z)</p>
+        <li class="done">HUD </li>
+        <p>with health bar, selected voxel and game mode</p>
+        
         <li class="done">Left and right punch</li>
         <li class="done">Shooting</li>
     </ol>
-    <h3>Mobile mode</h3>
+
+    <h2>World</h2>
+    <ol>
+        <li class="done">NPCs (walker, chaser, talker)</li>
+        <li class="not-done">Animals</li>
+        <li class="not-done">Pets</li>
+        <li class="not-done">Mounts / Vehicles</li>
+    </ol>
+    <h2>Mobile mode</h2>
     <ol>
         <li class="done">Left joystick for movement and right joystick for camera</li>
         <li class="done">Pinch to zoom and switch camera mode.</li>
 
     </ol>
-    <h3>Voxel Edition</h3>
+    <h2>Voxel Edition</h2>
     <ol>
         <li class="done">12 different voxels</li>
         <li class="done">Voxel placement and removal</li>
         <li class="done">Creative mode and Survival mode</li>
     </ol>
 
-    <h3>Commands</h3>
+    <h2>Controls</h2>
+
+    <h4>Desktop</h4>
+    <ol>
+        <li>WASD for movement</li>
+
+    </ol>
+
+    <h2>Commands</h2>
     <ol>
         <li class="done">/debugmode</li>
         <p>Shows debug information like collisions or raycasts</p>
@@ -142,15 +181,16 @@
         <p>(respawns player)</p>
     </ol>
 
-    <h3>Multiplayer</h3>
+    <h2>Multiplayer</h2>
     <ol>
         <li class="done">Presence</li>
+        <p>Remote player rendering</p>
         <li class="not-done">Broadcasting</li>
         <li class="not-done">Authentication</li>
         <li class="not-used">Chat</li>
     </ol>
 
-    <h3>Settings</h3>
+    <h2>Settings</h2>
     <ol>
         <li class="done">dark / light theme</li>
         <li class="done">fullscreen</li>
