@@ -24,6 +24,7 @@ import { CoinItemAppearance, GoxelItemAppearance, ItemAppearance } from './itemA
 import { buildSimpleMap } from './maps/simpleMap.js';
 import { buildCityMap } from './maps/cityMap.js';
 import { buildVoxelandiaMap } from './maps/voxelandiaMap.js';
+import { createMultiplayerController } from './multiplayer.js';
 
 let mobileMode = false;
 const touchQuery = window.matchMedia('(hover: none) and (pointer: coarse)');
@@ -1613,6 +1614,21 @@ const fpLeftShoulderBaseRot = firstPersonArmsRig.joints.leftShoulder.rotation.cl
 const fpLeftElbowBaseRot = firstPersonArmsRig.joints.leftElbow.rotation.clone();
 
 scene.add(playerBody);
+
+// Multiplayer only mirrors the local player into Supabase Presence and renders
+// other connected sessions as display-only avatars. Local gameplay authority
+// still lives entirely in this file.
+const multiplayerController = createMultiplayerController({
+  scene,
+  getLocalPlayerState: () => ({
+    x: playerBody.position.x,
+    y: playerBody.position.y,
+    z: playerBody.position.z,
+    rotationY: playerBody.rotation.y,
+    isMoving: horizontalMove.lengthSq() > 0.00001 || Math.abs(playerState.velocity.y) > 0.01,
+  }),
+});
+
 const playerFacingDir = new THREE.Vector3();
 let playerWalkCycle = 0;
 let playerIdleCycle = Math.random() * Math.PI * 2;
@@ -3659,6 +3675,7 @@ renderer.setAnimationLoop(() => {
   updateProjectilesAndExplosions(delta);
   updateVoxelRaycast();
   updateDebugCollisionVisuals();
+  multiplayerController.update(delta);
   checkFPS(delta);
 
   if (

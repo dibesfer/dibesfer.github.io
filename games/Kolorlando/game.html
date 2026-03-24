@@ -14,6 +14,80 @@
     <link href="https://fonts.googleapis.com/css2?family=Ubuntu+Sans+Mono:ital,wght@0,400..700;1,400..700&display=swap"
         rel="stylesheet">
 
+    <style>
+        /* This compact overlay keeps the online counter visible during play
+        without interfering with the rest of the HUD layout. It is anchored
+        to the top center of the screen so the existing Supabase Presence
+        counter can update a real on-screen element on this page. */
+        #peopleOnlineHud {
+            position: fixed;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            padding: 0.45rem 0.9rem 0.55rem;
+            border: 2px solid rgba(255, 255, 255, 0.75);
+            border-top: 0;
+            border-radius: 0 0 999px 999px;
+            background: rgba(15, 16, 22, 0.72);
+            color: #ffffff;
+            font-family: "Ubuntu Sans Mono", monospace;
+            font-size: 0.95rem;
+            line-height: 1;
+            text-align: center;
+            pointer-events: auto;
+            backdrop-filter: blur(6px);
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28);
+        }
+
+        /* The number gets a little extra weight so it is easier to scan while
+        moving around the scene. */
+        #peopleOnlineCount {
+            font-weight: 700;
+        }
+
+        /* The button keeps the debug panel tiny until it is needed, while still
+        making the whole People online pill clickable during multiplayer tests. */
+        #peopleOnlineToggle {
+            display: block;
+            border: 0;
+            padding: 0;
+            margin: 0;
+            background: transparent;
+            color: inherit;
+            font: inherit;
+            cursor: pointer;
+        }
+
+        /* The dropdown stays deliberately compact so it does not cover the
+        scene, but still gives us enough room to inspect live Presence values. */
+        #peopleOnlinePanel {
+            display: none;
+            width: min(240px, 68vw);
+            margin-top: 0.4rem;
+            padding-top: 0.4rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.22);
+            font-size: 0.7rem;
+            line-height: 1.25;
+            text-align: left;
+        }
+
+        #peopleOnlineHud.is-open #peopleOnlinePanel {
+            display: block;
+        }
+
+        #peopleOnlineList {
+            max-height: 120px;
+            overflow: auto;
+        }
+
+        #peopleOnlineList div + div {
+            margin-top: 0.2rem;
+        }
+    </style>
+
+    <!-- SUPABASE cdn -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 
     <script type="importmap">
     {
@@ -27,6 +101,15 @@
 </head>
 
 <body>
+
+    <div id="peopleOnlineHud" aria-live="polite">
+        <button id="peopleOnlineToggle" type="button" aria-expanded="false" aria-controls="peopleOnlinePanel">
+            People online: <span id="peopleOnlineCount">0</span>
+        </button>
+        <div id="peopleOnlinePanel">
+            <div id="peopleOnlineList">No players yet.</div>
+        </div>
+    </div>
 
     <div id="loadingScreen" role="status" aria-live="polite">
         <div id="loadingContent">
@@ -116,8 +199,6 @@
             <p class="inventory-help">Click any slot to select its stack for Survival mode.</p>
             <p class="inventory-help">Press <code>I</code> to open this tab quickly.</p>
         </section>
-
-
 
         <section class="menu-panel" data-menu-panel="character">
             <h2>Character</h2>
@@ -325,6 +406,7 @@
         <div id="crossHair">+</div>
     </div>
 
+    <script src="/assets/scripts/supabase.js"></script>
     <script type="module" src="script.js"></script>
 </body>
 

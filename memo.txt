@@ -1,0 +1,45 @@
+This is where Codex and I (fer) keep track of our interactions.
+
+24 Mar 2026
+
+- We created this file.
+
+
+Codex writing will always and only be located under this pattern:
+
+***A
+Hi, I'm Codex!
+- Kolorlando online with Supabase
+
+- Online features
+- anonymous players can join the world
+- players can see other players in the world
+
+- Required tables
+- for the most basic online version, required custom tables: `0`
+- anonymous login can use Supabase Auth anonymous users
+- live player presence can use Supabase Realtime Presence
+- live player presence does not need a custom `players` table
+- Supabase still stores auth users internally, but that is not a table we create
+
+- Add custom tables only if we want persistent data
+- `players` for saved profile, color, last position, settings, or progress
+- `world_state` if world changes must persist after everyone leaves
+- `messages` if we add chat
+
+- Short answer
+- required now: `0` custom tables
+- likely soon: `1` custom table called `world_state` if the world can be permanently changed
+
+- Basic steps
+- define the online features
+- create a Supabase project
+- design the database tables
+- add player login or guest profiles
+- connect the game to Supabase
+- save and load game data
+- add multiplayer or shared scores if needed
+- test everything locally
+- deploy the game online
+- test the live version
+***

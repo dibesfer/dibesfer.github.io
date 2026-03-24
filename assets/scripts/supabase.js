@@ -2,6 +2,10 @@ const supabaseUrl = 'https://qugihsopwjemzakhrbvw.supabase.co'
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF1Z2loc29wd2plbXpha2hyYnZ3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE2OTg0OTQxMDksImV4cCI6MjAxNDA3MDEwOX0.1q5fBic1cjueaiP2-p6W19C68ye8FTPLFne2a-fKwZ8'
 const database = supabase.createClient(supabaseUrl, supabaseKey)
 
+// Expose the shared client on window so module-based game code can reuse the
+// same Supabase connection instead of creating separate clients per page area.
+window.database = database
+
 var localVisits = localStorage.getItem("dibesferLocalVisits")
 if(localVisits == null || localVisits <= 0){
     localVisits = 1
