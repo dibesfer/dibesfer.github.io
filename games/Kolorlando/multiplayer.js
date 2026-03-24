@@ -206,7 +206,7 @@ export function createMultiplayerController({
   /* The small dropdown is a debugging aid so we can inspect the raw Presence
   player/session data without opening devtools every time a sync arrives. */
   if (peopleOnlineHudElement && peopleOnlineToggleElement) {
-    peopleOnlineToggleElement.addEventListener('click', () => {
+    peopleOnlineHudElement.addEventListener('click', () => {
       const nextIsOpen = !peopleOnlineHudElement.classList.contains('is-open');
       peopleOnlineHudElement.classList.toggle('is-open', nextIsOpen);
       peopleOnlineToggleElement.setAttribute('aria-expanded', String(nextIsOpen));

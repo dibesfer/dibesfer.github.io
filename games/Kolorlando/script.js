@@ -25,6 +25,7 @@ import { buildSimpleMap } from './maps/simpleMap.js';
 import { buildCityMap } from './maps/cityMap.js';
 import { buildVoxelandiaMap } from './maps/voxelandiaMap.js';
 import { createMultiplayerController } from './multiplayer.js';
+import { createCommandHandler } from './code/commands.js';
 
 let mobileMode = false;
 const touchQuery = window.matchMedia('(hover: none) and (pointer: coarse)');
@@ -211,24 +212,22 @@ function setElementHidden(element, hidden) {
 }
 
 
-function handleChatCommand(message) {
-  const normalizedMessage = message.trim().toLowerCase();
-  // Keep chat-command toggles centralized here so console-style commands reuse
-  // the same state-changing helpers as keyboard shortcuts.
-  if (normalizedMessage === '/debugmode') {
+const handleChatCommand = createCommandHandler({
+  /* The command module owns the text commands themselves, while script.js
+  keeps ownership of the actual gameplay state changes triggered by them. */
+  onToggleDebugMode: () => {
     setDebugMode(!debugModeEnabled);
-    return true;
-  }
-
-  // Reuse the dedicated fly-mode setter so chat toggles keep jump/velocity
-  // cleanup behavior identical to the keyboard shortcut.
-  if (normalizedMessage === '/flymode') {
+  },
+  onToggleFlyMode: () => {
     setFlyMode(!flyMode);
-    return true;
-  }
-
-  return false;
-}
+  },
+  onSpawn: () => {
+    /* Reusing the existing spawn helper keeps manual respawns identical to
+    death/fall respawns, including velocity cleanup and collider reset. */
+    respawnPlayerAtSpawn();
+    syncPlayerBody();
+  },
+});
 
 const chatUI = createChatUI({
   chatBox,
@@ -236,6 +235,9 @@ const chatUI = createChatUI({
   chatBoxInput,
   onCommand: handleChatCommand,
   onShow: () => {
+    /* Clearing tracked keys when chat opens prevents desktop movement from
+    continuing if the player was holding WASD right before focusing the input. */
+    clearTrackedKeys();
     setMobileChatToggleState(true);
     if (!mobileMode && typeof controls !== 'undefined' && controls.isLocked) {
       openingChatFromPointerLock = true;
@@ -645,11 +647,24 @@ if (playButton) {
 }
 
 const keys = {};
+function clearTrackedKeys() {
+  Object.keys(keys).forEach(keyCode => {
+    keys[keyCode] = false;
+  });
+}
+
 document.addEventListener('keydown', e => {
   gameAudio.unlockAudio(true);
+  if (!mobileMode && (chatUI.isInputOpen() || isTypingTarget(e.target))) return;
   keys[e.code] = true;
 });
-document.addEventListener('keyup', e => keys[e.code] = false);
+document.addEventListener('keyup', e => {
+  if (!mobileMode && (chatUI.isInputOpen() || isTypingTarget(e.target))) {
+    keys[e.code] = false;
+    return;
+  }
+  keys[e.code] = false;
+});
 
 const moveSpeed = 5;
 const flySpeed = 10;
