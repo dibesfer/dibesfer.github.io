@@ -24,6 +24,7 @@ body {
     line-height: 2;
     background-color: gray;
     background-image: radial-gradient(rgb(126, 126, 126), black);
+    color: white;    
 }
 
 header {
@@ -33,9 +34,10 @@ header {
     filter: saturate(0);
     color: white;
     text-shadow: 0 0 10px black;
-
 }
-
+header > h1 {
+    cursor: pointer;
+}
 header>h1,
 header>p {
     background-color: rgba(0, 0, 0, 0.4);
@@ -115,6 +117,7 @@ footer {
     flex-wrap: wrap;
     justify-content: space-evenly;
     align-items: center;
+    
 }
 
 /* Hall cards add their own card shell while still living inside #kImages. */
@@ -197,4 +200,12 @@ footer {
 
 .invisible {
     display: none;
+}
+
+.box{
+    max-width: 400px;
+    margin: auto;
+    text-align: left;
+    padding: 5px;
+    border: solid 1px white;
 }
