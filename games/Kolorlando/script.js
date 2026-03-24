@@ -3238,8 +3238,13 @@ rightJoy.addEventListener('touchmove', e => {
 
       rightPad.style.transform = `translate(${dx}px,${dy}px)`;
 
-      lookDx = dx;
-      lookDy = dy;
+      // Lego Lol mobile aim still consumes the right-stick vector using the
+      // pre-rotation world mapping. Because the fixed camera orbit was rotated
+      // 180 degrees around Y, the joystick-generated direction must be flipped
+      // here so the rest of the aiming code keeps receiving the expected
+      // world-space intent without additional branching downstream.
+      lookDx = -dx;
+      lookDy = -dy;
     }
   }
 }, { passive: false });
