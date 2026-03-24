@@ -3238,13 +3238,16 @@ rightJoy.addEventListener('touchmove', e => {
 
       rightPad.style.transform = `translate(${dx}px,${dy}px)`;
 
-      // Lego Lol mobile aim still consumes the right-stick vector using the
-      // pre-rotation world mapping. Because the fixed camera orbit was rotated
-      // 180 degrees around Y, the joystick-generated direction must be flipped
-      // here so the rest of the aiming code keeps receiving the expected
-      // world-space intent without additional branching downstream.
-      lookDx = -dx;
-      lookDy = -dy;
+      // Only Lego Lol uses the flipped mobile right-stick mapping. Skyrim and
+      // the rest of the free-look camera modes still expect the original stick
+      // direction so their yaw/pitch math keeps the legacy feel unchanged.
+      if (isLegoLolCameraMode()) {
+        lookDx = -dx;
+        lookDy = -dy;
+      } else {
+        lookDx = dx;
+        lookDy = dy;
+      }
     }
   }
 }, { passive: false });
