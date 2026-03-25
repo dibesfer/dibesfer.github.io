@@ -6,6 +6,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mandalaar</title>
     <style>
+
+        * {
+            box-sizing: border-box;
+        }
         html,
         body {
             width: 100%;
@@ -161,6 +165,136 @@
             font-size: 0.75rem;
         }
 
+        .joystick {
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            border: 3px solid rgba(255, 255, 255, 0.4);
+            background: rgba(9, 13, 18, 0.22);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            touch-action: none;
+            user-select: none;
+        }
+
+        .joystick .pad {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            border: 3px solid rgba(255, 255, 255, 0.55);
+            background: rgba(255, 255, 255, 0.12);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            font-size: 1.7rem;
+            font-weight: 700;
+            pointer-events: none;
+        }
+
+        #menuInferior {
+            position: fixed;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 5;
+            display: none;
+            justify-content: space-between;
+            align-items: end;
+            pointer-events: none;
+        }
+
+        #menuInferior.is-visible {
+            display: flex;
+        }
+
+        #menuInferiorLeft,
+        #menuInferiorRight {
+            position: relative;
+            flex: 1 1 50%;
+            height: 100%;
+            touch-action: none;
+            pointer-events: auto;
+        }
+
+        #menuInferiorLeft>.joystick,
+        #menuInferiorRight>.joystick {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1;
+        }
+
+        .mobile-button {
+            position: absolute;
+            z-index: 2;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            border: 3px solid rgba(255, 255, 255, 0.55);
+            background: rgba(20, 24, 30, 0.38);
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font: inherit;
+            font-weight: 700;
+            touch-action: none;
+            user-select: none;
+            pointer-events: auto;
+            padding: 0;
+        }
+
+        .mobile-button.is-active {
+            background: rgba(210, 170, 30, 0.78);
+        }
+
+        .mobile-button.is-shooting {
+            background: rgba(210, 30, 30, 0.82);
+        }
+
+        #Left2 {
+            left: 5px;
+            bottom: 5px;
+        }
+
+        #buttonUp {
+            right: 5px;
+            bottom: 5px;
+        }
+
+        #Left0 {
+            left: 5px;
+            top: 5px;
+        }
+
+        #Left1 {
+            right: 5px;
+            top: 5px;
+        }
+
+        #buttonShoot {
+            left: 5px;
+            top: 5px;
+        }
+
+        #Right1 {
+            top: 5px;
+            right: 5px;
+        }
+
+        #Right2 {
+            bottom: 5px;
+            left: 5px;
+        }
+
+        #Right3 {
+            bottom: 5px;
+            right: 5px;
+        }
+
         @media (max-width: 700px) {
             #playerHud {
                 bottom: 10px;
@@ -178,6 +312,66 @@
             #overlay h3 {
                 font-size: 0.95rem;
             }
+        }
+
+        body[data-mode="desktop"] #menuInferior {
+            display: none !important;
+        }
+
+        body[data-mode="mobile-portrait"] {
+            height: 100dvh;
+            overflow: hidden;
+        }
+
+        body[data-mode="mobile-portrait"] #playerHud {
+            bottom: 22%;
+        }
+
+        body[data-mode="mobile-portrait"] #menuInferior {
+            left: 0;
+            bottom: 0;
+            width: 100%;
+            height: 20dvh;
+        }
+
+        body[data-mode="mobile-portrait"] #menuInferiorLeft {
+            background-color: rgba(255, 0, 0, 0.22);
+        }
+
+        body[data-mode="mobile-portrait"] #menuInferiorRight {
+            background-color: rgba(0, 96, 0, 0.24);
+        }
+
+        body[data-mode="mobile-landscape"] {
+            height: var(--app-height, 100vh);
+        }
+
+        body[data-mode="mobile-landscape"] #menuInferior {
+            top: 0;
+            bottom: 0;
+            height: 100%;
+            background-color: unset;
+            backdrop-filter: unset;
+        }
+
+        body[data-mode="mobile-landscape"] #menuInferiorLeft {
+            background-color: rgba(255, 0, 0, 0.22);
+            border-top-right-radius: 50%;
+            height: 50%;
+            flex: 0 0 25%;
+            max-width: 25%;
+        }
+
+        body[data-mode="mobile-landscape"] #menuInferiorRight {
+            background-color: rgba(0, 96, 0, 0.24);
+            border-top-left-radius: 50%;
+            height: 50%;
+            flex: 0 0 25%;
+            max-width: 25%;
+        }
+
+        body[data-mode="mobile-landscape"] #playerHud {
+            width: 50%;
         }
 
         canvas {
@@ -248,6 +442,26 @@
             </div>
         </div>
     </div>
+    <div id="menuInferior" hidden>
+        <div id="menuInferiorLeft">
+            <div class="joystick" data-joystick="left">
+                <div class="pad">M</div>
+            </div>
+            <button id="Left2" class="mobile-button" type="button">D</button>
+            <button id="buttonUp" class="mobile-button" type="button">U</button>
+            <button id="Left0" class="mobile-button" type="button">L0</button>
+            <button id="Left1" class="mobile-button" type="button">L1</button>
+        </div>
+        <div id="menuInferiorRight">
+            <div class="joystick" data-joystick="right">
+                <div class="pad">A</div>
+            </div>
+            <button id="buttonShoot" class="mobile-button" type="button">S</button>
+            <button id="Right1" class="mobile-button" type="button">R1</button>
+            <button id="Right2" class="mobile-button" type="button">R2</button>
+            <button id="Right3" class="mobile-button" type="button">R3</button>
+        </div>
+    </div>
     <canvas id="gameCanvas" aria-label="Mandalaar game view"></canvas>
     <script>
 
@@ -262,10 +476,14 @@ if we are over 5
 
         const canvas = document.getElementById('gameCanvas');
         const context = canvas.getContext('2d');
+        const bodyElement = document.body;
         const fpsCounter = document.getElementById('fpsCounter');
         const playerHudReadout = document.getElementById('playerHudReadout');
         const playerHealthFill = document.getElementById('playerHealthFill');
         const playerHealthText = document.getElementById('playerHealthText');
+        const menuInferior = document.getElementById('menuInferior');
+        const leftJoystickElement = document.querySelector('#menuInferiorLeft .joystick');
+        const rightJoystickElement = document.querySelector('#menuInferiorRight .joystick');
         const MAP_SIZE = 2000;
         const MAP_HALF_SIZE = MAP_SIZE * 0.5;
         const MAP_BORDER_THICKNESS = 20;
@@ -273,6 +491,7 @@ if we are over 5
         const COIN_COUNT = 28;
         const MELEE_ENEMY_COUNT = 40;
         const RANGED_ENEMY_COUNT = 10;
+        const BOSS_ENEMY_COUNT = 3;
         const PLAYER_RADIUS = 14;
         const PLAYER_SPEED = 240;
         const PLAYER_SPRINT_MULTIPLIER = 1.7;
@@ -296,6 +515,8 @@ if we are over 5
         const ENEMY_MAX_HEALTH = 100;
         const ENEMY_PROJECTILE_RADIUS = 4;
         const ENEMY_PROJECTILE_LIFE = 2.1;
+        const BOSS_RADIUS_MULTIPLIER = 5;
+        const BOSS_MELEE_DAMAGE = 20;
         const BLUE_AREA_RADIUS_MULTIPLIER = 5;
         const COLLECTIBLE_ATTRACTION_SPEED = 7000;
         const COLLECTIBLE_MAGNET_MAX_STRENGTH = 7000;
@@ -309,6 +530,8 @@ if we are over 5
         const projectiles = [];
         const enemyProjectiles = [];
         const pressedKeys = {};
+        const bossSymbolImage = new Image();
+        bossSymbolImage.src = '/assets/art/symbols/Chaos_star.svg';
         const player = {
             x: 0,
             y: 0,
@@ -333,8 +556,152 @@ if we are over 5
             radius: 8,
             visible: false,
         };
+        const mobileModeQuery = window.matchMedia('(hover: none) and (pointer: coarse)');
+        const mobileButtons = Array.from(document.querySelectorAll('.mobile-button'));
+        const mobileControlState = {
+            leftJoystick: { active: false, touchId: null, x: 0, y: 0, strength: 0 },
+            rightJoystick: { active: false, touchId: null, x: 0, y: 0, strength: 0 },
+            buttons: {
+                Left0: false,
+                Left1: false,
+                Left2: false,
+                buttonUp: false,
+                buttonShoot: false,
+                Right1: false,
+                Right2: false,
+                Right3: false,
+            },
+        };
         let lastFrameTime = 0;
         let displayedFps = 0;
+
+        function isMobileMode() {
+            return bodyElement.dataset.mode === 'mobile-portrait' || bodyElement.dataset.mode === 'mobile-landscape';
+        }
+
+        function updateAppMode() {
+            /* Desktop and the two mobile orientations share one mode source so
+            the layout, touch UI, and future input wiring stay in sync. */
+            const isMobile = mobileModeQuery.matches;
+            let nextMode = 'desktop';
+
+            if (isMobile) {
+                nextMode = window.innerHeight >= window.innerWidth ? 'mobile-portrait' : 'mobile-landscape';
+            }
+
+            bodyElement.dataset.mode = nextMode;
+
+            /* The Kolorlando-style lower control shell only appears in mobile
+            modes, while desktop keeps the canvas and HUD unobstructed. */
+            if (isMobile) {
+                menuInferior.hidden = false;
+                menuInferior.classList.add('is-visible');
+            } else {
+                menuInferior.hidden = true;
+                menuInferior.classList.remove('is-visible');
+            }
+        }
+
+        function resetJoystickState(state) {
+            state.active = false;
+            state.touchId = null;
+            state.x = 0;
+            state.y = 0;
+            state.strength = 0;
+        }
+
+        function bindVirtualJoystick(element, state) {
+            /* The joystick stores normalized placeholder values now so you can
+            later decide exactly how movement and aiming should consume them. */
+            const padElement = element.querySelector('.pad');
+
+            function updateJoystickPad() {
+                if (!padElement) return;
+                /* Travel is computed from the live element sizes so the pad
+                stays just inside the outer ring even if box sizing changes. */
+                const padTravel = Math.max(0, (element.clientWidth - padElement.clientWidth) * 0.5 - 1);
+                padElement.style.transform = `translate(${state.x * padTravel}px, ${state.y * padTravel}px)`;
+            }
+
+            element.addEventListener('touchstart', event => {
+                if (state.active) return;
+                const touch = event.changedTouches[0];
+                if (!touch) return;
+                state.active = true;
+                state.touchId = touch.identifier;
+                updateJoystickPad();
+                event.preventDefault();
+            }, { passive: false });
+
+            element.addEventListener('touchmove', event => {
+                if (!state.active) return;
+                for (let i = 0; i < event.changedTouches.length; i += 1) {
+                    const touch = event.changedTouches[i];
+                    if (touch.identifier !== state.touchId) continue;
+
+                    const rect = element.getBoundingClientRect();
+                    const centerX = rect.left + rect.width * 0.5;
+                    const centerY = rect.top + rect.height * 0.5;
+                    const dx = touch.clientX - centerX;
+                    const dy = touch.clientY - centerY;
+                    const radius = rect.width * 0.5;
+                    const distance = Math.hypot(dx, dy);
+                    const clampedDistance = Math.min(radius, distance);
+                    const safeDistance = distance || 1;
+
+                    state.x = dx / safeDistance * (clampedDistance / radius);
+                    state.y = dy / safeDistance * (clampedDistance / radius);
+                    state.strength = clampedDistance / radius;
+                    updateJoystickPad();
+                    event.preventDefault();
+                    break;
+                }
+            }, { passive: false });
+
+            const releaseJoystick = event => {
+                if (!state.active) return;
+                for (let i = 0; i < event.changedTouches.length; i += 1) {
+                    const touch = event.changedTouches[i];
+                    if (touch.identifier !== state.touchId) continue;
+                    resetJoystickState(state);
+                    updateJoystickPad();
+                    event.preventDefault();
+                    break;
+                }
+            };
+
+            element.addEventListener('touchend', releaseJoystick, { passive: false });
+            element.addEventListener('touchcancel', releaseJoystick, { passive: false });
+        }
+
+        function setMobileButtonState(buttonId, active) {
+            mobileControlState.buttons[buttonId] = active;
+            const element = document.getElementById(buttonId);
+            if (!element) return;
+            element.classList.toggle('is-active', active);
+            if (buttonId === 'buttonShoot') {
+                element.classList.toggle('is-shooting', active);
+            }
+        }
+
+        function bindMobileButton(buttonId) {
+            const element = document.getElementById(buttonId);
+            if (!element) return;
+
+            const activate = event => {
+                setMobileButtonState(buttonId, true);
+                event.preventDefault();
+            };
+
+            const deactivate = event => {
+                setMobileButtonState(buttonId, false);
+                event.preventDefault();
+            };
+
+            element.addEventListener('touchstart', activate, { passive: false });
+            element.addEventListener('touchend', deactivate, { passive: false });
+            element.addEventListener('touchcancel', deactivate, { passive: false });
+        }
 
         function updateFpsCounter(deltaTime) {
             /* The title-adjacent readout uses a lightly smoothed FPS value so
@@ -515,6 +882,7 @@ if we are over 5
                     touchDamage: 10,
                     meleeAttackCooldown: 0,
                     meleeAttackInterval: 1,
+                    isBoss: false,
                     shoots: false,
                     ...overrides,
                 };
@@ -534,6 +902,21 @@ if we are over 5
                     projectileInterval: 1.0 + Math.random() * 0.35,
                     touchDamage: 0,
                     shoots: true,
+                }));
+            }
+
+            for (let i = 0; i < BOSS_ENEMY_COUNT; i += 1) {
+                enemyDots.push(createEnemyBase({
+                    radius: ENEMY_RADIUS * BOSS_RADIUS_MULTIPLIER,
+                    speed: 64 + Math.random() * 12,
+                    detectionDistance: 260,
+                    disengageDistance: 320,
+                    stopDistance: 70,
+                    color: '#4a0000',
+                    touchDamage: BOSS_MELEE_DAMAGE,
+                    projectileInterval: 1.8,
+                    isBoss: true,
+                    shoots: false,
                 }));
             }
         }
@@ -711,6 +1094,19 @@ if we are over 5
                 const drawY = viewCenterY + (enemy.y - cameraY);
 
                 drawOutlinedDot(drawX, drawY, enemy.radius, enemy.hitFlash > 0 ? '#7ab0ff' : enemy.color);
+
+                /* Bosses keep their colored body and get the chaos symbol
+                centered over it so the marker stays crisp at any scale. */
+                if (enemy.isBoss && bossSymbolImage.complete) {
+                    const symbolSize = enemy.radius * 1.55;
+                    context.drawImage(
+                        bossSymbolImage,
+                        drawX - symbolSize * 0.5,
+                        drawY - symbolSize * 0.5,
+                        symbolSize,
+                        symbolSize
+                    );
+                }
             }
         }
 
@@ -848,10 +1244,17 @@ if we are over 5
             let moveX = 0;
             let moveY = 0;
 
-            if (pressedKeys.KeyA || pressedKeys.ArrowLeft) moveX -= 1;
-            if (pressedKeys.KeyD || pressedKeys.ArrowRight) moveX += 1;
-            if (pressedKeys.KeyW || pressedKeys.ArrowUp) moveY -= 1;
-            if (pressedKeys.KeyS || pressedKeys.ArrowDown) moveY += 1;
+            if (isMobileMode()) {
+                /* Mobile movement reads directly from the left virtual joystick,
+                leaving the exact right-side touch actions free for later wiring. */
+                moveX = mobileControlState.leftJoystick.x;
+                moveY = mobileControlState.leftJoystick.y;
+            } else {
+                if (pressedKeys.KeyA || pressedKeys.ArrowLeft) moveX -= 1;
+                if (pressedKeys.KeyD || pressedKeys.ArrowRight) moveX += 1;
+                if (pressedKeys.KeyW || pressedKeys.ArrowUp) moveY -= 1;
+                if (pressedKeys.KeyS || pressedKeys.ArrowDown) moveY += 1;
+            }
 
             if (moveX === 0 && moveY === 0) return;
 
@@ -860,13 +1263,38 @@ if we are over 5
             const normalizedY = moveY / moveLength;
             const movementSpeed = (pressedKeys.KeyE ? player.speed * PLAYER_SPRINT_MULTIPLIER : player.speed);
 
-            player.x += normalizedX * movementSpeed * deltaTime;
-            player.y += normalizedY * movementSpeed * deltaTime;
+            player.x += normalizedX * movementSpeed * deltaTime * (isMobileMode() ? mobileControlState.leftJoystick.strength : 1);
+            player.y += normalizedY * movementSpeed * deltaTime * (isMobileMode() ? mobileControlState.leftJoystick.strength : 1);
 
             const minPosition = -MAP_HALF_SIZE + MAP_BORDER_THICKNESS + player.radius;
             const maxPosition = MAP_HALF_SIZE - MAP_BORDER_THICKNESS - player.radius;
             player.x = Math.max(minPosition, Math.min(maxPosition, player.x));
             player.y = Math.max(minPosition, Math.min(maxPosition, player.y));
+        }
+
+        function updateMobileAimCursor() {
+            /* Mobile aiming treats the right joystick center as the player's
+            position, then places the yellow aim marker around that center
+            using the joystick direction and intensity. */
+            if (!isMobileMode()) return;
+
+            /* When the right joystick is idle we hide the mobile aim marker so
+            the desktop mouse path remains the only visible cursor there. */
+            if (!mobileControlState.rightJoystick.active || mobileControlState.rightJoystick.strength <= 0) {
+                cursor.visible = false;
+                cursor.x = canvas.width * 0.5;
+                cursor.y = canvas.height * 0.5;
+                return;
+            }
+
+            /* The maximum aim reach follows the smaller viewport side, which
+            keeps portrait and landscape behavior consistent and bounded. */
+            const maxAimDistance = Math.min(canvas.width, canvas.height) * 0.5;
+            const aimDistance = maxAimDistance * mobileControlState.rightJoystick.strength;
+
+            cursor.x = canvas.width * 0.5 + mobileControlState.rightJoystick.x * aimDistance;
+            cursor.y = canvas.height * 0.5 + mobileControlState.rightJoystick.y * aimDistance;
+            cursor.visible = true;
         }
 
         function updateCollectibleMagnetism(collectibles, deltaTime) {
@@ -940,7 +1368,7 @@ if we are over 5
             for (let i = 0; i < enemyDots.length; i += 1) {
                 const enemy = enemyDots[i];
                 const distance = Math.hypot(enemy.x - ally.x, enemy.y - ally.y);
-                if (distance > ALLY_AREA_RADIUS) continue;
+                if (distance > ALLY_AREA_RADIUS + enemy.radius) continue;
                 if (distance >= nearestEnemyDistance) continue;
                 nearestEnemyDistance = distance;
                 targetEnemy = enemy;
@@ -1056,19 +1484,23 @@ if we are over 5
             }
         }
 
-        function resolveEnemyCollisions(deltaTime) {
-            /* The player and enemies stay physically separated so touching an
-            enemy feels like bumping into a body rather than ghosting through it. */
-            for (let i = 0; i < enemyDots.length; i += 1) {
-                const enemy = enemyDots[i];
-                const dx = enemy.x - player.x;
-                const dy = enemy.y - player.y;
+        function resolveActorCollisions() {
+            /* Living actors should feel solid against each other, so the same
+            separation pass handles ally, enemies, and pacifists consistently. */
+            const actors = [ally, ...enemyDots, ...pacifistDots];
+
+            /* The player acts as the camera anchor, so other actors get pushed
+            away from the player instead of moving the player itself. */
+            for (let i = 0; i < actors.length; i += 1) {
+                const actor = actors[i];
+                const dx = actor.x - player.x;
+                const dy = actor.y - player.y;
                 const distance = Math.hypot(dx, dy);
-                const minDistance = player.radius + enemy.radius;
+                const minDistance = player.radius + actor.radius;
 
                 if (distance === 0) {
-                    enemy.x += minDistance;
-                    clampWorldPosition(enemy);
+                    actor.x += minDistance;
+                    clampWorldPosition(actor);
                     continue;
                 }
 
@@ -1077,27 +1509,27 @@ if we are over 5
                 const overlap = minDistance - distance;
                 const pushX = dx / distance;
                 const pushY = dy / distance;
-                enemy.x += pushX * overlap;
-                enemy.y += pushY * overlap;
-                clampWorldPosition(enemy);
+                actor.x += pushX * overlap;
+                actor.y += pushY * overlap;
+                clampWorldPosition(actor);
             }
 
-            /* Enemies also separate from each other so the group does not pile
-            into a single red blob while wandering or chasing the player. */
-            for (let i = 0; i < enemyDots.length; i += 1) {
-                const enemyA = enemyDots[i];
-                for (let j = i + 1; j < enemyDots.length; j += 1) {
-                    const enemyB = enemyDots[j];
-                    const dx = enemyB.x - enemyA.x;
-                    const dy = enemyB.y - enemyA.y;
+            /* Actor-to-actor separation prevents ally, pacifists, and enemies
+            from stacking into each other while they all navigate the map. */
+            for (let i = 0; i < actors.length; i += 1) {
+                const actorA = actors[i];
+                for (let j = i + 1; j < actors.length; j += 1) {
+                    const actorB = actors[j];
+                    const dx = actorB.x - actorA.x;
+                    const dy = actorB.y - actorA.y;
                     const distance = Math.hypot(dx, dy);
-                    const minDistance = enemyA.radius + enemyB.radius;
+                    const minDistance = actorA.radius + actorB.radius;
 
                     if (distance === 0) {
-                        enemyA.x -= minDistance * 0.5;
-                        enemyB.x += minDistance * 0.5;
-                        clampWorldPosition(enemyA);
-                        clampWorldPosition(enemyB);
+                        actorA.x -= minDistance * 0.5;
+                        actorB.x += minDistance * 0.5;
+                        clampWorldPosition(actorA);
+                        clampWorldPosition(actorB);
                         continue;
                     }
 
@@ -1106,12 +1538,12 @@ if we are over 5
                     const overlap = minDistance - distance;
                     const pushX = dx / distance;
                     const pushY = dy / distance;
-                    enemyA.x -= pushX * overlap * 0.5;
-                    enemyA.y -= pushY * overlap * 0.5;
-                    enemyB.x += pushX * overlap * 0.5;
-                    enemyB.y += pushY * overlap * 0.5;
-                    clampWorldPosition(enemyA);
-                    clampWorldPosition(enemyB);
+                    actorA.x -= pushX * overlap * 0.5;
+                    actorA.y -= pushY * overlap * 0.5;
+                    actorB.x += pushX * overlap * 0.5;
+                    actorB.y += pushY * overlap * 0.5;
+                    clampWorldPosition(actorA);
+                    clampWorldPosition(actorB);
                 }
             }
         }
@@ -1308,12 +1740,13 @@ if we are over 5
 
             updateFpsCounter(deltaTime);
             updatePlayer(deltaTime);
+            updateMobileAimCursor();
             updateCollectibleMagnetism(foodDots, deltaTime);
             updateCollectibleMagnetism(coinDots, deltaTime);
             updateAlly(deltaTime);
             updatePacifists(deltaTime);
             updateEnemies(deltaTime);
-            resolveEnemyCollisions(deltaTime);
+            resolveActorCollisions();
             updateFoodCollisions();
             updateCoinCollisions();
             updateEnemyProjectiles(deltaTime);
@@ -1335,12 +1768,14 @@ if we are over 5
         });
 
         canvas.addEventListener('pointermove', event => {
+            if (isMobileMode()) return;
             cursor.x = event.clientX;
             cursor.y = event.clientY;
             cursor.visible = true;
         });
 
         canvas.addEventListener('pointerenter', event => {
+            if (isMobileMode()) return;
             cursor.x = event.clientX;
             cursor.y = event.clientY;
             cursor.visible = true;
@@ -1351,6 +1786,7 @@ if we are over 5
         });
 
         canvas.addEventListener('pointerdown', event => {
+            if (isMobileMode()) return;
             if (event.button !== 0) return;
             spawnProjectile();
         });
@@ -1360,12 +1796,26 @@ if we are over 5
         });
 
         window.addEventListener('resize', () => {
+            updateAppMode();
             resizeCanvas();
             cursor.x = canvas.width * 0.5;
             cursor.y = canvas.height * 0.5;
             render();
         });
 
+        bindVirtualJoystick(leftJoystickElement, mobileControlState.leftJoystick);
+        bindVirtualJoystick(rightJoystickElement, mobileControlState.rightJoystick);
+        bindMobileButton('Left0');
+        bindMobileButton('Left1');
+        bindMobileButton('Left2');
+        bindMobileButton('buttonUp');
+        bindMobileButton('buttonShoot');
+        bindMobileButton('Right1');
+        bindMobileButton('Right2');
+        bindMobileButton('Right3');
+        mobileModeQuery.addEventListener('change', updateAppMode);
+
+        updateAppMode();
         resizeCanvas();
         initializeWorld();
         updatePlayerHud();
