@@ -380,7 +380,7 @@
             z-index: 1;
             display: block;
             width: 100vw;
-            height: 100vh;
+            height: var(--app-height, 100vh);
         }
     </style>
 </head>
@@ -579,9 +579,18 @@ if we are over 5
             return bodyElement.dataset.mode === 'mobile-portrait' || bodyElement.dataset.mode === 'mobile-landscape';
         }
 
+        function updateViewportHeightVariable() {
+            /* Mobile browsers can shrink the visible viewport when the address
+            bar is showing, so we store the live visible height in a CSS
+            variable and let layout pieces read from that same source. */
+            const viewportHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+            document.documentElement.style.setProperty('--app-height', `${viewportHeight}px`);
+        }
+
         function updateAppMode() {
             /* Desktop and the two mobile orientations share one mode source so
             the layout, touch UI, and future input wiring stay in sync. */
+            updateViewportHeightVariable();
             const isMobile = mobileModeQuery.matches;
             let nextMode = 'desktop';
 
@@ -943,8 +952,10 @@ if we are over 5
         function resizeCanvas() {
             /* The game canvas follows the viewport exactly so we can treat the
             full browser window as the playable screen from the very start. */
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
+            const viewportWidth = window.visualViewport ? window.visualViewport.width : window.innerWidth;
+            const viewportHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+            canvas.width = viewportWidth;
+            canvas.height = viewportHeight;
         }
 
         function initializeWorld() {
@@ -1802,6 +1813,23 @@ if we are over 5
             cursor.y = canvas.height * 0.5;
             render();
         });
+
+        if (window.visualViewport) {
+            /* Some mobile browsers change the visible viewport during address
+            bar show and hide without a traditional layout resize, so we listen
+            directly to the visual viewport as well. */
+            window.visualViewport.addEventListener('resize', () => {
+                updateAppMode();
+                resizeCanvas();
+                cursor.x = canvas.width * 0.5;
+                cursor.y = canvas.height * 0.5;
+                render();
+            });
+
+            window.visualViewport.addEventListener('scroll', () => {
+                updateViewportHeightVariable();
+            });
+        }
 
         bindVirtualJoystick(leftJoystickElement, mobileControlState.leftJoystick);
         bindVirtualJoystick(rightJoystickElement, mobileControlState.rightJoystick);
