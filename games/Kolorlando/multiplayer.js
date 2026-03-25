@@ -222,6 +222,7 @@ export function createMultiplayerController({
   const remotePlayers = new Map();
   let channel = null;
   let isSubscribed = false;
+  let isRealtimeConnected = false;
   let publishAccumulator = 0;
   let broadcastAccumulator = 0;
   let lastPublishedPresence = null;
@@ -344,8 +345,15 @@ export function createMultiplayerController({
     syncRemotePlayersFromState(state);
   }
 
+  function setRealtimeConnectionState(nextConnected) {
+    /* Broadcast movement is only useful over the live websocket path. When the
+    channel drops or is still rejoining, suppressing sends avoids the new
+    Supabase warning about send() silently downgrading itself to REST. */
+    isRealtimeConnected = nextConnected;
+  }
+
   async function publishLocalPresence(force = false) {
-    if (!isSubscribed || !channel || typeof getLocalPlayerState !== 'function') return;
+    if (!isSubscribed || !isRealtimeConnected || !channel || typeof getLocalPlayerState !== 'function') return;
 
     const localPlayerState = getLocalPlayerState();
     if (!localPlayerState) return;
@@ -361,7 +369,7 @@ export function createMultiplayerController({
   }
 
   async function broadcastLocalPlayerState() {
-    if (!isSubscribed || !channel || typeof getLocalPlayerState !== 'function') return;
+    if (!isSubscribed || !isRealtimeConnected || !channel || typeof getLocalPlayerState !== 'function') return;
 
     const localPlayerState = getLocalPlayerState();
     if (!localPlayerState) return;
@@ -396,10 +404,17 @@ export function createMultiplayerController({
         applyRemoteBroadcast(payload.sessionId, payload);
       })
       .subscribe(async status => {
-        if (status !== 'SUBSCRIBED') return;
-        isSubscribed = true;
-        await publishLocalPresence(true);
-        await broadcastLocalPlayerState();
+        if (status === 'SUBSCRIBED') {
+          isSubscribed = true;
+          setRealtimeConnectionState(true);
+          await publishLocalPresence(true);
+          await broadcastLocalPlayerState();
+          return;
+        }
+
+        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+          setRealtimeConnectionState(false);
+        }
       });
   }
 

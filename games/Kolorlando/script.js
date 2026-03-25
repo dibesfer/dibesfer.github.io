@@ -105,6 +105,7 @@ let mobileFlyUpPressed = false;
 let mobileFlyDownPressed = false;
 let suppressRight3Click = false;
 let openingChatFromPointerLock = false;
+let pointerLockRetryArmed = false;
 let characterPreviewDragState = null;
 const gameAudio = createGameAudio();
 const systemMenuThemeQuery = window.matchMedia('(prefers-color-scheme: dark)');
@@ -161,18 +162,80 @@ function syncCameraModeAvailability() {
   if (!cameraModeController) return;
   cameraModeController.syncCameraModeAvailability();
 }
+
+function shouldRetryPointerLockNow() {
+  return (
+    !mobileMode
+    && shouldUsePointerLock()
+    && typeof controls !== 'undefined'
+    && !controls.isLocked
+    && !isMenuCentralVisible()
+    && !chatUI.isInputOpen()
+  );
+}
+
+function disarmPointerLockRetry() {
+  pointerLockRetryArmed = false;
+}
+
+function armPointerLockRetry() {
+  /* Browsers often reject Pointer Lock unless the request happens inside a
+  fresh trusted user gesture. When UI code closes chat or menus first and only
+  then tries to relock, that request can land outside the allowed gesture
+  window. Arming a retry lets the next click or key press re-enter gameplay
+  cleanly instead of leaving desktop look stuck half-disabled. */
+  if (!shouldRetryPointerLockNow()) return;
+  pointerLockRetryArmed = true;
+}
+
+function requestGameplayPointerLock() {
+  /* This helper centralizes every desktop relock request so we can keep the
+  browser's gesture requirements in one place and avoid scattered direct
+  controls.lock() calls that are hard to reason about. */
+  if (!shouldRetryPointerLockNow()) {
+    disarmPointerLockRetry();
+    return;
+  }
+
+  try {
+    disarmPointerLockRetry();
+    controls.lock();
+  } catch (error) {
+    console.warn('Failed to request pointer lock immediately.', error);
+    armPointerLockRetry();
+    return;
+  }
+
+  /* PointerLockControls reports many failures asynchronously instead of
+  throwing. Re-arming on a zero-delay timer avoids a duplicate request during
+  the same click while still preserving a recovery attempt on the next trusted
+  interaction if the browser declines the lock. */
+  window.setTimeout(() => {
+    if (!controls.isLocked) {
+      armPointerLockRetry();
+    }
+  }, 0);
+}
+
+function retryPointerLockFromUserGesture() {
+  if (!pointerLockRetryArmed) return;
+  requestGameplayPointerLock();
+}
+
 function activateDesktopScreenActivity() {
   if (mobileMode) return;
   hideMenuCentral();
   if (isLegoLolCameraMode()) {
+    disarmPointerLockRetry();
     return;
   }
   if (isScreenDragCameraMode()) {
+    disarmPointerLockRetry();
     setWowCameraScreenActive(true);
     return;
   }
   if (!controls.isLocked) {
-    controls.lock();
+    requestGameplayPointerLock();
   }
 }
 function deactivateDesktopScreenActivity(tabName = getActiveMenuCentralTab() || 'settings') {
@@ -247,7 +310,7 @@ const chatUI = createChatUI({
   onHide: () => {
     setMobileChatToggleState(false);
     if (shouldUsePointerLock() && typeof controls !== 'undefined' && !controls.isLocked && !isMenuCentralVisible()) {
-      controls.lock();
+      armPointerLockRetry();
     }
   },
 });
@@ -565,6 +628,7 @@ spawnPadTexture.anisotropy = maxAnisotropy;
 // --------------------
 const controls = new PointerLockControls(camera, document.body);
 controls.addEventListener('lock', () => {
+  disarmPointerLockRetry();
   hideMenuCentral();
 });
 controls.addEventListener('unlock', () => {
@@ -598,6 +662,7 @@ function controlLocker(event) {
 }
 
 document.addEventListener('pointerdown', controlLocker);
+document.addEventListener('pointerdown', retryPointerLockFromUserGesture);
 
 function setInventoryPanelOpen(nextOpen, { allowMobile = false } = {}) {
   if (mobileMode) {
@@ -655,6 +720,7 @@ function clearTrackedKeys() {
 
 document.addEventListener('keydown', e => {
   gameAudio.unlockAudio(true);
+  retryPointerLockFromUserGesture();
   if (!mobileMode && (chatUI.isInputOpen() || isTypingTarget(e.target))) return;
   keys[e.code] = true;
 });
