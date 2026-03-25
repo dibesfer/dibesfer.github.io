@@ -263,6 +263,7 @@
         #buttonUp {
             right: 5px;
             bottom: 5px;
+            display: none;
         }
 
         #Left0 {
@@ -273,11 +274,13 @@
         #Left1 {
             right: 5px;
             top: 5px;
+            display: none;
         }
 
         #buttonShoot {
             left: 5px;
             top: 5px;
+            display: none;
         }
 
         #Right1 {
@@ -288,6 +291,7 @@
         #Right2 {
             bottom: 5px;
             left: 5px;
+            display: none;
         }
 
         #Right3 {
@@ -381,7 +385,7 @@
             z-index: 1;
             display: block;
             width: var(--app-width, 100vw);
-            height: var(--app-height, 100vh);
+            height: var(--canvas-height, var(--app-height, 100vh));
         }
     </style>
 </head>
@@ -508,6 +512,7 @@ if we are over 5
         const ALLY_ATTACK_DAMAGE = 20;
         const ALLY_ATTACK_INTERVAL = 0.9;
         const ALLY_ATTACK_RANGE = 30;
+        const ALLY_COUNT = 2;
         const PACIFIST_COUNT = 12;
         const PACIFIST_RADIUS = 11;
         const PACIFIST_SPEED = 90;
@@ -520,6 +525,10 @@ if we are over 5
         const BOSS_MELEE_DAMAGE = 20;
         const BLUE_AREA_RADIUS_MULTIPLIER = 5;
         const MOBILE_AUTO_FIRE_INTERVAL = 0.2;
+        const DEATH_PARTICLE_COUNT = 9;
+        const DEATH_PARTICLE_SPEED = 170;
+        const DEATH_PARTICLE_LIFE = 0.45;
+        const SPAWN_SYMBOL_SIZE = 600;
         const COLLECTIBLE_ATTRACTION_SPEED = 7000;
         const COLLECTIBLE_MAGNET_MAX_STRENGTH = 7000;
         const COLLECTIBLE_MAGNET_DRAG = 5;
@@ -531,9 +540,12 @@ if we are over 5
         const outerStars = [];
         const projectiles = [];
         const enemyProjectiles = [];
+        const deathParticles = [];
         const pressedKeys = {};
         const bossSymbolImage = new Image();
         bossSymbolImage.src = '/assets/art/symbols/Chaos_star.svg';
+        const spawnSymbolImage = new Image();
+        spawnSymbolImage.src = '/assets/art/mandalas/unum.png';
         const player = {
             x: 0,
             y: 0,
@@ -545,13 +557,13 @@ if we are over 5
             deaths: 0,
             hitFlash: 0,
         };
-        const ally = {
-            x: ALLY_STANDOFF_DISTANCE,
-            y: 0,
+        const allies = Array.from({ length: ALLY_COUNT }, (_, index) => ({
+            x: ALLY_STANDOFF_DISTANCE * (index % 2 === 0 ? 1 : -1),
+            y: index < 2 ? 0 : (index - 1) * ALLY_STANDOFF_DISTANCE,
             radius: ALLY_RADIUS,
             speed: ALLY_SPEED,
             attackCooldown: 0,
-        };
+        }));
         const cursor = {
             x: window.innerWidth * 0.5,
             y: window.innerHeight * 0.5,
@@ -582,24 +594,26 @@ if we are over 5
             return bodyElement.dataset.mode === 'mobile-portrait' || bodyElement.dataset.mode === 'mobile-landscape';
         }
 
-        function updateViewportHeightVariable() {
-            /* Mobile browsers can shrink the visible viewport when the address
-            bar is showing, so we store the live visible height in a CSS
-            variable and let layout pieces read from that same source. */
+        function updateViewportMetrics(mode = bodyElement.dataset.mode) {
+            /* Mobile browsers can change both the visible viewport and the
+            safe playable region, so we keep shared CSS variables for the full
+            viewport and the canvas-specific viewport separately. */
             const viewportWidth = window.visualViewport ? window.visualViewport.width : window.innerWidth;
             const viewportHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
             const viewportLeft = window.visualViewport ? window.visualViewport.offsetLeft : 0;
             const viewportTop = window.visualViewport ? window.visualViewport.offsetTop : 0;
+            const menuHeight = mode === 'mobile-portrait' && menuInferior ? menuInferior.offsetHeight : 0;
+            const canvasHeight = Math.max(0, viewportHeight - menuHeight);
             document.documentElement.style.setProperty('--app-width', `${viewportWidth}px`);
             document.documentElement.style.setProperty('--app-height', `${viewportHeight}px`);
             document.documentElement.style.setProperty('--app-left', `${viewportLeft}px`);
             document.documentElement.style.setProperty('--app-top', `${viewportTop}px`);
+            document.documentElement.style.setProperty('--canvas-height', `${canvasHeight}px`);
         }
 
         function updateAppMode() {
             /* Desktop and the two mobile orientations share one mode source so
             the layout, touch UI, and future input wiring stay in sync. */
-            updateViewportHeightVariable();
             const isMobile = mobileModeQuery.matches;
             let nextMode = 'desktop';
 
@@ -608,6 +622,7 @@ if we are over 5
             }
 
             bodyElement.dataset.mode = nextMode;
+            updateViewportMetrics(nextMode);
 
             /* The Kolorlando-style lower control shell only appears in mobile
             modes, while desktop keeps the canvas and HUD unobstructed. */
@@ -618,6 +633,10 @@ if we are over 5
                 menuInferior.hidden = true;
                 menuInferior.classList.remove('is-visible');
             }
+
+            /* Portrait canvas height depends on the live control band size, so
+            we refresh the metrics once the mobile shell visibility is settled. */
+            updateViewportMetrics(nextMode);
         }
 
         function resetJoystickState(state) {
@@ -766,9 +785,12 @@ if we are over 5
             the same unavoidable projectile cluster on the next frame. */
             enemyProjectiles.length = 0;
             projectiles.length = 0;
-            ally.x = ALLY_STANDOFF_DISTANCE;
-            ally.y = 0;
-            ally.attackCooldown = 0;
+            for (let i = 0; i < allies.length; i += 1) {
+                const ally = allies[i];
+                ally.x = ALLY_STANDOFF_DISTANCE * (i % 2 === 0 ? 1 : -1);
+                ally.y = i < 2 ? 0 : (i - 1) * ALLY_STANDOFF_DISTANCE;
+                ally.attackCooldown = 0;
+            }
         }
 
         function updatePlayerDeath() {
@@ -797,6 +819,12 @@ if we are over 5
             for (let i = 0; i < patchCount; i += 1) {
                 const segments = [];
                 const segmentCount = 3 + Math.floor(Math.random() * 4);
+                const darkSegments = [];
+                const darkSegmentCount = 3 + Math.floor(Math.random() * 5);
+                const sandSegments = [];
+                const sandSegmentCount = 2 + Math.floor(Math.random() * 4);
+                const lightSandSegments = [];
+                const lightSandSegmentCount = 2 + Math.floor(Math.random() * 4);
                 for (let segmentIndex = 0; segmentIndex < segmentCount; segmentIndex += 1) {
                     segments.push({
                         offsetX: (Math.random() - 0.5) * 22,
@@ -806,12 +834,46 @@ if we are over 5
                     });
                 }
 
+                /* A second pass of darker squares adds more breakup to the
+                grass while keeping the same chunky geometric floor language. */
+                for (let segmentIndex = 0; segmentIndex < darkSegmentCount; segmentIndex += 1) {
+                    darkSegments.push({
+                        offsetX: (Math.random() - 0.5) * 180,
+                        offsetY: (Math.random() - 0.5) * 180,
+                        widthScale: 0.28 + Math.random() * 0.34,
+                        heightScale: 0.28 + Math.random() * 0.34,
+                    });
+                }
+
+                /* Sand uses two nearby cream tones so patches feel sun-baked
+                without needing to abandon the game's square chunk style. */
+                for (let segmentIndex = 0; segmentIndex < sandSegmentCount; segmentIndex += 1) {
+                    sandSegments.push({
+                        offsetX: (Math.random() - 0.5) * 220,
+                        offsetY: (Math.random() - 0.5) * 220,
+                        widthScale: 0.22 + Math.random() * 0.3,
+                        heightScale: 0.22 + Math.random() * 0.3,
+                    });
+                }
+
+                for (let segmentIndex = 0; segmentIndex < lightSandSegmentCount; segmentIndex += 1) {
+                    lightSandSegments.push({
+                        offsetX: (Math.random() - 0.5) * 240,
+                        offsetY: (Math.random() - 0.5) * 240,
+                        widthScale: 0.16 + Math.random() * 0.24,
+                        heightScale: 0.16 + Math.random() * 0.24,
+                    });
+                }
+
                 groundPatches.push({
                     x: randomMapCoordinate(MAP_BORDER_THICKNESS + 90),
                     y: randomMapCoordinate(MAP_BORDER_THICKNESS + 90),
                     width: 50 + Math.random() * 140,
                     height: 50 + Math.random() * 140,
                     segments,
+                    darkSegments,
+                    sandSegments,
+                    lightSandSegments,
                 });
             }
         }
@@ -962,9 +1024,37 @@ if we are over 5
             /* The game canvas follows the viewport exactly so we can treat the
             full browser window as the playable screen from the very start. */
             const viewportWidth = window.visualViewport ? window.visualViewport.width : window.innerWidth;
-            const viewportHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+            const canvasHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--canvas-height'))
+                || (window.visualViewport ? window.visualViewport.height : window.innerHeight);
             canvas.width = viewportWidth;
-            canvas.height = viewportHeight;
+            canvas.height = canvasHeight;
+        }
+
+        function refreshViewportLayout() {
+            /* Resize-sensitive mobile layout can settle over more than one
+            frame, especially when browser chrome or the joystick band changes
+            size, so we refresh once immediately and once on the next frame. */
+            updateAppMode();
+            resizeCanvas();
+            cursor.x = canvas.width * 0.5;
+            cursor.y = canvas.height * 0.5;
+            render();
+
+            window.requestAnimationFrame(() => {
+                updateAppMode();
+                resizeCanvas();
+                cursor.x = canvas.width * 0.5;
+                cursor.y = canvas.height * 0.5;
+                render();
+            });
+        }
+
+        function resetPressedKeys() {
+            /* Desktop can miss keyup events when focus changes mid-press, so
+            we clear the full pressed-key state on focus-loss style events. */
+            for (const code in pressedKeys) {
+                delete pressedKeys[code];
+            }
         }
 
         function initializeWorld() {
@@ -1029,10 +1119,30 @@ if we are over 5
             context.fillRect(mapScreenX + MAP_SIZE - MAP_BORDER_THICKNESS, mapScreenY, MAP_BORDER_THICKNESS, MAP_SIZE);
         }
 
+        function drawSpawnSymbol() {
+            /* The spawn mandala is painted as a floor decal at world origin so
+            it marks the starting area without behaving like a gameplay actor. */
+            if (!spawnSymbolImage.complete) return;
+
+            const viewCenterX = canvas.width * 0.5;
+            const viewCenterY = canvas.height * 0.5;
+            const drawX = viewCenterX - player.x - SPAWN_SYMBOL_SIZE * 0.5;
+            const drawY = viewCenterY - player.y - SPAWN_SYMBOL_SIZE * 0.5;
+
+            context.globalAlpha = 0.3;
+            context.drawImage(
+                spawnSymbolImage,
+                drawX,
+                drawY,
+                SPAWN_SYMBOL_SIZE,
+                SPAWN_SYMBOL_SIZE
+            );
+            context.globalAlpha = 1;
+        }
+
         function drawGroundPatches() {
             /* Layering a few chunky rectangles per patch makes the terrain feel
             rougher and more organic than a perfectly flat single-color field. */
-            context.fillStyle = '#256b2b';
             const cameraX = player.x;
             const cameraY = player.y;
             const viewCenterX = canvas.width * 0.5;
@@ -1040,6 +1150,8 @@ if we are over 5
 
             for (let i = 0; i < groundPatches.length; i += 1) {
                 const patch = groundPatches[i];
+
+                context.fillStyle = '#256b2b';
                 for (let segment = 0; segment < patch.segments.length; segment += 1) {
                     const part = patch.segments[segment];
                     const width = patch.width * part.widthScale;
@@ -1051,6 +1163,51 @@ if we are over 5
                         height
                     );
                 }
+
+                /* The darker pass uses its own wider offsets so it breaks up
+                the field independently instead of tracing the first layer. */
+                context.fillStyle = '#1f5b24';
+                for (let segment = 0; segment < patch.darkSegments.length; segment += 1) {
+                    const part = patch.darkSegments[segment];
+                    const width = patch.width * part.widthScale;
+                    const height = patch.height * part.heightScale;
+                    context.fillRect(
+                        viewCenterX + (patch.x - cameraX) + part.offsetX - width * 0.5,
+                        viewCenterY + (patch.y - cameraY) + part.offsetY - height * 0.5,
+                        width,
+                        height
+                    );
+                }
+
+                /* Two cream passes suggest sandy spots on top of the grass
+                while keeping the same blocky ground construction. */
+                context.globalAlpha = 0.1;
+                context.fillStyle = '#d8c693';
+                for (let segment = 0; segment < patch.sandSegments.length; segment += 1) {
+                    const part = patch.sandSegments[segment];
+                    const width = patch.width * part.widthScale;
+                    const height = patch.height * part.heightScale;
+                    context.fillRect(
+                        viewCenterX + (patch.x - cameraX) + part.offsetX - width * 0.5,
+                        viewCenterY + (patch.y - cameraY) + part.offsetY - height * 0.5,
+                        width,
+                        height
+                    );
+                }
+
+                context.fillStyle = '#efe4bf';
+                for (let segment = 0; segment < patch.lightSandSegments.length; segment += 1) {
+                    const part = patch.lightSandSegments[segment];
+                    const width = patch.width * part.widthScale;
+                    const height = patch.height * part.heightScale;
+                    context.fillRect(
+                        viewCenterX + (patch.x - cameraX) + part.offsetX - width * 0.5,
+                        viewCenterY + (patch.y - cameraY) + part.offsetY - height * 0.5,
+                        width,
+                        height
+                    );
+                }
+                context.globalAlpha = 1;
             }
         }
 
@@ -1079,7 +1236,12 @@ if we are over 5
                 const drawX = viewCenterX + (food.x - cameraX);
                 const drawY = viewCenterY + (food.y - cameraY);
 
-                drawOutlinedDot(drawX, drawY, food.radius, '#7a4a1e');
+                /* Food is a pickup rather than a living actor, so it keeps a
+                simpler fill-only look while outlined entities stay readable. */
+                context.fillStyle = '#7a4a1e';
+                context.beginPath();
+                context.arc(drawX, drawY, food.radius, 0, Math.PI * 2);
+                context.fill();
             }
         }
 
@@ -1096,7 +1258,12 @@ if we are over 5
                 const drawX = viewCenterX + (coin.x - cameraX);
                 const drawY = viewCenterY + (coin.y - cameraY);
 
-                drawOutlinedDot(drawX, drawY, coin.radius, '#ffd84d');
+                /* Coins also stay borderless so collectibles read differently
+                from actors and projectiles that use the shared black ring. */
+                context.fillStyle = '#ffd84d';
+                context.beginPath();
+                context.arc(drawX, drawY, coin.radius, 0, Math.PI * 2);
+                context.fill();
             }
         }
 
@@ -1147,6 +1314,25 @@ if we are over 5
             }
         }
 
+        function drawDeathParticles() {
+            /* Death particles stay in world space so the burst appears exactly
+            where the enemy died even while the camera remains player-centered. */
+            const cameraX = player.x;
+            const cameraY = player.y;
+            const viewCenterX = canvas.width * 0.5;
+            const viewCenterY = canvas.height * 0.5;
+
+            for (let i = 0; i < deathParticles.length; i += 1) {
+                const particle = deathParticles[i];
+                const drawX = viewCenterX + (particle.x - cameraX);
+                const drawY = viewCenterY + (particle.y - cameraY);
+
+                context.globalAlpha = Math.max(0, particle.life / particle.maxLife);
+                drawOutlinedDot(drawX, drawY, particle.radius, particle.color);
+                context.globalAlpha = 1;
+            }
+        }
+
         function drawProjectiles() {
             /* Projectiles live in world space like enemies, so aiming and hits
             stay consistent even while the camera remains centered on the player. */
@@ -1186,13 +1372,17 @@ if we are over 5
             defensive behavior without obscuring the entities inside it. */
             const viewCenterX = canvas.width * 0.5;
             const viewCenterY = canvas.height * 0.5;
-            const drawX = viewCenterX + (ally.x - player.x);
-            const drawY = viewCenterY + (ally.y - player.y);
 
-            context.fillStyle = 'rgba(95, 158, 160, 0.18)';
-            context.beginPath();
-            context.arc(drawX, drawY, ALLY_AREA_RADIUS, 0, Math.PI * 2);
-            context.fill();
+            for (let i = 0; i < allies.length; i += 1) {
+                const ally = allies[i];
+                const drawX = viewCenterX + (ally.x - player.x);
+                const drawY = viewCenterY + (ally.y - player.y);
+
+                context.fillStyle = 'rgba(95, 158, 160, 0.18)';
+                context.beginPath();
+                context.arc(drawX, drawY, ALLY_AREA_RADIUS, 0, Math.PI * 2);
+                context.fill();
+            }
         }
 
         function drawBlueArea() {
@@ -1227,10 +1417,14 @@ if we are over 5
             following and combat read as real movement on the map. */
             const viewCenterX = canvas.width * 0.5;
             const viewCenterY = canvas.height * 0.5;
-            const drawX = viewCenterX + (ally.x - player.x);
-            const drawY = viewCenterY + (ally.y - player.y);
 
-            drawOutlinedDot(drawX, drawY, ally.radius, 'cadetblue');
+            for (let i = 0; i < allies.length; i += 1) {
+                const ally = allies[i];
+                const drawX = viewCenterX + (ally.x - player.x);
+                const drawY = viewCenterY + (ally.y - player.y);
+
+                drawOutlinedDot(drawX, drawY, ally.radius, 'cadetblue');
+            }
         }
 
         function drawAimLine() {
@@ -1241,6 +1435,7 @@ if we are over 5
             const startX = canvas.width * 0.5;
             const startY = canvas.height * 0.5;
 
+            context.globalAlpha = 0.75;
             context.strokeStyle = '#f8e36a';
             context.lineWidth = 3;
             context.lineCap = 'round';
@@ -1248,6 +1443,7 @@ if we are over 5
             context.moveTo(startX, startY);
             context.lineTo(cursor.x, cursor.y);
             context.stroke();
+            context.globalAlpha = 1;
         }
 
         function drawCursor() {
@@ -1255,7 +1451,12 @@ if we are over 5
             future interaction logic easy to extend without relying on CSS UI. */
             if (!cursor.visible) return;
 
-            drawOutlinedDot(cursor.x, cursor.y, cursor.radius, '#ffe45c');
+            context.globalAlpha = 0.75;
+            context.fillStyle = '#ffe45c';
+            context.beginPath();
+            context.arc(cursor.x, cursor.y, cursor.radius, 0, Math.PI * 2);
+            context.fill();
+            context.globalAlpha = 1;
         }
 
         function updatePlayer(deltaTime) {
@@ -1407,46 +1608,53 @@ if we are over 5
         function updateAlly(deltaTime) {
             /* The ally keeps a loose orbit around the player, but it will break
             formation to intercept and melee enemies inside its defense area. */
-            ally.attackCooldown = Math.max(0, ally.attackCooldown - deltaTime);
+            for (let i = 0; i < allies.length; i += 1) {
+                const ally = allies[i];
+                ally.attackCooldown = Math.max(0, ally.attackCooldown - deltaTime);
 
-            let targetEnemy = null;
-            let nearestEnemyDistance = Infinity;
-            for (let i = 0; i < enemyDots.length; i += 1) {
-                const enemy = enemyDots[i];
-                const distance = Math.hypot(enemy.x - ally.x, enemy.y - ally.y);
-                if (distance > ALLY_AREA_RADIUS + enemy.radius) continue;
-                if (distance >= nearestEnemyDistance) continue;
-                nearestEnemyDistance = distance;
-                targetEnemy = enemy;
-            }
-
-            if (targetEnemy) {
-                const distanceToEnemy = Math.hypot(targetEnemy.x - ally.x, targetEnemy.y - ally.y);
-                if (distanceToEnemy > ALLY_ATTACK_RANGE) {
-                    moveEntityToward(ally, targetEnemy.x, targetEnemy.y, ally.speed, deltaTime);
-                } else if (ally.attackCooldown <= 0) {
-                    targetEnemy.health = Math.max(0, targetEnemy.health - ALLY_ATTACK_DAMAGE);
-                    targetEnemy.hitFlash = 0.15;
-                    ally.attackCooldown = ALLY_ATTACK_INTERVAL;
+                let targetEnemy = null;
+                let nearestEnemyDistance = Infinity;
+                for (let enemyIndex = 0; enemyIndex < enemyDots.length; enemyIndex += 1) {
+                    const enemy = enemyDots[enemyIndex];
+                    const distance = Math.hypot(enemy.x - ally.x, enemy.y - ally.y);
+                    if (distance > ALLY_AREA_RADIUS + enemy.radius) continue;
+                    if (distance >= nearestEnemyDistance) continue;
+                    nearestEnemyDistance = distance;
+                    targetEnemy = enemy;
                 }
-            } else {
-                const dx = player.x - ally.x;
-                const dy = player.y - ally.y;
-                const distanceToPlayer = Math.hypot(dx, dy);
-                const safeDistance = distanceToPlayer || 1;
-                const offsetX = distanceToPlayer > 0.001 ? (ally.x - player.x) / safeDistance : 1;
-                const offsetY = distanceToPlayer > 0.001 ? (ally.y - player.y) / safeDistance : 0;
-                const targetX = player.x + offsetX * ALLY_STANDOFF_DISTANCE;
-                const targetY = player.y + offsetY * ALLY_STANDOFF_DISTANCE;
 
-                /* Following a point on the standoff ring is smoother than
-                flipping between direct chase and direct retreat vectors. */
-                if (Math.abs(distanceToPlayer - ALLY_STANDOFF_DISTANCE) > ALLY_STANDOFF_TOLERANCE) {
-                    moveEntityToward(ally, targetX, targetY, ally.speed, deltaTime);
+                if (targetEnemy) {
+                    const distanceToEnemy = Math.hypot(targetEnemy.x - ally.x, targetEnemy.y - ally.y);
+                    const allyAttackReach = ally.radius + targetEnemy.radius;
+
+                    /* Ally melee should require actual body contact, while
+                    still respecting large targets by using both radii. */
+                    if (distanceToEnemy > allyAttackReach) {
+                        moveEntityToward(ally, targetEnemy.x, targetEnemy.y, ally.speed, deltaTime);
+                    } else if (ally.attackCooldown <= 0) {
+                        targetEnemy.health = Math.max(0, targetEnemy.health - ALLY_ATTACK_DAMAGE);
+                        targetEnemy.hitFlash = 0.15;
+                        ally.attackCooldown = ALLY_ATTACK_INTERVAL;
+                    }
+                } else {
+                    const dx = player.x - ally.x;
+                    const dy = player.y - ally.y;
+                    const distanceToPlayer = Math.hypot(dx, dy);
+                    const safeDistance = distanceToPlayer || 1;
+                    const offsetX = distanceToPlayer > 0.001 ? (ally.x - player.x) / safeDistance : (i % 2 === 0 ? 1 : -1);
+                    const offsetY = distanceToPlayer > 0.001 ? (ally.y - player.y) / safeDistance : 0;
+                    const targetX = player.x + offsetX * ALLY_STANDOFF_DISTANCE;
+                    const targetY = player.y + offsetY * ALLY_STANDOFF_DISTANCE;
+
+                    /* Following a point on the standoff ring is smoother than
+                    flipping between direct chase and direct retreat vectors. */
+                    if (Math.abs(distanceToPlayer - ALLY_STANDOFF_DISTANCE) > ALLY_STANDOFF_TOLERANCE) {
+                        moveEntityToward(ally, targetX, targetY, ally.speed, deltaTime);
+                    }
                 }
-            }
 
-            clampWorldPosition(ally);
+                clampWorldPosition(ally);
+            }
         }
 
         function updateEnemies(deltaTime) {
@@ -1533,7 +1741,7 @@ if we are over 5
         function resolveActorCollisions() {
             /* Living actors should feel solid against each other, so the same
             separation pass handles ally, enemies, and pacifists consistently. */
-            const actors = [ally, ...enemyDots, ...pacifistDots];
+            const actors = [...allies, ...enemyDots, ...pacifistDots];
 
             /* The player acts as the camera anchor, so other actors get pushed
             away from the player instead of moving the player itself. */
@@ -1545,8 +1753,16 @@ if we are over 5
                 const minDistance = player.radius + actor.radius;
 
                 if (distance === 0) {
-                    actor.x += minDistance;
-                    clampWorldPosition(actor);
+                    /* Bosses should feel heavier than the player, so a dead-
+                    center overlap resolves by moving the player away instead
+                    of gifting the push win to the player side. */
+                    if (actor.isBoss) {
+                        player.x -= minDistance;
+                        clampWorldPosition(player);
+                    } else {
+                        actor.x += minDistance;
+                        clampWorldPosition(actor);
+                    }
                     continue;
                 }
 
@@ -1555,9 +1771,19 @@ if we are over 5
                 const overlap = minDistance - distance;
                 const pushX = dx / distance;
                 const pushY = dy / distance;
-                actor.x += pushX * overlap;
-                actor.y += pushY * overlap;
-                clampWorldPosition(actor);
+
+                /* Dark red bosses override the normal player-anchor rule:
+                when contact happens, the boss holds ground and the player is
+                shoved back by the overlap amount instead. */
+                if (actor.isBoss) {
+                    player.x -= pushX * overlap;
+                    player.y -= pushY * overlap;
+                    clampWorldPosition(player);
+                } else {
+                    actor.x += pushX * overlap;
+                    actor.y += pushY * overlap;
+                    clampWorldPosition(actor);
+                }
             }
 
             /* Actor-to-actor separation prevents ally, pacifists, and enemies
@@ -1656,6 +1882,66 @@ if we are over 5
             }
         }
 
+        function spawnDeathParticles(entity, color) {
+            /* The burst inherits the defeated entity's body color so different
+            enemy families can share one emitter while still reading distinctly. */
+            for (let i = 0; i < DEATH_PARTICLE_COUNT; i += 1) {
+                const angle = Math.random() * Math.PI * 2;
+                const speed = DEATH_PARTICLE_SPEED * (0.45 + Math.random() * 0.8);
+                deathParticles.push({
+                    x: entity.x,
+                    y: entity.y,
+                    velocityX: Math.cos(angle) * speed,
+                    velocityY: Math.sin(angle) * speed,
+                    radius: Math.max(2, entity.radius * (0.16 + Math.random() * 0.12)),
+                    color,
+                    life: DEATH_PARTICLE_LIFE * (0.8 + Math.random() * 0.45),
+                    maxLife: DEATH_PARTICLE_LIFE,
+                });
+            }
+        }
+
+        function getEntityDeathColor(entity, fallbackColor) {
+            /* Hit flash should not turn the death burst blue, so we derive the
+            particle tint from the entity's base body color instead. */
+            return entity.color || fallbackColor;
+        }
+
+        function removeDeadEnemy(enemyIndex) {
+            /* Centralizing enemy removal keeps projectile kills, ally kills,
+            and any future damage source consistent with the same burst effect. */
+            const enemy = enemyDots[enemyIndex];
+            if (!enemy) return;
+            spawnDeathParticles(enemy, getEntityDeathColor(enemy, '#d82f2f'));
+            enemyDots.splice(enemyIndex, 1);
+        }
+
+        function removeDeadPacifist(pacifistIndex) {
+            /* Pacifists reuse the same burst system so peaceful entities can
+            still communicate death clearly with their own lighter color. */
+            const pacifist = pacifistDots[pacifistIndex];
+            if (!pacifist) return;
+            spawnDeathParticles(pacifist, getEntityDeathColor(pacifist, 'lightgreen'));
+            pacifistDots.splice(pacifistIndex, 1);
+        }
+
+        function updateDeathParticles(deltaTime) {
+            /* Particles drift briefly outward and fade quickly so enemy deaths
+            feel punchier without cluttering the screen for long. */
+            for (let i = deathParticles.length - 1; i >= 0; i -= 1) {
+                const particle = deathParticles[i];
+                particle.x += particle.velocityX * deltaTime;
+                particle.y += particle.velocityY * deltaTime;
+                particle.velocityX *= Math.max(0, 1 - 3.6 * deltaTime);
+                particle.velocityY *= Math.max(0, 1 - 3.6 * deltaTime);
+                particle.life -= deltaTime;
+
+                if (particle.life <= 0) {
+                    deathParticles.splice(i, 1);
+                }
+            }
+        }
+
         function updatePlayerHitFlash(deltaTime) {
             player.hitFlash = Math.max(0, player.hitFlash - deltaTime);
         }
@@ -1667,7 +1953,7 @@ if we are over 5
                 const enemy = enemyDots[i];
                 enemy.hitFlash = Math.max(0, enemy.hitFlash - deltaTime);
                 if (enemy.health <= 0) {
-                    enemyDots.splice(i, 1);
+                    removeDeadEnemy(i);
                 }
             }
 
@@ -1677,7 +1963,7 @@ if we are over 5
                 const pacifist = pacifistDots[i];
                 pacifist.hitFlash = Math.max(0, pacifist.hitFlash - deltaTime);
                 if (pacifist.health <= 0) {
-                    pacifistDots.splice(i, 1);
+                    removeDeadPacifist(i);
                 }
             }
         }
@@ -1734,7 +2020,7 @@ if we are over 5
                 enemy.health = Math.max(0, enemy.health - PLAYER_PROJECTILE_DAMAGE);
                 enemy.hitFlash = 0.15;
                 if (enemy.health <= 0) {
-                    enemyDots.splice(enemyIndex, 1);
+                    removeDeadEnemy(enemyIndex);
                 }
                 projectiles.splice(i, 1);
                 hitEnemy = true;
@@ -1751,7 +2037,7 @@ if we are over 5
                 pacifist.health = Math.max(0, pacifist.health - PLAYER_PROJECTILE_DAMAGE);
                 pacifist.hitFlash = 0.15;
                 if (pacifist.health <= 0) {
-                    pacifistDots.splice(pacifistIndex, 1);
+                    removeDeadPacifist(pacifistIndex);
                 }
                 projectiles.splice(i, 1);
                 hitEnemy = true;
@@ -1765,6 +2051,7 @@ if we are over 5
         function render() {
             drawFloor();
             drawGroundPatches();
+            drawSpawnSymbol();
             drawMapBorders();
             drawBlueArea();
             drawAllyArea();
@@ -1772,12 +2059,13 @@ if we are over 5
             drawCoinDots();
             drawPacifistDots();
             drawEnemyDots();
-            drawAimLine();
-            drawPlayer();
+            drawDeathParticles();
             drawAlly();
-            drawCursor();
             drawEnemyProjectiles();
             drawProjectiles();
+            drawAimLine();
+            drawPlayer();
+            drawCursor();
         }
 
         function frame(timestamp) {
@@ -1798,6 +2086,7 @@ if we are over 5
             updateCoinCollisions();
             updateEnemyProjectiles(deltaTime);
             updateProjectiles(deltaTime);
+            updateDeathParticles(deltaTime);
             updatePlayerDeath();
             updatePlayerHitFlash(deltaTime);
             updateEnemyHitFlash(deltaTime);
@@ -1840,14 +2129,18 @@ if we are over 5
 
         window.addEventListener('blur', () => {
             cursor.visible = false;
+            resetPressedKeys();
+        });
+
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                cursor.visible = false;
+                resetPressedKeys();
+            }
         });
 
         window.addEventListener('resize', () => {
-            updateAppMode();
-            resizeCanvas();
-            cursor.x = canvas.width * 0.5;
-            cursor.y = canvas.height * 0.5;
-            render();
+            refreshViewportLayout();
         });
 
         if (window.visualViewport) {
@@ -1855,15 +2148,11 @@ if we are over 5
             bar show and hide without a traditional layout resize, so we listen
             directly to the visual viewport as well. */
             window.visualViewport.addEventListener('resize', () => {
-                updateAppMode();
-                resizeCanvas();
-                cursor.x = canvas.width * 0.5;
-                cursor.y = canvas.height * 0.5;
-                render();
+                refreshViewportLayout();
             });
 
             window.visualViewport.addEventListener('scroll', () => {
-                updateViewportHeightVariable();
+                updateViewportMetrics();
             });
         }
 
