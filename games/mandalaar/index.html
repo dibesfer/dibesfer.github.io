@@ -519,6 +519,7 @@ if we are over 5
         const BOSS_RADIUS_MULTIPLIER = 5;
         const BOSS_MELEE_DAMAGE = 20;
         const BLUE_AREA_RADIUS_MULTIPLIER = 5;
+        const MOBILE_AUTO_FIRE_INTERVAL = 0.2;
         const COLLECTIBLE_ATTRACTION_SPEED = 7000;
         const COLLECTIBLE_MAGNET_MAX_STRENGTH = 7000;
         const COLLECTIBLE_MAGNET_DRAG = 5;
@@ -575,6 +576,7 @@ if we are over 5
         };
         let lastFrameTime = 0;
         let displayedFps = 0;
+        let mobileAutoFireCooldown = 0;
 
         function isMobileMode() {
             return bodyElement.dataset.mode === 'mobile-portrait' || bodyElement.dataset.mode === 'mobile-landscape';
@@ -1315,6 +1317,32 @@ if we are over 5
             cursor.visible = true;
         }
 
+        function updateMobileAutoFire(deltaTime) {
+            /* Holding the right joystick on mobile acts like an aiming-and-fire
+            stick, so we emit a shot on a fixed rhythm while that stick stays
+            engaged and pointing somewhere valid. */
+            if (!isMobileMode()) {
+                mobileAutoFireCooldown = 0;
+                return;
+            }
+
+            /* If the joystick is released or the aim marker is hidden, the
+            shooting rhythm stops immediately and restarts fresh next hold. */
+            if (!mobileControlState.rightJoystick.active || mobileControlState.rightJoystick.strength <= 0 || !cursor.visible) {
+                mobileAutoFireCooldown = 0;
+                return;
+            }
+
+            mobileAutoFireCooldown -= deltaTime;
+
+            /* Using a loop keeps the cadence stable even if a slower frame
+            spans more than one firing interval for any reason. */
+            while (mobileAutoFireCooldown <= 0) {
+                spawnProjectile();
+                mobileAutoFireCooldown += MOBILE_AUTO_FIRE_INTERVAL;
+            }
+        }
+
         function updateCollectibleMagnetism(collectibles, deltaTime) {
             /* Collectibles start drifting once the blueArea reaches them, and
             the pull ramps up over time so the magnet effect feels gradual. */
@@ -1759,6 +1787,7 @@ if we are over 5
             updateFpsCounter(deltaTime);
             updatePlayer(deltaTime);
             updateMobileAimCursor();
+            updateMobileAutoFire(deltaTime);
             updateCollectibleMagnetism(foodDots, deltaTime);
             updateCollectibleMagnetism(coinDots, deltaTime);
             updateAlly(deltaTime);
