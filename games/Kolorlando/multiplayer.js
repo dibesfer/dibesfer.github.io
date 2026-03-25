@@ -6,14 +6,16 @@ import {
 } from './entityModel.js';
 
 const PRESENCE_CHANNEL_NAME = 'kolorlando-world';
+const PLAYER_TRANSFORM_BROADCAST_EVENT = 'player:transform';
 const LOCAL_PLAYER_ID_STORAGE_KEY = 'kolorlando.multiplayer.localPlayerId';
 const LOCAL_PRESENCE_PUSH_INTERVAL = 0.1;
+const LOCAL_BROADCAST_PUSH_INTERVAL = 0.1;
 const REMOTE_POSITION_LERP_SPEED = 10;
 const REMOTE_ROTATION_LERP_SPEED = 12;
 const REMOTE_MOVE_DISTANCE_THRESHOLD = 0.0004;
 const REMOTE_PLAYER_HEIGHT = 1.8;
 
-function roundPresenceNumber(value, digits = 3) {
+function roundNetworkNumber(value, digits = 3) {
   const numericValue = Number(value);
   if (!Number.isFinite(numericValue)) return 0;
   const factor = 10 ** digits;
@@ -162,11 +164,6 @@ function snapshotPresencePayload(state, localPlayerId) {
   return {
     playerId: localPlayerId,
     sessionId: state.sessionId,
-    x: roundPresenceNumber(state.x),
-    y: roundPresenceNumber(state.y),
-    z: roundPresenceNumber(state.z),
-    rotationY: roundPresenceNumber(state.rotationY),
-    isMoving: Boolean(state.isMoving),
     online_at: new Date().toISOString(),
   };
 }
@@ -176,11 +173,36 @@ function arePresencePayloadsEqual(a, b) {
   return (
     a.playerId === b.playerId
     && a.sessionId === b.sessionId
+  );
+}
+
+function snapshotBroadcastPayload(state, localPlayerId, localSessionId) {
+  /* Broadcast carries the short-lived high-frequency gameplay state that would
+  otherwise make Presence feel sluggish for moment-to-moment avatar motion. */
+  return {
+    playerId: localPlayerId,
+    sessionId: localSessionId,
+    x: roundNetworkNumber(state.x),
+    y: roundNetworkNumber(state.y),
+    z: roundNetworkNumber(state.z),
+    rotationY: roundNetworkNumber(state.rotationY),
+    isMoving: Boolean(state.isMoving),
+    animation: state.isMoving ? 'walk' : 'idle',
+    sentAt: Date.now(),
+  };
+}
+
+function areBroadcastPayloadsEqual(a, b) {
+  if (!a || !b) return false;
+  return (
+    a.playerId === b.playerId
+    && a.sessionId === b.sessionId
     && a.x === b.x
     && a.y === b.y
     && a.z === b.z
     && a.rotationY === b.rotationY
     && a.isMoving === b.isMoving
+    && a.animation === b.animation
   );
 }
 
@@ -201,7 +223,9 @@ export function createMultiplayerController({
   let channel = null;
   let isSubscribed = false;
   let publishAccumulator = 0;
+  let broadcastAccumulator = 0;
   let lastPublishedPresence = null;
+  let lastBroadcastPayload = null;
 
   /* The small dropdown is a debugging aid so we can inspect the raw Presence
   player/session data without opening devtools every time a sync arrives. */
@@ -218,10 +242,6 @@ export function createMultiplayerController({
     peopleOnlineCountElement.textContent = String(totalSessions);
   }
 
-  function formatPresenceDebugValue(value) {
-    return readFiniteNumber(value).toFixed(2);
-  }
-
   function renderPeopleOnlineList(state) {
     if (!peopleOnlineListElement) return;
 
@@ -233,10 +253,8 @@ export function createMultiplayerController({
         if (!payload?.sessionId) return;
         rows.push({
           id: String(payload.sessionId),
+          playerId: String(payload.playerId ?? 'guest'),
           onlineAt: Date.parse(payload.online_at ?? '') || 0,
-          x: formatPresenceDebugValue(payload.x),
-          y: formatPresenceDebugValue(payload.y),
-          z: formatPresenceDebugValue(payload.z),
         });
       });
     });
@@ -255,7 +273,7 @@ export function createMultiplayerController({
     }
 
     peopleOnlineListElement.innerHTML = rows
-      .map((row, index) => `<div>${index + 1} | X ${row.x} Y ${row.y} Z ${row.z}</div>`)
+      .map((row, index) => `<div>${index + 1} | ${row.playerId} | ${row.id}</div>`)
       .join('');
   }
 
@@ -278,7 +296,7 @@ export function createMultiplayerController({
     return remotePlayer;
   }
 
-  function applyRemotePresence(sessionId, payload) {
+  function applyRemoteBroadcast(sessionId, payload) {
     const remotePlayer = getOrCreateRemotePlayer(sessionId);
 
     remotePlayer.targetPosition.set(
@@ -287,11 +305,10 @@ export function createMultiplayerController({
       readFiniteNumber(payload.z)
     );
     remotePlayer.targetRotationY = readFiniteNumber(payload.rotationY, remotePlayer.targetRotationY);
-    remotePlayer.isMoving = Boolean(payload.isMoving);
+    remotePlayer.isMoving = payload.animation === 'walk' || Boolean(payload.isMoving);
 
-    /* The first payload should place the avatar immediately in the right spot
-    so newly joined players do not slide in from world origin on their first
-    visible frame. */
+    /* The first transform packet should place the avatar immediately in the
+    right spot so a late join does not visibly lerp from world origin. */
     if (!remotePlayer.initialized) {
       remotePlayer.currentPosition.copy(remotePlayer.targetPosition);
       remotePlayer.root.position.copy(remotePlayer.targetPosition);
@@ -311,7 +328,7 @@ export function createMultiplayerController({
       if (latestPayload.sessionId === localSessionId) return;
 
       seenRemoteSessionIds.add(latestPayload.sessionId);
-      applyRemotePresence(latestPayload.sessionId, latestPayload);
+      getOrCreateRemotePlayer(latestPayload.sessionId);
     });
 
     Array.from(remotePlayers.keys()).forEach(sessionId => {
@@ -343,6 +360,27 @@ export function createMultiplayerController({
     await channel.track(nextPresencePayload);
   }
 
+  async function broadcastLocalPlayerState() {
+    if (!isSubscribed || !channel || typeof getLocalPlayerState !== 'function') return;
+
+    const localPlayerState = getLocalPlayerState();
+    if (!localPlayerState) return;
+
+    const nextBroadcastPayload = snapshotBroadcastPayload(
+      localPlayerState,
+      localPlayerId,
+      localSessionId
+    );
+    if (areBroadcastPayloadsEqual(lastBroadcastPayload, nextBroadcastPayload)) return;
+
+    lastBroadcastPayload = nextBroadcastPayload;
+    await channel.send({
+      type: 'broadcast',
+      event: PLAYER_TRANSFORM_BROADCAST_EVENT,
+      payload: nextBroadcastPayload,
+    });
+  }
+
   function connect() {
     const database = window.database;
     if (channel || !database?.channel) return;
@@ -353,10 +391,15 @@ export function createMultiplayerController({
       .on('presence', { event: 'sync' }, () => {
         handlePresenceSync(channel.presenceState());
       })
+      .on('broadcast', { event: PLAYER_TRANSFORM_BROADCAST_EVENT }, ({ payload }) => {
+        if (!payload?.sessionId || payload.sessionId === localSessionId) return;
+        applyRemoteBroadcast(payload.sessionId, payload);
+      })
       .subscribe(async status => {
         if (status !== 'SUBSCRIBED') return;
         isSubscribed = true;
         await publishLocalPresence(true);
+        await broadcastLocalPlayerState();
       });
   }
 
@@ -392,11 +435,19 @@ export function createMultiplayerController({
     updateRemotePlayers(deltaTime);
 
     publishAccumulator += deltaTime;
-    if (publishAccumulator < LOCAL_PRESENCE_PUSH_INTERVAL) return;
+    if (publishAccumulator >= LOCAL_PRESENCE_PUSH_INTERVAL) {
+      publishAccumulator = 0;
+      publishLocalPresence().catch(error => {
+        console.error('Failed to publish multiplayer presence.', error);
+      });
+    }
 
-    publishAccumulator = 0;
-    publishLocalPresence().catch(error => {
-      console.error('Failed to publish multiplayer presence.', error);
+    broadcastAccumulator += deltaTime;
+    if (broadcastAccumulator < LOCAL_BROADCAST_PUSH_INTERVAL) return;
+
+    broadcastAccumulator = 0;
+    broadcastLocalPlayerState().catch(error => {
+      console.error('Failed to broadcast multiplayer transform.', error);
     });
   }
 
