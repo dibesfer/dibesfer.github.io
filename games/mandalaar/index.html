@@ -376,10 +376,11 @@
 
         canvas {
             position: fixed;
-            inset: 0;
+            top: var(--app-top, 0px);
+            left: var(--app-left, 0px);
             z-index: 1;
             display: block;
-            width: 100vw;
+            width: var(--app-width, 100vw);
             height: var(--app-height, 100vh);
         }
     </style>
@@ -583,8 +584,14 @@ if we are over 5
             /* Mobile browsers can shrink the visible viewport when the address
             bar is showing, so we store the live visible height in a CSS
             variable and let layout pieces read from that same source. */
+            const viewportWidth = window.visualViewport ? window.visualViewport.width : window.innerWidth;
             const viewportHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+            const viewportLeft = window.visualViewport ? window.visualViewport.offsetLeft : 0;
+            const viewportTop = window.visualViewport ? window.visualViewport.offsetTop : 0;
+            document.documentElement.style.setProperty('--app-width', `${viewportWidth}px`);
             document.documentElement.style.setProperty('--app-height', `${viewportHeight}px`);
+            document.documentElement.style.setProperty('--app-left', `${viewportLeft}px`);
+            document.documentElement.style.setProperty('--app-top', `${viewportTop}px`);
         }
 
         function updateAppMode() {
