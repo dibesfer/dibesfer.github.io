@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mandalaar</title>
+    <style>
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        body {
+            background: #1f6e2a;
+            font-family: sans-serif;
+        }
+
+        #overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 2;
+            padding: 1rem;
+            pointer-events: none;
+            background-color: blue;
+        }
+
+        canvas {
+            position: fixed;
+            inset: 0;
+            z-index: 1;
+            display: block;
+            width: 100vw;
+            height: 100vh;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="overlay">
+        <h1>Mandalaar</h1>
+        <h3>Topdown 2D game</h3>
+    </div>
+    <canvas id="gameCanvas" aria-label="Mandalaar game view"></canvas>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const context = canvas.getContext('2d');
+        const MAP_SIZE = 2000;
+        const MAP_HALF_SIZE = MAP_SIZE * 0.5;
+        const MAP_BORDER_THICKNESS = 20;
+        const groundPatches = [];
+        const foodDots = [];
+        const coinDots = [];
+        const enemyDots = [];
+        const outerStars = [];
+        const projectiles = [];
+        const enemyProjectiles = [];
+        const pressedKeys = {};
+        const player = {
+            x: 0,
+            y: 0,
+            radius: 14,
+            speed: 240,
+            hitFlash: 0,
+        };
+        const cursor = {
+            x: window.innerWidth * 0.5,
+            y: window.innerHeight * 0.5,
+            radius: 8,
+            visible: false,
+        };
+        let lastFrameTime = 0;
+
+        function randomMapCoordinate(margin = 0) {
+            /* World content is generated inside the finite playfield so the
+            border reads as a real limit instead of decorative paint. */
+            const usableHalfSize = Math.max(0, MAP_HALF_SIZE - margin);
+            return (Math.random() * 2 - 1) * usableHalfSize;
+        }
+
+        function createGroundPatches() {
+            /* Prebuilding the ground patches once per resize keeps the map
+            visually varied while avoiding a distracting terrain flicker every
+            time the frame redraws. */
+            groundPatches.length = 0;
+
+            const patchCount = Math.max(24, Math.floor((canvas.width * canvas.height) / 28000));
+            for (let i = 0; i < patchCount; i += 1) {
+                const segments = [];
+                const segmentCount = 3 + Math.floor(Math.random() * 4);
+                for (let segmentIndex = 0; segmentIndex < segmentCount; segmentIndex += 1) {
+                    segments.push({
+                        offsetX: (Math.random() - 0.5) * 22,
+                        offsetY: (Math.random() - 0.5) * 22,
+                        widthScale: 0.55 + Math.random() * 0.6,
+                        heightScale: 0.55 + Math.random() * 0.6,
+                    });
+                }
+
+                groundPatches.push({
+                    x: randomMapCoordinate(MAP_BORDER_THICKNESS + 90),
+                    y: randomMapCoordinate(MAP_BORDER_THICKNESS + 90),
+                    width: 50 + Math.random() * 140,
+                    height: 50 + Math.random() * 140,
+                    segments,
+                });
+            }
+        }
+
+        function createOuterStars() {
+            /* The outer void gets its own distant star field so leaving the
+            playable map still feels intentional instead of visually empty. */
+            outerStars.length = 0;
+
+            const starFieldSize = MAP_SIZE * 2;
+            const starCount = 140;
+            for (let i = 0; i < starCount; i += 1) {
+                outerStars.push({
+                    x: (Math.random() - 0.5) * starFieldSize,
+                    y: (Math.random() - 0.5) * starFieldSize,
+                    radius: 1 + Math.random() * 2,
+                });
+            }
+        }
+
+        function createFoodDots() {
+            /* Food is scattered in world space so it behaves like a pickup field
+            the player can traverse, instead of a UI decoration pinned to the
+            current viewport. */
+            foodDots.length = 0;
+
+            const foodCount = 40;
+            for (let i = 0; i < foodCount; i += 1) {
+                foodDots.push({
+                    x: randomMapCoordinate(MAP_BORDER_THICKNESS + 24),
+                    y: randomMapCoordinate(MAP_BORDER_THICKNESS + 24),
+                    radius: 7 + Math.random() * 3,
+                });
+            }
+        }
+
+        function createCoinDots() {
+            /* Coins share the same simple pickup loop as food so we can add
+            collectible economy beats now and score logic later. */
+            coinDots.length = 0;
+
+            const coinCount = 28;
+            for (let i = 0; i < coinCount; i += 1) {
+                coinDots.push({
+                    x: randomMapCoordinate(MAP_BORDER_THICKNESS + 24),
+                    y: randomMapCoordinate(MAP_BORDER_THICKNESS + 24),
+                    radius: 4 + Math.random() * 2,
+                });
+            }
+        }
+
+        function createEnemyDots() {
+            /* Enemies live in world space just like food, which keeps their AI,
+            collision, and future combat logic independent from the camera. */
+            enemyDots.length = 0;
+
+            function createEnemyBase(overrides = {}) {
+                /* Both melee and ranged enemies share the same movement shell so
+                the dark red variant can inherit the red one's wander/chase loop
+                and only override the combat distances it cares about. */
+                return {
+                    x: randomMapCoordinate(MAP_BORDER_THICKNESS + 40),
+                    y: randomMapCoordinate(MAP_BORDER_THICKNESS + 40),
+                    radius: 12,
+                    speed: 105 + Math.random() * 25,
+                    wanderAngle: Math.random() * Math.PI * 2,
+                    wanderTimer: 0.4 + Math.random() * 1.6,
+                    chasing: false,
+                    detectionDistance: 150,
+                    disengageDistance: 200,
+                    stopDistance: 40,
+                    color: '#d82f2f',
+                    projectileCooldown: 0,
+                    projectileInterval: 1.3,
+                    shoots: false,
+                    ...overrides,
+                };
+            }
+
+            for (let i = 0; i < 10; i += 1) {
+                enemyDots.push(createEnemyBase());
+            }
+
+            for (let i = 0; i < 5; i += 1) {
+                enemyDots.push(createEnemyBase({
+                    speed: 92 + Math.random() * 18,
+                    detectionDistance: 190,
+                    disengageDistance: 250,
+                    stopDistance: 160,
+                    color: '#7a1414',
+                    projectileInterval: 1.0 + Math.random() * 0.35,
+                    shoots: true,
+                }));
+            }
+        }
+
+        function resizeCanvas() {
+            /* The game canvas follows the viewport exactly so we can treat the
+            full browser window as the playable screen from the very start. */
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+
+        function initializeWorld() {
+            /* World generation stays separate from viewport resizing so the map,
+            pickups, and enemies remain stable when the browser window changes. */
+            createOuterStars();
+            createGroundPatches();
+            createFoodDots();
+            createCoinDots();
+            createEnemyDots();
+        }
+
+        function drawFloor() {
+            /* The world is finite, so we first paint the void outside the map
+            and then lay down the playable grass base before other layers. */
+            context.fillStyle = '#050505';
+            context.fillRect(0, 0, canvas.width, canvas.height);
+
+            const cameraX = player.x;
+            const cameraY = player.y;
+            const viewCenterX = canvas.width * 0.5;
+            const viewCenterY = canvas.height * 0.5;
+
+            context.fillStyle = '#f4f6fb';
+            for (let i = 0; i < outerStars.length; i += 1) {
+                const star = outerStars[i];
+                const drawX = viewCenterX + (star.x - cameraX);
+                const drawY = viewCenterY + (star.y - cameraY);
+
+                context.beginPath();
+                context.arc(drawX, drawY, star.radius, 0, Math.PI * 2);
+                context.fill();
+            }
+
+            const mapScreenX = viewCenterX + (-MAP_HALF_SIZE - cameraX);
+            const mapScreenY = viewCenterY + (-MAP_HALF_SIZE - cameraY);
+
+            context.fillStyle = '#2f8f3a';
+            context.fillRect(
+                mapScreenX,
+                mapScreenY,
+                MAP_SIZE,
+                MAP_SIZE
+            );
+        }
+
+        function drawMapBorders() {
+            /* Borders render after terrain details so the red blocking edge
+            stays crisp and always readable against the darker ground patches. */
+            const cameraX = player.x;
+            const cameraY = player.y;
+            const viewCenterX = canvas.width * 0.5;
+            const viewCenterY = canvas.height * 0.5;
+            const mapScreenX = viewCenterX + (-MAP_HALF_SIZE - cameraX);
+            const mapScreenY = viewCenterY + (-MAP_HALF_SIZE - cameraY);
+
+            context.fillStyle = '#c42323';
+            context.fillRect(mapScreenX, mapScreenY, MAP_SIZE, MAP_BORDER_THICKNESS);
+            context.fillRect(mapScreenX, mapScreenY + MAP_SIZE - MAP_BORDER_THICKNESS, MAP_SIZE, MAP_BORDER_THICKNESS);
+            context.fillRect(mapScreenX, mapScreenY, MAP_BORDER_THICKNESS, MAP_SIZE);
+            context.fillRect(mapScreenX + MAP_SIZE - MAP_BORDER_THICKNESS, mapScreenY, MAP_BORDER_THICKNESS, MAP_SIZE);
+        }
+
+        function drawGroundPatches() {
+            /* Layering a few chunky rectangles per patch makes the terrain feel
+            rougher and more organic than a perfectly flat single-color field. */
+            context.fillStyle = '#256b2b';
+            const cameraX = player.x;
+            const cameraY = player.y;
+            const viewCenterX = canvas.width * 0.5;
+            const viewCenterY = canvas.height * 0.5;
+
+            for (let i = 0; i < groundPatches.length; i += 1) {
+                const patch = groundPatches[i];
+                for (let segment = 0; segment < patch.segments.length; segment += 1) {
+                    const part = patch.segments[segment];
+                    const width = patch.width * part.widthScale;
+                    const height = patch.height * part.heightScale;
+                    context.fillRect(
+                        viewCenterX + (patch.x - cameraX) + part.offsetX - width * 0.5,
+                        viewCenterY + (patch.y - cameraY) + part.offsetY - height * 0.5,
+                        width,
+                        height
+                    );
+                }
+            }
+        }
+
+        function drawFoodDots() {
+            /* The food uses the same camera offset as the terrain so pickups
+            stay anchored in the world and naturally scroll past the player. */
+            context.fillStyle = '#7a4a1e';
+            const cameraX = player.x;
+            const cameraY = player.y;
+            const viewCenterX = canvas.width * 0.5;
+            const viewCenterY = canvas.height * 0.5;
+
+            for (let i = 0; i < foodDots.length; i += 1) {
+                const food = foodDots[i];
+                const drawX = viewCenterX + (food.x - cameraX);
+                const drawY = viewCenterY + (food.y - cameraY);
+
+                context.beginPath();
+                context.arc(drawX, drawY, food.radius, 0, Math.PI * 2);
+                context.fill();
+            }
+        }
+
+        function drawCoinDots() {
+            /* Coins stay in the world like food pickups, but a brighter gold
+            color keeps them instantly distinguishable from survival resources. */
+            const cameraX = player.x;
+            const cameraY = player.y;
+            const viewCenterX = canvas.width * 0.5;
+            const viewCenterY = canvas.height * 0.5;
+
+            for (let i = 0; i < coinDots.length; i += 1) {
+                const coin = coinDots[i];
+                const drawX = viewCenterX + (coin.x - cameraX);
+                const drawY = viewCenterY + (coin.y - cameraY);
+
+                context.fillStyle = '#ffd84d';
+                context.beginPath();
+                context.arc(drawX, drawY, coin.radius, 0, Math.PI * 2);
+                context.fill();
+            }
+        }
+
+        function drawEnemyDots() {
+            /* Red enemies are rendered in the same camera space as the rest of
+            the world so their movement reads as true map navigation. */
+            const cameraX = player.x;
+            const cameraY = player.y;
+            const viewCenterX = canvas.width * 0.5;
+            const viewCenterY = canvas.height * 0.5;
+
+            for (let i = 0; i < enemyDots.length; i += 1) {
+                const enemy = enemyDots[i];
+                const drawX = viewCenterX + (enemy.x - cameraX);
+                const drawY = viewCenterY + (enemy.y - cameraY);
+
+                context.fillStyle = enemy.color;
+                context.beginPath();
+                context.arc(drawX, drawY, enemy.radius, 0, Math.PI * 2);
+                context.fill();
+            }
+        }
+
+        function drawProjectiles() {
+            /* Projectiles live in world space like enemies, so aiming and hits
+            stay consistent even while the camera remains centered on the player. */
+            context.fillStyle = '#101010';
+            const cameraX = player.x;
+            const cameraY = player.y;
+            const viewCenterX = canvas.width * 0.5;
+            const viewCenterY = canvas.height * 0.5;
+
+            for (let i = 0; i < projectiles.length; i += 1) {
+                const projectile = projectiles[i];
+                const drawX = viewCenterX + (projectile.x - cameraX);
+                const drawY = viewCenterY + (projectile.y - cameraY);
+
+                context.beginPath();
+                context.arc(drawX, drawY, projectile.radius, 0, Math.PI * 2);
+                context.fill();
+            }
+        }
+
+        function drawEnemyProjectiles() {
+            /* Enemy bullets use a separate visual so ranged threats read
+            differently from the player's own shots at a glance. */
+            const cameraX = player.x;
+            const cameraY = player.y;
+            const viewCenterX = canvas.width * 0.5;
+            const viewCenterY = canvas.height * 0.5;
+
+            for (let i = 0; i < enemyProjectiles.length; i += 1) {
+                const projectile = enemyProjectiles[i];
+                const drawX = viewCenterX + (projectile.x - cameraX);
+                const drawY = viewCenterY + (projectile.y - cameraY);
+
+                context.fillStyle = '#4f0e0e';
+                context.beginPath();
+                context.arc(drawX, drawY, projectile.radius, 0, Math.PI * 2);
+                context.fill();
+            }
+        }
+
+        function drawPlayer() {
+            /* The player starts centered on screen so the camera and character
+            occupy the same reference point while the prototype stays minimal. */
+            const centerX = canvas.width * 0.5;
+            const centerY = canvas.height * 0.5;
+
+            context.fillStyle = player.hitFlash > 0 ? '#7ab0ff' : '#1f6dff';
+            context.beginPath();
+            context.arc(centerX, centerY, player.radius, 0, Math.PI * 2);
+            context.fill();
+        }
+
+        function drawAimLine() {
+            /* Starting the line slightly below the player keeps the character
+            readable while still making the cursor direction obvious at a glance. */
+            if (!cursor.visible) return;
+
+            const startX = canvas.width * 0.5;
+            const startY = canvas.height * 0.5;
+
+            context.strokeStyle = '#f8e36a';
+            context.lineWidth = 3;
+            context.lineCap = 'round';
+            context.beginPath();
+            context.moveTo(startX, startY);
+            context.lineTo(cursor.x, cursor.y);
+            context.stroke();
+        }
+
+        function drawCursor() {
+            /* Keeping the cursor as an in-world paint layer makes aiming and
+            future interaction logic easy to extend without relying on CSS UI. */
+            if (!cursor.visible) return;
+
+            context.fillStyle = '#ffe45c';
+            context.beginPath();
+            context.arc(cursor.x, cursor.y, cursor.radius, 0, Math.PI * 2);
+            context.fill();
+        }
+
+        function updatePlayer(deltaTime) {
+            /* Normalizing the input vector prevents diagonal travel from moving
+            faster than straight-line movement when two keys are held at once. */
+            let moveX = 0;
+            let moveY = 0;
+
+            if (pressedKeys.KeyA || pressedKeys.ArrowLeft) moveX -= 1;
+            if (pressedKeys.KeyD || pressedKeys.ArrowRight) moveX += 1;
+            if (pressedKeys.KeyW || pressedKeys.ArrowUp) moveY -= 1;
+            if (pressedKeys.KeyS || pressedKeys.ArrowDown) moveY += 1;
+
+            if (moveX === 0 && moveY === 0) return;
+
+            const moveLength = Math.hypot(moveX, moveY) || 1;
+            const normalizedX = moveX / moveLength;
+            const normalizedY = moveY / moveLength;
+
+            player.x += normalizedX * player.speed * deltaTime;
+            player.y += normalizedY * player.speed * deltaTime;
+
+            const minPosition = -MAP_HALF_SIZE + MAP_BORDER_THICKNESS + player.radius;
+            const maxPosition = MAP_HALF_SIZE - MAP_BORDER_THICKNESS - player.radius;
+            player.x = Math.max(minPosition, Math.min(maxPosition, player.x));
+            player.y = Math.max(minPosition, Math.min(maxPosition, player.y));
+        }
+
+        function clampWorldPosition(entity) {
+            const minPosition = -MAP_HALF_SIZE + MAP_BORDER_THICKNESS + entity.radius;
+            const maxPosition = MAP_HALF_SIZE - MAP_BORDER_THICKNESS - entity.radius;
+            entity.x = Math.max(minPosition, Math.min(maxPosition, entity.x));
+            entity.y = Math.max(minPosition, Math.min(maxPosition, entity.y));
+        }
+
+        function updateEnemies(deltaTime) {
+            /* Enemies wander by default, chase inside the detection radius, stop
+            near the player, and only abandon the chase once the player is well
+            outside their awareness range to avoid jittery state flipping. */
+            for (let i = 0; i < enemyDots.length; i += 1) {
+                const enemy = enemyDots[i];
+                const dx = player.x - enemy.x;
+                const dy = player.y - enemy.y;
+                const distance = Math.hypot(dx, dy);
+                enemy.projectileCooldown = Math.max(0, enemy.projectileCooldown - deltaTime);
+
+                if (enemy.chasing) {
+                    if (distance > enemy.disengageDistance) {
+                        enemy.chasing = false;
+                        enemy.wanderTimer = 0;
+                    }
+                } else if (distance <= enemy.detectionDistance) {
+                    enemy.chasing = true;
+                }
+
+                if (enemy.chasing) {
+                    if (distance > enemy.stopDistance) {
+                        const safeDistance = distance || 1;
+                        enemy.x += (dx / safeDistance) * enemy.speed * deltaTime;
+                        enemy.y += (dy / safeDistance) * enemy.speed * deltaTime;
+                    }
+
+                    if (enemy.shoots && distance <= enemy.stopDistance + 20 && enemy.projectileCooldown <= 0) {
+                        const safeDistance = distance || 1;
+                        enemyProjectiles.push({
+                            x: enemy.x + (dx / safeDistance) * (enemy.radius + 6),
+                            y: enemy.y + (dy / safeDistance) * (enemy.radius + 6),
+                            velocityX: (dx / safeDistance) * 300,
+                            velocityY: (dy / safeDistance) * 300,
+                            radius: 4,
+                            life: 2.1,
+                        });
+                        enemy.projectileCooldown = enemy.projectileInterval;
+                    }
+                } else {
+                    enemy.wanderTimer -= deltaTime;
+                    if (enemy.wanderTimer <= 0) {
+                        enemy.wanderAngle = Math.random() * Math.PI * 2;
+                        enemy.wanderTimer = 0.45 + Math.random() * 1.6;
+                    }
+
+                    enemy.x += Math.cos(enemy.wanderAngle) * enemy.speed * 0.45 * deltaTime;
+                    enemy.y += Math.sin(enemy.wanderAngle) * enemy.speed * 0.45 * deltaTime;
+                }
+
+                clampWorldPosition(enemy);
+            }
+        }
+
+        function resolveEnemyCollisions() {
+            /* The player and enemies stay physically separated so touching an
+            enemy feels like bumping into a body rather than ghosting through it. */
+            for (let i = 0; i < enemyDots.length; i += 1) {
+                const enemy = enemyDots[i];
+                const dx = enemy.x - player.x;
+                const dy = enemy.y - player.y;
+                const distance = Math.hypot(dx, dy);
+                const minDistance = player.radius + enemy.radius;
+
+                if (distance === 0) {
+                    enemy.x += minDistance;
+                    clampWorldPosition(enemy);
+                    continue;
+                }
+
+                if (distance >= minDistance) continue;
+
+                const overlap = minDistance - distance;
+                const pushX = dx / distance;
+                const pushY = dy / distance;
+                enemy.x += pushX * overlap;
+                enemy.y += pushY * overlap;
+                clampWorldPosition(enemy);
+            }
+
+            /* Enemies also separate from each other so the group does not pile
+            into a single red blob while wandering or chasing the player. */
+            for (let i = 0; i < enemyDots.length; i += 1) {
+                const enemyA = enemyDots[i];
+                for (let j = i + 1; j < enemyDots.length; j += 1) {
+                    const enemyB = enemyDots[j];
+                    const dx = enemyB.x - enemyA.x;
+                    const dy = enemyB.y - enemyA.y;
+                    const distance = Math.hypot(dx, dy);
+                    const minDistance = enemyA.radius + enemyB.radius;
+
+                    if (distance === 0) {
+                        enemyA.x -= minDistance * 0.5;
+                        enemyB.x += minDistance * 0.5;
+                        clampWorldPosition(enemyA);
+                        clampWorldPosition(enemyB);
+                        continue;
+                    }
+
+                    if (distance >= minDistance) continue;
+
+                    const overlap = minDistance - distance;
+                    const pushX = dx / distance;
+                    const pushY = dy / distance;
+                    enemyA.x -= pushX * overlap * 0.5;
+                    enemyA.y -= pushY * overlap * 0.5;
+                    enemyB.x += pushX * overlap * 0.5;
+                    enemyB.y += pushY * overlap * 0.5;
+                    clampWorldPosition(enemyA);
+                    clampWorldPosition(enemyB);
+                }
+            }
+        }
+
+        function updateFoodCollisions() {
+            /* Because the player is the camera anchor, food collision can be
+            tested directly in world space using the player's own coordinates. */
+            for (let i = foodDots.length - 1; i >= 0; i -= 1) {
+                const food = foodDots[i];
+                const distance = Math.hypot(food.x - player.x, food.y - player.y);
+                if (distance <= player.radius + food.radius) {
+                    foodDots.splice(i, 1);
+                }
+            }
+        }
+
+        function updateCoinCollisions() {
+            /* Coins currently behave like food pickups: touching them removes
+            them from the map until we add inventory, score, or currency use. */
+            for (let i = coinDots.length - 1; i >= 0; i -= 1) {
+                const coin = coinDots[i];
+                const distance = Math.hypot(coin.x - player.x, coin.y - player.y);
+                if (distance <= player.radius + coin.radius) {
+                    coinDots.splice(i, 1);
+                }
+            }
+        }
+
+        function updateEnemyProjectiles(deltaTime) {
+            /* Enemy bullets pressure the player from range, but stay simple for
+            now by only flashing the player on hit instead of adding full health. */
+            for (let i = enemyProjectiles.length - 1; i >= 0; i -= 1) {
+                const projectile = enemyProjectiles[i];
+                projectile.x += projectile.velocityX * deltaTime;
+                projectile.y += projectile.velocityY * deltaTime;
+                projectile.life -= deltaTime;
+
+                const maxTravel = MAP_HALF_SIZE - MAP_BORDER_THICKNESS - projectile.radius;
+                const outsideMap =
+                    projectile.x < -maxTravel
+                    || projectile.x > maxTravel
+                    || projectile.y < -maxTravel
+                    || projectile.y > maxTravel;
+
+                if (projectile.life <= 0 || outsideMap) {
+                    enemyProjectiles.splice(i, 1);
+                    continue;
+                }
+
+                const distanceToPlayer = Math.hypot(projectile.x - player.x, projectile.y - player.y);
+                if (distanceToPlayer <= projectile.radius + player.radius) {
+                    player.hitFlash = 0.15;
+                    enemyProjectiles.splice(i, 1);
+                }
+            }
+        }
+
+        function updatePlayerHitFlash(deltaTime) {
+            player.hitFlash = Math.max(0, player.hitFlash - deltaTime);
+        }
+
+        function spawnProjectile() {
+            /* Shooting uses the cursor direction relative to the centered player,
+            which keeps aiming intuitive for a topdown mouse-and-keyboard setup. */
+            if (!cursor.visible) return;
+
+            const aimX = cursor.x - canvas.width * 0.5;
+            const aimY = cursor.y - canvas.height * 0.5;
+            const aimLength = Math.hypot(aimX, aimY);
+            if (aimLength < 1) return;
+
+            const directionX = aimX / aimLength;
+            const directionY = aimY / aimLength;
+            projectiles.push({
+                x: player.x + directionX * (player.radius + 10),
+                y: player.y + directionY * (player.radius + 10),
+                velocityX: directionX * 520,
+                velocityY: directionY * 520,
+                radius: 5,
+                life: 1.4,
+            });
+        }
+
+        function updateProjectiles(deltaTime) {
+            /* Projectiles advance, expire, and remove enemies on contact so the
+            combat loop stays lightweight while we prototype core interactions. */
+            for (let i = projectiles.length - 1; i >= 0; i -= 1) {
+              const projectile = projectiles[i];
+              projectile.x += projectile.velocityX * deltaTime;
+              projectile.y += projectile.velocityY * deltaTime;
+              projectile.life -= deltaTime;
+
+              const maxTravel = MAP_HALF_SIZE - MAP_BORDER_THICKNESS - projectile.radius;
+              const outsideMap =
+                projectile.x < -maxTravel
+                || projectile.x > maxTravel
+                || projectile.y < -maxTravel
+                || projectile.y > maxTravel;
+
+              if (projectile.life <= 0 || outsideMap) {
+                projectiles.splice(i, 1);
+                continue;
+              }
+
+              let hitEnemy = false;
+              for (let enemyIndex = enemyDots.length - 1; enemyIndex >= 0; enemyIndex -= 1) {
+                const enemy = enemyDots[enemyIndex];
+                const distance = Math.hypot(enemy.x - projectile.x, enemy.y - projectile.y);
+                if (distance > enemy.radius + projectile.radius) continue;
+
+                enemyDots.splice(enemyIndex, 1);
+                projectiles.splice(i, 1);
+                hitEnemy = true;
+                break;
+              }
+
+              if (hitEnemy) continue;
+            }
+        }
+
+        function render() {
+            drawFloor();
+            drawGroundPatches();
+            drawMapBorders();
+            drawFoodDots();
+            drawCoinDots();
+            drawEnemyDots();
+            drawAimLine();
+            drawPlayer();
+            drawCursor();
+            drawEnemyProjectiles();
+            drawProjectiles();
+        }
+
+        function frame(timestamp) {
+            const deltaTime = Math.min((timestamp - lastFrameTime) / 1000 || 0, 0.05);
+            lastFrameTime = timestamp;
+
+            updatePlayer(deltaTime);
+            updateEnemies(deltaTime);
+            resolveEnemyCollisions();
+            updateFoodCollisions();
+            updateCoinCollisions();
+            updateEnemyProjectiles(deltaTime);
+            updateProjectiles(deltaTime);
+            updatePlayerHitFlash(deltaTime);
+            render();
+            window.requestAnimationFrame(frame);
+        }
+
+        window.addEventListener('keydown', event => {
+            pressedKeys[event.code] = true;
+        });
+
+        window.addEventListener('keyup', event => {
+            pressedKeys[event.code] = false;
+        });
+
+        canvas.addEventListener('pointermove', event => {
+            cursor.x = event.clientX;
+            cursor.y = event.clientY;
+            cursor.visible = true;
+        });
+
+        canvas.addEventListener('pointerenter', event => {
+            cursor.x = event.clientX;
+            cursor.y = event.clientY;
+            cursor.visible = true;
+        });
+
+        canvas.addEventListener('pointerleave', () => {
+            cursor.visible = false;
+        });
+
+        canvas.addEventListener('pointerdown', event => {
+            if (event.button !== 0) return;
+            spawnProjectile();
+        });
+
+        window.addEventListener('blur', () => {
+            cursor.visible = false;
+        });
+
+        window.addEventListener('resize', () => {
+            resizeCanvas();
+            cursor.x = canvas.width * 0.5;
+            cursor.y = canvas.height * 0.5;
+            render();
+        });
+
+        resizeCanvas();
+        initializeWorld();
+        window.requestAnimationFrame(frame);
+    </script>
+</body>
+
+</html>
