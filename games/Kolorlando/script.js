@@ -26,6 +26,10 @@ import { buildCityMap } from './maps/cityMap.js';
 import { buildVoxelandiaMap } from './maps/voxelandiaMap.js';
 import { createMultiplayerController } from './multiplayer.js';
 import { createCommandHandler } from './code/commands.js';
+import { createLocalWorldSaveStore } from './code/data/worldSaving.js';
+
+const KOLORLANDO_MODE = window.KOLORLANDO_MODE === 'multiplayer' ? 'multiplayer' : 'singleplayer';
+const MULTIPLAYER_ENABLED = KOLORLANDO_MODE === 'multiplayer';
 
 let mobileMode = false;
 const touchQuery = window.matchMedia('(hover: none) and (pointer: coarse)');
@@ -88,6 +92,7 @@ const buttonRight3 = document.getElementById('Right3');
 const settingsFullScreen = document.getElementById('settingsFullScreen');
 const settingsMenuThemeDark = document.getElementById('settingsMenuThemeDark');
 const settingsShadows = document.getElementById('settingsShadows');
+const settingsReloadWorldButton = document.getElementById('settingsReloadWorldButton');
 const playerHealthFill = document.getElementById('playerHealthFill');
 const playerHealthText = document.getElementById('playerHealthText');
 const voxelReadout = document.getElementById('voxelReadout');
@@ -106,6 +111,7 @@ let mobileFlyDownPressed = false;
 let suppressRight3Click = false;
 let openingChatFromPointerLock = false;
 let pointerLockRetryArmed = false;
+let suppressNextDesktopAttack = false;
 let characterPreviewDragState = null;
 const gameAudio = createGameAudio();
 const systemMenuThemeQuery = window.matchMedia('(prefers-color-scheme: dark)');
@@ -658,6 +664,12 @@ function controlLocker(event) {
     return;
   }
 
+  /* Closing the menu with a gameplay click should only relock the cursor and
+  return to play. Without this guard, the follow-up mousedown event from the
+  same physical click can slip into the normal attack/build path once the menu
+  is already hidden. */
+  suppressNextDesktopAttack = true;
+  event.preventDefault();
   activateDesktopScreenActivity();
 }
 
@@ -885,11 +897,71 @@ const removeVoxelAtRaycastHit = typeof mapData.removeVoxelAtRaycastHit === 'func
 const addVoxelAtRaycastHit = typeof mapData.addVoxelAtRaycastHit === 'function'
   ? mapData.addVoxelAtRaycastHit
   : () => false;
+const getVoxelCellFromRaycastHit = typeof mapData.getVoxelCellFromRaycastHit === 'function'
+  ? mapData.getVoxelCellFromRaycastHit
+  : () => null;
+const getAdjacentVoxelCellFromRaycastHit = typeof mapData.getAdjacentVoxelCellFromRaycastHit === 'function'
+  ? mapData.getAdjacentVoxelCellFromRaycastHit
+  : () => null;
+const addVoxelAtCell = typeof mapData.addVoxelAtCell === 'function'
+  ? mapData.addVoxelAtCell
+  : () => false;
+const removeVoxelAtCell = typeof mapData.removeVoxelAtCell === 'function'
+  ? mapData.removeVoxelAtCell
+  : () => false;
 const getVoxelBoxFromRaycastHit = typeof mapData.getVoxelBoxFromRaycastHit === 'function'
   ? mapData.getVoxelBoxFromRaycastHit
   : () => null;
 const voxelTypes = Array.isArray(mapData.voxelTypes) ? mapData.voxelTypes : [];
+const localWorldSaveStore = !MULTIPLAYER_ENABLED && MAP_PRESET === 'voxelandia'
+  ? createLocalWorldSaveStore({
+    worldId: `${KOLORLANDO_MODE}-${MAP_PRESET}`,
+  })
+  : null;
 const entityRaycastPoint = new THREE.Vector3();
+
+function applyLocalSavedWorld() {
+  /* Replaying saved voxel diffs immediately after the map boots keeps local
+  persistence scoped to player edits while letting the authored base map remain
+  the single source of truth for untouched terrain. */
+  if (!localWorldSaveStore) return;
+
+  const voxelEdits = localWorldSaveStore.getVoxelEditsList();
+  for (let i = 0; i < voxelEdits.length; i += 1) {
+    const edit = voxelEdits[i];
+    if (edit.action === 'remove') {
+      removeVoxelAtCell(edit.cellX, edit.cellY, edit.cellZ);
+      continue;
+    }
+
+    if (edit.action === 'add') {
+      addVoxelAtCell(edit.cellX, edit.cellY, edit.cellZ, {
+        voxelType: edit.voxelType,
+      });
+    }
+  }
+}
+
+applyLocalSavedWorld();
+
+if (settingsReloadWorldButton) {
+  /* Reload World only makes sense for local singleplayer saves. In multiplayer
+  the world will eventually be authoritative elsewhere, so hiding the control
+  there prevents a misleading destructive action from appearing in the UI. */
+  if (!localWorldSaveStore) {
+    settingsReloadWorldButton.hidden = true;
+  } else {
+    settingsReloadWorldButton.addEventListener('click', () => {
+      const shouldReloadWorld = window.confirm(
+        'Are you sure you want to delete this world and create a new one?'
+      );
+      if (!shouldReloadWorld) return;
+
+      localWorldSaveStore.clearWorldSave();
+      window.location.reload();
+    });
+  }
+}
 
 function getEntityRaycastHit(origin, direction, maxDistance) {
   let closestHit = null;
@@ -1696,19 +1768,21 @@ const fpLeftElbowBaseRot = firstPersonArmsRig.joints.leftElbow.rotation.clone();
 
 scene.add(playerBody);
 
-// Multiplayer only mirrors the local player into Supabase Presence and renders
-// other connected sessions as display-only avatars. Local gameplay authority
-// still lives entirely in this file.
-const multiplayerController = createMultiplayerController({
-  scene,
-  getLocalPlayerState: () => ({
-    x: playerBody.position.x,
-    y: playerBody.position.y,
-    z: playerBody.position.z,
-    rotationY: playerBody.rotation.y,
-    isMoving: horizontalMove.lengthSq() > 0.00001 || Math.abs(playerState.velocity.y) > 0.01,
-  }),
-});
+/* The gameplay code stays shared across singleplayer and multiplayer pages.
+Singleplayer skips the Supabase controller entirely so the page can load with
+no online dependencies, while multiplayer keeps the existing room sync path. */
+const multiplayerController = MULTIPLAYER_ENABLED
+  ? createMultiplayerController({
+    scene,
+    getLocalPlayerState: () => ({
+      x: playerBody.position.x,
+      y: playerBody.position.y,
+      z: playerBody.position.z,
+      rotationY: playerBody.rotation.y,
+      isMoving: horizontalMove.lengthSq() > 0.00001 || Math.abs(playerState.velocity.y) > 0.01,
+    }),
+  })
+  : null;
 
 const playerFacingDir = new THREE.Vector3();
 let playerWalkCycle = 0;
@@ -2446,8 +2520,16 @@ function triggerActionForMouseButton(button, options = {}) {
 
     if (currentRaycastState.voxelEditionMode) {
       const removedVoxelType = resolveRaycastLabel(currentRaycastState.hit);
+      const removedVoxelCell = getVoxelCellFromRaycastHit(currentRaycastState.hit);
       const removed = removeVoxelAtRaycastHit(currentRaycastState.hit);
       if (removed && removedVoxelType) {
+        if (removedVoxelCell && localWorldSaveStore) {
+          localWorldSaveStore.recordVoxelRemoved(
+            removedVoxelCell.cellX,
+            removedVoxelCell.cellY,
+            removedVoxelCell.cellZ
+          );
+        }
         if (inventoryUI.getGameMode() === GAME_MODE_SURVIVAL) {
           inventoryUI.addItemToInventory(removedVoxelType, 1);
         } else if (!inventoryUI.inventoryHasType(removedVoxelType)) {
@@ -2467,10 +2549,21 @@ function triggerActionForMouseButton(button, options = {}) {
       const selectedVoxelType = inventoryUI.getSelectedPlaceableVoxelType();
       if (!selectedVoxelType) return;
 
+      const addedVoxelCell = getAdjacentVoxelCellFromRaycastHit(currentRaycastState.hit);
+      if (!addedVoxelCell) return;
+
       const added = addVoxelAtRaycastHit(currentRaycastState.hit, {
         playerCollider,
         voxelType: selectedVoxelType,
       });
+      if (added && localWorldSaveStore) {
+        localWorldSaveStore.recordVoxelAdded(
+          addedVoxelCell.cellX,
+          addedVoxelCell.cellY,
+          addedVoxelCell.cellZ,
+          selectedVoxelType
+        );
+      }
       if (added && inventoryUI.getGameMode() === GAME_MODE_SURVIVAL) {
           inventoryUI.consumeSelectedInventoryItem(1);
       }
@@ -2556,6 +2649,12 @@ function updateLeftPunch(deltaTime) {
 function handleDesktopAttack(event) {
   if (event.button !== 0 && event.button !== 2) return;
   if (mobileMode) return;
+
+  if (suppressNextDesktopAttack) {
+    suppressNextDesktopAttack = false;
+    event.preventDefault();
+    return;
+  }
 
   if (isScreenDragCameraActive()) {
     updateWowCursorRaycastPointer(event.clientX, event.clientY);
@@ -3756,7 +3855,9 @@ renderer.setAnimationLoop(() => {
   updateProjectilesAndExplosions(delta);
   updateVoxelRaycast();
   updateDebugCollisionVisuals();
-  multiplayerController.update(delta);
+  if (multiplayerController) {
+    multiplayerController.update(delta);
+  }
   checkFPS(delta);
 
   if (

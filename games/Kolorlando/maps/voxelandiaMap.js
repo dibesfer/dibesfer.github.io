@@ -183,6 +183,82 @@ export function buildVoxelandiaMap({ scene }) {
     return targetBox;
   }
 
+  function parseCellKey(key) {
+    if (!key) return null;
+    const parts = String(key).split('|');
+    if (parts.length !== 3) return null;
+
+    const cellX = Number(parts[0]);
+    const cellY = Number(parts[1]);
+    const cellZ = Number(parts[2]);
+    if (!Number.isFinite(cellX) || !Number.isFinite(cellY) || !Number.isFinite(cellZ)) {
+      return null;
+    }
+
+    return { cellX, cellY, cellZ };
+  }
+
+  function getVoxelCellFromRaycastHit(hit) {
+    if (!hit || hit.object !== voxelGrid) return null;
+    const voxelId = hit.instanceId;
+    if (!Number.isInteger(voxelId)) return null;
+    return parseCellKey(voxelIdToKey.get(voxelId));
+  }
+
+  function getAdjacentVoxelCellFromRaycastHit(hit) {
+    if (!hit || hit.object !== voxelGrid || !hit.face) return null;
+
+    hitNormalWorld.copy(hit.face.normal).transformDirection(voxelGrid.matrixWorld);
+    addTargetPoint.copy(hit.point).addScaledVector(hitNormalWorld, voxelSize * 0.5 + 0.001);
+
+    return {
+      cellX: toCellCoord(addTargetPoint.x),
+      cellY: toCellCoord(addTargetPoint.y),
+      cellZ: toCellCoord(addTargetPoint.z),
+    };
+  }
+
+  function removeVoxelAtCell(cellX, cellY, cellZ) {
+    const key = keyFromCell(cellX, cellY, cellZ);
+    const voxelId = occupiedVoxels.get(key);
+    if (!Number.isInteger(voxelId)) return false;
+
+    voxelGrid.setMatrixAt(voxelId, hiddenMatrix);
+    voxelGrid.instanceMatrix.needsUpdate = true;
+    occupiedVoxels.delete(key);
+    voxelIdToKey.delete(voxelId);
+    voxelIdToTypeName.delete(voxelId);
+    freeVoxelIds.push(voxelId);
+    return true;
+  }
+
+  function addVoxelAtCell(cellX, cellY, cellZ, options = {}) {
+    const key = keyFromCell(cellX, cellY, cellZ);
+    if (occupiedVoxels.has(key) || freeVoxelIds.length === 0) return false;
+
+    const playerCollider = options.playerCollider;
+    const candidateBox = setCollisionBoxFromCell(cellX, cellY, cellZ);
+    if (playerCollider && candidateBox.intersectsBox(playerCollider)) return false;
+
+    const voxelType = resolveVoxelType(options.voxelType);
+    const voxelId = freeVoxelIds.pop();
+    matrix.makeTranslation(
+      toCellCenter(cellX),
+      toCellCenter(cellY),
+      toCellCenter(cellZ)
+    );
+    voxelGrid.setMatrixAt(voxelId, matrix);
+    voxelGrid.setColorAt(voxelId, tmpInstanceColor.setHex(voxelType.color));
+    voxelGrid.instanceMatrix.needsUpdate = true;
+    if (voxelGrid.instanceColor) {
+      voxelGrid.instanceColor.needsUpdate = true;
+    }
+    occupiedVoxels.set(key, voxelId);
+    voxelIdToKey.set(voxelId, key);
+    voxelIdToTypeName.set(voxelId, voxelType.name);
+    return true;
+  }
+
   function intersectColliderBox(box) {
     const overlapEpsilon = 0.001;
     const minCellX = Math.floor(box.min.x / voxelSize);
@@ -403,55 +479,22 @@ export function buildVoxelandiaMap({ scene }) {
       return voxelIdToTypeName.get(voxelId) ?? null;
     },
     removeVoxelAtRaycastHit(hit) {
-      if (!hit || hit.object !== voxelGrid) return false;
-      const voxelId = hit.instanceId;
-      if (!Number.isInteger(voxelId)) return false;
-      const key = voxelIdToKey.get(voxelId);
-      if (!key) return false;
-
-      voxelGrid.setMatrixAt(voxelId, hiddenMatrix);
-      voxelGrid.instanceMatrix.needsUpdate = true;
-      occupiedVoxels.delete(key);
-      voxelIdToKey.delete(voxelId);
-      voxelIdToTypeName.delete(voxelId);
-      freeVoxelIds.push(voxelId);
-      return true;
+      const voxelCell = getVoxelCellFromRaycastHit(hit);
+      if (!voxelCell) return false;
+      return removeVoxelAtCell(voxelCell.cellX, voxelCell.cellY, voxelCell.cellZ);
     },
     addVoxelAtRaycastHit(hit, options = {}) {
       if (!hit || hit.object !== voxelGrid) return false;
       if (!hit.face || freeVoxelIds.length === 0) return false;
 
-      hitNormalWorld.copy(hit.face.normal).transformDirection(voxelGrid.matrixWorld);
-      addTargetPoint.copy(hit.point).addScaledVector(hitNormalWorld, voxelSize * 0.5 + 0.001);
-
-      const cellX = toCellCoord(addTargetPoint.x);
-      const cellY = toCellCoord(addTargetPoint.y);
-      const cellZ = toCellCoord(addTargetPoint.z);
-      const key = keyFromCell(cellX, cellY, cellZ);
-
-      if (occupiedVoxels.has(key)) return false;
-      const playerCollider = options.playerCollider;
-      const candidateBox = setCollisionBoxFromCell(cellX, cellY, cellZ);
-      if (playerCollider && candidateBox.intersectsBox(playerCollider)) return false;
-
-      const voxelType = resolveVoxelType(options.voxelType);
-      const voxelId = freeVoxelIds.pop();
-      matrix.makeTranslation(
-        toCellCenter(cellX),
-        toCellCenter(cellY),
-        toCellCenter(cellZ)
-      );
-      voxelGrid.setMatrixAt(voxelId, matrix);
-      voxelGrid.setColorAt(voxelId, tmpInstanceColor.setHex(voxelType.color));
-      voxelGrid.instanceMatrix.needsUpdate = true;
-      if (voxelGrid.instanceColor) {
-        voxelGrid.instanceColor.needsUpdate = true;
-      }
-      occupiedVoxels.set(key, voxelId);
-      voxelIdToKey.set(voxelId, key);
-      voxelIdToTypeName.set(voxelId, voxelType.name);
-      return true;
+      const adjacentCell = getAdjacentVoxelCellFromRaycastHit(hit);
+      if (!adjacentCell) return false;
+      return addVoxelAtCell(adjacentCell.cellX, adjacentCell.cellY, adjacentCell.cellZ, options);
     },
+    getVoxelCellFromRaycastHit,
+    getAdjacentVoxelCellFromRaycastHit,
+    addVoxelAtCell,
+    removeVoxelAtCell,
     shadowRange: 90,
     miniMapViewSize: 130,
     miniMapHeight: 170,

@@ -230,7 +230,7 @@ export class ItemAppearance {
   }
 
   loadModelFromUrl(modelUrl) {
-    console.info('Loading item appearance model', modelUrl);
+    //console.info('Loading item appearance model', modelUrl);
     gltfLoader.load(
       modelUrl,
       gltf => {
@@ -253,7 +253,7 @@ export class ItemAppearance {
 
         applyShadows(root, this.castShadow, this.receiveShadow);
         this.setModel({ root, height });
-        console.info('Loaded item appearance model', modelUrl);
+        //console.info('Loaded item appearance model', modelUrl);
       },
       undefined,
       error => {
