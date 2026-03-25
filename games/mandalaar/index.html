@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Mandalaar</title>
     <style>
 
@@ -407,59 +407,59 @@
         <div id="hotbar" aria-label="Hotbar">
             <div class="hotbar-slot is-selected">
                 <span class="hotbar-slot-label">1</span>
-                <span class="hotbar-slot-icon">+</span>
-                <span class="hotbar-slot-count">HP</span>
+                <span class="hotbar-slot-icon">·</span>
+                <span class="hotbar-slot-count">0</span>
             </div>
             <div class="hotbar-slot">
                 <span class="hotbar-slot-label">2</span>
-                <span class="hotbar-slot-icon">o</span>
-                <span class="hotbar-slot-count">1</span>
+                <span class="hotbar-slot-icon">·</span>
+                <span class="hotbar-slot-count">0</span>
             </div>
             <div class="hotbar-slot">
                 <span class="hotbar-slot-label">3</span>
-                <span class="hotbar-slot-icon">*</span>
-                <span class="hotbar-slot-count">Q</span>
+                <span class="hotbar-slot-icon">·</span>
+                <span class="hotbar-slot-count">0</span>
             </div>
             <div class="hotbar-slot">
                 <span class="hotbar-slot-label">4</span>
-                <span class="hotbar-slot-icon">W</span>
-                <span class="hotbar-slot-count">MV</span>
+                <span class="hotbar-slot-icon">·</span>
+                <span class="hotbar-slot-count">0</span>
             </div>
             <div class="hotbar-slot">
                 <span class="hotbar-slot-label">5</span>
-                <span class="hotbar-slot-icon">A</span>
-                <span class="hotbar-slot-count">IM</span>
+                <span class="hotbar-slot-icon">·</span>
+                <span class="hotbar-slot-count">0</span>
             </div>
             <div class="hotbar-slot">
                 <span class="hotbar-slot-label">6</span>
-                <span class="hotbar-slot-icon">S</span>
-                <span class="hotbar-slot-count">FD</span>
+                <span class="hotbar-slot-icon">·</span>
+                <span class="hotbar-slot-count">0</span>
             </div>
             <div class="hotbar-slot">
                 <span class="hotbar-slot-label">7</span>
-                <span class="hotbar-slot-icon">$</span>
-                <span class="hotbar-slot-count">C</span>
+                <span class="hotbar-slot-icon">·</span>
+                <span class="hotbar-slot-count">0</span>
             </div>
             <div class="hotbar-slot">
                 <span class="hotbar-slot-label">8</span>
-                <span class="hotbar-slot-icon">!</span>
-                <span class="hotbar-slot-count">EN</span>
+                <span class="hotbar-slot-icon">·</span>
+                <span class="hotbar-slot-count">0</span>
             </div>
         </div>
     </div>
     <div id="menuInferior" hidden>
         <div id="menuInferiorLeft">
             <div class="joystick" data-joystick="left">
-                <div class="pad">M</div>
+                <div class="pad">+</div>
             </div>
-            <button id="Left2" class="mobile-button" type="button">D</button>
+            <button id="Left2" class="mobile-button" type="button">L2</button>
             <button id="buttonUp" class="mobile-button" type="button">U</button>
             <button id="Left0" class="mobile-button" type="button">L0</button>
             <button id="Left1" class="mobile-button" type="button">L1</button>
         </div>
         <div id="menuInferiorRight">
             <div class="joystick" data-joystick="right">
-                <div class="pad">A</div>
+                <div class="pad">x</div>
             </div>
             <button id="buttonShoot" class="mobile-button" type="button">S</button>
             <button id="Right1" class="mobile-button" type="button">R1</button>
@@ -525,6 +525,7 @@ if we are over 5
         const BOSS_MELEE_DAMAGE = 20;
         const BLUE_AREA_RADIUS_MULTIPLIER = 5;
         const MOBILE_AUTO_FIRE_INTERVAL = 0.2;
+        const MOBILE_ZOOM_OUT_FACTOR = 2;
         const DEATH_PARTICLE_COUNT = 9;
         const DEATH_PARTICLE_SPEED = 170;
         const DEATH_PARTICLE_LIFE = 0.45;
@@ -1026,8 +1027,12 @@ if we are over 5
             const viewportWidth = window.visualViewport ? window.visualViewport.width : window.innerWidth;
             const canvasHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--canvas-height'))
                 || (window.visualViewport ? window.visualViewport.height : window.innerHeight);
-            canvas.width = viewportWidth;
-            canvas.height = canvasHeight;
+            const renderScale = isMobileMode() ? MOBILE_ZOOM_OUT_FACTOR : 1;
+
+            /* Mobile uses a larger internal render surface while keeping the
+            same CSS size, which makes the camera show more world by default. */
+            canvas.width = viewportWidth * renderScale;
+            canvas.height = canvasHeight * renderScale;
         }
 
         function refreshViewportLayout() {
@@ -2138,6 +2143,18 @@ if we are over 5
                 resetPressedKeys();
             }
         });
+
+        document.addEventListener('gesturestart', event => {
+            event.preventDefault();
+        }, { passive: false });
+
+        document.addEventListener('gesturechange', event => {
+            event.preventDefault();
+        }, { passive: false });
+
+        document.addEventListener('gestureend', event => {
+            event.preventDefault();
+        }, { passive: false });
 
         window.addEventListener('resize', () => {
             refreshViewportLayout();
