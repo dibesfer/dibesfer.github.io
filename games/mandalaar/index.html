@@ -26,7 +26,158 @@
             z-index: 2;
             padding: 1rem;
             pointer-events: none;
-            background-color: blue;
+            color: #ffffff;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+        }
+
+        #overlayTitleRow {
+            display: flex;
+            align-items: baseline;
+            gap: 0.6rem;
+        }
+
+        #overlay h1,
+        #overlay h3 {
+            margin: 0;
+        }
+
+        #fpsCounter {
+            font-family: monospace;
+            font-size: 0.95rem;
+            font-weight: 700;
+            opacity: 0.9;
+        }
+
+        #overlay h3 {
+            margin-top: 0.35rem;
+            opacity: 0.85;
+            font-weight: 600;
+        }
+
+        #playerHud {
+            position: fixed;
+            left: 50%;
+            bottom: 12px;
+            transform: translateX(-50%);
+            width: min(520px, calc(100vw - 20px));
+            z-index: 3;
+            pointer-events: none;
+        }
+
+        #playerHudReadout {
+            margin-bottom: 6px;
+            text-align: center;
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #ffebeb;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.85);
+        }
+
+        #playerHealthBar {
+            position: relative;
+            height: 24px;
+            border: 2px solid rgba(255, 255, 255, 0.9);
+            border-radius: 999px;
+            background: rgba(35, 35, 35, 0.8);
+            overflow: hidden;
+        }
+
+        #playerHealthFill {
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 100%;
+            background: linear-gradient(90deg, #1ca646 0%, #62d84a 100%);
+            transition: width 0.1s linear, background 0.1s linear;
+        }
+
+        #playerHealthText {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #ffffff;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+        }
+
+        #hotbar {
+            display: grid;
+            grid-template-columns: repeat(8, minmax(0, 1fr));
+            gap: 6px;
+            margin-top: 8px;
+            padding: 8px;
+            border: 2px solid rgba(255, 255, 255, 0.72);
+            background: rgba(10, 12, 16, 0.6);
+            border-radius: 10px;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+            pointer-events: auto;
+        }
+
+        .hotbar-slot {
+            position: relative;
+            aspect-ratio: 1 / 1;
+            overflow: hidden;
+            border: 2px solid rgba(255, 255, 255, 0.45);
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+        }
+
+        .hotbar-slot.is-selected {
+            border-color: #fef8bc;
+            box-shadow: 0 0 0 2px rgba(255, 238, 128, 0.35);
+            background: rgba(255, 248, 188, 0.18);
+        }
+
+        .hotbar-slot-label,
+        .hotbar-slot-icon,
+        .hotbar-slot-count {
+            position: absolute;
+            color: #ffffff;
+            font-weight: 700;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.85);
+        }
+
+        .hotbar-slot-label {
+            top: 4px;
+            left: 6px;
+            font-size: 0.75rem;
+        }
+
+        .hotbar-slot-icon {
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+
+        .hotbar-slot-count {
+            right: 6px;
+            bottom: 4px;
+            font-size: 0.75rem;
+        }
+
+        @media (max-width: 700px) {
+            #playerHud {
+                bottom: 10px;
+                width: calc(100vw - 16px);
+            }
+
+            #overlay {
+                padding: 0.8rem;
+            }
+
+            #overlay h1 {
+                font-size: 1.4rem;
+            }
+
+            #overlay h3 {
+                font-size: 0.95rem;
+            }
         }
 
         canvas {
@@ -42,20 +193,118 @@
 
 <body>
     <div id="overlay">
-        <h1>Mandalaar</h1>
+        <div id="overlayTitleRow">
+            <h1>Mandalaar</h1>
+            <span id="fpsCounter">0 FPS</span>
+        </div>
         <h3>Topdown 2D game</h3>
+    </div>
+    <div id="playerHud" aria-label="Player HUD">
+        <div id="playerHudReadout">Coins: 0 | Food: 40 | Enemies: 15 | Deaths: 0</div>
+        <div id="playerHealthBar" aria-label="Player health">
+            <div id="playerHealthFill"></div>
+            <span id="playerHealthText">100 / 100</span>
+        </div>
+        <div id="hotbar" aria-label="Hotbar">
+            <div class="hotbar-slot is-selected">
+                <span class="hotbar-slot-label">1</span>
+                <span class="hotbar-slot-icon">+</span>
+                <span class="hotbar-slot-count">HP</span>
+            </div>
+            <div class="hotbar-slot">
+                <span class="hotbar-slot-label">2</span>
+                <span class="hotbar-slot-icon">o</span>
+                <span class="hotbar-slot-count">1</span>
+            </div>
+            <div class="hotbar-slot">
+                <span class="hotbar-slot-label">3</span>
+                <span class="hotbar-slot-icon">*</span>
+                <span class="hotbar-slot-count">Q</span>
+            </div>
+            <div class="hotbar-slot">
+                <span class="hotbar-slot-label">4</span>
+                <span class="hotbar-slot-icon">W</span>
+                <span class="hotbar-slot-count">MV</span>
+            </div>
+            <div class="hotbar-slot">
+                <span class="hotbar-slot-label">5</span>
+                <span class="hotbar-slot-icon">A</span>
+                <span class="hotbar-slot-count">IM</span>
+            </div>
+            <div class="hotbar-slot">
+                <span class="hotbar-slot-label">6</span>
+                <span class="hotbar-slot-icon">S</span>
+                <span class="hotbar-slot-count">FD</span>
+            </div>
+            <div class="hotbar-slot">
+                <span class="hotbar-slot-label">7</span>
+                <span class="hotbar-slot-icon">$</span>
+                <span class="hotbar-slot-count">C</span>
+            </div>
+            <div class="hotbar-slot">
+                <span class="hotbar-slot-label">8</span>
+                <span class="hotbar-slot-icon">!</span>
+                <span class="hotbar-slot-count">EN</span>
+            </div>
+        </div>
     </div>
     <canvas id="gameCanvas" aria-label="Mandalaar game view"></canvas>
     <script>
+
+/*
+
+lets add a hunger system, an orange progressbar below healthbar,
+
+every 5 seconds we lose 1 point, every food increases 5 points.
+
+if we are over 5
+*/
+
         const canvas = document.getElementById('gameCanvas');
         const context = canvas.getContext('2d');
+        const fpsCounter = document.getElementById('fpsCounter');
+        const playerHudReadout = document.getElementById('playerHudReadout');
+        const playerHealthFill = document.getElementById('playerHealthFill');
+        const playerHealthText = document.getElementById('playerHealthText');
         const MAP_SIZE = 2000;
         const MAP_HALF_SIZE = MAP_SIZE * 0.5;
         const MAP_BORDER_THICKNESS = 20;
+        const FOOD_COUNT = 40;
+        const COIN_COUNT = 28;
+        const MELEE_ENEMY_COUNT = 40;
+        const RANGED_ENEMY_COUNT = 10;
+        const PLAYER_RADIUS = 14;
+        const PLAYER_SPEED = 240;
+        const PLAYER_SPRINT_MULTIPLIER = 1.7;
+        const PLAYER_MAX_HEALTH = 100;
+        const PLAYER_PROJECTILE_DAMAGE = 20;
+        const PLAYER_PROJECTILE_RADIUS = 5;
+        const PLAYER_PROJECTILE_LIFE = 1.4;
+        const ALLY_RADIUS = 12;
+        const ALLY_SPEED = 235;
+        const ALLY_STANDOFF_DISTANCE = 100;
+        const ALLY_STANDOFF_TOLERANCE = 0;
+        const ALLY_AREA_RADIUS = 100;
+        const ALLY_ATTACK_DAMAGE = 20;
+        const ALLY_ATTACK_INTERVAL = 0.9;
+        const ALLY_ATTACK_RANGE = 30;
+        const PACIFIST_COUNT = 12;
+        const PACIFIST_RADIUS = 11;
+        const PACIFIST_SPEED = 90;
+        const PACIFIST_MAX_HEALTH = 100;
+        const ENEMY_RADIUS = 12;
+        const ENEMY_MAX_HEALTH = 100;
+        const ENEMY_PROJECTILE_RADIUS = 4;
+        const ENEMY_PROJECTILE_LIFE = 2.1;
+        const BLUE_AREA_RADIUS_MULTIPLIER = 5;
+        const COLLECTIBLE_ATTRACTION_SPEED = 7000;
+        const COLLECTIBLE_MAGNET_MAX_STRENGTH = 7000;
+        const COLLECTIBLE_MAGNET_DRAG = 5;
         const groundPatches = [];
         const foodDots = [];
         const coinDots = [];
         const enemyDots = [];
+        const pacifistDots = [];
         const outerStars = [];
         const projectiles = [];
         const enemyProjectiles = [];
@@ -63,9 +312,20 @@
         const player = {
             x: 0,
             y: 0,
-            radius: 14,
-            speed: 240,
+            radius: PLAYER_RADIUS,
+            speed: PLAYER_SPEED,
+            maxHealth: PLAYER_MAX_HEALTH,
+            health: PLAYER_MAX_HEALTH,
+            coins: 0,
+            deaths: 0,
             hitFlash: 0,
+        };
+        const ally = {
+            x: ALLY_STANDOFF_DISTANCE,
+            y: 0,
+            radius: ALLY_RADIUS,
+            speed: ALLY_SPEED,
+            attackCooldown: 0,
         };
         const cursor = {
             x: window.innerWidth * 0.5,
@@ -74,6 +334,66 @@
             visible: false,
         };
         let lastFrameTime = 0;
+        let displayedFps = 0;
+
+        function updateFpsCounter(deltaTime) {
+            /* The title-adjacent readout uses a lightly smoothed FPS value so
+            it stays readable instead of jittering wildly every single frame. */
+            if (deltaTime <= 0) return;
+
+            const instantFps = 1 / deltaTime;
+            displayedFps += (instantFps - displayedFps) * 0.15;
+            fpsCounter.textContent = `${Math.round(displayedFps)} FPS`;
+        }
+
+        function updatePlayerHud() {
+            /* The HUD mirrors the lightweight survival state already present in
+            the prototype so health loss, pickups, and remaining threats are
+            readable without opening menus or stopping movement. */
+            const clampedHealth = Math.max(0, Math.min(player.maxHealth, player.health));
+            const healthPercent = (clampedHealth / player.maxHealth) * 100;
+
+            playerHealthFill.style.width = `${healthPercent}%`;
+            playerHealthText.textContent = `${Math.ceil(clampedHealth)} / ${player.maxHealth}`;
+
+            /* The bar color shifts as health drops so danger reads instantly
+            even when the player only catches the HUD in peripheral vision. */
+            if (healthPercent > 60) {
+                playerHealthFill.style.background = 'linear-gradient(90deg, #1ca646 0%, #62d84a 100%)';
+            } else if (healthPercent > 30) {
+                playerHealthFill.style.background = 'linear-gradient(90deg, #d68b21 0%, #f2c94c 100%)';
+            } else {
+                playerHealthFill.style.background = 'linear-gradient(90deg, #a61c1c 0%, #e04f4f 100%)';
+            }
+
+            playerHudReadout.textContent = `Coins: ${player.coins} | Food: ${foodDots.length} | Enemies: ${enemyDots.length} | Deaths: ${player.deaths}`;
+        }
+
+        function respawnPlayer() {
+            /* Respawning resets only the player's local combat state so death
+            feels immediate and readable without wiping the whole current run. */
+            player.x = 0;
+            player.y = 0;
+            player.health = player.maxHealth;
+            player.hitFlash = 0;
+
+            /* Clearing active bullets prevents the player from respawning into
+            the same unavoidable projectile cluster on the next frame. */
+            enemyProjectiles.length = 0;
+            projectiles.length = 0;
+            ally.x = ALLY_STANDOFF_DISTANCE;
+            ally.y = 0;
+            ally.attackCooldown = 0;
+        }
+
+        function updatePlayerDeath() {
+            /* Death resolves before rendering the next frame so the HUD never
+            sits at zero health for long and the respawn loop stays snappy. */
+            if (player.health > 0) return;
+
+            player.deaths += 1;
+            respawnPlayer();
+        }
 
         function randomMapCoordinate(margin = 0) {
             /* World content is generated inside the finite playfield so the
@@ -117,7 +437,11 @@
             outerStars.length = 0;
 
             const starFieldSize = MAP_SIZE * 2;
-            const starCount = 140;
+            /* Star count scales with the generated outer-space area so the
+            black void keeps a readable density even if the star field grows. */
+            const starFieldArea = starFieldSize * starFieldSize;
+            const starDensity = 1 / 42000;
+            const starCount = Math.max(140, Math.floor(starFieldArea * starDensity));
             for (let i = 0; i < starCount; i += 1) {
                 outerStars.push({
                     x: (Math.random() - 0.5) * starFieldSize,
@@ -133,12 +457,14 @@
             current viewport. */
             foodDots.length = 0;
 
-            const foodCount = 40;
-            for (let i = 0; i < foodCount; i += 1) {
+            for (let i = 0; i < FOOD_COUNT; i += 1) {
                 foodDots.push({
                     x: randomMapCoordinate(MAP_BORDER_THICKNESS + 24),
                     y: randomMapCoordinate(MAP_BORDER_THICKNESS + 24),
                     radius: 7 + Math.random() * 3,
+                    velocityX: 0,
+                    velocityY: 0,
+                    magnetStrength: 0,
                 });
             }
         }
@@ -148,12 +474,14 @@
             collectible economy beats now and score logic later. */
             coinDots.length = 0;
 
-            const coinCount = 28;
-            for (let i = 0; i < coinCount; i += 1) {
+            for (let i = 0; i < COIN_COUNT; i += 1) {
                 coinDots.push({
                     x: randomMapCoordinate(MAP_BORDER_THICKNESS + 24),
                     y: randomMapCoordinate(MAP_BORDER_THICKNESS + 24),
                     radius: 4 + Math.random() * 2,
+                    velocityX: 0,
+                    velocityY: 0,
+                    magnetStrength: 0,
                 });
             }
         }
@@ -170,10 +498,13 @@
                 return {
                     x: randomMapCoordinate(MAP_BORDER_THICKNESS + 40),
                     y: randomMapCoordinate(MAP_BORDER_THICKNESS + 40),
-                    radius: 12,
+                    radius: ENEMY_RADIUS,
+                    maxHealth: ENEMY_MAX_HEALTH,
+                    health: ENEMY_MAX_HEALTH,
                     speed: 105 + Math.random() * 25,
                     wanderAngle: Math.random() * Math.PI * 2,
                     wanderTimer: 0.4 + Math.random() * 1.6,
+                    hitFlash: 0,
                     chasing: false,
                     detectionDistance: 150,
                     disengageDistance: 200,
@@ -181,16 +512,19 @@
                     color: '#d82f2f',
                     projectileCooldown: 0,
                     projectileInterval: 1.3,
+                    touchDamage: 10,
+                    meleeAttackCooldown: 0,
+                    meleeAttackInterval: 1,
                     shoots: false,
                     ...overrides,
                 };
             }
 
-            for (let i = 0; i < 10; i += 1) {
+            for (let i = 0; i < MELEE_ENEMY_COUNT; i += 1) {
                 enemyDots.push(createEnemyBase());
             }
 
-            for (let i = 0; i < 5; i += 1) {
+            for (let i = 0; i < RANGED_ENEMY_COUNT; i += 1) {
                 enemyDots.push(createEnemyBase({
                     speed: 92 + Math.random() * 18,
                     detectionDistance: 190,
@@ -198,8 +532,28 @@
                     stopDistance: 160,
                     color: '#7a1414',
                     projectileInterval: 1.0 + Math.random() * 0.35,
+                    touchDamage: 0,
                     shoots: true,
                 }));
+            }
+        }
+
+        function createPacifistDots() {
+            /* Pacifists are simple ambient walkers that add life to the map
+            without adding another combat role to the prototype. */
+            pacifistDots.length = 0;
+
+            for (let i = 0; i < PACIFIST_COUNT; i += 1) {
+                pacifistDots.push({
+                    x: randomMapCoordinate(MAP_BORDER_THICKNESS + 40),
+                    y: randomMapCoordinate(MAP_BORDER_THICKNESS + 40),
+                    radius: PACIFIST_RADIUS,
+                    health: PACIFIST_MAX_HEALTH,
+                    speed: PACIFIST_SPEED + Math.random() * 18,
+                    wanderAngle: Math.random() * Math.PI * 2,
+                    wanderTimer: 0.35 + Math.random() * 1.8,
+                    hitFlash: 0,
+                });
             }
         }
 
@@ -218,6 +572,7 @@
             createFoodDots();
             createCoinDots();
             createEnemyDots();
+            createPacifistDots();
         }
 
         function drawFloor() {
@@ -296,10 +651,21 @@
             }
         }
 
+        function drawOutlinedDot(drawX, drawY, radius, fillColor) {
+            /* All circular gameplay entities share the same black ring so dots
+            stay readable against grass, borders, and outer space alike. */
+            context.fillStyle = fillColor;
+            context.strokeStyle = '#000000';
+            context.lineWidth = 2;
+            context.beginPath();
+            context.arc(drawX, drawY, radius, 0, Math.PI * 2);
+            context.fill();
+            context.stroke();
+        }
+
         function drawFoodDots() {
             /* The food uses the same camera offset as the terrain so pickups
             stay anchored in the world and naturally scroll past the player. */
-            context.fillStyle = '#7a4a1e';
             const cameraX = player.x;
             const cameraY = player.y;
             const viewCenterX = canvas.width * 0.5;
@@ -310,9 +676,7 @@
                 const drawX = viewCenterX + (food.x - cameraX);
                 const drawY = viewCenterY + (food.y - cameraY);
 
-                context.beginPath();
-                context.arc(drawX, drawY, food.radius, 0, Math.PI * 2);
-                context.fill();
+                drawOutlinedDot(drawX, drawY, food.radius, '#7a4a1e');
             }
         }
 
@@ -329,10 +693,7 @@
                 const drawX = viewCenterX + (coin.x - cameraX);
                 const drawY = viewCenterY + (coin.y - cameraY);
 
-                context.fillStyle = '#ffd84d';
-                context.beginPath();
-                context.arc(drawX, drawY, coin.radius, 0, Math.PI * 2);
-                context.fill();
+                drawOutlinedDot(drawX, drawY, coin.radius, '#ffd84d');
             }
         }
 
@@ -349,17 +710,30 @@
                 const drawX = viewCenterX + (enemy.x - cameraX);
                 const drawY = viewCenterY + (enemy.y - cameraY);
 
-                context.fillStyle = enemy.color;
-                context.beginPath();
-                context.arc(drawX, drawY, enemy.radius, 0, Math.PI * 2);
-                context.fill();
+                drawOutlinedDot(drawX, drawY, enemy.radius, enemy.hitFlash > 0 ? '#7ab0ff' : enemy.color);
+            }
+        }
+
+        function drawPacifistDots() {
+            /* Pacifists share the same world-space camera transform so they
+            feel like inhabitants of the same map rather than UI pieces. */
+            const cameraX = player.x;
+            const cameraY = player.y;
+            const viewCenterX = canvas.width * 0.5;
+            const viewCenterY = canvas.height * 0.5;
+
+            for (let i = 0; i < pacifistDots.length; i += 1) {
+                const pacifist = pacifistDots[i];
+                const drawX = viewCenterX + (pacifist.x - cameraX);
+                const drawY = viewCenterY + (pacifist.y - cameraY);
+
+                drawOutlinedDot(drawX, drawY, pacifist.radius, pacifist.hitFlash > 0 ? '#7ab0ff' : 'lightgreen');
             }
         }
 
         function drawProjectiles() {
             /* Projectiles live in world space like enemies, so aiming and hits
             stay consistent even while the camera remains centered on the player. */
-            context.fillStyle = '#101010';
             const cameraX = player.x;
             const cameraY = player.y;
             const viewCenterX = canvas.width * 0.5;
@@ -370,9 +744,7 @@
                 const drawX = viewCenterX + (projectile.x - cameraX);
                 const drawY = viewCenterY + (projectile.y - cameraY);
 
-                context.beginPath();
-                context.arc(drawX, drawY, projectile.radius, 0, Math.PI * 2);
-                context.fill();
+                drawOutlinedDot(drawX, drawY, projectile.radius, '#101010');
             }
         }
 
@@ -389,11 +761,40 @@
                 const drawX = viewCenterX + (projectile.x - cameraX);
                 const drawY = viewCenterY + (projectile.y - cameraY);
 
-                context.fillStyle = '#4f0e0e';
-                context.beginPath();
-                context.arc(drawX, drawY, projectile.radius, 0, Math.PI * 2);
-                context.fill();
+                drawOutlinedDot(drawX, drawY, projectile.radius, '#4f0e0e');
             }
+        }
+
+        function drawAllyArea() {
+            /* The ally area shows the protection radius that can trigger its
+            defensive behavior without obscuring the entities inside it. */
+            const viewCenterX = canvas.width * 0.5;
+            const viewCenterY = canvas.height * 0.5;
+            const drawX = viewCenterX + (ally.x - player.x);
+            const drawY = viewCenterY + (ally.y - player.y);
+
+            context.fillStyle = 'rgba(95, 158, 160, 0.18)';
+            context.beginPath();
+            context.arc(drawX, drawY, ALLY_AREA_RADIUS, 0, Math.PI * 2);
+            context.fill();
+        }
+
+        function drawBlueArea() {
+            /* The blueArea is painted before gameplay entities so it reads as
+            ground feedback instead of covering actors that pass over it. */
+            const centerX = canvas.width * 0.5;
+            const centerY = canvas.height * 0.5;
+
+            context.fillStyle = 'rgba(31, 109, 255, 0.4)';
+            context.beginPath();
+            context.arc(centerX, centerY, player.radius * BLUE_AREA_RADIUS_MULTIPLIER, 0, Math.PI * 2);
+            context.fill();
+        }
+
+        function getBlueAreaRadius() {
+            /* Centralizing the area radius keeps the render circle and the
+            gameplay magnet zone perfectly aligned when tuned later. */
+            return player.radius * BLUE_AREA_RADIUS_MULTIPLIER;
         }
 
         function drawPlayer() {
@@ -402,10 +803,18 @@
             const centerX = canvas.width * 0.5;
             const centerY = canvas.height * 0.5;
 
-            context.fillStyle = player.hitFlash > 0 ? '#7ab0ff' : '#1f6dff';
-            context.beginPath();
-            context.arc(centerX, centerY, player.radius, 0, Math.PI * 2);
-            context.fill();
+            drawOutlinedDot(centerX, centerY, player.radius, player.hitFlash > 0 ? '#7ab0ff' : '#1f6dff');
+        }
+
+        function drawAlly() {
+            /* The ally uses the same world-space camera offset as enemies so
+            following and combat read as real movement on the map. */
+            const viewCenterX = canvas.width * 0.5;
+            const viewCenterY = canvas.height * 0.5;
+            const drawX = viewCenterX + (ally.x - player.x);
+            const drawY = viewCenterY + (ally.y - player.y);
+
+            drawOutlinedDot(drawX, drawY, ally.radius, 'cadetblue');
         }
 
         function drawAimLine() {
@@ -430,10 +839,7 @@
             future interaction logic easy to extend without relying on CSS UI. */
             if (!cursor.visible) return;
 
-            context.fillStyle = '#ffe45c';
-            context.beginPath();
-            context.arc(cursor.x, cursor.y, cursor.radius, 0, Math.PI * 2);
-            context.fill();
+            drawOutlinedDot(cursor.x, cursor.y, cursor.radius, '#ffe45c');
         }
 
         function updatePlayer(deltaTime) {
@@ -452,9 +858,10 @@
             const moveLength = Math.hypot(moveX, moveY) || 1;
             const normalizedX = moveX / moveLength;
             const normalizedY = moveY / moveLength;
+            const movementSpeed = (pressedKeys.KeyE ? player.speed * PLAYER_SPRINT_MULTIPLIER : player.speed);
 
-            player.x += normalizedX * player.speed * deltaTime;
-            player.y += normalizedY * player.speed * deltaTime;
+            player.x += normalizedX * movementSpeed * deltaTime;
+            player.y += normalizedY * movementSpeed * deltaTime;
 
             const minPosition = -MAP_HALF_SIZE + MAP_BORDER_THICKNESS + player.radius;
             const maxPosition = MAP_HALF_SIZE - MAP_BORDER_THICKNESS - player.radius;
@@ -462,11 +869,110 @@
             player.y = Math.max(minPosition, Math.min(maxPosition, player.y));
         }
 
+        function updateCollectibleMagnetism(collectibles, deltaTime) {
+            /* Collectibles start drifting once the blueArea reaches them, and
+            the pull ramps up over time so the magnet effect feels gradual. */
+            const blueAreaRadius = getBlueAreaRadius();
+
+            for (let i = 0; i < collectibles.length; i += 1) {
+                const collectible = collectibles[i];
+                const dx = player.x - collectible.x;
+                const dy = player.y - collectible.y;
+                const distance = Math.hypot(dx, dy);
+                const insideBlueArea = distance <= blueAreaRadius + collectible.radius;
+
+                if (insideBlueArea) {
+                    collectible.magnetStrength = Math.min(
+                        COLLECTIBLE_MAGNET_MAX_STRENGTH,
+                        collectible.magnetStrength + COLLECTIBLE_ATTRACTION_SPEED * deltaTime
+                    );
+                } else {
+                    collectible.magnetStrength = Math.max(
+                        0,
+                        collectible.magnetStrength - COLLECTIBLE_ATTRACTION_SPEED * 1.4 * deltaTime
+                    );
+                }
+
+                if (distance > 0.001 && collectible.magnetStrength > 0) {
+                    const directionX = dx / distance;
+                    const directionY = dy / distance;
+                    collectible.velocityX += directionX * collectible.magnetStrength * deltaTime;
+                    collectible.velocityY += directionY * collectible.magnetStrength * deltaTime;
+                }
+
+                const dragMultiplier = Math.max(0, 1 - COLLECTIBLE_MAGNET_DRAG * deltaTime);
+                collectible.velocityX *= dragMultiplier;
+                collectible.velocityY *= dragMultiplier;
+                collectible.x += collectible.velocityX * deltaTime;
+                collectible.y += collectible.velocityY * deltaTime;
+                clampWorldPosition(collectible);
+            }
+        }
+
+        function moveEntityToward(entity, targetX, targetY, speed, deltaTime) {
+            /* Shared directional movement keeps ally steering readable and
+            avoids repeating the same normalize-and-step logic. */
+            const dx = targetX - entity.x;
+            const dy = targetY - entity.y;
+            const distance = Math.hypot(dx, dy);
+            if (distance <= 0.001) return distance;
+
+            const step = Math.min(distance, speed * deltaTime);
+            entity.x += (dx / distance) * step;
+            entity.y += (dy / distance) * step;
+            return distance;
+        }
+
         function clampWorldPosition(entity) {
             const minPosition = -MAP_HALF_SIZE + MAP_BORDER_THICKNESS + entity.radius;
             const maxPosition = MAP_HALF_SIZE - MAP_BORDER_THICKNESS - entity.radius;
             entity.x = Math.max(minPosition, Math.min(maxPosition, entity.x));
             entity.y = Math.max(minPosition, Math.min(maxPosition, entity.y));
+        }
+
+        function updateAlly(deltaTime) {
+            /* The ally keeps a loose orbit around the player, but it will break
+            formation to intercept and melee enemies inside its defense area. */
+            ally.attackCooldown = Math.max(0, ally.attackCooldown - deltaTime);
+
+            let targetEnemy = null;
+            let nearestEnemyDistance = Infinity;
+            for (let i = 0; i < enemyDots.length; i += 1) {
+                const enemy = enemyDots[i];
+                const distance = Math.hypot(enemy.x - ally.x, enemy.y - ally.y);
+                if (distance > ALLY_AREA_RADIUS) continue;
+                if (distance >= nearestEnemyDistance) continue;
+                nearestEnemyDistance = distance;
+                targetEnemy = enemy;
+            }
+
+            if (targetEnemy) {
+                const distanceToEnemy = Math.hypot(targetEnemy.x - ally.x, targetEnemy.y - ally.y);
+                if (distanceToEnemy > ALLY_ATTACK_RANGE) {
+                    moveEntityToward(ally, targetEnemy.x, targetEnemy.y, ally.speed, deltaTime);
+                } else if (ally.attackCooldown <= 0) {
+                    targetEnemy.health = Math.max(0, targetEnemy.health - ALLY_ATTACK_DAMAGE);
+                    targetEnemy.hitFlash = 0.15;
+                    ally.attackCooldown = ALLY_ATTACK_INTERVAL;
+                }
+            } else {
+                const dx = player.x - ally.x;
+                const dy = player.y - ally.y;
+                const distanceToPlayer = Math.hypot(dx, dy);
+                const safeDistance = distanceToPlayer || 1;
+                const offsetX = distanceToPlayer > 0.001 ? (ally.x - player.x) / safeDistance : 1;
+                const offsetY = distanceToPlayer > 0.001 ? (ally.y - player.y) / safeDistance : 0;
+                const targetX = player.x + offsetX * ALLY_STANDOFF_DISTANCE;
+                const targetY = player.y + offsetY * ALLY_STANDOFF_DISTANCE;
+
+                /* Following a point on the standoff ring is smoother than
+                flipping between direct chase and direct retreat vectors. */
+                if (Math.abs(distanceToPlayer - ALLY_STANDOFF_DISTANCE) > ALLY_STANDOFF_TOLERANCE) {
+                    moveEntityToward(ally, targetX, targetY, ally.speed, deltaTime);
+                }
+            }
+
+            clampWorldPosition(ally);
         }
 
         function updateEnemies(deltaTime) {
@@ -479,6 +985,7 @@
                 const dy = player.y - enemy.y;
                 const distance = Math.hypot(dx, dy);
                 enemy.projectileCooldown = Math.max(0, enemy.projectileCooldown - deltaTime);
+                enemy.meleeAttackCooldown = Math.max(0, (enemy.meleeAttackCooldown || 0) - deltaTime);
 
                 if (enemy.chasing) {
                     if (distance > enemy.disengageDistance) {
@@ -496,6 +1003,14 @@
                         enemy.y += (dy / safeDistance) * enemy.speed * deltaTime;
                     }
 
+                    /* Melee enemies attack while holding their close standoff
+                    range, so they do not need literal sprite overlap to hurt. */
+                    if (!enemy.shoots && enemy.touchDamage > 0 && distance <= enemy.stopDistance + 6 && enemy.meleeAttackCooldown <= 0) {
+                        player.health = Math.max(0, player.health - enemy.touchDamage);
+                        player.hitFlash = 0.1;
+                        enemy.meleeAttackCooldown = enemy.meleeAttackInterval;
+                    }
+
                     if (enemy.shoots && distance <= enemy.stopDistance + 20 && enemy.projectileCooldown <= 0) {
                         const safeDistance = distance || 1;
                         enemyProjectiles.push({
@@ -503,8 +1018,8 @@
                             y: enemy.y + (dy / safeDistance) * (enemy.radius + 6),
                             velocityX: (dx / safeDistance) * 300,
                             velocityY: (dy / safeDistance) * 300,
-                            radius: 4,
-                            life: 2.1,
+                            radius: ENEMY_PROJECTILE_RADIUS,
+                            life: ENEMY_PROJECTILE_LIFE,
                         });
                         enemy.projectileCooldown = enemy.projectileInterval;
                     }
@@ -523,7 +1038,25 @@
             }
         }
 
-        function resolveEnemyCollisions() {
+        function updatePacifists(deltaTime) {
+            /* Pacifists only wander, giving the world some motion without
+            turning every living dot into another combatant. */
+            for (let i = 0; i < pacifistDots.length; i += 1) {
+                const pacifist = pacifistDots[i];
+                pacifist.wanderTimer -= deltaTime;
+
+                if (pacifist.wanderTimer <= 0) {
+                    pacifist.wanderAngle = Math.random() * Math.PI * 2;
+                    pacifist.wanderTimer = 0.4 + Math.random() * 1.9;
+                }
+
+                pacifist.x += Math.cos(pacifist.wanderAngle) * pacifist.speed * deltaTime;
+                pacifist.y += Math.sin(pacifist.wanderAngle) * pacifist.speed * deltaTime;
+                clampWorldPosition(pacifist);
+            }
+        }
+
+        function resolveEnemyCollisions(deltaTime) {
             /* The player and enemies stay physically separated so touching an
             enemy feels like bumping into a body rather than ghosting through it. */
             for (let i = 0; i < enemyDots.length; i += 1) {
@@ -591,6 +1124,10 @@
                 const distance = Math.hypot(food.x - player.x, food.y - player.y);
                 if (distance <= player.radius + food.radius) {
                     foodDots.splice(i, 1);
+
+                    /* Food doubles as a simple healing pickup for now so the
+                    HUD bar has meaningful recovery feedback during combat. */
+                    player.health = Math.min(player.maxHealth, player.health + 8);
                 }
             }
         }
@@ -603,6 +1140,10 @@
                 const distance = Math.hypot(coin.x - player.x, coin.y - player.y);
                 if (distance <= player.radius + coin.radius) {
                     coinDots.splice(i, 1);
+
+                    /* Coins already exist as pickups in the world, so the HUD
+                    can expose them immediately as a visible progression count. */
+                    player.coins += 1;
                 }
             }
         }
@@ -631,6 +1172,7 @@
                 const distanceToPlayer = Math.hypot(projectile.x - player.x, projectile.y - player.y);
                 if (distanceToPlayer <= projectile.radius + player.radius) {
                     player.hitFlash = 0.15;
+                    player.health = Math.max(0, player.health - 12);
                     enemyProjectiles.splice(i, 1);
                 }
             }
@@ -638,6 +1180,28 @@
 
         function updatePlayerHitFlash(deltaTime) {
             player.hitFlash = Math.max(0, player.hitFlash - deltaTime);
+        }
+
+        function updateEnemyHitFlash(deltaTime) {
+            /* Enemy hit flashes decay independently so each target can briefly
+            show impact feedback even while the group keeps moving normally. */
+            for (let i = enemyDots.length - 1; i >= 0; i -= 1) {
+                const enemy = enemyDots[i];
+                enemy.hitFlash = Math.max(0, enemy.hitFlash - deltaTime);
+                if (enemy.health <= 0) {
+                    enemyDots.splice(i, 1);
+                }
+            }
+
+            /* Pacifists can also be harmed, so they need the same temporary
+            hit feedback and cleanup path as hostile entities. */
+            for (let i = pacifistDots.length - 1; i >= 0; i -= 1) {
+                const pacifist = pacifistDots[i];
+                pacifist.hitFlash = Math.max(0, pacifist.hitFlash - deltaTime);
+                if (pacifist.health <= 0) {
+                    pacifistDots.splice(i, 1);
+                }
+            }
         }
 
         function spawnProjectile() {
@@ -657,14 +1221,14 @@
                 y: player.y + directionY * (player.radius + 10),
                 velocityX: directionX * 520,
                 velocityY: directionY * 520,
-                radius: 5,
-                life: 1.4,
+                radius: PLAYER_PROJECTILE_RADIUS,
+                life: PLAYER_PROJECTILE_LIFE,
             });
         }
 
         function updateProjectiles(deltaTime) {
-            /* Projectiles advance, expire, and remove enemies on contact so the
-            combat loop stays lightweight while we prototype core interactions. */
+            /* Projectiles advance, expire, and chip enemy health down in fixed
+            chunks so combat can support tougher enemies than one-hit kills. */
             for (let i = projectiles.length - 1; i >= 0; i -= 1) {
               const projectile = projectiles[i];
               projectile.x += projectile.velocityX * deltaTime;
@@ -689,7 +1253,28 @@
                 const distance = Math.hypot(enemy.x - projectile.x, enemy.y - projectile.y);
                 if (distance > enemy.radius + projectile.radius) continue;
 
-                enemyDots.splice(enemyIndex, 1);
+                enemy.health = Math.max(0, enemy.health - PLAYER_PROJECTILE_DAMAGE);
+                enemy.hitFlash = 0.15;
+                if (enemy.health <= 0) {
+                    enemyDots.splice(enemyIndex, 1);
+                }
+                projectiles.splice(i, 1);
+                hitEnemy = true;
+                break;
+              }
+
+              if (hitEnemy) continue;
+
+              for (let pacifistIndex = pacifistDots.length - 1; pacifistIndex >= 0; pacifistIndex -= 1) {
+                const pacifist = pacifistDots[pacifistIndex];
+                const distance = Math.hypot(pacifist.x - projectile.x, pacifist.y - projectile.y);
+                if (distance > pacifist.radius + projectile.radius) continue;
+
+                pacifist.health = Math.max(0, pacifist.health - PLAYER_PROJECTILE_DAMAGE);
+                pacifist.hitFlash = 0.15;
+                if (pacifist.health <= 0) {
+                    pacifistDots.splice(pacifistIndex, 1);
+                }
                 projectiles.splice(i, 1);
                 hitEnemy = true;
                 break;
@@ -703,11 +1288,15 @@
             drawFloor();
             drawGroundPatches();
             drawMapBorders();
+            drawBlueArea();
+            drawAllyArea();
             drawFoodDots();
             drawCoinDots();
+            drawPacifistDots();
             drawEnemyDots();
             drawAimLine();
             drawPlayer();
+            drawAlly();
             drawCursor();
             drawEnemyProjectiles();
             drawProjectiles();
@@ -717,14 +1306,22 @@
             const deltaTime = Math.min((timestamp - lastFrameTime) / 1000 || 0, 0.05);
             lastFrameTime = timestamp;
 
+            updateFpsCounter(deltaTime);
             updatePlayer(deltaTime);
+            updateCollectibleMagnetism(foodDots, deltaTime);
+            updateCollectibleMagnetism(coinDots, deltaTime);
+            updateAlly(deltaTime);
+            updatePacifists(deltaTime);
             updateEnemies(deltaTime);
-            resolveEnemyCollisions();
+            resolveEnemyCollisions(deltaTime);
             updateFoodCollisions();
             updateCoinCollisions();
             updateEnemyProjectiles(deltaTime);
             updateProjectiles(deltaTime);
+            updatePlayerDeath();
             updatePlayerHitFlash(deltaTime);
+            updateEnemyHitFlash(deltaTime);
+            updatePlayerHud();
             render();
             window.requestAnimationFrame(frame);
         }
@@ -771,6 +1368,7 @@
 
         resizeCanvas();
         initializeWorld();
+        updatePlayerHud();
         window.requestAnimationFrame(frame);
     </script>
 </body>
