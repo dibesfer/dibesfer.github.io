@@ -30,7 +30,7 @@ function setIdentityVisual(username, isLoggedIn) {
     the page. */
     authUserDisplay.textContent = username
     idDiv.title = isLoggedIn ? `Logged in as ${username}` : "Anonymous user"
-    idDivIcon.style.filter = isLoggedIn ? "invert(0)" : "invert(1)"
+    idDiv_icon_wrapper.style = isLoggedIn ? "background-color: green" : "background-color: pink"
 }
 
 function setAuthMode(isLoggedIn) {

@@ -235,13 +235,14 @@ footer {
     margin-left: 15px;
     border: solid 2px white;
     border-radius: 50%;
-    background-color: cadetblue;
+    
     cursor: pointer;
+    overflow: hidden;
 
 }
 
 #idDiv_icon {
-
+    filter: invert(1);
     display: block;
 }
 
