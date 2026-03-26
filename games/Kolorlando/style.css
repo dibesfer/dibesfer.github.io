@@ -33,7 +33,7 @@ input {
 }
 
 body[data-camera-mode="wow"] {
-    cursor: url("assets/icons/cursor/Middle\ Ages--cursor--SweezyCursors.png") 1 1, auto;
+    cursor: url("assets/icons/cursor/RWArrow.cur") 1 1, auto;
 }
 
 
@@ -42,7 +42,7 @@ body[data-camera-mode="wow"] a,
 body[data-camera-mode="wow"] label,
 body[data-camera-mode="wow"] input,
 body[data-camera-mode="wow"] select {
-    cursor: url("assets/icons/cursor/Middle\ Ages--pointer--SweezyCursors.png") 1 1, pointer;
+    cursor: url("assets/icons/cursor/RWHand.cur") 1 1, pointer;
 }
 
 body[data-camera-mode="wow"] #crossHair,

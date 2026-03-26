@@ -22,18 +22,47 @@
 </head>
 
 <body>
+
+    <div id="idDiv">
+        <img id="idDiv_icon" src="https://upload.wikimedia.org/wikipedia/commons/9/99/Sample_User_Icon.png" alt="user sign">
+        <!-- <p>Sign/Log in</p> -->
+    </div>
+
+    <div id="authModal" class="authModal invisible" aria-hidden="true">
+        <div id="authModal_backdrop" class="authModal_backdrop"></div>
+
+        <div id="authModal_panel" class="authModal_panel" role="dialog" aria-modal="true" aria-labelledby="authModal_title">
+            <h2 id="authModal_title">Sign / Log in</h2>
+
+            <form class="authModal_form">
+                <label for="authIdentity">Mail or username</label>
+                <input id="authIdentity" name="authIdentity" type="text" autocomplete="username email" placeholder="Mail or username">
+
+                <label for="authPassword">Password</label>
+                <input id="authPassword" name="authPassword" type="password" autocomplete="current-password" placeholder="Password">
+
+                <p id="authMessage" class="authModal_message" aria-live="polite">
+
+                    Save and keep your data by logging in
+
+                </p>
+
+                <button class="authModal_sendButton" type="submit">SEND</button>
+            </form>
+        </div>
+    </div>
+
     <header>
         <h1 onclick="changePage('home')">Kolorlando</h1>
         <p>A 3D world to build and explore</p>
     </header>
 
     <main>
-        <h2>People online <span id="peopleOnlineCount">0</span></h2>
         <div id="mainMenu" class="kLevelsDisplay">
 
 
             <div class="kLevels" onclick="changePage('avatar')">
-                <h2>Your Avatar</h2>
+                <h2>Avatar</h2>
                 <div>
                     <img src="assets/imagenesPortada/Captura desde 2026-03-10 13-01-58.png" alt="">
                 </div>
@@ -41,7 +70,7 @@
             </div>
 
             <div class="kLevels" onclick="changePage('yourWorlds')">
-                <h2>Your Worlds</h2>
+                <h2>Worlds</h2>
                 <div>
                     <img src="assets/imagenesPortada/Captura desde 2026-03-09 11-11-06.png" alt="">
 
@@ -49,13 +78,13 @@
                 <p>Save your progress!</p>
             </div>
 
-            <div class="kLevels" onclick="changePage('galaxy')">
+            <!-- <div class="kLevels" onclick="changePage('galaxy')">
                 <h2>Galaxy</h2>
                 <div>
                     <img src="assets/imagenesPortada/Captura desde 2026-03-10 13-02-09.png" alt="">
                 </div>
                 <p>Explore others' worlds!</p>
-            </div>
+            </div> -->
 
 
         </div>
@@ -103,63 +132,33 @@
             </div>
             <div class="kLevelsDisplay">
                 <div class="kLevels" onclick="window.location = '/games/Kolorlando/game.html' ">
-                    <h2>Play World</h2>
+                    <h2>Singleplayer</h2>
                     <div>
                         <img src="assets/imagenesPortada/Captura desde 2026-03-09 11-11-06.png" alt="">
                     </div>
                     <p>Enter your current world</p>
                 </div>
 
-                <div class="kLevels">
+                <!-- <div class="kLevels">
                     <h2>Create World</h2>
                     <div>
                         <img src="assets/imagenesPortada/Captura desde 2026-03-10 13-02-09.png" alt="">
                     </div>
                     <p>Start a new world slot</p>
-                </div>
-
-                <div class="kLevels" onclick="changePage('home')">
-                    <h2>Back</h2>
-                    <div>
-                        <img style="object-fit: contain;" src="assets/icons/favicon/android-chrome-512x512.png" alt="">
-                    </div>
-                    <p>Return to the main menu</p>
-                </div>
-            </div>
-        </div>
-
-        <div id="galaxyMenu" class="invisible">
-            <div class="box">
-                <p>Galaxy is where you browse worlds from other players.</p>
-                <p>Later this can connect to public worlds, featured creations, and online visits.</p>
-            </div>
-
-            <div class="kLevelsDisplay">
-                <div class="kLevels">
-                    <h2>Featured Worlds</h2>
-                    <div>
-                        <img src="assets/imagenesPortada/Captura desde 2026-03-10 13-02-09.png" alt="">
-                    </div>
-                    <p>Discover highlighted worlds</p>
-                </div>
+                </div> -->
 
                 <div class="kLevels" onclick="window.location = '/games/Kolorlando/multiplayer.html' ">
-                    <h2>Online Worlds</h2>
+                    <h2>Multiplayer</h2>
                     <div>
                         <img src="assets/imagenesPortada/Captura desde 2026-03-09 11-11-06.png" alt="">
                     </div>
                     <p>See worlds with active players</p>
                 </div>
-
-                <div class="kLevels" onclick="changePage('home')">
-                    <h2>Back</h2>
-                    <div>
-                        <img style="object-fit: contain;" src="assets/icons/favicon/android-chrome-512x512.png" alt="">
-                    </div>
-                    <p>Return to the main menu</p>
-                </div>
             </div>
         </div>
+
+                <h2>People online <span id="peopleOnlineCount">0</span></h2>
+
 
         <div id="info">
             <h3>What is Kolorlando?</h3>
@@ -191,7 +190,7 @@
 
         <p>Contact <a href="mailto:dibesfer@gmail.com">dibesfer@gmail.com</a></p>
 
-        <p>ThreeJS + dibesfer + Codex</p>
+        <p>ThreeJS + <a href="https://dibesfer.github.io">dibesfer</a> + Codex</p>
 
     </footer>
     <script src="webscript.js"></script>
