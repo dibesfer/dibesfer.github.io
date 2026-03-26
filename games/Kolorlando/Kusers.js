@@ -12,6 +12,7 @@ const kAuthForm = document.getElementById("kAuthForm")
 const kAuthSubmit = document.getElementById("kAuthSubmit")
 const kAuthLogout = document.getElementById("kAuthLogout")
 const idDiv = document.getElementById("idDiv")
+const idDivUsername = document.getElementById("idDiv_username")
 
 let kolorlandoAuthUser = null
 let kolorlandoUserProfile = null
@@ -29,6 +30,9 @@ function setIdentityVisual(username, isLoggedIn) {
     its tooltip and image filter to signal login state without redesigning
     the page. */
     authUserDisplay.textContent = username
+    /* The compact header badge should surface the current username directly
+    so the logged-in state is visible even when the auth modal is closed. */
+    idDivUsername.textContent = isLoggedIn ? username : ""
     idDiv.title = isLoggedIn ? `Logged in as ${username}` : "Anonymous user"
     idDiv_icon_wrapper.style = isLoggedIn ? "background-color: green" : "background-color: pink"
 }
@@ -263,9 +267,10 @@ async function handleLogOut() {
             throw error
         }
 
-        authPassword.value = ""
-        await refreshAuthState()
-        setAuthMessage("You are anonymous again.", false)
+        /* A full reload is the safest way to guarantee every Kolorlando menu
+        script, presence subscription, and cached UI fragment goes back to the
+        anonymous boot state immediately after the session is destroyed. */
+        window.location.reload()
     } catch (error) {
         setAuthMessage(error.message || "Log out error", true)
     } finally {
