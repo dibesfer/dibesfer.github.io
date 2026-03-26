@@ -189,6 +189,7 @@ footer {
     }
 }
 
+/* mobile */
 @media screen and (max-width: 800px) {
     #kImages {
         padding: 0;
@@ -198,6 +199,10 @@ footer {
     .kLevels {
         width: 100%;
         margin: 10px;
+    }
+
+    .desktopDiv{
+        display: none;
     }
 }
 
