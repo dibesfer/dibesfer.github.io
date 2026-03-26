@@ -24,7 +24,7 @@ body {
     line-height: 2;
     background-color: gray;
     background-image: radial-gradient(rgb(0, 72, 131), black);
-    color: white;    
+    color: white;
 }
 
 header {
@@ -36,11 +36,13 @@ header {
     text-shadow: 5px 5px black;
     font-size: 1.2rem;
 }
-header > h1 {
+
+header>h1 {
     cursor: pointer;
 }
 
-header > h1 , header > p {
+header>h1,
+header>p {
     width: max-content;
 
 }
@@ -119,7 +121,7 @@ footer {
     flex-wrap: wrap;
     justify-content: space-evenly;
     align-items: center;
-    
+
 }
 
 /* Hall cards add their own card shell while still living inside #kImages. */
@@ -166,8 +168,7 @@ footer {
 
 .kLevels:hover {
     box-shadow: 0 0 15px white;
-    
-    border: solid 2px white;
+
 
 }
 
@@ -204,7 +205,7 @@ footer {
     display: none;
 }
 
-.box{
+.box {
     max-width: 400px;
     margin: auto;
     text-align: left;
@@ -216,23 +217,27 @@ footer {
     position: fixed;
     top: 20px;
     right: 20px;
-    max-width: 100px;
+    max-width: 200px;
     font-size: 1rem;
     text-align: right;
-    background-color: cadetblue;
+    display: flex;
+    align-items: center;
+
+}
+
+#idDiv_icon_wrapper {
+    width: 50px;
+    margin-left: 15px;
     border: solid 2px white;
     border-radius: 50%;
-    
+    background-color: cadetblue;
+    cursor: pointer;
+
 }
 
 #idDiv_icon {
-    filter: invert(1);
-    width: 50px;
-    
+
     display: block;
-    
-    cursor: pointer;
-   
 }
 
 .authModal {
@@ -283,7 +288,7 @@ footer {
     text-align: left;
 }
 
-.authModal_form > input {
+.authModal_form>input {
     width: 100%;
     padding: 12px;
     border: solid 2px rgb(117, 185, 255);
@@ -293,11 +298,11 @@ footer {
     font: inherit;
 }
 
-.authModal_form > input::placeholder {
+.authModal_form>input::placeholder {
     color: rgba(255, 255, 255, 0.72);
 }
 
-.authModal_form > input:focus {
+.authModal_form>input:focus {
     outline: solid 2px white;
     outline-offset: 2px;
 }

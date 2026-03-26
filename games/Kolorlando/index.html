@@ -13,8 +13,6 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Ubuntu+Sans+Mono:ital,wght@0,400..700;1,400..700&display=swap"
         rel="stylesheet">
-
-
     <!-- SUPABASE cdn -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 
@@ -24,22 +22,31 @@
 <body>
 
     <div id="idDiv">
-        <img id="idDiv_icon" src="https://upload.wikimedia.org/wikipedia/commons/9/99/Sample_User_Icon.png" alt="user sign">
-        <!-- <p>Sign/Log in</p> -->
+        <span>anon</span>
+        <div id="idDiv_icon_wrapper"> 
+            <img id="idDiv_icon" 
+            src="https://upload.wikimedia.org/wikipedia/commons/9/99/Sample_User_Icon.png"
+                alt="user sign">
+        </div> <!-- <p>Sign/Log in</p> -->
     </div>
 
     <div id="authModal" class="authModal invisible" aria-hidden="true">
         <div id="authModal_backdrop" class="authModal_backdrop"></div>
 
-        <div id="authModal_panel" class="authModal_panel" role="dialog" aria-modal="true" aria-labelledby="authModal_title">
+        <div id="authModal_panel" class="authModal_panel" role="dialog" aria-modal="true"
+            aria-labelledby="authModal_title">
             <h2 id="authModal_title">Sign / Log in</h2>
 
-            <form class="authModal_form">
+            <p id="authUserDisplay" class="authModal_message" aria-live="polite">Anonymous</p>
+
+            <form id="kAuthForm" class="authModal_form">
                 <label for="authIdentity">Mail or username</label>
-                <input id="authIdentity" name="authIdentity" type="text" autocomplete="username email" placeholder="Mail or username">
+                <input id="authIdentity" name="authIdentity" type="text" autocomplete="username email"
+                    placeholder="Mail or username">
 
                 <label for="authPassword">Password</label>
-                <input id="authPassword" name="authPassword" type="password" autocomplete="current-password" placeholder="Password">
+                <input id="authPassword" name="authPassword" type="password" autocomplete="current-password"
+                    placeholder="Password">
 
                 <p id="authMessage" class="authModal_message" aria-live="polite">
 
@@ -47,7 +54,8 @@
 
                 </p>
 
-                <button class="authModal_sendButton" type="submit">SEND</button>
+                <button id="kAuthSubmit" class="authModal_sendButton" type="submit">SEND</button>
+                <button id="kAuthLogout" class="authModal_sendButton invisible" type="button">LOG OUT</button>
             </form>
         </div>
     </div>
@@ -123,12 +131,12 @@
 
             <div class="box">
                 <p>Create your singleplayer world</p>
-            <p>Choose a template</p>
-            <ol>
-                <li>City</li>
-                <li>Voxelaar (100x100x3 voxels)</li>
-                <li>other</li>
-            </ol>
+                <p>Choose a template</p>
+                <ol>
+                    <li>City</li>
+                    <li>Voxelaar (100x100x3 voxels)</li>
+                    <li>other</li>
+                </ol>
             </div>
             <div class="kLevelsDisplay">
                 <div class="kLevels" onclick="window.location = '/games/Kolorlando/game.html' ">
@@ -157,7 +165,7 @@
             </div>
         </div>
 
-                <h2>People online <span id="peopleOnlineCount">0</span></h2>
+        <h2>People online <span id="peopleOnlineCount">0</span></h2>
 
 
         <div id="info">
@@ -196,6 +204,7 @@
     <script src="webscript.js"></script>
 
     <script src="/assets/scripts/supabase.js"></script>
+    <script src="Kusers.js"></script>
     <script>
         // This element shows how many live sessions are currently connected
         // to the shared Kolorlando Presence channel.
