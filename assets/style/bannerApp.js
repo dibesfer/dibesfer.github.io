@@ -67,6 +67,14 @@ banner.link = "https://dibesfer.com/web/chat/";
 banners.push(banner);
 banner = new Banner();
 
+banner.icon = "/web/SquareFaceCreator/assets/branding/SFC.png";
+banner.title = "Square Face Creator";
+banner.desc = "Generate custom square faces!";
+banner.link = "https://dibesfer.com/web/SquareFaceGenerator/";
+
+banners.push(banner);
+banner = new Banner();
+
 banner.emoji = "💬";
 banner.title = "Fake Language Generator";
 banner.desc = "Generate fake language text";
