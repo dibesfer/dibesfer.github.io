@@ -108,6 +108,15 @@ banners.push(banner);
 banner = new Banner();
 
 
+
+banner.icon = "/web/javascript/calculator/assets/Calculator_Icon.png";
+banner.title = "Calculator";
+banner.desc = "Calculate anything";
+banner.link = "/web/javascript/calculator/";
+
+banners.push(banner);
+banner = new Banner();
+
 banner.emoji = "🪶";
 banner.title = "Guestbook";
 banner.desc = "Leave your footprint!";
