@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Karakteristiks</title>
+    <title>📄 Karakteristiks</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -33,9 +33,19 @@
             text-align: center;
         }
 
-        details {
+        #legendDetails {
             border: solid 3px white;
+            border-radius: 15px;
+        }
+
+        summary {
             padding: 15px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        summary>h2 {
+            display: inline-block;
         }
 
         hr {
@@ -54,6 +64,11 @@
         li:hover {
             font-weight: bold;
         }
+
+        #legend {
+            padding: 15px;
+        }
+
         .done {
             color: rgb(81, 255, 81);
         }
@@ -79,8 +94,8 @@
 
 <body>
     <header>
-        <h1>Karakteristiks</h1>
-        
+        <h1>📄 Karakteristiks</h1>
+
         <br>
         <hr>
         <br>
@@ -90,19 +105,22 @@
 
     <br>
 
-    <details>
-        <summary>Legend</summary>
-        <p class="done">done</p>
-        <p class="not-done">not done</p>
-        <p class="not-used">not used
-            (done but not implemented)</p>
-        <p class="to-improve">to-improve</p>
-        <p class="implemented-in">implemented-in</p>
+    <details id="legendDetails">
+        <summary><h2>Legend</h2></summary>
+        <div id="legend">
+            <p class="done">done</p>
+            <p class="not-done">not done</p>
+            <p class="not-used">not used
+                (done but not implemented)</p>
+            <p class="to-improve">to-improve</p>
+            <p class="implemented-in">implemented-in</p>
+        </div>
     </details>
 
     <br>
 
-    <h2>🖥️ Screen</h2>
+    <details>
+        <summary><h2>🖥️ Screen</h2></summary>
 
     <ol>
         <li class="done">Resizing</li>
@@ -111,20 +129,25 @@
         <p><span class="implemented-in">code/graphics/screen.js, style.css, script.js</span></p>
 
     </ol>
+    </details>
 
-    <h2>📷 Camera</h2>
+    <details>
+        <summary><h2>📷 Camera</h2></summary>
     <ol>
         <li class="done">3D Camera</li>
         <p><span class="implemented-in">script.js, code/graphics/camera.js</span></p>
         <li class="done">Skyrim Camera</li>
-        <p>Zoomable camera from First Person mode to Third Person Mode <span class="implemented-in">script.js, code/graphics/camera.js</span></p>
+        <p>Zoomable camera from First Person mode to Third Person Mode <span class="implemented-in">script.js,
+                code/graphics/camera.js</span></p>
         <li class="done">WoW Camera</li>
         <p><span class="implemented-in">script.js, code/graphics/camera.js</span></p>
         <li class="done">Lego LoL Camera</li>
         <p><span class="implemented-in">script.js, code/graphics/camera.js</span></p>
     </ol>
+    </details>
 
-    <h2>🎛️ User Interface (UI)</h2>
+    <details>
+        <summary><h2>🎛️ User Interface (UI)</h2></summary>
     <ol>
         <li class="done">Hotbar</li>
         <p>8 item slots <span class="implemented-in">code/UI/inventory.js, game.html, style.css</span></p>
@@ -133,16 +156,20 @@
         <li class="not-used">Chat</li>
         <p><span class="implemented-in">code/UI/chat.js, game.html, style.css</span></p>
         <li class="done">Consola</li>
-        <p>Shows FPS (Frames per second) and player coords (XYZ) <span class="implemented-in">script.js, game.html, style.css</span></p>
+        <p>Shows FPS (Frames per second) and player coords (XYZ) <span class="implemented-in">script.js, game.html,
+                style.css</span></p>
         <li class="done">Joysticks</li>
         <p>Mobile only
             <span class="implemented-in">script.js, game.html, style.css</span>
         </p>
         <li class="done">Panel menu</li>
-        <p>Shows Encyclopedia, Inventory, Character, Settings and About <span class="implemented-in">code/UI/menu.js, game.html, style.css</span></p>
+        <p>Shows Encyclopedia, Inventory, Character, Settings and About <span class="implemented-in">code/UI/menu.js,
+                game.html, style.css</span></p>
     </ol>
+    </details>
 
-    <h2>🧍 Player</h2>
+    <details>
+        <summary><h2>🧍 Player</h2></summary>
     <ol>
         <li class="done">Movement, double jump and <span class="not-done">crouch</span>.</li>
         <p><span class="implemented-in">script.js. Crouch has no dedicated file yet.</span></p>
@@ -161,17 +188,21 @@
         <li class="not-done">Equipment/wearables</li>
         <p><span class="implemented-in">game.html, style.css</span></p>
         <li class="to-improve">Tools</li>
-        <p>weapons/goxels (gltf models scaled 0.1 and centered on X Y Z) <span class="implemented-in">script.js, itemAppearance.js</span></p>
+        <p>weapons/goxels (gltf models scaled 0.1 and centered on X Y Z) <span class="implemented-in">script.js,
+                itemAppearance.js</span></p>
         <li class="done">HUD </li>
-        <p>with health bar, selected voxel and game mode <span class="implemented-in">playerHud.js, code/UI/inventory.js, game.html, style.css</span></p>
-        
+        <p>with health bar, selected voxel and game mode <span class="implemented-in">playerHud.js,
+                code/UI/inventory.js, game.html, style.css</span></p>
+
         <li class="done">Left and right punch</li>
         <p><span class="implemented-in">script.js, entityModel.js</span></p>
         <li class="done">Shooting</li>
         <p><span class="implemented-in">script.js</span></p>
     </ol>
+    </details>
 
-    <h2>🌍 World</h2>
+    <details>
+        <summary><h2>🌍 World</h2></summary>
     <ol>
         <li class="done">NPCs (walker, chaser, talker)</li>
         <p><span class="implemented-in">entity.js, maps/voxelandiaMap.js, maps/cityMap.js, script.js</span></p>
@@ -186,7 +217,9 @@
             <p><span class="implemented-in">vehicle.js, script.js</span></p>
         </ol>
     </ol>
-    <h2>📱 Mobile mode</h2>
+    </details>
+    <details>
+        <summary><h2>📱 Mobile mode</h2></summary>
     <ol>
         <li class="done">Left joystick for movement and right joystick for camera</li>
         <p><span class="implemented-in">script.js, game.html, style.css</span></p>
@@ -194,7 +227,9 @@
         <p><span class="implemented-in">script.js, code/graphics/screen.js</span></p>
 
     </ol>
-    <h2>🧱 Voxel Edition</h2>
+    </details>
+    <details>
+        <summary><h2>🧱 Voxel Edition</h2></summary>
     <ol>
         <li class="done">12 different voxels</li>
         <p><span class="implemented-in">maps/voxelandiaMap.js, code/UI/inventory.js</span></p>
@@ -203,8 +238,10 @@
         <li class="done">Creative mode and Survival mode</li>
         <p><span class="implemented-in">code/UI/inventory.js, script.js, game.html</span></p>
     </ol>
+    </details>
 
-    <h2>🎮 Controls</h2>
+    <details>
+        <summary><h2>🎮 Controls</h2></summary>
 
     <h4>Desktop</h4>
     <ol>
@@ -212,30 +249,39 @@
         <p><span class="implemented-in">script.js, game.html</span></p>
 
     </ol>
+    </details>
 
-    <h2>⌨️ Commands</h2>
+    <details>
+        <summary><h2>⌨️ Commands</h2></summary>
     <ol>
         <li class="done">/debugmode</li>
-        <p>Shows debug information like collisions or raycasts <span class="implemented-in">code/commands.js, script.js</span></p>
+        <p>Shows debug information like collisions or raycasts <span class="implemented-in">code/commands.js,
+                script.js</span></p>
         <li class="done">/flymode </li>
         <p>(enables flying) <span class="implemented-in">code/commands.js, script.js</span></p>
         <li class="done">/spawn </li>
         <p>(respawns player) <span class="implemented-in">code/commands.js, script.js</span></p>
     </ol>
+    </details>
 
-    <h2>🌐 Multiplayer</h2>
+    <details>
+        <summary><h2>🌐 Multiplayer</h2></summary>
     <ol>
         <li class="done">Presence</li>
-        <p>Remote sessions detection <span class="implemented-in">multiplayer.js, multiplayer.html, index.html</span></p>
+        <p>Remote sessions detection <span class="implemented-in">multiplayer.js, multiplayer.html, index.html</span>
+        </p>
         <li class="done">Broadcasting</li>
-        <p>Low-latency updates on position, rotation and animation. <span class="implemented-in">multiplayer.js</span></p>
+        <p>Low-latency updates on position, rotation and animation. <span class="implemented-in">multiplayer.js</span>
+        </p>
         <li class="not-used">Authentication</li>
         <p><span class="implemented-in">index.html, Kusers.js, webscript.js, webstyle.css</span></p>
         <li class="not-used">Chat</li>
         <p><span class="implemented-in">code/UI/chat.js, game.html, multiplayer.html, style.css</span></p>
     </ol>
+    </details>
 
-    <h2>⚙️ Settings</h2>
+    <details>
+        <summary><h2>⚙️ Settings</h2></summary>
     <ol>
         <li class="done">dark / light theme</li>
         <p><span class="implemented-in">code/UI/menu.js, style.css</span></p>
@@ -244,17 +290,20 @@
         <li class="not-done">Background music</li>
         <p><span class="implemented-in">UI only in: game.html, multiplayer.html</span></p>
     </ol>
+    </details>
 
     <hr>
-    <h2>🔗 Links</h2>
+    <details open>
+        <summary><h2>🔗 Links</h2></summary>
     <ul>
         <li><a href="/games/Kolorlando/">Landing Page</a></li>
         <li><a href="/games/Kolorlando/game.html">Game</a></li>
         <li><a href="/games/Kolorlando/multiplayer.html">Multiplayer</a></li>
         <li><a href="/web/SquareFaceCreator/">Square Face Creator</a></li>
         <li><a href="/games/Kolorlando/characteristics.html">Characteristics</a></li>
-        
+
     </ul>
+    </details>
     <footer>
         <hr>
         <p>Game made with ThreeJS by <a href="https://dibesfer.github.io">dibesfer</a> and Codex</p>
