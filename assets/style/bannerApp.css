@@ -53,9 +53,13 @@
 .bannerApp_title {
     padding: 5px;
     flex: 50%;
+    height: 50%;
     font-size: 1.5rem;
     border-bottom: 1px white solid;
     font-family: monospace;
+    white-space: nowrap;
+    overflow-x: auto;
+    line-height: 1;
 }
 
 .bannerApp:hover>.bannerApp_text>.bannerApp_title {
