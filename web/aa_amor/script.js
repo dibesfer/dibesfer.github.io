@@ -82,7 +82,7 @@ function app() {
         mainBool = true
     }
 
-    console.log(url, url.length)
+    //console.log(url, url.length)
 
     if (mainBool) {
 
