@@ -27,6 +27,7 @@ import { buildVoxelandiaMap } from './maps/voxelandiaMap.js';
 import { createMultiplayerController } from './multiplayer.js';
 import { createCommandHandler } from './code/commands.js';
 import { createLocalWorldSaveStore } from './code/data/worldSaving.js';
+import { SpaceShipVehicle } from './vehicle.js';
 
 const KOLORLANDO_MODE = window.KOLORLANDO_MODE === 'multiplayer' ? 'multiplayer' : 'singleplayer';
 const MULTIPLAYER_ENABLED = KOLORLANDO_MODE === 'multiplayer';
@@ -1114,6 +1115,16 @@ entities.push(new TalkerEntity({
   groundY: GROUND_Y,
   name: 'Guide',
   dialogLines: ['Welcome back to Kolorlando', 'Check the item appearances nearby', 'Debug mode shows the item spheres'],
+}));
+
+/* Vehicles are tracked alongside other world entities for now so existing
+HUD, minimap, and frame update systems can see them without another registry.
+This first spaceship is intentionally parked close to spawn for quick testing. */
+const firstSpaceShipPosition = new THREE.Vector3(30, 6, -7);
+entities.push(new SpaceShipVehicle({
+  scene,
+  position: firstSpaceShipPosition,
+  name: 'SpaceShip1',
 }));
 
 const itemAppearances = [];
