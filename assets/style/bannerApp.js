@@ -124,7 +124,12 @@ banner.link = "https://dibesfer.com/web/guestbook";
 
 banners.push(banner);
 
+let bannersHTML = ""
 
 banners.forEach((element) => {
-    showBanners.innerHTML += element.render();
+
+  bannersHTML += element.render()
+
 });
+
+showBanners.innerHTML = bannersHTML;

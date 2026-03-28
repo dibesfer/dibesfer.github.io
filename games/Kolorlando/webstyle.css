@@ -53,7 +53,7 @@ header a {
 
 header,
 footer {
-    padding: 40px;
+    padding: 20px;
     background-color: rgb(21, 64, 98);
     color: rgb(255, 255, 255);
 }
