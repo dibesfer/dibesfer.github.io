@@ -206,6 +206,18 @@ function areBroadcastPayloadsEqual(a, b) {
   );
 }
 
+function formatCoordValue(value) {
+  return readFiniteNumber(value).toFixed(2);
+}
+
+function formatCoordsLabel(transform) {
+  /* The online list is meant to be human-readable during multiplayer tests, so
+  we format the latest known position as a short XYZ triplet instead of showing
+  anonymous ids that are harder to scan while moving around the world. */
+  if (!transform) return 'waiting for coords...';
+  return `x:${formatCoordValue(transform.x)} y:${formatCoordValue(transform.y)} z:${formatCoordValue(transform.z)}`;
+}
+
 export function createMultiplayerController({
   scene,
   getLocalPlayerState,
@@ -227,6 +239,8 @@ export function createMultiplayerController({
   let broadcastAccumulator = 0;
   let lastPublishedPresence = null;
   let lastBroadcastPayload = null;
+  let lastPresenceState = {};
+  const latestTransformsBySessionId = new Map();
 
   /* The small dropdown is a debugging aid so we can inspect the raw Presence
   player/session data without opening devtools every time a sync arrives. */
@@ -254,8 +268,8 @@ export function createMultiplayerController({
         if (!payload?.sessionId) return;
         rows.push({
           id: String(payload.sessionId),
-          playerId: String(payload.playerId ?? 'guest'),
           onlineAt: Date.parse(payload.online_at ?? '') || 0,
+          coordsLabel: formatCoordsLabel(latestTransformsBySessionId.get(String(payload.sessionId))),
         });
       });
     });
@@ -274,12 +288,13 @@ export function createMultiplayerController({
     }
 
     peopleOnlineListElement.innerHTML = rows
-      .map((row, index) => `<div>${index + 1} | ${row.playerId} | ${row.id}</div>`)
+      .map((row, index) => `<div>${index + 1} | ${row.coordsLabel}</div>`)
       .join('');
   }
 
   function removeRemotePlayer(sessionId) {
     const remotePlayer = remotePlayers.get(sessionId);
+    latestTransformsBySessionId.delete(sessionId);
     if (!remotePlayer) return;
     if (remotePlayer.root.parent) {
       remotePlayer.root.parent.remove(remotePlayer.root);
@@ -299,6 +314,14 @@ export function createMultiplayerController({
 
   function applyRemoteBroadcast(sessionId, payload) {
     const remotePlayer = getOrCreateRemotePlayer(sessionId);
+
+    /* Cache the most recent network transform so the "People online" panel can
+    show live coordinates for each connected session instead of opaque ids. */
+    latestTransformsBySessionId.set(sessionId, {
+      x: readFiniteNumber(payload.x),
+      y: readFiniteNumber(payload.y),
+      z: readFiniteNumber(payload.z),
+    });
 
     remotePlayer.targetPosition.set(
       readFiniteNumber(payload.x),
@@ -340,6 +363,7 @@ export function createMultiplayerController({
   }
 
   function handlePresenceSync(state) {
+    lastPresenceState = state;
     setPeopleOnlineCount(countPresenceSessions(state));
     renderPeopleOnlineList(state);
     syncRemotePlayersFromState(state);
@@ -382,6 +406,12 @@ export function createMultiplayerController({
     if (areBroadcastPayloadsEqual(lastBroadcastPayload, nextBroadcastPayload)) return;
 
     lastBroadcastPayload = nextBroadcastPayload;
+    latestTransformsBySessionId.set(localSessionId, {
+      x: nextBroadcastPayload.x,
+      y: nextBroadcastPayload.y,
+      z: nextBroadcastPayload.z,
+    });
+    renderPeopleOnlineList(lastPresenceState);
     await channel.send({
       type: 'broadcast',
       event: PLAYER_TRANSFORM_BROADCAST_EVENT,
@@ -402,6 +432,7 @@ export function createMultiplayerController({
       .on('broadcast', { event: PLAYER_TRANSFORM_BROADCAST_EVENT }, ({ payload }) => {
         if (!payload?.sessionId || payload.sessionId === localSessionId) return;
         applyRemoteBroadcast(payload.sessionId, payload);
+        renderPeopleOnlineList(lastPresenceState);
       })
       .subscribe(async status => {
         if (status === 'SUBSCRIBED') {
