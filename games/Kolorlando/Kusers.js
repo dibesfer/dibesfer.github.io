@@ -13,9 +13,11 @@ const kAuthSubmit = document.getElementById("kAuthSubmit")
 const kAuthLogout = document.getElementById("kAuthLogout")
 const idDiv = document.getElementById("idDiv")
 const idDivUsername = document.getElementById("idDiv_username")
+const KOLORLANDO_PLAYER_NAME_STORAGE_KEY = "kolorlando.playerName"
 
 let kolorlandoAuthUser = null
 let kolorlandoUserProfile = null
+let kolorlandoLoginReloadPending = false
 
 /* These small text helpers keep the UI copy consistent every time auth
 state changes, whether that change comes from a page load, sign in, sign up,
@@ -35,6 +37,20 @@ function setIdentityVisual(username, isLoggedIn) {
     idDivUsername.textContent = isLoggedIn ? username : ""
     idDiv.title = isLoggedIn ? `Logged in as ${username}` : "Anonymous user"
     idDiv_icon_wrapper.style = isLoggedIn ? "background-color: green" : "background-color: pink"
+}
+
+function persistKolorlandoPlayerName(username) {
+    /* The game page is a separate document from the landing page auth modal, so
+    we cache the resolved player name in localStorage where the game can read it
+    later without needing to re-run this auth script on every scene page. */
+    const safeUsername = typeof username === "string" ? username.trim() : ""
+
+    if (!safeUsername) {
+        window.localStorage.removeItem(KOLORLANDO_PLAYER_NAME_STORAGE_KEY)
+        return
+    }
+
+    window.localStorage.setItem(KOLORLANDO_PLAYER_NAME_STORAGE_KEY, safeUsername)
 }
 
 function setAuthMode(isLoggedIn) {
@@ -164,6 +180,7 @@ async function refreshAuthState() {
         kolorlandoUserProfile = null
         window.kolorlandoAuthUser = null
         window.kolorlandoUserProfile = null
+        persistKolorlandoPlayerName("")
         authIdentity.value = ""
         authPassword.value = ""
         setIdentityVisual("Anonymous", false)
@@ -185,8 +202,19 @@ async function refreshAuthState() {
 
     authIdentity.value = ""
     authPassword.value = ""
+    persistKolorlandoPlayerName(username)
     setIdentityVisual(username, true)
-    setAuthMode(true)
+
+    /* A successful password login now reloads the page immediately after the
+    session is created. While that handoff is in progress we deliberately keep
+    the anonymous form mode instead of flashing the logged-in logout panel for
+    a fraction of a second right before navigation restarts the page. */
+    if (kolorlandoLoginReloadPending) {
+        setAuthMode(false)
+    } else {
+        setAuthMode(true)
+    }
+
     setAuthMessage(`You are logged as ${username}`, false)
 
     return user
@@ -215,16 +243,25 @@ async function signUpWithEmail(email, password) {
 async function logInWithEmail(email, password) {
     /* The login branch keeps Monochat's password flow and then refreshes the
     local modal state from the newly created session. */
+    kolorlandoLoginReloadPending = true
+
     const { error } = await database.auth.signInWithPassword({
         email: email,
         password: password
     })
 
     if (error) {
+        kolorlandoLoginReloadPending = false
         throw error
     }
 
     await refreshAuthState()
+
+    /* A full reload right after a confirmed login makes the rest of the
+    landing page boot again from the authenticated state, which is safer than
+    expecting every already-mounted menu, presence, and game entry helper to
+    react perfectly to the session swap in place. */
+    window.location.reload()
 }
 
 async function handleAuthSubmit(event) {

@@ -456,7 +456,7 @@ img {
 
 #kolorlandiaCharacterMenu_slots {
     line-height: 0;
-    background-color: gray;
+    
     width: 25%;
     aspect-ratio: 1;
     margin: auto 0;
@@ -464,15 +464,16 @@ img {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
     grid-gap: 5px;
-    padding: 5px;
+    
 }
 
 #kolorlandiaCharacterMenu_slots>div {
-    border: solid 3px black;
+    border: solid 2px black;
     aspect-ratio: 1;
     display: flex;
     justify-content: center;
     align-items: center;
+    background-color: rgb(73, 73, 73, 0.5);
 
 }
 

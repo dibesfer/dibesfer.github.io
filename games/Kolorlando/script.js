@@ -30,6 +30,60 @@ import { createLocalWorldSaveStore } from './code/data/worldSaving.js';
 
 const KOLORLANDO_MODE = window.KOLORLANDO_MODE === 'multiplayer' ? 'multiplayer' : 'singleplayer';
 const MULTIPLAYER_ENABLED = KOLORLANDO_MODE === 'multiplayer';
+const KOLORLANDO_PLAYER_NAME_STORAGE_KEY = 'kolorlando.playerName';
+
+function resolveLocalPlayerDisplayName() {
+  /* The in-world player body lives on the game page, while auth currently
+  happens on the landing page. Reading the cached name from localStorage lets
+  the 3D scene show the same identity without depending on the auth modal
+  script being loaded here. */
+  const storedName = window.localStorage.getItem(KOLORLANDO_PLAYER_NAME_STORAGE_KEY);
+  const trimmedStoredName = typeof storedName === 'string' ? storedName.trim() : '';
+  return trimmedStoredName || 'Anon';
+}
+
+function createPlayerNameSprite(name) {
+  /* A canvas-backed sprite keeps the label lightweight, crisp, and easy to
+  place above the avatar head without introducing DOM overlays into the 3D HUD. */
+  const canvas = document.createElement('canvas');
+  canvas.width = 320;
+  canvas.height = 96;
+  const context = canvas.getContext('2d');
+
+  if (!context) {
+    return null;
+  }
+
+  const safeName = typeof name === 'string' && name.trim() ? name.trim() : 'Anon';
+
+  context.clearRect(0, 0, canvas.width, canvas.height);
+  context.fillStyle = 'rgba(0, 0, 0, 0.6)';
+  context.fillRect(32, 22, canvas.width - 64, 52);
+  context.lineWidth = 4;
+  context.strokeStyle = 'rgba(255, 255, 255, 0.18)';
+  context.strokeRect(32, 22, canvas.width - 64, 52);
+  context.textAlign = 'center';
+  context.textBaseline = 'middle';
+  context.font = 'bold 28px "Ubuntu Sans Mono", monospace';
+  context.fillStyle = '#ffffff';
+  context.fillText(safeName, canvas.width * 0.5, canvas.height * 0.5);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+
+  const material = new THREE.SpriteMaterial({
+    map: texture,
+    transparent: true,
+    depthWrite: false,
+    depthTest: false,
+  });
+
+  const sprite = new THREE.Sprite(material);
+  sprite.scale.set(1.85, 0.56, 1);
+  sprite.renderOrder = 2500;
+  sprite.frustumCulled = false;
+  return sprite;
+}
 
 let mobileMode = false;
 const touchQuery = window.matchMedia('(hover: none) and (pointer: coarse)');
@@ -1072,14 +1126,17 @@ const ITEM_PICKUP_MAGNET_MAX_SPEED = 10.5;
 const TEST_ITEM_SPAWN_DISTANCE = 3;
 const TEST_ITEM_BEHIND_DISTANCE = 10;
 const TEST_ITEM_SIDE_OFFSET = 2.8;
-const firstItemSpawnPosition = playerSpawnPoint.clone().add(new THREE.Vector3(0, 0, -TEST_ITEM_SPAWN_DISTANCE));
+/* ItemAppearance computes its rendered Y from groundY plus its hover settings,
+so the Spawn Point keeps its authored X/Z at the world origin while using an
+elevated base plane so the visible pickup sits at world Y=2. */
+const firstItemSpawnPosition = new THREE.Vector3(0, 0, 0);
 itemAppearances.push(new ItemAppearance({
   scene,
   position: firstItemSpawnPosition,
   label: 'Spawn Point',
   inventoryType: 'Spawn Point',
   pickable: false,
-  groundY: GROUND_Y,
+  groundY: GROUND_Y + 2,
 }));
 
 const swordItemSpawnPosition = playerSpawnPoint.clone().add(new THREE.Vector3(TEST_ITEM_SIDE_OFFSET, 0, -TEST_ITEM_BEHIND_DISTANCE));
@@ -1310,6 +1367,14 @@ const playerHumanoid = createHumanoidModel({
 });
 playerBody.add(playerHumanoid.root);
 playerBody.scale.set(1, PLAYER_HEIGHT / playerHumanoid.baseHeight, 1);
+
+const playerNameSprite = createPlayerNameSprite(resolveLocalPlayerDisplayName());
+if (playerNameSprite) {
+  /* The label sits a bit above the voxel head so it reads cleanly in third
+  person while staying attached to the same transform as the player body. */
+  playerNameSprite.position.set(0, PLAYER_HEIGHT + 0.62, 0);
+  playerBody.add(playerNameSprite);
+}
 
 // Neutral defaults keep every held item consistent when first equipped.
 // Individual items can still override any of these fields later if they need
