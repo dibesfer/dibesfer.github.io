@@ -70,7 +70,7 @@ banner = new Banner();
 banner.icon = "/web/SquareFaceCreator/assets/branding/SFC.png";
 banner.title = "Square Face Creator";
 banner.desc = "Generate custom square faces!";
-banner.link = "https://dibesfer.com/web/SquareFaceGenerator/";
+banner.link = "https://dibesfer.com/web/SquareFaceCreator/";
 
 banners.push(banner);
 banner = new Banner();
