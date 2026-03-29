@@ -8,6 +8,7 @@ import {
 const PRESENCE_CHANNEL_NAME = 'kolorlando-world';
 const PLAYER_TRANSFORM_BROADCAST_EVENT = 'player:transform';
 const LOCAL_PLAYER_ID_STORAGE_KEY = 'kolorlando.multiplayer.localPlayerId';
+const LOCAL_PLAYER_NAME_STORAGE_KEY = 'kolorlando.playerName';
 const LOCAL_PRESENCE_PUSH_INTERVAL = 0.1;
 const LOCAL_BROADCAST_PUSH_INTERVAL = 0.1;
 const REMOTE_POSITION_LERP_SPEED = 10;
@@ -59,6 +60,30 @@ function getOrCreateLocalPlayerId() {
   const generatedPlayerId = generateId('player');
   window.localStorage.setItem(LOCAL_PLAYER_ID_STORAGE_KEY, generatedPlayerId);
   return generatedPlayerId;
+}
+
+function resolvePresenceDisplayName(payloadDisplayName = '') {
+  /* The online panel should show a human-readable name for every session. We
+  prefer an explicit Presence payload name when available, otherwise we fall
+  back to the same cached local username used by the in-world player label,
+  and finally to "Anon" so anonymous guests still render cleanly. */
+  const payloadName = typeof payloadDisplayName === 'string' ? payloadDisplayName.trim() : '';
+  if (payloadName) return payloadName;
+
+  const storedName = window.localStorage.getItem(LOCAL_PLAYER_NAME_STORAGE_KEY);
+  const trimmedStoredName = typeof storedName === 'string' ? storedName.trim() : '';
+  return trimmedStoredName || 'Anon';
+}
+
+function escapeHtml(text) {
+  /* Presence data can come from other clients, so escaping keeps the debug
+  list safe even if a display name contains characters that look like HTML. */
+  return String(text)
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
 }
 
 function buildRemoteOutfit() {
@@ -164,6 +189,7 @@ function snapshotPresencePayload(state, localPlayerId) {
   return {
     playerId: localPlayerId,
     sessionId: state.sessionId,
+    displayName: resolvePresenceDisplayName(),
     online_at: new Date().toISOString(),
   };
 }
@@ -173,6 +199,7 @@ function arePresencePayloadsEqual(a, b) {
   return (
     a.playerId === b.playerId
     && a.sessionId === b.sessionId
+    && a.displayName === b.displayName
   );
 }
 
@@ -268,6 +295,7 @@ export function createMultiplayerController({
         if (!payload?.sessionId) return;
         rows.push({
           id: String(payload.sessionId),
+          displayName: resolvePresenceDisplayName(payload.displayName),
           onlineAt: Date.parse(payload.online_at ?? '') || 0,
           coordsLabel: formatCoordsLabel(latestTransformsBySessionId.get(String(payload.sessionId))),
         });
@@ -288,7 +316,7 @@ export function createMultiplayerController({
     }
 
     peopleOnlineListElement.innerHTML = rows
-      .map((row, index) => `<div>${index + 1} | ${row.coordsLabel}</div>`)
+      .map((row, index) => `<div>${index + 1}. ${escapeHtml(row.displayName)} ${escapeHtml(row.coordsLabel)}</div>`)
       .join('');
   }
 

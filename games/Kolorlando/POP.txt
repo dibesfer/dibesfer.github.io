@@ -96,6 +96,14 @@ Issues: SRP is laggy for low latency changes
 - Broadcast drives movement with lower visible lag
 - no custom tables are required for the first playable online version
 
+So planning-wise:
+
+add userId to Presence
+detect duplicate authenticated users
+choose winner by timestamp
+disconnect older tab
+later, if needed, back it with a DB active_session
+
 ***
 
 --------
