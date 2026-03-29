@@ -18,6 +18,7 @@ const loadedImageCache = {};
 const recoloredImageCache = {};
 let canvasBackgroundColor = backgroundColorInput.value;
 const saveCodeVersion = "SFC1";
+const playerFaceStorageKey = "kolorlando.playerFaceData";
 const desktopPointerMediaQuery = window.matchMedia("(hover: hover) and (pointer: fine)");
 
 const categoryItems = {
@@ -473,11 +474,19 @@ function generateSaveCode() {
 function updateSaveDataPre() {
     // The save-code preview should always reflect the live face state so
     // users do not need a separate save click before copying the code.
-    if (!saveDataPre) {
-        return;
+    const saveCode = generateSaveCode();
+
+    if (saveDataPre) {
+        saveDataPre.textContent = saveCode;
     }
 
-    saveDataPre.textContent = generateSaveCode();
+    // Keeping the latest generated payload in localStorage lets Kolorlando
+    // read the same face data locally without needing a manual paste step.
+    try {
+        window.localStorage.setItem(playerFaceStorageKey, saveCode);
+    } catch (error) {
+        console.warn("Failed to persist Square Face Creator data locally.", error);
+    }
 }
 
 function applySaveDataPayload(saveData) {
@@ -558,6 +567,26 @@ function readSaveCodeFromPre() {
     }
 
     applySaveDataPayload(parsedSaveData);
+}
+
+function readStoredPlayerFaceData() {
+    try {
+        const storedSaveCode = window.localStorage.getItem(playerFaceStorageKey);
+
+        if (!storedSaveCode) {
+            return null;
+        }
+
+        const parsedSaveData = JSON.parse(storedSaveCode);
+
+        if (parsedSaveData?.version !== saveCodeVersion) {
+            return null;
+        }
+
+        return parsedSaveData;
+    } catch (error) {
+        return null;
+    }
 }
 
 function enableDesktopCategoryDragScroll() {
@@ -1045,11 +1074,22 @@ readDataButton?.addEventListener("click", () => {
 // Rendering once at startup makes the initial "eyes" category come
 // from the data object instead of relying on hardcoded HTML images.
 updatePossibleCombinationsTitle();
-loadDefaultSelections();
-renderCategoryItems(currentCategory);
-updateSelectedCategoryStyles();
-syncSecondaryColorInput();
-updateSaveDataPre();
-resizeCanvasToWrapper();
+const storedPlayerFaceData = readStoredPlayerFaceData();
+
+if (storedPlayerFaceData) {
+    applySaveDataPayload(storedPlayerFaceData);
+} else {
+    loadDefaultSelections();
+    renderCategoryItems(currentCategory);
+    updateSelectedCategoryStyles();
+    syncSecondaryColorInput();
+    updateSaveDataPre();
+    resizeCanvasToWrapper();
+}
+
+if (storedPlayerFaceData) {
+    resizeCanvasToWrapper();
+}
+
 enableDesktopCategoryDragScroll();
 window.addEventListener("resize", resizeCanvasToWrapper);

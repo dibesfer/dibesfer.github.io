@@ -28,6 +28,7 @@ import { createMultiplayerController } from './multiplayer.js';
 import { createCommandHandler } from './code/commands.js';
 import { createLocalWorldSaveStore } from './code/data/worldSaving.js';
 import { SpaceShipVehicle } from './vehicle.js';
+import { DEFAULT_SFC_FACE, SFC_FACE_STORAGE_KEY, normalizeSfcFaceData } from './sfcFace.js';
 
 const KOLORLANDO_MODE = window.KOLORLANDO_MODE === 'multiplayer' ? 'multiplayer' : 'singleplayer';
 const MULTIPLAYER_ENABLED = KOLORLANDO_MODE === 'multiplayer';
@@ -55,6 +56,24 @@ function persistLocalPlayerDisplayName(name) {
   }
 
   window.localStorage.setItem(KOLORLANDO_PLAYER_NAME_STORAGE_KEY, trimmedName);
+}
+
+function readStoredLocalPlayerFaceData() {
+  /* The game reads the latest SFC payload directly from localStorage so the
+  player can customize their face in Square Face Creator and immediately have
+  that same design picked up locally without introducing server sync yet. */
+  try {
+    const storedFaceData = window.localStorage.getItem(SFC_FACE_STORAGE_KEY);
+    if (!storedFaceData) {
+      return normalizeSfcFaceData(DEFAULT_SFC_FACE);
+    }
+
+    const parsedFaceData = JSON.parse(storedFaceData);
+    return normalizeSfcFaceData(parsedFaceData, DEFAULT_SFC_FACE);
+  } catch (error) {
+    console.warn('Failed to read the local Kolorlando player face data.', error);
+    return normalizeSfcFaceData(DEFAULT_SFC_FACE);
+  }
 }
 
 function drawPlayerNameLabel(context, canvas, name) {
@@ -1579,6 +1598,7 @@ const PLAYER_OUTFIT = {
   shoes: 0x161616,
   hair: 0x221710,
   faceEmoji: '😎',
+  faceData: readStoredLocalPlayerFaceData(),
 };
 initCharacterPreview();
 const playerHumanoid = createHumanoidModel({

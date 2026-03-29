@@ -1,7 +1,10 @@
 import * as THREE from 'three';
+import { drawSfcFaceToContext, normalizeSfcFaceData } from './sfcFace.js';
 
 const MODEL_PART_SCALE = 0.9;
 const LIMB_PART_GAP = 0.04;
+const HEAD_FACE_SIZE = 0.404;
+const HEAD_FACE_Z_OFFSET = 0.201;
 
 function createPartMaterial(color, roughness, metalness) {
   return new THREE.MeshStandardMaterial({ color, roughness, metalness });
@@ -32,8 +35,54 @@ function createEmojiFace(emoji) {
     transparent: true,
     depthWrite: false,
   });
-  const plane = new THREE.Mesh(new THREE.PlaneGeometry(0.42, 0.39), material);
+  /* Matching the head box face exactly keeps the emoji texture flush with the
+  front square of the cube instead of hanging slightly wider than the head. */
+  const plane = new THREE.Mesh(new THREE.PlaneGeometry(HEAD_FACE_SIZE, HEAD_FACE_SIZE), material);
   plane.renderOrder = 2;
+  plane.userData.skipHumanoidPartScale = true;
+  return plane;
+}
+
+function createSfcFace(faceData) {
+  const normalizedFaceData = normalizeSfcFaceData(faceData);
+  const canvas = document.createElement('canvas');
+  canvas.width = 128;
+  canvas.height = 128;
+  const ctx = canvas.getContext('2d');
+
+  if (!ctx) return null;
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+
+  const material = new THREE.MeshBasicMaterial({
+    map: texture,
+    transparent: true,
+    depthWrite: false,
+  });
+
+  /* The SFC face uses the same exact square as the head front so both the
+  default preset and imported faces fit the cube face cleanly edge to edge. */
+  const plane = new THREE.Mesh(new THREE.PlaneGeometry(HEAD_FACE_SIZE, HEAD_FACE_SIZE), material);
+  plane.renderOrder = 2;
+  plane.userData.skipHumanoidPartScale = true;
+
+  /* The face plane can appear immediately with the normalized base color while
+  the SFC layer images stream in asynchronously, then the same texture is
+  refreshed in place so the head mesh does not need to be rebuilt. */
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = normalizedFaceData.background;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  texture.needsUpdate = true;
+
+  drawSfcFaceToContext(ctx, canvas.width, normalizedFaceData)
+    .then(() => {
+      texture.needsUpdate = true;
+    })
+    .catch(error => {
+      console.error('Failed to draw Square Face Creator data on a humanoid face.', error);
+    });
+
   return plane;
 }
 
@@ -50,6 +99,7 @@ export function createHumanoidModel({
     shoes: outfit.shoes ?? 0x1d1d1d,
     hair: outfit.hair ?? 0x2a1d16,
     faceEmoji: outfit.faceEmoji ?? '🙂',
+    faceData: outfit.faceData ?? null,
   };
 
   const skinMat = createPartMaterial(resolvedOutfit.skin, 0.85, 0.03);
@@ -78,10 +128,14 @@ export function createHumanoidModel({
   setShadow(head, castShadow, receiveShadow);
   torso.add(head);
 
-  const faceEmoji = createEmojiFace(resolvedOutfit.faceEmoji);
-  if (faceEmoji) {
-    faceEmoji.position.set(0, 0.01, 0.212);
-    head.add(faceEmoji);
+  const faceMesh = resolvedOutfit.faceData
+    ? createSfcFace(resolvedOutfit.faceData)
+    : createEmojiFace(resolvedOutfit.faceEmoji);
+  if (faceMesh) {
+    /* The plane sits just in front of the head's half-depth to avoid z-fight
+    shimmer while still reading as perfectly attached to the box face. */
+    faceMesh.position.set(0, 0, HEAD_FACE_Z_OFFSET);
+    head.add(faceMesh);
   }
 
   const hairTop = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.2, 0.5), hairMat);
@@ -213,6 +267,7 @@ export function createHumanoidModel({
 
   root.traverse(part => {
     if (part.isMesh) {
+      if (part.userData?.skipHumanoidPartScale) return;
       part.scale.multiplyScalar(MODEL_PART_SCALE);
     }
   });
