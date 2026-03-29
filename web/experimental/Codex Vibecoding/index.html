@@ -1,15 +1,209 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Codex Vibecoding</title>
-</head>
-<body>
+    <style>
+        * {
+            margin: 0;
+            box-sizing: border-box;
+        }
 
+        body {
+            font-family: sans-serif;
+        }
+
+        header {
+            text-align: center;
+            padding: 20px;
+        }
+
+        main {
+            max-width: 1000px;
+            margin: auto;
+        }
+
+        .flex3 {
+            display: flex;
+            justify-content: space-evenly;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .flex3>div {
+            padding: 10px;
+            max-width: 30%;
+            flex: 30%;
+            aspect-ratio: 1;
+        }
+
+        .flex3>div>div {
+            width: 100%;
+            height: 100%;
+            background-color: rgb(175, 175, 175);
+            border: solid 3px black;
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .title {
+            padding: 5px;
+            font-size: 1.5rem;
+            height: 2.5rem;
+            white-space: nowrap;
+            overflow-x: auto;
+        }
+
+        .image {
+            aspect-ratio: 16/9;
+            background-color: gray;
+            flex: 1;
+            
+        }
+
+        .image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .desc {
+            padding: 5px;
+            flex: 1;
+            overflow: auto;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>Codex Vibecoding</h1>
+    </header>
     <main>
-        
+        <div class="flex3">
+
+            <div>
+                <div>
+
+                    <div class="title">Voxel Worlds</div>
+                    <div class="image">
+                        <img src="https://loremflickr.com/900/600/voxel,game" alt="Voxel styled world">
+                    </div>
+                    <div class="desc">Building playful blocky spaces, maps, and game rules feels like a natural fit
+                        with Kolorlando and the whole handmade worldbuilding vibe.</div>
+
+                </div>
+            </div>
+
+            <div>
+                <div>
+
+                    <div class="title">Character Creators</div>
+                    <div class="image">
+                        <img src="https://loremflickr.com/900/600/avatar,design" alt="Avatar and character design">
+                    </div>
+                    <div class="desc">Square Face Creator already points toward a love for expressive identity tools,
+                        customization systems, and visual self-invention.</div>
+
+                </div>
+            </div>
+            <div>
+                <div>
+
+                    <div class="title">Creative Coding</div>
+                    <div class="image">
+                        <img src="https://loremflickr.com/900/600/creative,coding" alt="Creative coding scene">
+                    </div>
+                    <div class="desc">There is a strong experimental energy here: coding not only for utility, but
+                        for style, weirdness, play, and personal expression.</div>
+
+                </div>
+            </div>
+            <div>
+                <div>
+
+                    <div class="title">AI Vibecoding</div>
+                    <div class="image">
+                        <img src="https://loremflickr.com/900/600/artificial,intelligence,computer" alt="AI and coding">
+                    </div>
+                    <div class="desc">This page itself says it: using AI as a playful collaborator for shipping ideas
+                        faster, stranger, and with less friction.</div>
+
+                </div>
+            </div>
+            <div>
+                <div>
+
+                    <div class="title">Web 3D</div>
+                    <div class="image">
+                        <img src="https://loremflickr.com/900/600/3d,web" alt="3D graphics on the web">
+                    </div>
+                    <div class="desc">Three.js projects, interactive scenes, and game-like browser experiences seem
+                        like a clear recurring obsession across the repo.</div>
+
+                </div>
+            </div>
+            <div>
+                <div>
+
+                    <div class="title">Multiplayer Sandboxes</div>
+                    <div class="image">
+                        <img src="https://loremflickr.com/900/600/multiplayer,gaming" alt="People playing together">
+                    </div>
+                    <div class="desc">Shared worlds, social play, and seeing custom avatars in motion feels like the
+                        next natural layer beyond a solo sandbox.</div>
+
+                </div>
+            </div>
+
+            <div>
+                <div>
+
+                    <div class="title">Toolmaking</div>
+                    <div class="image">
+                        <img src="https://loremflickr.com/900/600/tools,software" alt="Software tools">
+                    </div>
+                    <div class="desc">Making side tools for the main project suggests an interest in building systems
+                        that generate, support, and accelerate other systems.</div>
+
+                </div>
+            </div>
+
+            <div>
+                <div>
+
+                    <div class="title">Playful Interfaces</div>
+                    <div class="image">
+                        <img src="https://loremflickr.com/900/600/interface,design" alt="Playful interface design">
+                    </div>
+                    <div class="desc">The projects do not feel corporate-clean. They feel toy-like, curious, and full
+                        of personality, which makes UI itself part of the fun.</div>
+
+                </div>
+            </div>
+
+            <div>
+                <div>
+
+                    <div class="title">Worldbuilding</div>
+                    <div class="image">
+                        <img src="https://loremflickr.com/900/600/fantasy,world" alt="Fantasy worldbuilding">
+                    </div>
+                    <div class="desc">Names, characters, systems, items, and maps all point to a bigger interest in
+                        inventing small universes that can keep expanding.</div>
+
+                </div>
+            </div>
+
+
+        </div>
+
     </main>
-    
+
 </body>
+
 </html>
