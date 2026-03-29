@@ -38,7 +38,9 @@ function createEntityLabelSprite(name, type) {
     map: texture,
     transparent: true,
     depthWrite: false,
-    depthTest: false,
+    /* Floating labels should stay readable but still live in world space, so
+    they must respect the depth buffer instead of drawing through bodies. */
+    depthTest: true,
   });
   const sprite = new THREE.Sprite(material);
   sprite.scale.set(1.62, 0.53, 1);
@@ -76,7 +78,9 @@ function createDialogSprite(lines) {
     map: texture,
     transparent: true,
     depthWrite: false,
-    depthTest: false,
+    /* Dialog bubbles should disappear behind geometry naturally instead of
+    overlaying the back of the speaking character or nearby players. */
+    depthTest: true,
   });
   const sprite = new THREE.Sprite(material);
   sprite.scale.set(4.1, 1.3, 1);
@@ -96,7 +100,9 @@ function createHealthBarSprite(healthRatio = 1) {
       map: texture,
       transparent: true,
       depthWrite: false,
-      depthTest: false,
+      /* Health bars stay non-writing so they do not block later transparents,
+      but they still need depth testing so they can be occluded by the world. */
+      depthTest: true,
     })
   );
   sprite.scale.set(1.3, 0.23, 1);

@@ -115,12 +115,13 @@ function createPlayerNameSprite(name) {
     map: texture,
     transparent: true,
     depthWrite: false,
-    depthTest: false,
+    /* The player name should stay attached to the character in world space,
+    which means nearby geometry and the player body must be able to occlude it. */
+    depthTest: true,
   });
 
   const sprite = new THREE.Sprite(material);
   sprite.scale.set(1.85, 0.56, 1);
-  sprite.renderOrder = 2500;
   sprite.frustumCulled = false;
   sprite.userData.playerNameCanvas = canvas;
   sprite.userData.playerNameContext = context;
@@ -306,6 +307,9 @@ const DEFAULT_RENDER_SCALE = 1;
 const VALID_RENDER_SCALE_VALUES = new Set(['1', '0.75', '0.5']);
 let rendererPixelRatioBase = Math.min(window.devicePixelRatio, 2);
 let renderScaleMultiplier = DEFAULT_RENDER_SCALE;
+const cameraForwardDirection = new THREE.Vector3();
+let yaw = 0;
+let pitch = 0;
 
 function getEffectiveRenderPixelRatio() {
   /* The renderer already caps device pixel ratio for sanity on dense screens.
@@ -373,8 +377,13 @@ function shouldUsePointerLock() {
 }
 
 function syncDesktopLookAnglesFromCamera() {
-  yaw = camera.rotation.y;
-  pitch = camera.rotation.x;
+  /* Some camera modes, especially Lego Lol, orient the camera through lookAt()
+  instead of the same Euler path used by pointer-lock and WoW drag look.
+  Re-deriving yaw/pitch from the real forward vector makes mode switches carry
+  over the visible view direction instead of inheriting distorted Euler values. */
+  camera.getWorldDirection(cameraForwardDirection);
+  yaw = Math.atan2(-cameraForwardDirection.x, -cameraForwardDirection.z);
+  pitch = -Math.asin(THREE.MathUtils.clamp(cameraForwardDirection.y, -1, 1));
 }
 
 function setWowCameraScreenActive(nextActive) {
@@ -3850,9 +3859,6 @@ rightJoy.addEventListener('touchmove', e => {
 // --------------------
 let moveForward = 0;
 let moveRight = 0;
-
-let yaw = 0;
-let pitch = 0;
 let lookDx = 0;
 let lookDy = 0;
 

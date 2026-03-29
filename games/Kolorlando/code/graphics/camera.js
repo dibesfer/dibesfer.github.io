@@ -79,6 +79,9 @@ export function createCameraModeController(options) {
     document.body.dataset.cameraMode = currentCameraMode;
     persistCameraModePreference();
     setWowCameraScreenActive(false);
+    if (typeof onSyncDesktopLookAngles === 'function') {
+      onSyncDesktopLookAngles();
+    }
     if (isScreenDragCameraMode() && isPointerLocked() && typeof onRequestUnlock === 'function') {
       onRequestUnlock();
     }
