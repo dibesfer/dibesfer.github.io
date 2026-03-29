@@ -1516,11 +1516,17 @@ cameraRayTip.visible = false;
 scene.add(cameraRayTip);
 
 const VOXEL_HIGHLIGHT_SCALE = 1.04;
+const DEFAULT_VOXEL_HIGHLIGHT_COLOR = 0xfff3a6;
+const DEFAULT_VOXEL_HIGHLIGHT_EMISSIVE = 0xffea84;
+const BOXEL_HIGHLIGHT_COLOR = 0x79b8ff;
+const BOXEL_HIGHLIGHT_EMISSIVE = 0x2f8fff;
+const BOXEL_SELECTED_HIGHLIGHT_SCALE = 1.14;
+const BOXEL_RANGE_HIGHLIGHT_PADDING = 0.14;
 const voxelHighlightMesh = new THREE.Mesh(
   new THREE.BoxGeometry(VOXEL_HIGHLIGHT_SCALE, VOXEL_HIGHLIGHT_SCALE, VOXEL_HIGHLIGHT_SCALE),
   new THREE.MeshStandardMaterial({
-    color: 0xfff3a6,
-    emissive: 0xffea84,
+    color: DEFAULT_VOXEL_HIGHLIGHT_COLOR,
+    emissive: DEFAULT_VOXEL_HIGHLIGHT_EMISSIVE,
     emissiveIntensity: 0.45,
     transparent: true,
     opacity: 0.28,
@@ -1531,6 +1537,47 @@ voxelHighlightMesh.visible = false;
 voxelHighlightMesh.renderOrder = 998;
 scene.add(voxelHighlightMesh);
 const voxelHighlightBox = new THREE.Box3();
+const boxelSelectedHighlightMesh = new THREE.Mesh(
+  new THREE.BoxGeometry(BOXEL_SELECTED_HIGHLIGHT_SCALE, BOXEL_SELECTED_HIGHLIGHT_SCALE, BOXEL_SELECTED_HIGHLIGHT_SCALE),
+  new THREE.MeshStandardMaterial({
+    /* The persisted Boxel selection needs to read as a deliberate secondary
+    state, so it uses a brighter blue, higher opacity, and stronger emissive
+    glow than the transient aim highlight. */
+    color: 0xa8d4ff,
+    emissive: 0x4aa3ff,
+    emissiveIntensity: 0.9,
+    transparent: true,
+    opacity: 0.42,
+    depthWrite: false,
+  })
+);
+boxelSelectedHighlightMesh.visible = false;
+boxelSelectedHighlightMesh.renderOrder = 997;
+scene.add(boxelSelectedHighlightMesh);
+const boxelRangeHighlightMesh = new THREE.Mesh(
+  new THREE.BoxGeometry(1, 1, 1),
+  new THREE.MeshStandardMaterial({
+    /* The second Boxel click should clearly read as a larger region selection,
+    so this mesh scales to the union of both voxels and stays slightly more
+    transparent than the single-voxel anchor marker. */
+    color: 0x8fc6ff,
+    emissive: 0x3a8fff,
+    emissiveIntensity: 0.78,
+    transparent: true,
+    opacity: 0.24,
+    depthWrite: false,
+  })
+);
+boxelRangeHighlightMesh.visible = false;
+boxelRangeHighlightMesh.renderOrder = 996;
+scene.add(boxelRangeHighlightMesh);
+const boxelSelectionAnchorBox = new THREE.Box3();
+const boxelSelectionRangeBox = new THREE.Box3();
+const boxelSelectionCombinedBox = new THREE.Box3();
+const boxelSelectionCombinedSize = new THREE.Vector3();
+const boxelSelectionCombinedCenter = new THREE.Vector3();
+const boxelSelectionInputBox = new THREE.Box3();
+const boxelSelectionInputSize = new THREE.Vector3();
 
 // --------------------
 // PLAYER BODY + COLLIDER
@@ -2837,6 +2884,124 @@ function isGunSelectedForAction() {
   return getSelectedActionItemType() === 'Gun';
 }
 
+function isBoxelSelectionToolSelected() {
+  /* Boxel mode is intentionally driven by the hotbar selection because the
+  user asked for this tool to behave like a dedicated editing mode that only
+  becomes active when the Boxel Selection Tool is equipped. */
+  return getSelectedActionItemType() === 'Boxel Selection Tool';
+}
+
+function syncVoxelHighlightStyle() {
+  /* The same highlight mesh is reused for normal voxel aiming and the new
+  Boxel mode so we only swap colors here instead of creating duplicate meshes
+  or branching the raycast rendering path. */
+  const highlightMaterial = voxelHighlightMesh.material;
+  const useBoxelPalette = isBoxelSelectionToolSelected();
+
+  highlightMaterial.color.setHex(
+    useBoxelPalette ? BOXEL_HIGHLIGHT_COLOR : DEFAULT_VOXEL_HIGHLIGHT_COLOR
+  );
+  highlightMaterial.emissive.setHex(
+    useBoxelPalette ? BOXEL_HIGHLIGHT_EMISSIVE : DEFAULT_VOXEL_HIGHLIGHT_EMISSIVE
+  );
+}
+
+function clearBoxelSelectedVoxelHighlight() {
+  /* Clearing through one helper keeps every future selection/removal path in
+  sync instead of scattering visibility resets across multiple action flows. */
+  boxelSelectedHighlightMesh.visible = false;
+  boxelRangeHighlightMesh.visible = false;
+  boxelSelectionAnchorBox.makeEmpty();
+  boxelSelectionRangeBox.makeEmpty();
+  boxelSelectionCombinedBox.makeEmpty();
+}
+
+function syncBoxelSelectedVoxelHighlightVisibility() {
+  /* The Boxel-picked voxel should feel persistent while the tool is equipped,
+  but hiding it outside Boxel mode prevents stale selection visuals from
+  competing with normal voxel editing and combat interactions. */
+  boxelSelectedHighlightMesh.visible = isBoxelSelectionToolSelected()
+    && boxelSelectionAnchorBox.isEmpty() === false;
+  boxelRangeHighlightMesh.visible = isBoxelSelectionToolSelected()
+    && boxelSelectionRangeBox.isEmpty() === false
+    && boxelSelectionCombinedBox.isEmpty() === false;
+}
+
+function placeBoxelSelectedVoxelHighlightFromBox(clickedVoxelBox) {
+  /* Both Boxel actions feed into the same rolling selection state. This keeps
+  left-click and right-click perfectly aligned once they resolve which voxel
+  box should be used as the next selection point. */
+  if (!clickedVoxelBox || clickedVoxelBox.isEmpty()) {
+    clearBoxelSelectedVoxelHighlight();
+    return false;
+  }
+
+  if (boxelSelectionAnchorBox.isEmpty()) {
+    /* The very first click only establishes the initial anchor point. */
+    boxelSelectionAnchorBox.copy(clickedVoxelBox);
+    boxelSelectionRangeBox.makeEmpty();
+    boxelSelectionCombinedBox.makeEmpty();
+    boxelSelectionAnchorBox.getCenter(boxelSelectedHighlightMesh.position);
+    boxelRangeHighlightMesh.visible = false;
+    syncBoxelSelectedVoxelHighlightVisibility();
+    return true;
+  }
+
+  if (boxelSelectionRangeBox.isEmpty() === false) {
+    /* Once both points exist, every new click advances the window so the old
+    second point becomes the new anchor and the latest click becomes the new
+    opposite corner. */
+    boxelSelectionAnchorBox.copy(boxelSelectionRangeBox);
+    boxelSelectionAnchorBox.getCenter(boxelSelectedHighlightMesh.position);
+  }
+
+  boxelSelectionRangeBox.copy(clickedVoxelBox);
+  boxelSelectionCombinedBox.copy(boxelSelectionAnchorBox).union(boxelSelectionRangeBox);
+
+  /* Slight padding keeps the combined selection visible around the voxel faces
+  instead of z-fighting directly on the terrain surfaces. */
+  boxelSelectionCombinedBox.getSize(boxelSelectionCombinedSize);
+  boxelSelectionCombinedBox.getCenter(boxelSelectionCombinedCenter);
+  boxelRangeHighlightMesh.position.copy(boxelSelectionCombinedCenter);
+  boxelRangeHighlightMesh.scale.set(
+    boxelSelectionCombinedSize.x + BOXEL_RANGE_HIGHLIGHT_PADDING,
+    boxelSelectionCombinedSize.y + BOXEL_RANGE_HIGHLIGHT_PADDING,
+    boxelSelectionCombinedSize.z + BOXEL_RANGE_HIGHLIGHT_PADDING
+  );
+  syncBoxelSelectedVoxelHighlightVisibility();
+  return true;
+}
+
+function placeBoxelSelectedVoxelHighlightFromHit(voxelHit) {
+  /* Left-click still uses the voxel currently under the raycast. */
+  if (!voxelHit || !getVoxelBoxFromRaycastHit(voxelHit, boxelSelectionInputBox)) {
+    clearBoxelSelectedVoxelHighlight();
+    return false;
+  }
+
+  return placeBoxelSelectedVoxelHighlightFromBox(boxelSelectionInputBox);
+}
+
+function placeBoxelSelectedVoxelHighlightFromAdjacentHit(voxelHit) {
+  /* Right-click should target the empty voxel space on the pointed face, so we
+  derive the adjacent cell coordinates from the existing map helper and then
+  rebuild that cell's box using the currently hit voxel dimensions. */
+  const adjacentVoxelCell = getAdjacentVoxelCellFromRaycastHit(voxelHit);
+  if (!adjacentVoxelCell || !getVoxelBoxFromRaycastHit(voxelHit, boxelSelectionInputBox)) {
+    clearBoxelSelectedVoxelHighlight();
+    return false;
+  }
+
+  boxelSelectionInputBox.getSize(boxelSelectionInputSize);
+  boxelSelectionInputBox.min.set(
+    adjacentVoxelCell.cellX * boxelSelectionInputSize.x,
+    adjacentVoxelCell.cellY * boxelSelectionInputSize.y,
+    adjacentVoxelCell.cellZ * boxelSelectionInputSize.z
+  );
+  boxelSelectionInputBox.max.copy(boxelSelectionInputBox.min).add(boxelSelectionInputSize);
+  return placeBoxelSelectedVoxelHighlightFromBox(boxelSelectionInputBox);
+}
+
 function triggerActionForMouseButton(button, options = {}) {
   const allowMobile = options.allowMobile === true;
 
@@ -2850,6 +3015,11 @@ function triggerActionForMouseButton(button, options = {}) {
     // on the same button. This intentionally bypasses voxel editing too.
     if (isGunSelectedForAction()) {
       shootProjectileFromPlayer();
+      return;
+    }
+
+    if (currentRaycastState.boxelEditionMode) {
+      placeBoxelSelectedVoxelHighlightFromHit(currentRaycastState.hit);
       return;
     }
 
@@ -2881,6 +3051,11 @@ function triggerActionForMouseButton(button, options = {}) {
   }
 
   if (button === 2) {
+    if (currentRaycastState.boxelEditionMode) {
+      placeBoxelSelectedVoxelHighlightFromAdjacentHit(currentRaycastState.hit);
+      return;
+    }
+
     if (currentRaycastState.voxelEditionMode) {
       // Placement must only consume actual voxel stacks. Non-build items can share
       // the hotbar, so we resolve a voxel-safe selection before touching the world.
@@ -3426,6 +3601,7 @@ const currentRaycastState = {
   entity: null,
   item: null,
   voxelEditionMode: false,
+  boxelEditionMode: false,
 };
 
 function invalidateVoxelRaycast() {
@@ -3603,13 +3779,20 @@ function updateVoxelRaycast() {
   currentRaycastState.entity = activeEntity;
   currentRaycastState.item = activeHitKind === 'item' ? activeHit?.itemAppearance ?? null : null;
   currentRaycastState.voxelEditionMode = activeVoxelHit !== null;
+  currentRaycastState.boxelEditionMode = activeVoxelHit !== null && isBoxelSelectionToolSelected();
 
   if (activeVoxelHit && getVoxelBoxFromRaycastHit(activeVoxelHit, voxelHighlightBox)) {
+    /* The Boxel tool is currently a visual abstraction layer over the existing
+    voxel raycast, so it reuses the same targeted box but tints it blue while
+    the dedicated hotbar tool is equipped. */
+    syncVoxelHighlightStyle();
     voxelHighlightBox.getCenter(voxelHighlightMesh.position);
     voxelHighlightMesh.visible = true;
   } else {
     voxelHighlightMesh.visible = false;
   }
+
+  syncBoxelSelectedVoxelHighlightVisibility();
 
   cameraRayLine.visible = debugModeEnabled;
   cameraRayTip.visible = debugModeEnabled;
