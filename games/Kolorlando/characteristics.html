@@ -33,6 +33,10 @@
             text-align: center;
         }
 
+        img {
+            max-width: 100%;
+        }
+
         #legendDetails {
             border: solid 3px white;
             border-radius: 15px;
@@ -89,6 +93,13 @@
             color: rgb(145, 198, 255);
             display: block;
         }
+
+        .myPre {
+            padding: 5px;
+            border: solid 3px white;
+            height: 400px;
+            overflow: auto;
+        }
     </style>
 </head>
 
@@ -120,195 +131,317 @@
     <details>
         <summary>🖥️ Screen</summary>
 
-    <ol>
-        <li class="done">Resizing</li>
-        <p><span class="implemented-in">script.js, code/graphics/screen.js</span></p>
-        <li class="done">Desktop mode, mobile-portrait mode and mobile-landscape mode</li>
-        <p><span class="implemented-in">code/graphics/screen.js, style.css, script.js</span></p>
+        <ol>
+            <li class="done">Resizing</li>
+            <p><span class="implemented-in">script.js, code/graphics/screen.js</span></p>
+            <li class="done">Desktop mode, mobile-portrait mode and mobile-landscape mode</li>
+            <p><span class="implemented-in">code/graphics/screen.js, style.css, script.js</span></p>
 
-    </ol>
+        </ol>
     </details>
 
     <details>
         <summary>📷 Camera</summary>
-    <ol>
-        <li class="done">3D Camera</li>
-        <p><span class="implemented-in">script.js, code/graphics/camera.js</span></p>
-        <li class="done">Skyrim Camera</li>
-        <p>Zoomable camera from First Person mode to Third Person Mode <span class="implemented-in">script.js,
-                code/graphics/camera.js</span></p>
-        <li class="done">WoW Camera</li>
-        <p><span class="implemented-in">script.js, code/graphics/camera.js</span></p>
-        <li class="done">Lego LoL Camera</li>
-        <p><span class="implemented-in">script.js, code/graphics/camera.js</span></p>
-    </ol>
+        <ol>
+            <li class="done">3D Camera</li>
+            <p><span class="implemented-in">script.js, code/graphics/camera.js</span></p>
+            <li class="done">Skyrim Camera</li>
+            <p>Zoomable camera from First Person mode to Third Person Mode <span class="implemented-in">script.js,
+                    code/graphics/camera.js</span></p>
+            <li class="done">WoW Camera</li>
+            <p><span class="implemented-in">script.js, code/graphics/camera.js</span></p>
+            <li class="done">Lego LoL Camera</li>
+            <p><span class="implemented-in">script.js, code/graphics/camera.js</span></p>
+        </ol>
     </details>
 
     <details>
         <summary>🎛️ User Interface (UI)</summary>
-    <ol>
-        <li class="done">Hotbar</li>
-        <p>8 item slots <span class="implemented-in">code/UI/inventory.js, game.html, style.css</span></p>
-        <li class="done">Minimap</li>
-        <p><span class="implemented-in">code/UI/minimap.js, game.html, style.css</span></p>
-        <li class="not-used">Chat</li>
-        <p><span class="implemented-in">code/UI/chat.js, game.html, style.css</span></p>
-        <li class="done">Consola</li>
-        <p>Shows FPS (Frames per second) and player coords (XYZ) <span class="implemented-in">script.js, game.html,
-                style.css</span></p>
-        <li class="done">Joysticks</li>
-        <p>Mobile only
-            <span class="implemented-in">script.js, game.html, style.css</span>
-        </p>
-        <li class="done">Panel menu</li>
-        <p>Shows Encyclopedia, Inventory, Character, Settings and About <span class="implemented-in">code/UI/menu.js,
-                game.html, style.css</span></p>
-    </ol>
+        <ol>
+            <li class="done">Hotbar</li>
+            <p>8 item slots <span class="implemented-in">code/UI/inventory.js, game.html, style.css</span></p>
+            <li class="done">Minimap</li>
+            <p><span class="implemented-in">code/UI/minimap.js, game.html, style.css</span></p>
+            <li class="not-used">Chat</li>
+            <p><span class="implemented-in">code/UI/chat.js, game.html, style.css</span></p>
+            <li class="done">Consola</li>
+            <p>Shows FPS (Frames per second) and player coords (XYZ) <span class="implemented-in">script.js, game.html,
+                    style.css</span></p>
+            <li class="done">Joysticks</li>
+            <p>Mobile only
+                <span class="implemented-in">script.js, game.html, style.css</span>
+            </p>
+            <li class="done">Panel menu</li>
+            <p>Shows Encyclopedia, Inventory, Character, Settings and About <span
+                    class="implemented-in">code/UI/menu.js,
+                    game.html, style.css</span></p>
+        </ol>
     </details>
 
     <details>
         <summary>🧍 Player</summary>
-    <ol>
-        <li class="done">Movement, double jump and <span class="not-done">crouch</span>.</li>
-        <p><span class="implemented-in">script.js. Crouch has no dedicated file yet.</span></p>
-        <li class="done">Step-up movement over one-block obstacles</li>
-        <p><span class="implemented-in">script.js</span></p>
-        <li class="done">Fly mode</li>
-        <p><span class="implemented-in">script.js, code/commands.js</span></p>
-        <li class="done">Debug mode (see collisions)</li>
-        <p><span class="implemented-in">script.js, code/commands.js</span></p>
-        <li class="done">Inventory</li>
-        <p>32 item slots, 99 stack item slots</p>
-        <p><span class="implemented-in">code/UI/inventory.js, script.js, game.html</span></p>
-        <li class="not-used">Customizable characters</li>
-        <p>Face, body</p>
-        <p><span class="implemented-in">game.html, script.js, index.html</span></p>
-        <li class="not-done">Equipment/wearables</li>
-        <p><span class="implemented-in">game.html, style.css</span></p>
-        <li class="to-improve">Tools</li>
-        <p>weapons/goxels (gltf models scaled 0.1 and centered on X Y Z) <span class="implemented-in">script.js,
-                itemAppearance.js</span></p>
-        <li class="done">HUD </li>
-        <p>with health bar, selected voxel and game mode <span class="implemented-in">playerHud.js,
-                code/UI/inventory.js, game.html, style.css</span></p>
+        <ol>
+            <li class="done">Movement, double jump and <span class="not-done">crouch</span>.</li>
+            <p><span class="implemented-in">script.js. Crouch has no dedicated file yet.</span></p>
+            <li class="done">Step-up movement over one-block obstacles</li>
+            <p><span class="implemented-in">script.js</span></p>
+            <li class="done">Fly mode</li>
+            <p><span class="implemented-in">script.js, code/commands.js</span></p>
+            <li class="done">Debug mode (see collisions)</li>
+            <p><span class="implemented-in">script.js, code/commands.js</span></p>
+            <li class="done">Inventory</li>
+            <p>32 item slots, 99 stack item slots</p>
+            <p><span class="implemented-in">code/UI/inventory.js, script.js, game.html</span></p>
+            <li class="not-used">Customizable characters</li>
+            <p>Face, body</p>
+            <p><span class="implemented-in">game.html, script.js, index.html</span></p>
+            <li class="not-done">Equipment/wearables</li>
+            <p><span class="implemented-in">game.html, style.css</span></p>
+            <li class="to-improve">Tools</li>
+            <p>weapons/goxels (gltf models scaled 0.1 and centered on X Y Z) <span class="implemented-in">script.js,
+                    itemAppearance.js</span></p>
+            <li class="done">HUD </li>
+            <p>with health bar, selected voxel and game mode <span class="implemented-in">playerHud.js,
+                    code/UI/inventory.js, game.html, style.css</span></p>
 
-        <li class="done">Left and right punch</li>
-        <p><span class="implemented-in">script.js, entityModel.js</span></p>
-        <li class="done">Shooting</li>
-        <p><span class="implemented-in">script.js</span></p>
-    </ol>
+            <li class="done">Left and right punch</li>
+            <p><span class="implemented-in">script.js, entityModel.js</span></p>
+            <li class="done">Shooting</li>
+            <p><span class="implemented-in">script.js</span></p>
+        </ol>
     </details>
 
     <details>
         <summary>🌍 World</summary>
-    <ol>
-        <li class="done">Save / Load world data</li>
-        <li class="done">NPCs (walker, chaser, talker)</li>
-        <p><span class="implemented-in">entity.js, maps/voxelandiaMap.js, maps/cityMap.js, script.js</span></p>
-        <li class="not-done">Animals</li>
-        <p><span class="implemented-in">No implementation file yet.</span></p>
-        <li class="not-done">Pets</li>
-        <p><span class="implemented-in">No implementation file yet.</span></p>
-        <li class="not-used">Mounts / Vehicles</li>
-        <p><span class="implemented-in">vehicle.js, script.js</span></p>
         <ol>
-            <li class="not-used">Spaceship</li>
+            <li class="done">Save / Load world data locally</li>
+            <li class="done">NPCs (walker, chaser, talker)</li>
+            <p><span class="implemented-in">entity.js, maps/voxelandiaMap.js, maps/cityMap.js, script.js</span></p>
+            <li class="not-done">Animals</li>
+            <p><span class="implemented-in">No implementation file yet.</span></p>
+            <li class="not-done">Pets</li>
+            <p><span class="implemented-in">No implementation file yet.</span></p>
+            <li class="not-used">Mounts / Vehicles</li>
             <p><span class="implemented-in">vehicle.js, script.js</span></p>
+            <ol>
+                <li class="not-used">Spaceship</li>
+                <p><span class="implemented-in">vehicle.js, script.js</span></p>
+            </ol>
         </ol>
-    </ol>
     </details>
     <details>
         <summary>📱 Mobile mode</summary>
-    <ol>
-        <li class="done">Left joystick for movement and right joystick for camera</li>
-        <p><span class="implemented-in">script.js, game.html, style.css</span></p>
-        <li class="done">Pinch to zoom and switch camera mode.</li>
-        <p><span class="implemented-in">script.js, code/graphics/screen.js</span></p>
+        <ol>
+            <li class="done">Left joystick for movement and right joystick for camera</li>
+            <p><span class="implemented-in">script.js, game.html, style.css</span></p>
+            <li class="done">Pinch to zoom and switch camera mode.</li>
+            <p><span class="implemented-in">script.js, code/graphics/screen.js</span></p>
 
-    </ol>
+        </ol>
+        <img height="400px" src="assets/mobile-portrait.png" alt="">
+        <img height="400px" src="assets/mobile-landscape.png" alt="">
     </details>
     <details>
         <summary>🧱 Voxel Edition</summary>
-    <ol>
-        <li class="done">12 different voxels</li>
-        <p><span class="implemented-in">maps/voxelandiaMap.js, code/UI/inventory.js</span></p>
-        <li class="done">Voxel placement and removal</li>
-        <p><span class="implemented-in">script.js, maps/voxelandiaMap.js</span></p>
-        <li class="done">Creative mode and Survival mode</li>
-        <p><span class="implemented-in">code/UI/inventory.js, script.js, game.html</span></p>
-        <li class="not-done">Effortless Building</li>
-        <p>Select a blue voxel box, place blocks in bulk. Save and load voxel data</p>
-        <li class="not-done">Chisel and bits</li>
-        <p>Edit voxels on a 16³ microvoxel basis. Creating custom voxels.</p>
-        <li class="not-done">Paint on voxels</li>
-        <p>Self-explanatory</p>
+        <ol>
+            <li class="done">12 different voxels</li>
+            <p><span class="implemented-in">maps/voxelandiaMap.js, code/UI/inventory.js</span></p>
+            <li class="done">Voxel placement and removal</li>
+            <p><span class="implemented-in">script.js, maps/voxelandiaMap.js</span></p>
+            <li class="done">Creative mode and Survival mode</li>
+            <p><span class="implemented-in">code/UI/inventory.js, script.js, game.html</span></p>
+            <li class="not-done">Effortless Building</li>
+            <p>Select a blue voxel box, place blocks in bulk. Save and load voxel data</p>
+            <li class="not-done">Chisel and bits</li>
+            <p>Edit voxels on a 16³ microvoxel basis. Creating custom voxels.</p>
+            <li class="not-done">Paint on voxels</li>
+            <p>Self-explanatory</p>
 
-    </ol>
+        </ol>
     </details>
 
     <details>
         <summary>🎮 Controls</summary>
 
-    <h4>Desktop</h4>
-    <ol>
-        <li>WASD for movement</li>
-        <p><span class="implemented-in">script.js, game.html</span></p>
+        <h4>Desktop</h4>
+        <ol>
+            <li>WASD for movement</li>
+            <p><span class="implemented-in">script.js, game.html</span></p>
 
-    </ol>
+        </ol>
     </details>
 
     <details>
         <summary>⌨️ Commands</summary>
-    <ol>
-        <li class="done">/debugmode</li>
-        <p>Shows debug information like collisions or raycasts <span class="implemented-in">code/commands.js,
-                script.js</span></p>
-        <li class="done">/flymode </li>
-        <p>(enables flying) <span class="implemented-in">code/commands.js, script.js</span></p>
-        <li class="done">/spawn </li>
-        <p>(respawns player) <span class="implemented-in">code/commands.js, script.js</span></p>
-    </ol>
+        <ol>
+            <li class="done">/debugmode</li>
+            <p>Shows debug information like collisions or raycasts <span class="implemented-in">code/commands.js,
+                    script.js</span></p>
+            <li class="done">/flymode </li>
+            <p>(enables flying) <span class="implemented-in">code/commands.js, script.js</span></p>
+            <li class="done">/spawn </li>
+            <p>(respawns player) <span class="implemented-in">code/commands.js, script.js</span></p>
+        </ol>
     </details>
 
     <details>
         <summary>🌐 Multiplayer</summary>
-    <ol>
-        <li class="done">Presence</li>
-        <p>Remote sessions detection <span class="implemented-in">multiplayer.js, multiplayer.html, index.html</span>
-        </p>
-        <li class="done">Broadcasting</li>
-        <p>Low-latency updates on position, rotation and animation. <span class="implemented-in">multiplayer.js</span>
-        </p>
-        <li class="not-used">Authentication</li>
-        <p><span class="implemented-in">index.html, Kusers.js, webscript.js, webstyle.css</span></p>
-        <li class="not-used">Chat</li>
-        <p><span class="implemented-in">code/UI/chat.js, game.html, multiplayer.html, style.css</span></p>
-    </ol>
+        <ol>
+            <li class="done">Presence</li>
+            <p>Remote sessions detection <span class="implemented-in">multiplayer.js, multiplayer.html,
+                    index.html</span>
+            </p>
+            <li class="done">Broadcasting</li>
+            <p>Low-latency updates on position, rotation and animation. <span
+                    class="implemented-in">multiplayer.js</span>
+            </p>
+            <li class="not-used">Authentication</li>
+            <p><span class="implemented-in">index.html, Kusers.js, webscript.js, webstyle.css</span></p>
+            <li class="not-used">Chat</li>
+            <p><span class="implemented-in">code/UI/chat.js, game.html, multiplayer.html, style.css</span></p>
+        </ol>
+
+        <pre class="myPre">
+Play Online Plan
+
+- Kolorlando online with Supabase
+
+- Online features
+- anonymous players can join the world
+- players can see other players in the world
+
+- create a Supabase project
+- design the database tables
+- add player login or guest profiles
+- connect the game to Supabase
+- save and load game data
+- add multiplayer or shared scores if needed
+- test everything locally
+- deploy the game online
+- test the live version
+
+
+0 - Most basic version:
+Supabase Realtime Presence
+- required custom tables: `0`
+- anonymous login can use Supabase Auth anonymous users
+- live player presence can use Supabase Realtime Presence
+- Supabase still stores auth users internally, but that is not a table we create
+
+Issues: SRP is laggy for low latency changes
+
+1 - Supabase Broadcast
+***A 
+
+- Broadcast + Presence plan
+- Step 1
+- keep Supabase anonymous auth as the player identity layer
+- keep one shared room channel for the same world
+- in Supabase, create the project and copy the project URL and anon key
+- in Supabase Auth, enable anonymous sign-ins
+
+- Step 2
+- keep Presence only for lightweight state
+- use Presence for join, leave, session id, player id, and maybe display name or color
+- stop using Presence for frequent position updates
+- anonymous auth gives a stable guest user id
+- it does not guarantee one different player identity per browser tab
+
+- Step 3
+- add Broadcast for real-time gameplay messages
+- use Broadcast for position, rotation, moving state, emotes, attacks, and temporary actions
+- treat Broadcast as transient live traffic, not saved data
+
+- Step 4
+- on connect, subscribe to the room channel
+- sign in anonymously first
+- after subscription, publish Presence once so the player appears in the online list
+- then start listening for Broadcast packets from other players
+
+- Step 5
+- send local transform updates through Broadcast on a throttle
+- start around `10` sends per second
+- only send when the player changed enough in position, rotation, or movement state
+- keep a separate generated session id for each tab or page session
+- use auth user id as player identity and session id as live instance identity
+
+- Step 6
+- keep remote players client-side
+- when a Broadcast packet arrives, update that remote player's target transform
+- smooth movement locally with interpolation so motion still looks fluid between packets
+
+- Step 7
+- use Presence sync to manage the roster
+- create remote avatars when a new session appears
+- remove remote avatars when a session disappears
+- use Broadcast only to drive motion and temporary actions for sessions that are already present
+
+- Step 8
+- handle late join and fallback behavior
+- when a player first appears through Presence, place them at a safe default until their first Broadcast transform arrives
+- if Broadcast packets stop for a short time, keep the avatar visible but idle
+- if Presence removes the session, delete the avatar
+
+- Step 9
+- keep database tables at `0` for this version
+- add a `players` table only if you want persistent profile data
+- add a `world_state` table only if world edits must survive after everyone leaves
+
+- Step 10
+- test in this order
+- one tab: confirm connect, roster count, and no errors
+- two tabs: confirm both players appear and movement is smoother than Presence-only
+- three to five tabs: confirm traffic stays stable and players clean up correctly on leave
+- remote network throttling: confirm interpolation still looks acceptable
+
+- Step 11
+- success criteria
+- Presence updates the online roster correctly
+- Broadcast drives movement with lower visible lag
+- no custom tables are required for the first playable online version
+
+Keeping one session for logged-in user
+add userId to Presence
+detect duplicate authenticated users
+choose winner by timestamp
+disconnect older tab
+later, if needed, back it with a DB active_session
+
+***
+
+--------
+
+- Custom tables for persistent data
+- `players` for saved profile, color, last position, settings, or progress
+- `world_state` if world changes must persist after everyone leaves
+- `messages` for chat
+    </pre>
+
     </details>
 
     <details>
         <summary>⚙️ Settings</summary>
-    <ol>
-        <li class="done">dark / light theme</li>
-        <p><span class="implemented-in">code/UI/menu.js, style.css</span></p>
-        <li class="done">fullscreen</li>
-        <p><span class="implemented-in">code/UI/menu.js, game.html, multiplayer.html</span></p>
-        <li class="not-done">Background music</li>
-        <p><span class="implemented-in">UI only in: game.html, multiplayer.html</span></p>
-    </ol>
+        <ol>
+            <li class="done">dark / light theme</li>
+            <p><span class="implemented-in">code/UI/menu.js, style.css</span></p>
+            <li class="done">fullscreen</li>
+            <p><span class="implemented-in">code/UI/menu.js, game.html, multiplayer.html</span></p>
+            <li class="not-done">Background music</li>
+            <p><span class="implemented-in">UI only in: game.html, multiplayer.html</span></p>
+        </ol>
     </details>
 
     <hr>
     <details open>
         <summary>🔗 Links</summary>
-    <ul>
-        <li><a href="/games/Kolorlando/">Landing Page</a></li>
-        <li><a href="/games/Kolorlando/game.html">Game</a></li>
-        <li><a href="/games/Kolorlando/multiplayer.html">Multiplayer</a></li>
-        <li><a href="/web/SquareFaceCreator/">Square Face Creator</a></li>
-        <li><a href="/games/Kolorlando/characteristics.html">Characteristics</a></li>
+        <ul>
+            <li><a href="/games/Kolorlando/">Landing Page</a></li>
+            <li><a href="/games/Kolorlando/game.html">Game</a></li>
+            <li><a href="/games/Kolorlando/multiplayer.html">Multiplayer</a></li>
+            <li><a href="/web/SquareFaceCreator/">Square Face Creator</a></li>
+            <li><a href="/games/Kolorlando/characteristics.html">Characteristics</a></li>
 
-    </ul>
+        </ul>
     </details>
     <footer>
         <hr>

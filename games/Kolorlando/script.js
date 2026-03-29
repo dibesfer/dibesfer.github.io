@@ -246,6 +246,12 @@ const playerHealthFill = document.getElementById('playerHealthFill');
 const playerHealthText = document.getElementById('playerHealthText');
 const voxelReadout = document.getElementById('voxelReadout');
 const wowCursorNdc = new THREE.Vector2();
+const lastRaycastCameraPosition = new THREE.Vector3();
+const lastRaycastCameraDirection = new THREE.Vector3();
+const lastRaycastPlayerPosition = new THREE.Vector3();
+const trackedRaycastCameraPosition = new THREE.Vector3();
+const trackedRaycastCameraDirection = new THREE.Vector3();
+const trackedRaycastPlayerPosition = new THREE.Vector3();
 const chatBox = document.getElementById('chatBox');
 const chatBoxOutput = document.getElementById('chatBoxOutput');
 const chatBoxInput = document.getElementById('chatBoxInput');
@@ -258,6 +264,9 @@ let mobileSprintEnabled = false;
 let mobileFlyUpPressed = false;
 let mobileFlyDownPressed = false;
 let suppressRight3Click = false;
+let voxelRaycastDirty = true;
+let lastRaycastModeKey = '';
+let lastWowCursorRaycastActive = false;
 let openingChatFromPointerLock = false;
 let pointerLockRetryArmed = false;
 let suppressNextDesktopAttack = false;
@@ -709,7 +718,7 @@ const stopWowCameraDrag = event => {
   // A short click still acts like a gameplay click; only longer movement counts as camera dragging.
   if (event.type === 'pointerup' && dragDistance < 6 && isScreenDragCameraActive() && !isMenuCentralVisible()) {
     updateWowCursorRaycastPointer(event.clientX, event.clientY);
-    updateVoxelRaycast();
+    refreshVoxelRaycast(true);
     triggerActionForMouseButton(0);
   }
 };
@@ -722,6 +731,7 @@ function updateSceneViewSize() {
   camera.aspect = width / height;
   camera.updateProjectionMatrix();
   renderer.setSize(width, height, false);
+  invalidateVoxelRaycast();
 }
 
 
@@ -2622,6 +2632,9 @@ function resolveProjectileDirection(outDir) {
 }
 
 function shootProjectileFromPlayer() {
+  // Screen-drag shots derive their direction from the current raycast hit, so
+  // firing forces a fresh query instead of trusting an old cached target.
+  refreshVoxelRaycast(true);
   resolveProjectileDirection(projectileDirection);
   projectileSpawnPos.copy(playerEye).addScaledVector(projectileDirection, 1.0);
 
@@ -2680,6 +2693,10 @@ function isGunSelectedForAction() {
 function triggerActionForMouseButton(button, options = {}) {
   const allowMobile = options.allowMobile === true;
 
+  // Build, break, and context-sensitive melee all depend on the latest aimed
+  // target, so interactions force-refresh the cached raycast right up front.
+  refreshVoxelRaycast(true);
+
   if (button === 0) {
     // Guns take over the right-hand action completely so selecting a firearm
     // feels like equipping a weapon rather than keeping the build/punch action
@@ -2706,6 +2723,9 @@ function triggerActionForMouseButton(button, options = {}) {
         } else if (!inventoryUI.inventoryHasType(removedVoxelType)) {
           inventoryUI.addCreativeInventoryItem(removedVoxelType);
         }
+        // Breaking a voxel mutates the raycast scene immediately, so the next idle
+        // refresh must resolve a brand-new target instead of reusing the old hit.
+        invalidateVoxelRaycast();
       }
       return;
     }
@@ -2737,6 +2757,10 @@ function triggerActionForMouseButton(button, options = {}) {
       }
       if (added && inventoryUI.getGameMode() === GAME_MODE_SURVIVAL) {
           inventoryUI.consumeSelectedInventoryItem(1);
+      }
+      if (added) {
+        // Placing a voxel also changes the front-most hit surface right away.
+        invalidateVoxelRaycast();
       }
       return;
     }
@@ -2829,7 +2853,7 @@ function handleDesktopAttack(event) {
 
   if (isScreenDragCameraActive()) {
     updateWowCursorRaycastPointer(event.clientX, event.clientY);
-    updateVoxelRaycast();
+    refreshVoxelRaycast(true);
     if (event.button === 0) {
       event.preventDefault();
       return;
@@ -3242,15 +3266,74 @@ const currentRaycastState = {
   voxelEditionMode: false,
 };
 
+function invalidateVoxelRaycast() {
+  // Raycasts are now demand-driven, so any input or camera state change that can
+  // alter the aimed target simply marks the cached result as dirty for a later refresh.
+  voxelRaycastDirty = true;
+}
+
+function getCurrentRaycastModeKey() {
+  // The same camera transform can still mean a different aiming rule depending on
+  // the active camera mode, so the cache also tracks the interaction mode itself.
+  if (isScreenDragCameraActive()) return 'screen-drag-active';
+  if (isScreenDragCameraMode()) return 'screen-drag-idle';
+  if (isLegoLolCameraMode()) return 'lego-lol';
+  return 'default';
+}
+
+function syncTrackedRaycastInputs() {
+  // These snapshots are intentionally cheap to gather. They let us avoid the
+  // heavy world raycast whenever the player, camera, and mode stayed unchanged.
+  camera.getWorldPosition(trackedRaycastCameraPosition);
+  camera.getWorldDirection(trackedRaycastCameraDirection);
+  trackedRaycastPlayerPosition.copy(playerEye);
+}
+
+function hasVoxelRaycastInputsChanged() {
+  const currentModeKey = getCurrentRaycastModeKey();
+  syncTrackedRaycastInputs();
+
+  // Tiny thresholds keep floating-point jitter from retriggering expensive raycasts.
+  return currentModeKey !== lastRaycastModeKey
+    || trackedRaycastCameraPosition.distanceToSquared(lastRaycastCameraPosition) > 0.000001
+    || trackedRaycastCameraDirection.distanceToSquared(lastRaycastCameraDirection) > 0.000001
+    || trackedRaycastPlayerPosition.distanceToSquared(lastRaycastPlayerPosition) > 0.000001
+    || wowCursorRaycastActive !== lastWowCursorRaycastActive;
+}
+
+function commitVoxelRaycastInputs() {
+  // Once a raycast finishes, the tracked input snapshot becomes the new clean baseline.
+  lastRaycastCameraPosition.copy(trackedRaycastCameraPosition);
+  lastRaycastCameraDirection.copy(trackedRaycastCameraDirection);
+  lastRaycastPlayerPosition.copy(trackedRaycastPlayerPosition);
+  lastRaycastModeKey = getCurrentRaycastModeKey();
+  lastWowCursorRaycastActive = wowCursorRaycastActive;
+  voxelRaycastDirty = false;
+}
+
+function refreshVoxelRaycast(force = false) {
+  // The force path is used right before interactions so clicks never consume a stale
+  // target even if the world raycast has been skipped on recent idle frames.
+  if (!force && !voxelRaycastDirty && !hasVoxelRaycastInputsChanged()) return;
+
+  // Refreshes always snapshot the latest input state first so the cache baseline
+  // matches the exact camera/player configuration that produced this raycast.
+  syncTrackedRaycastInputs();
+  updateVoxelRaycast();
+  commitVoxelRaycastInputs();
+}
+
 function updateWowCursorRaycastPointer(clientX, clientY) {
   if (!sceneView || mobileMode || !isScreenDragCameraActive()) {
     wowCursorRaycastActive = false;
+    invalidateVoxelRaycast();
     return;
   }
 
   const rect = sceneView.getBoundingClientRect();
   if (rect.width <= 0 || rect.height <= 0) {
     wowCursorRaycastActive = false;
+    invalidateVoxelRaycast();
     return;
   }
 
@@ -3258,10 +3341,12 @@ function updateWowCursorRaycastPointer(clientX, clientY) {
   wowCursorNdc.y = -((clientY - rect.top) / rect.height) * 2 + 1;
   wowCursorRaycastActive = wowCursorNdc.x >= -1 && wowCursorNdc.x <= 1
     && wowCursorNdc.y >= -1 && wowCursorNdc.y <= 1;
+  invalidateVoxelRaycast();
 }
 
 function clearWowCursorRaycastPointer() {
   wowCursorRaycastActive = false;
+  invalidateVoxelRaycast();
 }
 
 function updateVoxelRaycast() {
@@ -3971,7 +4056,7 @@ let fps = 0;
 
 miniMapUI.updateMiniMapSize();
 updatePlayerHealthUI();
-updateVoxelRaycast();
+refreshVoxelRaycast(true);
 
 function checkFPS(delta) {
   accTime += delta;
@@ -4024,7 +4109,7 @@ renderer.setAnimationLoop(() => {
   updateChaserMeleeAttacks(delta);
   updateChaserPunchHitboxes(delta);
   updateProjectilesAndExplosions(delta);
-  updateVoxelRaycast();
+  refreshVoxelRaycast();
   updateDebugCollisionVisuals();
   if (multiplayerController) {
     multiplayerController.update(delta);
