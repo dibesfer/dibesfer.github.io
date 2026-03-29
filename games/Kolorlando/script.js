@@ -20,7 +20,7 @@ import {
 } from './code/UI/inventory.js';
 import { createChatUI } from './code/UI/chat.js';
 import { createPlayerHud } from './playerHud.js';
-import { CoinItemAppearance, GoxelItemAppearance, ItemAppearance } from './itemAppearance.js';
+import { BoxelSelectionToolItemAppearance, CoinItemAppearance, GoxelItemAppearance, ItemAppearance } from './itemAppearance.js';
 import { buildSimpleMap } from './maps/simpleMap.js';
 import { buildCityMap } from './maps/cityMap.js';
 import { buildVoxelandiaMap } from './maps/voxelandiaMap.js';
@@ -1368,7 +1368,7 @@ entities.push(new SpaceShipVehicle({
 }));
 
 const itemAppearances = [];
-const PICKUP_ITEM_TYPES = new Set(['Sword', 'Gun', 'Coin']);
+const PICKUP_ITEM_TYPES = new Set(['Sword', 'Gun', 'Coin', 'Boxel Selection Tool']);
 const PLAYER_PICKUP_RADIUS = 3;
 const PLAYER_PICKUP_RADIUS_SQ = PLAYER_PICKUP_RADIUS * PLAYER_PICKUP_RADIUS;
 const ITEM_PICKUP_COLLISION_RADIUS = 0.45;
@@ -1410,6 +1410,19 @@ itemAppearances.push(new GoxelItemAppearance({
   pickable: true,
   groundY: GROUND_Y,
   modelUrl: 'assets/3D/weapons/gun.gltf',
+}));
+
+const boxelSelectionToolSpawnPosition = playerSpawnPoint.clone().add(new THREE.Vector3(0, 0, -TEST_ITEM_BEHIND_DISTANCE - 3.2));
+itemAppearances.push(new BoxelSelectionToolItemAppearance({
+  scene,
+  position: boxelSelectionToolSpawnPosition,
+  /* The Boxel Selection Tool now renders as its own floating sigil plane so
+  the world pickup matches the icon used in the encyclopedia and inventory. */
+  label: 'Boxel Selection Tool',
+  inventoryType: 'Boxel Selection Tool',
+  pickable: true,
+  groundY: GROUND_Y,
+  iconUrl: 'assets/icons/Asymmetrical_symbol_of_Chaos.png',
 }));
 
 const coinSpawnOffsets = [
@@ -1875,9 +1888,7 @@ async function mountHeldItem(itemType) {
 }
 
 function updateHeldItemSelection() {
-  const selectedStack = inventoryUI.getGameMode() === GAME_MODE_SURVIVAL
-    ? inventoryUI.getSelectedSurvivalStack()
-    : null;
+  const selectedStack = inventoryUI.getSelectedHotbarStack();
   const selectedItemType = selectedStack?.typeName ?? null;
 
   if (!selectedItemType || !HELD_ITEM_DEFINITIONS[selectedItemType]) {
@@ -2815,9 +2826,10 @@ function startLeftPunch(options = {}) {
 }
 
 function getSelectedActionItemType() {
-  // Action bindings follow the currently selected survival stack because the
-  // hotbar is the source of truth for equipped hand items and build materials.
-  const selectedStack = inventoryUI.getSelectedSurvivalStack();
+  // Action bindings should follow the currently selected hotbar stack in both
+  // creative and survival so equipped tools/items behave consistently once the
+  // player puts them in a visible hotbar slot.
+  const selectedStack = inventoryUI.getSelectedHotbarStack();
   return selectedStack?.typeName ?? null;
 }
 

@@ -33,6 +33,7 @@ export function createInventoryUI(options) {
     { name: 'Spawn Point', iconSrc: 'assets/icons/diamonds.png' },
     { name: 'Gun', iconSrc: 'assets/weapons/pistol-gun.png' },
     { name: 'Sword', iconSrc: 'assets/weapons/gladius.png' },
+    { name: 'Boxel Selection Tool', iconSrc: 'assets/icons/Asymmetrical_symbol_of_Chaos.png' },
     { name: 'Coin', iconKind: 'coin' },
   ];
   const itemIconByName = encyclopediaItems.reduce(function (lookup, item) {
@@ -85,6 +86,11 @@ export function createInventoryUI(options) {
 
   function getSelectedSurvivalStack() {
     return playerInventory[selectedInventorySlotIndex];
+  }
+
+  function getSelectedHotbarStack() {
+    if (selectedHotbarIndex < 0 || selectedHotbarIndex >= hotbarSlotEls.length) return null;
+    return playerInventory[selectedHotbarIndex];
   }
 
   function getSelectedPlaceableVoxelType() {
@@ -459,6 +465,16 @@ export function createInventoryUI(options) {
       label.textContent = itemEntry ? itemEntry.name : 'empty';
       slot.appendChild(label);
 
+      if (itemEntry) {
+        slot.addEventListener('click', function () {
+          /* Encyclopedia items should mirror the voxel encyclopedia behavior in
+          creative mode so every listed item can be pulled straight into the
+          inventory without needing a separate world pickup first. */
+          if (gameMode !== GAME_MODE_CREATIVE) return;
+          addCreativeInventoryItem(itemEntry.name);
+        });
+      }
+
       itemEncyclopediaSlots.appendChild(slot);
     }
   }
@@ -558,6 +574,7 @@ export function createInventoryUI(options) {
     addItemToInventory: addItemToInventory,
     consumeSelectedInventoryItem: consumeSelectedInventoryItem,
     getGameMode: function () { return gameMode; },
+    getSelectedHotbarStack: getSelectedHotbarStack,
     getSelectedPlaceableVoxelType: getSelectedPlaceableVoxelType,
     getSelectedSurvivalStack: getSelectedSurvivalStack,
     inventoryHasType: inventoryHasType,

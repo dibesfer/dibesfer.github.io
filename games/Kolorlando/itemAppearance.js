@@ -37,6 +37,7 @@ function centerModelOnBounds(root, { x = false, y = false, z = false } = {}) {
 const DEFAULT_RAYCAST_SPHERE_RADIUS = 0.9;
 const DEFAULT_ITEM_PLACEMENT_HEIGHT = 1;
 const GOXEL_MODEL_SCALE = 0.1;
+const boxelSelectionToolTextureLoader = new THREE.TextureLoader();
 
 function createDefaultItemModel({
   color = 0xffcf4a,
@@ -142,6 +143,77 @@ function createCoinItemModel({ castShadow = true, receiveShadow = false } = {}) 
   groove.rotation.y = Math.PI * 0.5;
   setShadow(groove, castShadow, receiveShadow);
   root.add(groove);
+
+  return {
+    root,
+    height: measureModelHeight(root),
+  };
+}
+
+function createBoxelSelectionToolItemModel({
+  castShadow = true,
+  receiveShadow = false,
+  iconUrl = 'assets/icons/Asymmetrical_symbol_of_Chaos.png',
+} = {}) {
+  const root = new THREE.Group();
+
+  /* The tool should read like a flat magical sigil pickup rather than a
+  generic crystal, so it uses a thin double-sided plane with the authored
+  chaos-symbol icon and a subtle backing plate for depth and readability. */
+  const plate = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.42, 0.42, 0.04, 24),
+    new THREE.MeshStandardMaterial({
+      color: 0x101010,
+      roughness: 0.34,
+      metalness: 0.58,
+      emissive: new THREE.Color(0x1b1b1b),
+    })
+  );
+  plate.rotation.z = Math.PI * 0.5;
+  setShadow(plate, castShadow, receiveShadow);
+  root.add(plate);
+
+  const iconTexture = boxelSelectionToolTextureLoader.load(iconUrl);
+  iconTexture.colorSpace = THREE.SRGBColorSpace;
+
+  const sigilMaterial = new THREE.MeshBasicMaterial({
+    map: iconTexture,
+    transparent: true,
+    alphaTest: 0.08,
+  });
+  const sigilPlaneFront = new THREE.Mesh(
+    new THREE.PlaneGeometry(0.9, 0.9),
+    sigilMaterial
+  );
+  sigilPlaneFront.position.x = 0.03;
+  sigilPlaneFront.rotation.y = Math.PI * 0.5;
+  setShadow(sigilPlaneFront, castShadow, receiveShadow);
+  root.add(sigilPlaneFront);
+
+  /* A second plane facing the opposite direction keeps the icon readable from
+  both sides instead of relying on a double-sided material that would mirror
+  the symbol when viewed from behind. */
+  const sigilPlaneBack = new THREE.Mesh(
+    new THREE.PlaneGeometry(0.9, 0.9),
+    sigilMaterial.clone()
+  );
+  sigilPlaneBack.position.x = -0.03;
+  sigilPlaneBack.rotation.y = -Math.PI * 0.5;
+  setShadow(sigilPlaneBack, castShadow, receiveShadow);
+  root.add(sigilPlaneBack);
+
+  const halo = new THREE.Mesh(
+    new THREE.TorusGeometry(0.38, 0.03, 10, 28),
+    new THREE.MeshStandardMaterial({
+      color: 0xd4b4ff,
+      roughness: 0.18,
+      metalness: 0.2,
+      emissive: new THREE.Color(0x6e39a8).multiplyScalar(0.45),
+    })
+  );
+  halo.rotation.y = Math.PI * 0.5;
+  setShadow(halo, castShadow, receiveShadow);
+  root.add(halo);
 
   return {
     root,
@@ -301,6 +373,23 @@ export class CoinItemAppearance extends ItemAppearance {
       placementHeight: options?.placementHeight ?? 0.7,
       floatHeight: options?.floatHeight ?? 0.45,
       rotationSpeed: options?.rotationSpeed ?? 1.8,
+    });
+  }
+}
+
+export class BoxelSelectionToolItemAppearance extends ItemAppearance {
+  constructor(options) {
+    super({
+      ...options,
+      model: createBoxelSelectionToolItemModel({
+        castShadow: options?.castShadow,
+        receiveShadow: options?.receiveShadow,
+        iconUrl: options?.iconUrl,
+      }),
+      raycastSphereRadius: options?.raycastSphereRadius ?? 0.72,
+      placementHeight: options?.placementHeight ?? 0.9,
+      floatHeight: options?.floatHeight ?? 0.5,
+      rotationSpeed: options?.rotationSpeed ?? 1.15,
     });
   }
 }
