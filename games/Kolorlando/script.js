@@ -241,6 +241,7 @@ const buttonRight3 = document.getElementById('Right3');
 const settingsFullScreen = document.getElementById('settingsFullScreen');
 const settingsMenuThemeDark = document.getElementById('settingsMenuThemeDark');
 const settingsShadows = document.getElementById('settingsShadows');
+const settingsUndersampling = document.getElementById('settingsUndersampling');
 const settingsReloadWorldButton = document.getElementById('settingsReloadWorldButton');
 const playerHealthFill = document.getElementById('playerHealthFill');
 const playerHealthText = document.getElementById('playerHealthText');
@@ -270,6 +271,8 @@ let lastWowCursorRaycastActive = false;
 let openingChatFromPointerLock = false;
 let pointerLockRetryArmed = false;
 let suppressNextDesktopAttack = false;
+let suppressNextDesktopAttackUntil = 0;
+let suppressNextDesktopAttackButton = null;
 let characterPreviewDragState = null;
 const gameAudio = createGameAudio();
 const systemMenuThemeQuery = window.matchMedia('(prefers-color-scheme: dark)');
@@ -277,7 +280,50 @@ let wowCameraDragState = null;
 let wowCursorRaycastActive = false;
 let cameraModeController = null;
 let screenController = null;
+let miniMapUI = null;
 const SHADOWS_STORAGE_KEY = 'kolorlando.settings.shadows';
+const RENDER_SCALE_STORAGE_KEY = 'kolorlando.settings.renderScale';
+const DEFAULT_RENDER_SCALE = 1;
+const VALID_RENDER_SCALE_VALUES = new Set(['1', '0.75', '0.5']);
+let rendererPixelRatioBase = Math.min(window.devicePixelRatio, 2);
+let renderScaleMultiplier = DEFAULT_RENDER_SCALE;
+
+function getEffectiveRenderPixelRatio() {
+  /* The renderer already caps device pixel ratio for sanity on dense screens.
+  Multiplying that capped base by the user-selected scale gives us a compact
+  "undersampling" control that behaves like a lighter-weight render resolution
+  slider without changing canvas CSS size or camera math. */
+  return Math.max(0.5, rendererPixelRatioBase * renderScaleMultiplier);
+}
+
+function syncRenderScaleSetting() {
+  if (!settingsUndersampling) return;
+  settingsUndersampling.value = String(renderScaleMultiplier);
+}
+
+function persistRenderScalePreference(nextScale) {
+  try {
+    window.localStorage.setItem(RENDER_SCALE_STORAGE_KEY, String(nextScale));
+  } catch (error) {
+    console.warn('Failed to persist the Kolorlando render scale setting.', error);
+  }
+}
+
+function readSavedRenderScalePreference() {
+  try {
+    return window.localStorage.getItem(RENDER_SCALE_STORAGE_KEY);
+  } catch (error) {
+    return null;
+  }
+}
+
+function resolveRenderScalePreference(rawValue) {
+  const normalizedValue = typeof rawValue === 'string' ? rawValue.trim() : '';
+  if (VALID_RENDER_SCALE_VALUES.has(normalizedValue)) {
+    return Number(normalizedValue);
+  }
+  return DEFAULT_RENDER_SCALE;
+}
 
 function isLegoLolCameraMode() {
   return cameraModeController ? cameraModeController.isLegoLolCameraMode() : false;
@@ -521,7 +567,10 @@ function initCharacterPreview() {
   characterPreviewCamera.lookAt(0, CHARACTER_PREVIEW_LOOK_Y, 0);
 
   characterPreviewRenderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
-  characterPreviewRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  /* The preview renderer follows the same render scale as the main scene so
+  the graphics setting feels global and the extra UI scene does not keep
+  burning full-resolution pixels after the player lowers quality for FPS. */
+  characterPreviewRenderer.setPixelRatio(getEffectiveRenderPixelRatio());
   characterPreviewRenderer.setClearColor(0x000000, 0);
   characterPreviewRenderer.outputColorSpace = THREE.SRGBColorSpace;
   characterPreviewRenderer.domElement.setAttribute('aria-hidden', 'true');
@@ -669,7 +718,9 @@ if (menuCloseButton) {
 const sceneView = document.getElementById('sceneView');
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+/* The main scene renderer uses the effective scaled pixel ratio so the
+undersampling setting can reduce GPU load immediately without changing layout. */
+renderer.setPixelRatio(getEffectiveRenderPixelRatio());
 renderer.setClearColor(0x5EC9FF);
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -828,6 +879,15 @@ function controlLocker(event) {
   same physical click can slip into the normal attack/build path once the menu
   is already hidden. */
   suppressNextDesktopAttack = true;
+  /* The suppression must only cover the click that actually closed the menu.
+  If the browser finishes pointer lock a little later, leaving this armed
+  indefinitely would swallow the user's first real gameplay click after PLAY. */
+  suppressNextDesktopAttackUntil = typeof event?.timeStamp === 'number'
+    ? event.timeStamp + 80
+    : performance.now() + 80;
+  suppressNextDesktopAttackButton = typeof event?.button === 'number'
+    ? event.button
+    : null;
   event.preventDefault();
   activateDesktopScreenActivity();
 }
@@ -983,6 +1043,41 @@ function readSavedShadowsPreference() {
   }
 }
 
+function applyRenderScale(options = {}) {
+  const shouldResize = options.resize !== false;
+  const effectivePixelRatio = getEffectiveRenderPixelRatio();
+
+  /* All Three.js renderers that draw every frame or sit prominently in the UI
+  share the same scale so the setting behaves predictably and the GPU savings
+  are not partially cancelled by secondary canvases staying at full density. */
+  renderer.setPixelRatio(effectivePixelRatio);
+  miniMapUI?.setPixelRatio(effectivePixelRatio);
+
+  if (characterPreviewRenderer) {
+    characterPreviewRenderer.setPixelRatio(effectivePixelRatio);
+  }
+
+  syncRenderScaleSetting();
+
+  if (!shouldResize) return;
+
+  updateSceneViewSize();
+  miniMapUI?.updateMiniMapSize();
+  if (characterPreviewRenderer) {
+    updateCharacterPreviewSize();
+  }
+}
+
+function setRenderScale(nextScale, options = {}) {
+  const shouldPersist = options.persist !== false;
+  renderScaleMultiplier = resolveRenderScalePreference(String(nextScale));
+  applyRenderScale({ resize: options.resize !== false });
+
+  if (shouldPersist) {
+    persistRenderScalePreference(renderScaleMultiplier);
+  }
+}
+
 function setShadowsEnabled(nextEnabled, options = {}) {
   const shouldPersist = options.persist !== false;
   const enabled = nextEnabled !== false;
@@ -1021,6 +1116,18 @@ if (savedShadowsPreference === 'true' || savedShadowsPreference === 'false') {
 if (settingsShadows) {
   settingsShadows.addEventListener('change', function () {
     setShadowsEnabled(settingsShadows.checked);
+  });
+}
+
+const savedRenderScalePreference = readSavedRenderScalePreference();
+setRenderScale(resolveRenderScalePreference(savedRenderScalePreference), {
+  persist: false,
+  resize: false,
+});
+
+if (settingsUndersampling) {
+  settingsUndersampling.addEventListener('change', function () {
+    setRenderScale(settingsUndersampling.value);
   });
 }
 
@@ -1194,7 +1301,7 @@ const SHADOW_RANGE = mapData.shadowRange ?? 80;
 const MINI_MAP_VIEW_SIZE = mapData.miniMapViewSize ?? 90;
 const MINI_MAP_HEIGHT = mapData.miniMapHeight ?? 130;
 const HAS_INFINITE_GROUND = mapData.hasInfiniteGround ?? true;
-const miniMapUI = createMiniMapUI({
+miniMapUI = createMiniMapUI({
   miniMap,
   scene,
   camera,
@@ -1205,6 +1312,7 @@ const miniMapUI = createMiniMapUI({
   miniMapViewSize: MINI_MAP_VIEW_SIZE,
   miniMapHeight: MINI_MAP_HEIGHT,
 });
+miniMapUI.setPixelRatio(getEffectiveRenderPixelRatio());
 const FALL_RESPAWN_Y = -100;
 const playerSpawnPoint = mapData.spawnPoint.clone();
 playerSpawnPoint.y += 1;
@@ -1436,12 +1544,10 @@ screenController = createScreenController({
     setMobileSprintState(false);
   },
   onPixelRatioChange: pixelRatio => {
-    renderer.setPixelRatio(pixelRatio);
-    miniMapUI.setPixelRatio(pixelRatio);
-    if (characterPreviewRenderer) {
-      characterPreviewRenderer.setPixelRatio(pixelRatio);
-      updateCharacterPreviewSize();
-    }
+    /* Viewport and device-pixel-ratio changes update the capped native base,
+    then the user-selected undersampling multiplier is reapplied on top. */
+    rendererPixelRatioBase = pixelRatio;
+    applyRenderScale();
   },
   onResizeLayout: () => {
     updateSceneViewSize();
@@ -2845,10 +2951,25 @@ function handleDesktopAttack(event) {
   if (event.button !== 0 && event.button !== 2) return;
   if (mobileMode) return;
 
-  if (suppressNextDesktopAttack) {
+  /* The menu-close guard should only suppress the matching follow-up mouse
+  event from that same physical click, not the first separate action after
+  pointer lock has already settled. */
+  const shouldSuppressMatchingAttack = suppressNextDesktopAttack
+    && (suppressNextDesktopAttackButton == null || suppressNextDesktopAttackButton === event.button)
+    && (suppressNextDesktopAttackUntil === 0 || event.timeStamp <= suppressNextDesktopAttackUntil);
+
+  if (shouldSuppressMatchingAttack) {
     suppressNextDesktopAttack = false;
+    suppressNextDesktopAttackUntil = 0;
+    suppressNextDesktopAttackButton = null;
     event.preventDefault();
     return;
+  }
+
+  if (suppressNextDesktopAttack) {
+    suppressNextDesktopAttack = false;
+    suppressNextDesktopAttackUntil = 0;
+    suppressNextDesktopAttackButton = null;
   }
 
   if (isScreenDragCameraActive()) {
@@ -3824,6 +3945,14 @@ function setMobileInventoryToggleState(active) {
   buttonRight3.classList.toggle('is-active', active);
 }
 
+function isTouchLikePointerEvent(event) {
+  /* Mobile browsers often emit Pointer Events after Touch Events for the same
+  physical tap. Filtering touch-like pointer sources here lets the dedicated
+  touch handlers own tap-driven gameplay actions so one tap only performs one
+  build/break interaction. */
+  return event?.pointerType === 'touch';
+}
+
 function startMobileLeftClick(event) {
   gameAudio.unlockAudio(true);
   if (!mobileMode) return;
@@ -3864,18 +3993,23 @@ if (buttonShoot) {
   buttonShoot.addEventListener('touchcancel', stopMobileLeftClick, { passive: false });
   buttonShoot.addEventListener('pointerdown', event => {
     if (!mobileMode) return;
+    if (isTouchLikePointerEvent(event)) return;
     event.preventDefault();
     startMobileLeftClick(event);
   });
   buttonShoot.addEventListener('pointerup', event => {
     if (!mobileMode) return;
+    if (isTouchLikePointerEvent(event)) return;
     event.preventDefault();
     stopMobileLeftClick(event);
   });
   buttonShoot.addEventListener('click', event => {
     if (!mobileMode) return;
+    /* Touch taps already fired on touchstart, so the later synthetic click must
+    be swallowed to avoid doubling the action. Keeping the handler also stops
+    the browser from forwarding the tap into unrelated document-level logic. */
     event.preventDefault();
-    triggerActionForMouseButton(0, { allowMobile: true });
+    event.stopPropagation();
   });
 }
 
@@ -3885,16 +4019,20 @@ if (buttonRight1) {
   buttonRight1.addEventListener('touchcancel', stopMobileRightClick, { passive: false });
   buttonRight1.addEventListener('pointerdown', event => {
     if (!mobileMode) return;
+    if (isTouchLikePointerEvent(event)) return;
     startMobileRightClick(event);
   });
   buttonRight1.addEventListener('pointerup', event => {
     if (!mobileMode) return;
+    if (isTouchLikePointerEvent(event)) return;
     stopMobileRightClick(event);
   });
   buttonRight1.addEventListener('click', event => {
     if (!mobileMode) return;
+    /* Right-action taps already execute during touchstart, so the synthetic
+    click only needs to be consumed instead of firing the gameplay action again. */
     event.preventDefault();
-    triggerActionForMouseButton(2, { allowMobile: true });
+    event.stopPropagation();
   });
 }
 
