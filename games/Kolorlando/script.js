@@ -43,18 +43,23 @@ function resolveLocalPlayerDisplayName() {
   return trimmedStoredName || 'Anon';
 }
 
-function createPlayerNameSprite(name) {
-  /* A canvas-backed sprite keeps the label lightweight, crisp, and easy to
-  place above the avatar head without introducing DOM overlays into the 3D HUD. */
-  const canvas = document.createElement('canvas');
-  canvas.width = 320;
-  canvas.height = 96;
-  const context = canvas.getContext('2d');
+function persistLocalPlayerDisplayName(name) {
+  /* The floating in-world label should stay aligned with the latest resolved
+  auth username, so we keep the same localStorage cache updated even when the
+  game page itself is the first place that notices an already-signed-in user. */
+  const trimmedName = typeof name === 'string' ? name.trim() : '';
 
-  if (!context) {
-    return null;
+  if (!trimmedName) {
+    window.localStorage.removeItem(KOLORLANDO_PLAYER_NAME_STORAGE_KEY);
+    return;
   }
 
+  window.localStorage.setItem(KOLORLANDO_PLAYER_NAME_STORAGE_KEY, trimmedName);
+}
+
+function drawPlayerNameLabel(context, canvas, name) {
+  /* Centralizing the canvas drawing lets both the initial sprite creation and
+  later auth-driven refreshes render the exact same label styling. */
   const safeName = typeof name === 'string' && name.trim() ? name.trim() : 'Anon';
 
   context.clearRect(0, 0, canvas.width, canvas.height);
@@ -68,6 +73,21 @@ function createPlayerNameSprite(name) {
   context.font = 'bold 28px "Ubuntu Sans Mono", monospace';
   context.fillStyle = '#ffffff';
   context.fillText(safeName, canvas.width * 0.5, canvas.height * 0.5);
+}
+
+function createPlayerNameSprite(name) {
+  /* A canvas-backed sprite keeps the label lightweight, crisp, and easy to
+  place above the avatar head without introducing DOM overlays into the 3D HUD. */
+  const canvas = document.createElement('canvas');
+  canvas.width = 320;
+  canvas.height = 96;
+  const context = canvas.getContext('2d');
+
+  if (!context) {
+    return null;
+  }
+
+  drawPlayerNameLabel(context, canvas, name);
 
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
@@ -83,7 +103,81 @@ function createPlayerNameSprite(name) {
   sprite.scale.set(1.85, 0.56, 1);
   sprite.renderOrder = 2500;
   sprite.frustumCulled = false;
+  sprite.userData.playerNameCanvas = canvas;
+  sprite.userData.playerNameContext = context;
+  sprite.userData.playerNameTexture = texture;
   return sprite;
+}
+
+function updatePlayerNameSprite(sprite, name) {
+  /* Reusing the same sprite avoids detach/reattach work on the player body
+  while still letting the text update as soon as auth data becomes available. */
+  const canvas = sprite?.userData?.playerNameCanvas;
+  const context = sprite?.userData?.playerNameContext;
+  const texture = sprite?.userData?.playerNameTexture;
+
+  if (!canvas || !context || !texture) {
+    return;
+  }
+
+  drawPlayerNameLabel(context, canvas, name);
+  texture.needsUpdate = true;
+}
+
+async function resolveAuthenticatedPlayerDisplayName() {
+  /* The game page can be opened directly with a valid Supabase session already
+  stored in the browser, so this auth lookup fills the label even when the
+  landing page never ran the localStorage caching step first. */
+  if (!window.database?.auth?.getUser) {
+    return '';
+  }
+
+  try {
+    const { data, error } = await window.database.auth.getUser();
+
+    if (error) {
+      throw error;
+    }
+
+    const user = data?.user;
+
+    if (!user?.email) {
+      return '';
+    }
+
+    const { data: profileRows, error: profileError } = await window.database
+      .from('users')
+      .select('username')
+      .eq('email', user.email.toLowerCase())
+      .limit(1);
+
+    if (profileError) {
+      throw profileError;
+    }
+
+    const profileUsername = profileRows?.[0]?.username;
+    const fallbackUsername = user.email.split('@')[0];
+    return typeof profileUsername === 'string' && profileUsername.trim()
+      ? profileUsername.trim()
+      : fallbackUsername;
+  } catch (error) {
+    console.error('Failed to resolve the authenticated Kolorlando player name.', error);
+    return '';
+  }
+}
+
+async function syncLocalPlayerDisplayNameFromAuth(sprite) {
+  /* We first render from the cached/local default value so the scene appears
+  immediately, then asynchronously upgrade the label once auth confirms who
+  the current player is on this page. */
+  const authenticatedName = await resolveAuthenticatedPlayerDisplayName();
+
+  if (!authenticatedName) {
+    return;
+  }
+
+  persistLocalPlayerDisplayName(authenticatedName);
+  updatePlayerNameSprite(sprite, authenticatedName);
 }
 
 let mobileMode = false;
@@ -1385,6 +1479,7 @@ if (playerNameSprite) {
   person while staying attached to the same transform as the player body. */
   playerNameSprite.position.set(0, PLAYER_HEIGHT + 0.62, 0);
   playerBody.add(playerNameSprite);
+  syncLocalPlayerDisplayNameFromAuth(playerNameSprite);
 }
 
 // Neutral defaults keep every held item consistent when first equipped.
