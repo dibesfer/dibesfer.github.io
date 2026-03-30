@@ -17,6 +17,10 @@ export function createMiniMapUI(options) {
   const miniMapCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 500);
   const miniMapFacing = new THREE.Vector3();
   const miniMapProjectedPos = new THREE.Vector3();
+  const MINIMAP_TARGET_FPS = 12;
+  const MINIMAP_FRAME_INTERVAL = 1 / MINIMAP_TARGET_FPS;
+  let miniMapFrameAccumulator = MINIMAP_FRAME_INTERVAL;
+  let miniMapRenderDirty = true;
 
   miniMapPlayerMarker.id = 'miniMapPlayerMarker';
   miniMap.appendChild(miniMapPlayerMarker);
@@ -39,6 +43,11 @@ export function createMiniMapUI(options) {
     miniMapCamera.bottom = -halfHeight;
     miniMapCamera.updateProjectionMatrix();
     miniMapRenderer.setSize(width, height, false);
+
+    // Resizing changes both the render target and the projected marker space,
+    // so we flag the minimap dirty to guarantee the very next update paints a
+    // correctly aligned result instead of waiting for the throttle interval.
+    miniMapRenderDirty = true;
   }
 
   function getEntityMiniMapMarkerClass(entity) {
@@ -69,7 +78,7 @@ export function createMiniMapUI(options) {
     });
   }
 
-  function updateMiniMap() {
+  function renderMiniMapFrame() {
     miniMapCamera.position.set(playerEye.x, playerEye.y + miniMapHeight, playerEye.z);
     miniMapCamera.lookAt(playerEye.x, groundY, playerEye.z);
 
@@ -118,9 +127,36 @@ export function createMiniMapUI(options) {
     miniMapRenderer.render(scene, miniMapCamera);
   }
 
+  function updateMiniMap(deltaTime, force) {
+    // The minimap is a second full Three.js render plus a batch of DOM marker
+    // updates, so capping it to a modest HUD refresh rate saves frame time
+    // without affecting movement or combat simulation in the main world.
+    if (force === true) {
+      miniMapFrameAccumulator = 0;
+      miniMapRenderDirty = false;
+      renderMiniMapFrame();
+      return;
+    }
+
+    // The first frame starts dirty so the player never sees an empty minimap,
+    // while later frames accumulate time until the next scheduled HUD refresh.
+    miniMapFrameAccumulator += Number.isFinite(deltaTime) ? deltaTime : 0;
+
+    if (!miniMapRenderDirty && miniMapFrameAccumulator < MINIMAP_FRAME_INTERVAL) {
+      return;
+    }
+
+    // Keeping only the leftover time prevents long-tab or hitch recovery from
+    // trying to "catch up" with several minimap renders in one game frame.
+    miniMapFrameAccumulator %= MINIMAP_FRAME_INTERVAL;
+    miniMapRenderDirty = false;
+    renderMiniMapFrame();
+  }
+
   return {
     setPixelRatio: function (value) {
       miniMapRenderer.setPixelRatio(value);
+      miniMapRenderDirty = true;
     },
     updateMiniMap: updateMiniMap,
     updateMiniMapSize: updateMiniMapSize,

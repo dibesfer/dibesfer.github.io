@@ -14,6 +14,9 @@ export function createInventoryUI(options) {
   const gameModeReadout = options.gameModeReadout;
   const gameModeButtons = options.gameModeButtons;
   const voxelTypes = options.voxelTypes;
+  const onSelectedHotbarStackChange = typeof options.onSelectedHotbarStackChange === 'function'
+    ? options.onSelectedHotbarStackChange
+    : null;
   const voxelTypeNames = new Set(voxelTypes.map(function (type) { return type.name; }));
 
   const PLAYER_INVENTORY_SLOT_COUNT = 32;
@@ -28,6 +31,7 @@ export function createInventoryUI(options) {
   let suppressInventorySlotClick = false;
   const inventoryDragPreview = document.createElement('div');
   const INVENTORY_DRAG_START_DISTANCE = 6;
+  let lastSelectedHotbarStackTypeName = null;
 
   const encyclopediaItems = [
     { name: 'Spawn Point', iconSrc: 'assets/icons/diamonds.png' },
@@ -91,6 +95,20 @@ export function createInventoryUI(options) {
   function getSelectedHotbarStack() {
     if (selectedHotbarIndex < 0 || selectedHotbarIndex >= hotbarSlotEls.length) return null;
     return playerInventory[selectedHotbarIndex];
+  }
+
+  function emitSelectedHotbarStackChangeIfNeeded(force) {
+    if (!onSelectedHotbarStackChange) return;
+
+    const selectedStack = getSelectedHotbarStack();
+    const nextTypeName = selectedStack?.typeName ?? null;
+
+    // The held item model only depends on the selected hotbar item type, so we
+    // skip notifying the game when only the stack count changes in place.
+    if (!force && nextTypeName === lastSelectedHotbarStackTypeName) return;
+
+    lastSelectedHotbarStackTypeName = nextTypeName;
+    onSelectedHotbarStackChange(selectedStack);
   }
 
   function getSelectedPlaceableVoxelType() {
@@ -253,6 +271,7 @@ export function createInventoryUI(options) {
     updateGameModeUI();
     updateInventorySelectionUI();
     renderPlayerInventorySlots();
+    emitSelectedHotbarStackChangeIfNeeded(false);
   }
 
   function addItemToInventory(typeName, amount) {
@@ -276,6 +295,7 @@ export function createInventoryUI(options) {
 
     renderPlayerInventorySlots();
     updateInventorySelectionUI();
+    emitSelectedHotbarStackChangeIfNeeded(false);
     return (amount === undefined ? 1 : amount) - remaining;
   }
 
@@ -292,6 +312,7 @@ export function createInventoryUI(options) {
     syncSelectedVoxelTypeFromMode();
     renderPlayerInventorySlots();
     updateInventorySelectionUI();
+    emitSelectedHotbarStackChangeIfNeeded(false);
     return true;
   }
 
@@ -302,6 +323,7 @@ export function createInventoryUI(options) {
     syncSelectedVoxelTypeFromMode();
     renderPlayerInventorySlots();
     updateInventorySelectionUI();
+    emitSelectedHotbarStackChangeIfNeeded(false);
   }
 
   function beginInventorySlotDrag(index, event, element) {
@@ -376,6 +398,7 @@ export function createInventoryUI(options) {
     syncSelectedVoxelTypeFromMode();
     renderPlayerInventorySlots();
     updateInventorySelectionUI();
+    emitSelectedHotbarStackChangeIfNeeded(false);
   }
 
   function updateInventoryDragPreviewPosition(clientX, clientY) {
@@ -521,6 +544,7 @@ export function createInventoryUI(options) {
     syncSelectedVoxelTypeFromMode();
     updateInventorySelectionUI();
     renderPlayerInventorySlots();
+    emitSelectedHotbarStackChangeIfNeeded(false);
   }
 
   for (let i = 0; i < gameModeButtons.length; i += 1) {

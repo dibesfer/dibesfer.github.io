@@ -301,6 +301,7 @@ let mobileFlyUpPressed = false;
 let mobileFlyDownPressed = false;
 let suppressRight3Click = false;
 let voxelRaycastDirty = true;
+let voxelRaycastRefreshAccumulator = 1 / 30;
 let lastRaycastModeKey = '';
 let lastWowCursorRaycastActive = false;
 let openingChatFromPointerLock = false;
@@ -322,6 +323,8 @@ const DEFAULT_RENDER_SCALE = 1;
 const VALID_RENDER_SCALE_VALUES = new Set(['1', '0.75', '0.5']);
 let rendererPixelRatioBase = Math.min(window.devicePixelRatio, 2);
 let renderScaleMultiplier = DEFAULT_RENDER_SCALE;
+const VOXEL_RAYCAST_REFRESH_INTERVAL = 1 / 30;
+const WOW_CURSOR_RAYCAST_NDC_EPSILON_SQ = 0.000004;
 const cameraForwardDirection = new THREE.Vector3();
 let yaw = 0;
 let pitch = 0;
@@ -563,7 +566,10 @@ const chatUI = createChatUI({
   onHide: () => {
     setMobileChatToggleState(false);
     if (shouldUsePointerLock() && typeof controls !== 'undefined' && !controls.isLocked && !isMenuCentralVisible()) {
-      armPointerLockRetry();
+      // Closing chat after a command still happens inside a trusted user action
+      // like Enter or Escape, so we can try to restore gameplay pointer lock
+      // immediately instead of leaving Skyrim mode with a loose cursor.
+      requestGameplayPointerLock();
     }
   },
 });
@@ -585,8 +591,16 @@ let characterPreviewModelRoot = null;
 let characterPreviewIdleCycle = Math.random() * Math.PI * 2;
 let characterPreviewWidth = 0;
 let characterPreviewHeight = 0;
+let characterPreviewResizeObserver = null;
+let isCharacterPreviewSizeDirty = true;
 const CHARACTER_PREVIEW_LOOK_Y = 1.26;
 const CHARACTER_PREVIEW_DRAG_THRESHOLD = 10;
+
+function markCharacterPreviewSizeDirty() {
+  // The preview panel size rarely changes compared with the animation rate, so
+  // a dirty flag lets us skip repeated DOM size checks on normal render frames.
+  isCharacterPreviewSizeDirty = true;
+}
 
 function updateCharacterPreviewSize() {
   if (!characterMenuPlayer || !characterPreviewRenderer || !characterPreviewCamera) return;
@@ -599,6 +613,7 @@ function updateCharacterPreviewSize() {
   characterPreviewCamera.aspect = width / height;
   characterPreviewCamera.updateProjectionMatrix();
   characterPreviewRenderer.setSize(width, height, false);
+  isCharacterPreviewSizeDirty = false;
 }
 
 function initCharacterPreview() {
@@ -618,6 +633,15 @@ function initCharacterPreview() {
   characterPreviewRenderer.outputColorSpace = THREE.SRGBColorSpace;
   characterPreviewRenderer.domElement.setAttribute('aria-hidden', 'true');
   characterMenuPlayer.appendChild(characterPreviewRenderer.domElement);
+
+  if (typeof ResizeObserver === 'function') {
+    // Observing the container keeps preview resizing tied to actual layout
+    // changes instead of polling client sizes every animation frame.
+    characterPreviewResizeObserver = new ResizeObserver(() => {
+      markCharacterPreviewSizeDirty();
+    });
+    characterPreviewResizeObserver.observe(characterMenuPlayer);
+  }
 
   const ambientLight = new THREE.HemisphereLight(0xf6fbff, 0x4b5566, 1.5);
   characterPreviewScene.add(ambientLight);
@@ -1098,6 +1122,7 @@ function applyRenderScale(options = {}) {
 
   if (characterPreviewRenderer) {
     characterPreviewRenderer.setPixelRatio(effectivePixelRatio);
+    markCharacterPreviewSizeDirty();
   }
 
   syncRenderScaleSetting();
@@ -1107,6 +1132,7 @@ function applyRenderScale(options = {}) {
   updateSceneViewSize();
   miniMapUI?.updateMiniMapSize();
   if (characterPreviewRenderer) {
+    markCharacterPreviewSizeDirty();
     updateCharacterPreviewSize();
   }
 }
@@ -1386,6 +1412,10 @@ const itemAppearances = [];
 const PICKUP_ITEM_TYPES = new Set(['Sword', 'Gun', 'Coin', 'Boxel Selection Tool']);
 const PLAYER_PICKUP_RADIUS = 3;
 const PLAYER_PICKUP_RADIUS_SQ = PLAYER_PICKUP_RADIUS * PLAYER_PICKUP_RADIUS;
+const ITEM_APPEARANCE_NEARBY_UPDATE_RADIUS = 18;
+const ITEM_APPEARANCE_NEARBY_UPDATE_RADIUS_SQ =
+  ITEM_APPEARANCE_NEARBY_UPDATE_RADIUS * ITEM_APPEARANCE_NEARBY_UPDATE_RADIUS;
+const ITEM_APPEARANCE_FAR_UPDATE_INTERVAL = 0.25;
 const ITEM_PICKUP_COLLISION_RADIUS = 0.45;
 const ITEM_PICKUP_MAGNET_MIN_SPEED = 1.6;
 const ITEM_PICKUP_MAGNET_MAX_SPEED = 10.5;
@@ -1479,6 +1509,12 @@ const inventoryUI = createInventoryUI({
   gameModeReadout,
   gameModeButtons,
   voxelTypes,
+  // The held-item model only needs to refresh when the equipped hotbar item
+  // changes, so the inventory pushes that event directly instead of making the
+  // main animation loop poll the same selection state every frame.
+  onSelectedHotbarStackChange: () => {
+    updateHeldItemSelection();
+  },
 });
 
 dir.shadow.camera.left = -SHADOW_RANGE;
@@ -2262,6 +2298,11 @@ function setDebugMode(nextEnabled) {
     for (let i = 0; i < itemRaycastSphereHelpers.length; i++) {
       itemRaycastSphereHelpers[i].visible = false;
     }
+  } else {
+    // Refreshing once on enable keeps the helpers visually in sync immediately
+    // without requiring the main loop to call the debug visual updater when the
+    // game is not currently in debug mode.
+    updateDebugCollisionVisuals();
   }
   chatUI.appendLine(`Debug mode ${nextEnabled ? 'enabled' : 'disabled'}.`);
 }
@@ -3280,6 +3321,7 @@ function updateEntities(deltaTime) {
 const itemPickupOffset = new THREE.Vector3();
 const itemPickupDirection = new THREE.Vector3();
 const itemPickupColliderSphere = new THREE.Sphere(new THREE.Vector3(), ITEM_PICKUP_COLLISION_RADIUS);
+let farItemAppearanceUpdateAccumulator = 0;
 
 function updatePlayerPickupSphere() {
   // Centering the pickup sphere around the player's torso keeps the debug visualization
@@ -3304,10 +3346,34 @@ function tryCollectItemAppearance(itemAppearance) {
 
 function updateItemAppearances(deltaTime) {
   updatePlayerPickupSphere();
+  farItemAppearanceUpdateAccumulator += deltaTime;
+  const shouldRunFarItemUpdate = farItemAppearanceUpdateAccumulator >= ITEM_APPEARANCE_FAR_UPDATE_INTERVAL;
+  const farItemUpdateDelta = shouldRunFarItemUpdate ? farItemAppearanceUpdateAccumulator : 0;
+
+  // Distant world pickups can animate at a much lower cadence because they are
+  // small on screen and cannot be collected yet, which keeps the nearby player
+  // interactions smooth when many decorative or dropped items exist at once.
+  if (shouldRunFarItemUpdate) {
+    farItemAppearanceUpdateAccumulator = 0;
+  }
 
   for (let i = 0; i < itemAppearances.length; i++) {
     const itemAppearance = itemAppearances[i];
-    if (!itemAppearance) continue;
+    if (!itemAppearance || itemAppearance.collected) continue;
+
+    const itemOffsetX = playerEye.x - itemAppearance.position.x;
+    const itemOffsetZ = playerEye.z - itemAppearance.position.z;
+    const horizontalDistanceSq = itemOffsetX * itemOffsetX + itemOffsetZ * itemOffsetZ;
+    const isNearbyForFullUpdate = horizontalDistanceSq <= ITEM_APPEARANCE_NEARBY_UPDATE_RADIUS_SQ;
+
+    if (!isNearbyForFullUpdate) {
+      if (shouldRunFarItemUpdate) {
+        // Passing the accumulated far-item delta keeps distant idle rotation
+        // roughly time-correct while avoiding full update work every frame.
+        itemAppearance.update(farItemUpdateDelta);
+      }
+      continue;
+    }
 
     if (canPlayerPickUpItem(itemAppearance)) {
       // The magnetic pickup pull becomes stronger as the item gets closer to the
@@ -3664,40 +3730,76 @@ function commitVoxelRaycastInputs() {
   voxelRaycastDirty = false;
 }
 
-function refreshVoxelRaycast(force = false) {
+function refreshVoxelRaycast(force = false, deltaTime = 0) {
   // The force path is used right before interactions so clicks never consume a stale
   // target even if the world raycast has been skipped on recent idle frames.
-  if (!force && !voxelRaycastDirty && !hasVoxelRaycastInputsChanged()) return;
+  if (force) {
+    syncTrackedRaycastInputs();
+    updateVoxelRaycast();
+    commitVoxelRaycastInputs();
+    voxelRaycastRefreshAccumulator = 0;
+    return;
+  }
+
+  const hasInputsChanged = hasVoxelRaycastInputsChanged();
+  if (!voxelRaycastDirty && !hasInputsChanged) return;
+
+  voxelRaycastRefreshAccumulator += Number.isFinite(deltaTime) ? deltaTime : 0;
+
+  // Capping non-forced refreshes keeps camera drag and aim jitter from issuing
+  // a full world raycast on every render frame while still updating the target
+  // often enough for smooth interaction feedback.
+  if (voxelRaycastRefreshAccumulator < VOXEL_RAYCAST_REFRESH_INTERVAL) {
+    return;
+  }
 
   // Refreshes always snapshot the latest input state first so the cache baseline
   // matches the exact camera/player configuration that produced this raycast.
   syncTrackedRaycastInputs();
   updateVoxelRaycast();
   commitVoxelRaycastInputs();
+  voxelRaycastRefreshAccumulator %= VOXEL_RAYCAST_REFRESH_INTERVAL;
 }
 
 function updateWowCursorRaycastPointer(clientX, clientY) {
   if (!sceneView || mobileMode || !isScreenDragCameraActive()) {
-    wowCursorRaycastActive = false;
-    invalidateVoxelRaycast();
+    if (wowCursorRaycastActive) {
+      wowCursorRaycastActive = false;
+      invalidateVoxelRaycast();
+    }
     return;
   }
 
   const rect = sceneView.getBoundingClientRect();
   if (rect.width <= 0 || rect.height <= 0) {
-    wowCursorRaycastActive = false;
-    invalidateVoxelRaycast();
+    if (wowCursorRaycastActive) {
+      wowCursorRaycastActive = false;
+      invalidateVoxelRaycast();
+    }
     return;
   }
 
+  const previousNdcX = wowCursorNdc.x;
+  const previousNdcY = wowCursorNdc.y;
+  const wasCursorRaycastActive = wowCursorRaycastActive;
   wowCursorNdc.x = ((clientX - rect.left) / rect.width) * 2 - 1;
   wowCursorNdc.y = -((clientY - rect.top) / rect.height) * 2 + 1;
   wowCursorRaycastActive = wowCursorNdc.x >= -1 && wowCursorNdc.x <= 1
     && wowCursorNdc.y >= -1 && wowCursorNdc.y <= 1;
-  invalidateVoxelRaycast();
+  const cursorMovedEnoughToMatter =
+    (wowCursorNdc.x - previousNdcX) * (wowCursorNdc.x - previousNdcX)
+    + (wowCursorNdc.y - previousNdcY) * (wowCursorNdc.y - previousNdcY)
+    > WOW_CURSOR_RAYCAST_NDC_EPSILON_SQ;
+
+  if (wowCursorRaycastActive !== wasCursorRaycastActive || (wowCursorRaycastActive && cursorMovedEnoughToMatter)) {
+    invalidateVoxelRaycast();
+  }
 }
 
 function clearWowCursorRaycastPointer() {
+  if (!wowCursorRaycastActive) {
+    return;
+  }
   wowCursorRaycastActive = false;
   invalidateVoxelRaycast();
 }
@@ -4473,7 +4575,6 @@ renderer.setAnimationLoop(() => {
   }
 
   updatePlayer(delta);
-  updateHeldItemSelection();
   updateRightPunch(delta);
   updateLeftPunch(delta);
   updatePunchHitboxes(delta);
@@ -4483,8 +4584,12 @@ renderer.setAnimationLoop(() => {
   updateChaserMeleeAttacks(delta);
   updateChaserPunchHitboxes(delta);
   updateProjectilesAndExplosions(delta);
-  refreshVoxelRaycast();
-  updateDebugCollisionVisuals();
+  refreshVoxelRaycast(false, delta);
+  if (debugModeEnabled) {
+    // Keeping the branch outside the helper avoids even the function call cost
+    // on normal gameplay frames where collision debugging is completely off.
+    updateDebugCollisionVisuals();
+  }
   if (multiplayerController) {
     multiplayerController.update(delta);
   }
@@ -4498,12 +4603,16 @@ renderer.setAnimationLoop(() => {
     && isMenuCentralVisible()
     && getActiveMenuCentralTab() === 'character'
   ) {
-    updateCharacterPreviewSize();
+    if (isCharacterPreviewSizeDirty) {
+      updateCharacterPreviewSize();
+    }
     characterPreviewIdleCycle += delta * 0.65;
     applyHumanoidIdleAnimation(characterPreviewModel.joints, characterPreviewIdleCycle, 0.9);
     characterPreviewRenderer.render(characterPreviewScene, characterPreviewCamera);
   }
 
   renderer.render(scene, camera);
-  miniMapUI.updateMiniMap();
+  // Passing delta lets the minimap apply its own capped refresh rate instead
+  // of doing a second full scene render on every animation frame.
+  miniMapUI.updateMiniMap(delta);
 });

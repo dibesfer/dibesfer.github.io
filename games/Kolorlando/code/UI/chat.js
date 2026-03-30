@@ -35,10 +35,13 @@ export function createChatUI(options) {
 
   function hideInput() {
     if (!chatBoxInput) return;
-    onHide?.();
     setElementHidden(chatBoxInput, true);
     chatBox?.classList.remove('backgrounded');
     chatBoxInput.blur();
+    // Pointer-lock recovery and similar hide-side effects need the input to be
+    // fully hidden and unfocused first, otherwise browsers may reject the
+    // gameplay relock because the text field still owns the active focus state.
+    onHide?.();
   }
 
   function submitInput() {
