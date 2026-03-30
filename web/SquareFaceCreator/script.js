@@ -37,7 +37,11 @@ function createResolvedCategoryItems(rawCategoryItems) {
                 // Normalizing every catalog URL through the shared resolver
                 // keeps local assets and mirrored former external assets
                 // reachable after deployment from any supported site root.
-                imgUrl: resolveSfcImageUrlAlias(item?.imgUrl || "", import.meta.url)
+                imgUrl: resolveSfcImageUrlAlias(item?.imgUrl || "", import.meta.url),
+                // Keeping an optional second resolved URL lets the editor
+                // recover gracefully when a mirrored production asset is
+                // missing and the original third-party file is still usable.
+                fallbackImgUrl: resolveSfcImageUrlAlias(item?.fallbackImgUrl || "", import.meta.url)
             }))
         ])
     );
@@ -49,11 +53,11 @@ const categoryItems = createResolvedCategoryItems({
     eyes: [
         { imgUrl: "assets/categories/eyes/SFC_eyes1.png" },
         { imgUrl: "assets/categories/eyes/SFC_eyes2.png" },
-        { imgUrl: "/web/SquareFaceCreator/assets/categories/_mirrored/www.pngmart.com_files_23_Cartoon-Eye-PNG-Picture.png" },
-        { imgUrl: "/web/SquareFaceCreator/assets/categories/_mirrored/pngimg.com_d_eye_PNG6187.png" },
-        { imgUrl: "/web/SquareFaceCreator/assets/categories/_mirrored/www.freeiconspng.com_uploads_eyes-icon-0.png" },
+        { imgUrl: "/web/SquareFaceCreator/assets/categories/_mirrored/www.pngmart.com_files_23_Cartoon-Eye-PNG-Picture.png", fallbackImgUrl: "https://www.pngmart.com/files/23/Cartoon-Eye-PNG-Picture.png" },
+        { imgUrl: "/web/SquareFaceCreator/assets/categories/_mirrored/pngimg.com_d_eye_PNG6187.png", fallbackImgUrl: "https://pngimg.com/d/eye_PNG6187.png" },
+        { imgUrl: "/web/SquareFaceCreator/assets/categories/_mirrored/www.freeiconspng.com_uploads_eyes-icon-0.png", fallbackImgUrl: "https://www.freeiconspng.com/uploads/eyes-icon-0.png" },
         
-        { imgUrl: "/web/SquareFaceCreator/assets/categories/_mirrored/www.onlygfx.com_wp-content_uploads_2021_08_simple-eye-5144.svg" },
+        { imgUrl: "/web/SquareFaceCreator/assets/categories/_mirrored/www.onlygfx.com_wp-content_uploads_2021_08_simple-eye-5144.svg", fallbackImgUrl: "https://www.onlygfx.com/wp-content/uploads/2021/08/simple-eye-5144.svg" },
         { imgUrl: "REPLACE_WITH_EYES_07_URL" },
         { imgUrl: "REPLACE_WITH_EYES_08_URL" },
         { imgUrl: "REPLACE_WITH_EYES_09_URL" },
@@ -67,9 +71,9 @@ const categoryItems = createResolvedCategoryItems({
     ],
     eyebrows: [
         { imgUrl: "assets/categories/eyebrows/SFC_eyebrows1.png" },
-        { imgUrl: "/web/SquareFaceCreator/assets/categories/_mirrored/www.pngall.com_wp-content_uploads_14_Eyebrow-PNG.png" },
-        { imgUrl: "/web/SquareFaceCreator/assets/categories/_mirrored/static.vecteezy.com_system_resources_thumbnails_022_924_750_small_black-eyebrow-drawing-png.png" },
-        { imgUrl: "/web/SquareFaceCreator/assets/categories/_mirrored/static.vecteezy.com_system_resources_thumbnails_016_658_101_small_brown-brow-line-art-png.png" },
+        { imgUrl: "/web/SquareFaceCreator/assets/categories/_mirrored/www.pngall.com_wp-content_uploads_14_Eyebrow-PNG.png", fallbackImgUrl: "https://www.pngall.com/wp-content/uploads/14/Eyebrow-PNG.png" },
+        { imgUrl: "/web/SquareFaceCreator/assets/categories/_mirrored/static.vecteezy.com_system_resources_thumbnails_022_924_750_small_black-eyebrow-drawing-png.png", fallbackImgUrl: "https://static.vecteezy.com/system/resources/thumbnails/022/924/750/small/black-eyebrow-drawing-png.png" },
+        { imgUrl: "/web/SquareFaceCreator/assets/categories/_mirrored/static.vecteezy.com_system_resources_thumbnails_016_658_101_small_brown-brow-line-art-png.png", fallbackImgUrl: "https://static.vecteezy.com/system/resources/thumbnails/016/658/101/small/brown-brow-line-art-png.png" },
         { imgUrl: "REPLACE_WITH_EYEBROWS_05_URL" },
         { imgUrl: "REPLACE_WITH_EYEBROWS_06_URL" },
         { imgUrl: "REPLACE_WITH_EYEBROWS_07_URL" },
@@ -86,9 +90,9 @@ const categoryItems = createResolvedCategoryItems({
     nose: [
         { imgUrl: "assets/categories/nose/SFC_nose1.png" },
         { imgUrl: "assets/categories/nose/SFC_nose2.svg" },
-        { imgUrl: "/web/SquareFaceCreator/assets/categories/_mirrored/images.vexels.com_media_users_3_252474_isolated_preview_81c2548b31a26f089248ab4022c0d8da-anime-nose-stroke.png" },
-        { imgUrl: "/web/SquareFaceCreator/assets/categories/_mirrored/pngimg.com_d_nose_PNG12.png" },
-        { imgUrl: "/web/SquareFaceCreator/assets/categories/_mirrored/pngimg.com_d_nose_PNG8.png" },
+        { imgUrl: "/web/SquareFaceCreator/assets/categories/_mirrored/images.vexels.com_media_users_3_252474_isolated_preview_81c2548b31a26f089248ab4022c0d8da-anime-nose-stroke.png", fallbackImgUrl: "https://images.vexels.com/media/users/3/252474/isolated/preview/81c2548b31a26f089248ab4022c0d8da-anime-nose-stroke.png" },
+        { imgUrl: "/web/SquareFaceCreator/assets/categories/_mirrored/pngimg.com_d_nose_PNG12.png", fallbackImgUrl: "https://pngimg.com/d/nose_PNG12.png" },
+        { imgUrl: "/web/SquareFaceCreator/assets/categories/_mirrored/pngimg.com_d_nose_PNG8.png", fallbackImgUrl: "https://pngimg.com/d/nose_PNG8.png" },
         { imgUrl: "REPLACE_WITH_NOSE_05_URL" },
         { imgUrl: "REPLACE_WITH_NOSE_06_URL" },
         { imgUrl: "REPLACE_WITH_NOSE_07_URL" },
@@ -105,11 +109,11 @@ const categoryItems = createResolvedCategoryItems({
     mouth: [
         { imgUrl: "assets/categories/mouth/SFC_mouth1.png" },
         
-        { imgUrl: "/web/SquareFaceCreator/assets/categories/_mirrored/images.vexels.com_media_users_3_252302_isolated_preview_49cb11a5214ad6339f540faf86a91c01-anime-open-mouth.png" },
-        { imgUrl: "/web/SquareFaceCreator/assets/categories/_mirrored/static.vecteezy.com_system_resources_thumbnails_025_868_361_small_happy-smile-046-png.png" },
-        { imgUrl: "/web/SquareFaceCreator/assets/categories/_mirrored/www.pngall.com_wp-content_uploads_15_Anime-Mouth-PNG-Image-File.png" },
-        { imgUrl: "/web/SquareFaceCreator/assets/categories/_mirrored/images.vexels.com_media_users_3_252487_isolated_preview_d9b94e35af6fb920c619807df06c9c75-boca-de-sonrisa-feliz.png" },
-        { imgUrl: "/web/SquareFaceCreator/assets/categories/_mirrored/images.vexels.com_media_users_3_252291_isolated_preview_bbd9948356d3fdd2f162226b7f1fe78c-anime-smile-color-stroke.png" },
+        { imgUrl: "/web/SquareFaceCreator/assets/categories/_mirrored/images.vexels.com_media_users_3_252302_isolated_preview_49cb11a5214ad6339f540faf86a91c01-anime-open-mouth.png", fallbackImgUrl: "https://images.vexels.com/media/users/3/252302/isolated/preview/49cb11a5214ad6339f540faf86a91c01-anime-open-mouth.png" },
+        { imgUrl: "/web/SquareFaceCreator/assets/categories/_mirrored/static.vecteezy.com_system_resources_thumbnails_025_868_361_small_happy-smile-046-png.png", fallbackImgUrl: "https://static.vecteezy.com/system/resources/thumbnails/025/868/361/small/happy-smile-046-png.png" },
+        { imgUrl: "/web/SquareFaceCreator/assets/categories/_mirrored/www.pngall.com_wp-content_uploads_15_Anime-Mouth-PNG-Image-File.png", fallbackImgUrl: "https://www.pngall.com/wp-content/uploads/15/Anime-Mouth-PNG-Image-File.png" },
+        { imgUrl: "/web/SquareFaceCreator/assets/categories/_mirrored/images.vexels.com_media_users_3_252487_isolated_preview_d9b94e35af6fb920c619807df06c9c75-boca-de-sonrisa-feliz.png", fallbackImgUrl: "https://images.vexels.com/media/users/3/252487/isolated/preview/d9b94e35af6fb920c619807df06c9c75-boca-de-sonrisa-feliz.png" },
+        { imgUrl: "/web/SquareFaceCreator/assets/categories/_mirrored/images.vexels.com_media_users_3_252291_isolated_preview_bbd9948356d3fdd2f162226b7f1fe78c-anime-smile-color-stroke.png", fallbackImgUrl: "https://images.vexels.com/media/users/3/252291/isolated/preview/bbd9948356d3fdd2f162226b7f1fe78c-anime-smile-color-stroke.png" },
         { imgUrl: "" },
         { imgUrl: "REPLACE_WITH_MOUTH_07_URL" },
         { imgUrl: "REPLACE_WITH_MOUTH_08_URL" },
@@ -124,10 +128,10 @@ const categoryItems = createResolvedCategoryItems({
     ],
     ears: [
         { imgUrl: "assets/categories/ears/SFC_ear2.svg" },
-        { imgUrl: "/web/SquareFaceCreator/assets/categories/_mirrored/cdn.creazilla.com_cliparts_69759_ear-clipart-md.png" },
-        { imgUrl: "/web/SquareFaceCreator/assets/categories/_mirrored/www.freepnglogos.com_uploads_ear-png_vector-graphic-ear-listen-hear-gossip-sound-image-pixabay-15.png" },
-        { imgUrl: "/web/SquareFaceCreator/assets/categories/_mirrored/www.freepnglogos.com_uploads_ear-png_ear-very-basic-listen-icon-ios-iconset-icons-35.png" },
-        { imgUrl: "/web/SquareFaceCreator/assets/categories/_mirrored/freepngimg.com_thumb_ear_142094-ear-vector-download-hq.png" },
+        { imgUrl: "/web/SquareFaceCreator/assets/categories/_mirrored/cdn.creazilla.com_cliparts_69759_ear-clipart-md.png", fallbackImgUrl: "https://cdn.creazilla.com/cliparts/69759/ear-clipart-md.png" },
+        { imgUrl: "/web/SquareFaceCreator/assets/categories/_mirrored/www.freepnglogos.com_uploads_ear-png_vector-graphic-ear-listen-hear-gossip-sound-image-pixabay-15.png", fallbackImgUrl: "https://www.freepnglogos.com/uploads/ear-png/vector-graphic-ear-listen-hear-gossip-sound-image-pixabay-15.png" },
+        { imgUrl: "/web/SquareFaceCreator/assets/categories/_mirrored/www.freepnglogos.com_uploads_ear-png_ear-very-basic-listen-icon-ios-iconset-icons-35.png", fallbackImgUrl: "https://www.freepnglogos.com/uploads/ear-png/ear-very-basic-listen-icon-ios-iconset-icons-35.png" },
+        { imgUrl: "/web/SquareFaceCreator/assets/categories/_mirrored/freepngimg.com_thumb_ear_142094-ear-vector-download-hq.png", fallbackImgUrl: "https://freepngimg.com/thumb/ear/142094-ear-vector-download-hq.png" },
         { imgUrl: "REPLACE_WITH_EARS_05_URL" },
         { imgUrl: "REPLACE_WITH_EARS_06_URL" },
         { imgUrl: "REPLACE_WITH_EARS_07_URL" },
@@ -376,6 +380,43 @@ function updatePossibleCombinationsTitle() {
     combinationsTitle.textContent = `Make ${possibleCombinations.toLocaleString()} different faces`;
 }
 
+function findCategoryItemByImgUrl(imgUrl) {
+    const categoryEntryList = Object.values(categoryItems);
+
+    for (let categoryIndex = 0; categoryIndex < categoryEntryList.length; categoryIndex += 1) {
+        const matchedItem = categoryEntryList[categoryIndex].find(item => item?.imgUrl === imgUrl);
+
+        if (matchedItem) {
+            return matchedItem;
+        }
+    }
+
+    return null;
+}
+
+function attachImageSourceFallback(image, itemData) {
+    const primaryImgUrl = itemData?.imgUrl || "";
+    const fallbackImgUrl = itemData?.fallbackImgUrl || "";
+
+    // The grid keeps the mirrored local file as the canonical selection
+    // value, but the actual <img> element may transparently retry with the
+    // original remote asset if the deployed mirror responds with a 404.
+    image.src = primaryImgUrl;
+
+    if (!fallbackImgUrl || fallbackImgUrl === primaryImgUrl) {
+        return;
+    }
+
+    image.addEventListener("error", () => {
+        if (image.dataset.fallbackApplied === "true") {
+            return;
+        }
+
+        image.dataset.fallbackApplied = "true";
+        image.src = fallbackImgUrl;
+    }, { once: true });
+}
+
 function renderCategoryItems(categoryName) {
     // Read the selected category from the source object and push those
     // values into the 16 existing DOM slots before any click logic runs.
@@ -402,8 +443,8 @@ function renderCategoryItems(categoryName) {
 
         // The image source comes from the category object, making the
         // object the single source of truth for every face item slot.
-        image.src = imgUrl;
         image.alt = "";
+        attachImageSourceFallback(image, itemData);
         faceItem.appendChild(image);
     });
 
@@ -987,6 +1028,7 @@ function getImageForCategory(imgUrl) {
     }
 
     const image = new Image();
+    const itemData = findCategoryItemByImgUrl(imgUrl);
     image.dataset.loading = "true";
     loadedImageCache[imgUrl] = image;
 
@@ -998,10 +1040,14 @@ function getImageForCategory(imgUrl) {
             resolve(image);
         }, { once: true });
         image.addEventListener("error", () => {
-            delete loadedImageCache[imgUrl];
-            resolve(null);
+            // If both the mirrored and fallback sources fail, clear the
+            // cache entry so future redraws can retry after a deploy fix.
+            if (image.dataset.fallbackApplied === "true" || !itemData?.fallbackImgUrl) {
+                delete loadedImageCache[imgUrl];
+                resolve(null);
+            }
         }, { once: true });
-        image.src = imgUrl;
+        attachImageSourceFallback(image, itemData || { imgUrl });
     });
 }
 
