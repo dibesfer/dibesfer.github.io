@@ -28,7 +28,22 @@ const saveCodeVersion = DEFAULT_SFC_FACE.version;
 const playerFaceStorageKey = SFC_FACE_STORAGE_KEY;
 const desktopPointerMediaQuery = window.matchMedia("(hover: hover) and (pointer: fine)");
 
-const categoryItems = {
+function createResolvedCategoryItems(rawCategoryItems) {
+    return Object.fromEntries(
+        Object.entries(rawCategoryItems).map(([categoryName, items]) => [
+            categoryName,
+            items.map(item => ({
+                ...item,
+                // Normalizing every catalog URL through the shared resolver
+                // keeps local assets and mirrored former external assets
+                // reachable after deployment from any supported site root.
+                imgUrl: resolveSfcImageUrlAlias(item?.imgUrl || "", import.meta.url)
+            }))
+        ])
+    );
+}
+
+const categoryItems = createResolvedCategoryItems({
     // Each category keeps a fixed list of 16 item slots.
     // Replace the example imgUrl values with your real image URLs.
     eyes: [
@@ -180,7 +195,7 @@ const categoryItems = {
         { imgUrl: "" },
         { imgUrl: "" }
     ]
-};
+});
 
 // Keeping the visible background picker aligned with the shared default face
 // avoids saving an editor-only color that differs from Kolorlando's fallback.
@@ -450,7 +465,7 @@ function getRuntimeItemIndexForCategory(categoryName) {
 
     // Kolorlando only understands the shared runtime catalog, so the saved
     // game-facing item index must be resolved against that smaller list.
-    return runtimeCategoryEntries.findIndex(item => item?.imgUrl === selectedImgUrl);
+    return runtimeCategoryEntries.findIndex(item => resolveSfcImageUrlAlias(item?.imgUrl || "") === selectedImgUrl);
 }
 
 function getSavedEditorSelectionUrl(categoryName, saveData) {
@@ -474,7 +489,7 @@ function getSavedRuntimeSelectionUrl(categoryName, saveData) {
     const runtimeItem = Number.isInteger(savedIndex)
         ? runtimeCategoryEntries[savedIndex]
         : null;
-    const runtimeImgUrl = runtimeItem?.imgUrl || "";
+    const runtimeImgUrl = resolveSfcImageUrlAlias(runtimeItem?.imgUrl || "");
 
     // Falling back to the runtime catalog lets the editor open existing
     // Kolorlando payloads even when they do not include editor-only metadata.
@@ -943,9 +958,12 @@ function drawStoredCategoryImage(categoryName, image) {
 }
 
 function getImageForCategory(imgUrl) {
-    const cachedGridImage = document.querySelector(
-        `.faceItem[data-img-url="${imgUrl}"] img`
-    );
+    const cachedGridImage = Array.from(faceItems).find(faceItem => {
+        // Absolute URLs can contain selector-special characters like ":"
+        // and "/", so matching through dataset values is safer than
+        // building a CSS attribute selector string from the raw URL.
+        return faceItem.dataset.imgUrl === imgUrl;
+    })?.querySelector("img");
 
     // Reusing an already rendered grid image avoids extra network work
     // when the selected category is currently visible in the picker.

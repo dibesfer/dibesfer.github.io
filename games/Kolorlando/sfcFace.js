@@ -156,14 +156,36 @@ const SFC_CATEGORY_NAMES = Object.keys(SFC_CATEGORY_ITEMS);
 const SFC_HEX_COLOR_PATTERN = /^#[0-9a-f]{6}$/i;
 const imagePromiseCache = new Map();
 const recoloredCanvasCache = new Map();
+const SFC_SITE_ROOT_URL = new URL('../../', import.meta.url);
 
-export function resolveSfcImageUrlAlias(imgUrl) {
+export function resolveSfcImageUrlAlias(imgUrl, baseUrl = import.meta.url) {
   if (typeof imgUrl !== 'string') {
     return '';
   }
 
   const trimmedImgUrl = imgUrl.trim();
-  return SFC_LEGACY_IMAGE_URL_ALIASES[trimmedImgUrl] || trimmedImgUrl;
+  const aliasedImgUrl = SFC_LEGACY_IMAGE_URL_ALIASES[trimmedImgUrl] || trimmedImgUrl;
+
+  if (!aliasedImgUrl) {
+    return '';
+  }
+
+  if (aliasedImgUrl.startsWith('REPLACE_WITH_')) {
+    return aliasedImgUrl;
+  }
+
+  /* Turning catalog paths into absolute URLs at runtime keeps the same saved
+  data working on localhost, GitHub Pages, and subpath deployments like the
+  Codeberg mirror without hardcoding a single domain root. */
+  if (/^(?:[a-z]+:)?\/\//i.test(aliasedImgUrl) || /^(?:data|blob):/i.test(aliasedImgUrl)) {
+    return aliasedImgUrl;
+  }
+
+  if (aliasedImgUrl.startsWith('/')) {
+    return new URL(aliasedImgUrl.slice(1), SFC_SITE_ROOT_URL).href;
+  }
+
+  return new URL(aliasedImgUrl, baseUrl).href;
 }
 
 function deepCloneSfcFaceData(faceData) {
@@ -452,7 +474,7 @@ function resolveFacePartImageUrl(faceData, categoryName) {
     return '';
   }
 
-  return SFC_CATEGORY_ITEMS[categoryName]?.[itemIndex]?.imgUrl || '';
+  return resolveSfcImageUrlAlias(SFC_CATEGORY_ITEMS[categoryName]?.[itemIndex]?.imgUrl || '');
 }
 
 export async function drawSfcFaceToContext(context, canvasSize, rawFaceData) {
