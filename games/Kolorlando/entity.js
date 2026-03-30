@@ -44,6 +44,10 @@ function createEntityLabelSprite(name, type) {
   });
   const sprite = new THREE.Sprite(material);
   sprite.scale.set(1.62, 0.53, 1);
+  /* Labels stay in world space and still obey depth testing, but a later
+  render order ensures they win over the face plane when the two overlap on
+  screen for distant or front-facing characters. */
+  sprite.renderOrder = 10;
   return sprite;
 }
 
@@ -84,6 +88,9 @@ function createDialogSprite(lines) {
   });
   const sprite = new THREE.Sprite(material);
   sprite.scale.set(4.1, 1.3, 1);
+  /* Dialog bubbles share the same depth semantics as labels, but they need
+  to render even later so speech remains readable above the speaker face. */
+  sprite.renderOrder = 11;
   return sprite;
 }
 
@@ -106,6 +113,9 @@ function createHealthBarSprite(healthRatio = 1) {
     })
   );
   sprite.scale.set(1.3, 0.23, 1);
+  /* Health bars are another floating HUD layer, so they should not be hidden
+  by the character face once both project into the same screen region. */
+  sprite.renderOrder = 12;
   sprite.userData.healthCanvas = canvas;
   sprite.userData.healthCtx = ctx;
   sprite.userData.healthTexture = texture;

@@ -1,3 +1,10 @@
+import {
+    DEFAULT_SFC_FACE,
+    SFC_CATEGORY_ITEMS,
+    SFC_FACE_STORAGE_KEY,
+    resolveSfcImageUrlAlias
+} from "../../games/Kolorlando/sfcFace.js";
+
 const canvasWrapper = document.querySelector(".canvas-wrapper");
 const canvas = document.querySelector("canvas");
 const context = canvas.getContext("2d");
@@ -11,14 +18,14 @@ const combinationsTitle = document.querySelector(".combinations-title");
 const saveDataContainer = document.querySelector("#saveData");
 const saveDataPre = saveDataContainer?.querySelector("pre");
 const readDataButton = saveDataContainer?.querySelector(".read-data-button");
-let currentCategory = "eyes";
+let currentCategory = DEFAULT_SFC_FACE.currentCategory;
 const selectedCategoryImages = {};
 const selectedCategoryColors = {};
 const loadedImageCache = {};
 const recoloredImageCache = {};
-let canvasBackgroundColor = backgroundColorInput.value;
-const saveCodeVersion = "SFC1";
-const playerFaceStorageKey = "kolorlando.playerFaceData";
+let canvasBackgroundColor = DEFAULT_SFC_FACE.background;
+const saveCodeVersion = DEFAULT_SFC_FACE.version;
+const playerFaceStorageKey = SFC_FACE_STORAGE_KEY;
 const desktopPointerMediaQuery = window.matchMedia("(hover: hover) and (pointer: fine)");
 
 const categoryItems = {
@@ -27,11 +34,11 @@ const categoryItems = {
     eyes: [
         { imgUrl: "assets/categories/eyes/SFC_eyes1.png" },
         { imgUrl: "assets/categories/eyes/SFC_eyes2.png" },
-        { imgUrl: "https://www.pngmart.com/files/23/Cartoon-Eye-PNG-Picture.png" },
-        { imgUrl: "https://pngimg.com/d/eye_PNG6187.png" },
-        { imgUrl: "https://www.freeiconspng.com/uploads/eyes-icon-0.png" },
+        { imgUrl: "/web/SquareFaceCreator/assets/categories/_mirrored/www.pngmart.com_files_23_Cartoon-Eye-PNG-Picture.png" },
+        { imgUrl: "/web/SquareFaceCreator/assets/categories/_mirrored/pngimg.com_d_eye_PNG6187.png" },
+        { imgUrl: "/web/SquareFaceCreator/assets/categories/_mirrored/www.freeiconspng.com_uploads_eyes-icon-0.png" },
         
-        { imgUrl: "https://www.onlygfx.com/wp-content/uploads/2021/08/simple-eye-5144.svg" },
+        { imgUrl: "/web/SquareFaceCreator/assets/categories/_mirrored/www.onlygfx.com_wp-content_uploads_2021_08_simple-eye-5144.svg" },
         { imgUrl: "REPLACE_WITH_EYES_07_URL" },
         { imgUrl: "REPLACE_WITH_EYES_08_URL" },
         { imgUrl: "REPLACE_WITH_EYES_09_URL" },
@@ -45,9 +52,9 @@ const categoryItems = {
     ],
     eyebrows: [
         { imgUrl: "assets/categories/eyebrows/SFC_eyebrows1.png" },
-        { imgUrl: "https://www.pngall.com/wp-content/uploads/14/Eyebrow-PNG.png" },
-        { imgUrl: "https://static.vecteezy.com/system/resources/thumbnails/022/924/750/small/black-eyebrow-drawing-png.png" },
-        { imgUrl: "https://static.vecteezy.com/system/resources/thumbnails/016/658/101/small/brown-brow-line-art-png.png" },
+        { imgUrl: "/web/SquareFaceCreator/assets/categories/_mirrored/www.pngall.com_wp-content_uploads_14_Eyebrow-PNG.png" },
+        { imgUrl: "/web/SquareFaceCreator/assets/categories/_mirrored/static.vecteezy.com_system_resources_thumbnails_022_924_750_small_black-eyebrow-drawing-png.png" },
+        { imgUrl: "/web/SquareFaceCreator/assets/categories/_mirrored/static.vecteezy.com_system_resources_thumbnails_016_658_101_small_brown-brow-line-art-png.png" },
         { imgUrl: "REPLACE_WITH_EYEBROWS_05_URL" },
         { imgUrl: "REPLACE_WITH_EYEBROWS_06_URL" },
         { imgUrl: "REPLACE_WITH_EYEBROWS_07_URL" },
@@ -64,9 +71,9 @@ const categoryItems = {
     nose: [
         { imgUrl: "assets/categories/nose/SFC_nose1.png" },
         { imgUrl: "assets/categories/nose/SFC_nose2.svg" },
-        { imgUrl: "https://images.vexels.com/media/users/3/252474/isolated/preview/81c2548b31a26f089248ab4022c0d8da-anime-nose-stroke.png" },
-        { imgUrl: "https://pngimg.com/d/nose_PNG12.png" },
-        { imgUrl: "https://pngimg.com/d/nose_PNG8.png" },
+        { imgUrl: "/web/SquareFaceCreator/assets/categories/_mirrored/images.vexels.com_media_users_3_252474_isolated_preview_81c2548b31a26f089248ab4022c0d8da-anime-nose-stroke.png" },
+        { imgUrl: "/web/SquareFaceCreator/assets/categories/_mirrored/pngimg.com_d_nose_PNG12.png" },
+        { imgUrl: "/web/SquareFaceCreator/assets/categories/_mirrored/pngimg.com_d_nose_PNG8.png" },
         { imgUrl: "REPLACE_WITH_NOSE_05_URL" },
         { imgUrl: "REPLACE_WITH_NOSE_06_URL" },
         { imgUrl: "REPLACE_WITH_NOSE_07_URL" },
@@ -83,11 +90,11 @@ const categoryItems = {
     mouth: [
         { imgUrl: "assets/categories/mouth/SFC_mouth1.png" },
         
-        { imgUrl: "https://images.vexels.com/media/users/3/252302/isolated/preview/49cb11a5214ad6339f540faf86a91c01-anime-open-mouth.png" },
-        { imgUrl: "https://static.vecteezy.com/system/resources/thumbnails/025/868/361/small/happy-smile-046-png.png" },
-        { imgUrl: "https://www.pngall.com/wp-content/uploads/15/Anime-Mouth-PNG-Image-File.png" },
-        { imgUrl: "https://images.vexels.com/media/users/3/252487/isolated/preview/d9b94e35af6fb920c619807df06c9c75-boca-de-sonrisa-feliz.png" },
-        { imgUrl: "https://images.vexels.com/media/users/3/252291/isolated/preview/bbd9948356d3fdd2f162226b7f1fe78c-anime-smile-color-stroke.png" },
+        { imgUrl: "/web/SquareFaceCreator/assets/categories/_mirrored/images.vexels.com_media_users_3_252302_isolated_preview_49cb11a5214ad6339f540faf86a91c01-anime-open-mouth.png" },
+        { imgUrl: "/web/SquareFaceCreator/assets/categories/_mirrored/static.vecteezy.com_system_resources_thumbnails_025_868_361_small_happy-smile-046-png.png" },
+        { imgUrl: "/web/SquareFaceCreator/assets/categories/_mirrored/www.pngall.com_wp-content_uploads_15_Anime-Mouth-PNG-Image-File.png" },
+        { imgUrl: "/web/SquareFaceCreator/assets/categories/_mirrored/images.vexels.com_media_users_3_252487_isolated_preview_d9b94e35af6fb920c619807df06c9c75-boca-de-sonrisa-feliz.png" },
+        { imgUrl: "/web/SquareFaceCreator/assets/categories/_mirrored/images.vexels.com_media_users_3_252291_isolated_preview_bbd9948356d3fdd2f162226b7f1fe78c-anime-smile-color-stroke.png" },
         { imgUrl: "" },
         { imgUrl: "REPLACE_WITH_MOUTH_07_URL" },
         { imgUrl: "REPLACE_WITH_MOUTH_08_URL" },
@@ -102,10 +109,10 @@ const categoryItems = {
     ],
     ears: [
         { imgUrl: "assets/categories/ears/SFC_ear2.svg" },
-        { imgUrl: "https://cdn.creazilla.com/cliparts/69759/ear-clipart-md.png" },
-        { imgUrl: "https://www.freepnglogos.com/uploads/ear-png/vector-graphic-ear-listen-hear-gossip-sound-image-pixabay-15.png" },
-        { imgUrl: "https://www.freepnglogos.com/uploads/ear-png/ear-very-basic-listen-icon-ios-iconset-icons-35.png" },
-        { imgUrl: "https://freepngimg.com/thumb/ear/142094-ear-vector-download-hq.png" },
+        { imgUrl: "/web/SquareFaceCreator/assets/categories/_mirrored/cdn.creazilla.com_cliparts_69759_ear-clipart-md.png" },
+        { imgUrl: "/web/SquareFaceCreator/assets/categories/_mirrored/www.freepnglogos.com_uploads_ear-png_vector-graphic-ear-listen-hear-gossip-sound-image-pixabay-15.png" },
+        { imgUrl: "/web/SquareFaceCreator/assets/categories/_mirrored/www.freepnglogos.com_uploads_ear-png_ear-very-basic-listen-icon-ios-iconset-icons-35.png" },
+        { imgUrl: "/web/SquareFaceCreator/assets/categories/_mirrored/freepngimg.com_thumb_ear_142094-ear-vector-download-hq.png" },
         { imgUrl: "REPLACE_WITH_EARS_05_URL" },
         { imgUrl: "REPLACE_WITH_EARS_06_URL" },
         { imgUrl: "REPLACE_WITH_EARS_07_URL" },
@@ -174,6 +181,10 @@ const categoryItems = {
         { imgUrl: "" }
     ]
 };
+
+// Keeping the visible background picker aligned with the shared default face
+// avoids saving an editor-only color that differs from Kolorlando's fallback.
+backgroundColorInput.value = canvasBackgroundColor;
 
 const categoryDrawSettings = {
     // Each category gets its own normalized layout values so you can
@@ -433,23 +444,60 @@ function loadDefaultSelections() {
     });
 }
 
-function getSelectedItemIndexForCategory(categoryName) {
+function getRuntimeItemIndexForCategory(categoryName) {
     const selectedImgUrl = selectedCategoryImages[categoryName] || "";
-    const categoryEntries = categoryItems[categoryName] || [];
+    const runtimeCategoryEntries = SFC_CATEGORY_ITEMS[categoryName] || [];
 
-    // Saving the selected slot index instead of the full URL keeps the
-    // code shorter while still mapping back to the current local catalog.
-    return categoryEntries.findIndex(item => item?.imgUrl === selectedImgUrl);
+    // Kolorlando only understands the shared runtime catalog, so the saved
+    // game-facing item index must be resolved against that smaller list.
+    return runtimeCategoryEntries.findIndex(item => item?.imgUrl === selectedImgUrl);
+}
+
+function getSavedEditorSelectionUrl(categoryName, saveData) {
+    const savedSelectionUrls = saveData?.editorSelectionUrls || {};
+    const savedEditorUrl = resolveSfcImageUrlAlias(savedSelectionUrls[categoryName] || "");
+    const editorCategoryEntries = categoryItems[categoryName] || [];
+    const hasMatchingEditorItem = editorCategoryEntries.some(item => item?.imgUrl === savedEditorUrl);
+
+    // The editor keeps its own richer catalog, so a saved URL is the most
+    // reliable way to restore custom picks that Kolorlando itself ignores.
+    if (isRealImageUrl(savedEditorUrl) && hasMatchingEditorItem) {
+        return savedEditorUrl;
+    }
+
+    return "";
+}
+
+function getSavedRuntimeSelectionUrl(categoryName, saveData) {
+    const savedIndex = Number.parseInt(saveData?.items?.[categoryName], 10);
+    const runtimeCategoryEntries = SFC_CATEGORY_ITEMS[categoryName] || [];
+    const runtimeItem = Number.isInteger(savedIndex)
+        ? runtimeCategoryEntries[savedIndex]
+        : null;
+    const runtimeImgUrl = runtimeItem?.imgUrl || "";
+
+    // Falling back to the runtime catalog lets the editor open existing
+    // Kolorlando payloads even when they do not include editor-only metadata.
+    if (isRealImageUrl(runtimeImgUrl)) {
+        return runtimeImgUrl;
+    }
+
+    return "";
 }
 
 function buildSaveDataPayload() {
     const items = {};
     const colors = {};
+    const editorSelectionUrls = {};
 
     Object.keys(categoryItems).forEach(categoryName => {
         // Using -1 for empty categories makes "no item selected" explicit
         // in the code instead of silently dropping the category entirely.
-        items[categoryName] = getSelectedItemIndexForCategory(categoryName);
+        items[categoryName] = getRuntimeItemIndexForCategory(categoryName);
+
+        // The editor also saves the raw selected URL so larger local catalogs
+        // survive reloads even when the game only supports a smaller subset.
+        editorSelectionUrls[categoryName] = selectedCategoryImages[categoryName] || "";
 
         // Every category keeps its own tint entry so the read action can
         // restore custom recolors even if that category is not open yet.
@@ -461,7 +509,8 @@ function buildSaveDataPayload() {
         background: canvasBackgroundColor,
         currentCategory,
         items,
-        colors
+        colors,
+        editorSelectionUrls
     };
 }
 
@@ -502,12 +551,9 @@ function applySaveDataPayload(saveData) {
     });
 
     categoryNames.forEach(categoryName => {
-        const savedIndex = Number.parseInt(savedItems[categoryName], 10);
-        const categoryEntries = categoryItems[categoryName] || [];
-        const savedItem = Number.isInteger(savedIndex)
-            ? categoryEntries[savedIndex]
-            : null;
-        const savedImgUrl = savedItem?.imgUrl || "";
+        const savedEditorUrl = getSavedEditorSelectionUrl(categoryName, saveData);
+        const savedRuntimeUrl = getSavedRuntimeSelectionUrl(categoryName, saveData);
+        const savedImgUrl = savedEditorUrl || savedRuntimeUrl;
 
         // Only real URLs should become active layers so malformed codes or
         // placeholder catalog slots do not break the restored face.
@@ -560,8 +606,8 @@ function readSaveCodeFromPre() {
         return;
     }
 
-    // Version-gating the payload gives the format room to evolve later
-    // without trying to load incompatible codes into the current app.
+    // The editor accepts full payloads so pasted SFC codes can restore both
+    // the shared Kolorlando fields and any editor-only catalog selections.
     if (parsedSaveData?.version !== saveCodeVersion) {
         return;
     }

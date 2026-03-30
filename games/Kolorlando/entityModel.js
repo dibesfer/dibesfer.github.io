@@ -33,12 +33,15 @@ function createEmojiFace(emoji) {
   const material = new THREE.MeshBasicMaterial({
     map: texture,
     transparent: true,
+    depthTest: true,
     depthWrite: false,
   });
   /* Matching the head box face exactly keeps the emoji texture flush with the
   front square of the cube instead of hanging slightly wider than the head. */
   const plane = new THREE.Mesh(new THREE.PlaneGeometry(HEAD_FACE_SIZE, HEAD_FACE_SIZE), material);
-  plane.renderOrder = 2;
+  /* The face should participate in the normal character depth stack so any
+  floating HUD sprites that intentionally render later can appear above it. */
+  plane.renderOrder = 0;
   plane.userData.skipHumanoidPartScale = true;
   return plane;
 }
@@ -58,13 +61,16 @@ function createSfcFace(faceData) {
   const material = new THREE.MeshBasicMaterial({
     map: texture,
     transparent: true,
+    depthTest: true,
     depthWrite: false,
   });
 
   /* The SFC face uses the same exact square as the head front so both the
   default preset and imported faces fit the cube face cleanly edge to edge. */
   const plane = new THREE.Mesh(new THREE.PlaneGeometry(HEAD_FACE_SIZE, HEAD_FACE_SIZE), material);
-  plane.renderOrder = 2;
+  /* Keeping the SFC plane in the base character layer prevents it from
+  jumping in front of later-rendered world-space labels or dialog bubbles. */
+  plane.renderOrder = 0;
   plane.userData.skipHumanoidPartScale = true;
 
   /* The face plane can appear immediately with the normalized base color while

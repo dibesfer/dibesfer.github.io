@@ -115,14 +115,17 @@ function createPlayerNameSprite(name) {
     map: texture,
     transparent: true,
     depthWrite: false,
-    /* The player name should stay attached to the character in world space,
-    which means nearby geometry and the player body must be able to occlude it. */
-    depthTest: true,
+    /* Player names should behave like a floating overlay so they remain
+    readable even when the avatar body or nearby geometry crosses in front. */
+    depthTest: false,
   });
 
   const sprite = new THREE.Sprite(material);
   sprite.scale.set(1.85, 0.56, 1);
   sprite.frustumCulled = false;
+  /* The local player name should sit above the rest of the floating world HUD
+  stack so it stays readable when labels or dialog sprites overlap nearby. */
+  sprite.renderOrder = 20;
   sprite.userData.playerNameCanvas = canvas;
   sprite.userData.playerNameContext = context;
   sprite.userData.playerNameTexture = texture;
@@ -156,6 +159,18 @@ async function resolveAuthenticatedPlayerDisplayName() {
     const { data, error } = await window.database.auth.getUser();
 
     if (error) {
+      /* Anonymous visitors reach this branch when Supabase has no persisted
+      session for the current browser yet. That state is expected on both
+      game.html and multiplayer.html, so we quietly keep the locally cached
+      fallback name instead of printing a scary console error. */
+      const isMissingSessionError =
+        error?.name === 'AuthSessionMissingError' ||
+        /auth session missing/i.test(String(error?.message || ''));
+
+      if (isMissingSessionError) {
+        return '';
+      }
+
       throw error;
     }
 
