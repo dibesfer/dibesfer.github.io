@@ -2735,7 +2735,11 @@ function projectileHitsEntity(position, radius) {
   for (let i = entities.length - 1; i >= 0; i--) {
     const entity = entities[i];
     if (!entity.collider.intersectsSphere(projectileSphere)) continue;
+    if (typeof entity.applyDamage !== 'function') continue;
 
+    /* Vehicles currently share the broad entity registry for updates and HUD
+    support, but they are not combat actors yet, so projectile hits should
+    skip them instead of assuming every registry entry can take damage. */
     const killed = entity.applyDamage(PROJECTILE_DAMAGE);
     if (killed) {
       scene.remove(entity.group);
@@ -2813,6 +2817,8 @@ function updatePunchHitboxes(deltaTime) {
 
       hitbox.hitEntities.add(entity);
       hitThisFrame = true;
+      if (typeof entity.applyDamage !== 'function') continue;
+
       punchPushDir.set(
         entity.position.x - playerEye.x,
         0,
@@ -2823,7 +2829,9 @@ function updatePunchHitboxes(deltaTime) {
       } else {
         punchPushDir.normalize();
       }
-      entity.applyKnockback(punchPushDir, PUNCH_PUSH_FORCE);
+      if (typeof entity.applyKnockback === 'function') {
+        entity.applyKnockback(punchPushDir, PUNCH_PUSH_FORCE);
+      }
       const killed = entity.applyDamage(PUNCH_DAMAGE);
       if (killed) {
         scene.remove(entity.group);

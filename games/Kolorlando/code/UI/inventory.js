@@ -1,4 +1,4 @@
-import { createCircleIcon, createImageIcon, createVoxelIcon } from './icon.js';
+import { createCoinSymbolIcon, createImageIcon, createVoxelIcon } from './icon.js';
 
 export const GAME_MODE_CREATIVE = 'creative';
 export const GAME_MODE_SURVIVAL = 'survival';
@@ -38,7 +38,7 @@ export function createInventoryUI(options) {
     { name: 'Gun', iconSrc: 'assets/weapons/pistol-gun.png' },
     { name: 'Sword', iconSrc: 'assets/weapons/gladius.png' },
     { name: 'Boxel Selection Tool', iconSrc: 'assets/icons/Asymmetrical_symbol_of_Chaos.png' },
-    { name: 'Coin', iconKind: 'coin' },
+    { name: 'Coin', iconKind: 'coin', iconSrc: 'assets/icons/KoloraMonero.png' },
   ];
   const itemIconByName = encyclopediaItems.reduce(function (lookup, item) {
     lookup[item.name] = item;
@@ -62,7 +62,11 @@ export function createInventoryUI(options) {
   function createInventoryStackIcon(typeName) {
     const iconDefinition = itemIconByName[typeName];
     if (iconDefinition?.iconKind === 'coin') {
-      return createCircleIcon('#d4af37', '#ffe08a');
+      return createCoinSymbolIcon({
+        symbolSrc: iconDefinition.iconSrc,
+        symbolAlt: typeName,
+        symbolOpacity: 0.75,
+      });
     }
     if (iconDefinition?.iconSrc) {
       // Item pickups like sword and gun should keep their authored icons in both
@@ -78,7 +82,11 @@ export function createInventoryUI(options) {
     // Reusing the same icon resolution rules keeps the encyclopedia aligned with
     // the inventory and hotbar, including generated icons like the coin circle.
     if (itemEntry.iconKind === 'coin') {
-      return createCircleIcon('#d4af37', '#ffe08a');
+      return createCoinSymbolIcon({
+        symbolSrc: itemEntry.iconSrc,
+        symbolAlt: itemEntry.name,
+        symbolOpacity: 0.75,
+      });
     }
     if (itemEntry.iconSrc) {
       return createImageIcon(itemEntry.iconSrc, itemEntry.name);

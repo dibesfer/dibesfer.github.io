@@ -49,6 +49,30 @@ export function createCircleIcon(color = '#d4af37', borderColor = '#ffe08a') {
   return icon;
 }
 
+export function createCoinSymbolIcon({
+  color = '#d4af37',
+  borderColor = '#ffe08a',
+  symbolSrc = 'assets/icons/KoloraMonero.png',
+  symbolAlt = 'Coin',
+  symbolOpacity = 0.75,
+} = {}) {
+  const icon = createCircleIcon(color, borderColor);
+  const symbol = document.createElement('img');
+
+  /* The coin keeps the original circular token silhouette in the UI while a
+  separate centered symbol image adds the KoloraMonero mark as a semi-transparent
+  print above the gold base instead of replacing the whole icon artwork. */
+  symbol.className = 'coin-symbol-icon__img';
+  symbol.src = symbolSrc;
+  symbol.alt = symbolAlt;
+  symbol.decoding = 'async';
+  symbol.style.opacity = String(symbolOpacity);
+  symbol.style.pointerEvents = 'none';
+
+  icon.appendChild(symbol);
+  return icon;
+}
+
 export function createImageIcon(src, alt = '') {
   const icon = createIcon('icon-chip item-slot-icon image-icon');
   const image = document.createElement('img');

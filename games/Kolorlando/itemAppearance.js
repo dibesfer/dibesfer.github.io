@@ -38,6 +38,7 @@ const DEFAULT_RAYCAST_SPHERE_RADIUS = 0.9;
 const DEFAULT_ITEM_PLACEMENT_HEIGHT = 1;
 const GOXEL_MODEL_SCALE = 0.1;
 const boxelSelectionToolTextureLoader = new THREE.TextureLoader();
+const coinIconTextureLoader = new THREE.TextureLoader();
 
 function createDefaultItemModel({
   color = 0xffcf4a,
@@ -143,6 +144,49 @@ function createCoinItemModel({ castShadow = true, receiveShadow = false } = {}) 
   groove.rotation.y = Math.PI * 0.5;
   setShadow(groove, castShadow, receiveShadow);
   root.add(groove);
+
+  /* The collectible now uses the authored KoloraMonero mark as a printed coin
+  face detail so the pickup reads as in-world currency instead of a generic
+  gold token. A dedicated texture loader keeps the icon reusable if more coin
+  variants or UI previews are added later. */
+  const coinIconTexture = coinIconTextureLoader.load('assets/icons/KoloraMonero.png');
+  coinIconTexture.colorSpace = THREE.SRGBColorSpace;
+
+  /* A transparent standard material lets the symbol respond to scene lights
+  like the rest of the coin while still respecting the PNG alpha cutout and
+  the requested semi-transparent printed look. */
+  const coinIconMaterial = new THREE.MeshStandardMaterial({
+    map: coinIconTexture,
+    transparent: true,
+    opacity: 0.75,
+    alphaTest: 0.05,
+    roughness: 0.38,
+    metalness: 0.2,
+    depthWrite: false,
+  });
+
+  /* The front print floats a hair above the embossed metal face to avoid
+  z-fighting shimmer while still reading as ink or stamped paint on the coin. */
+  const frontIcon = new THREE.Mesh(
+    new THREE.PlaneGeometry(0.5, 0.5),
+    coinIconMaterial
+  );
+  frontIcon.position.x = 0.051;
+  frontIcon.rotation.y = Math.PI * 0.5;
+  setShadow(frontIcon, castShadow, receiveShadow);
+  root.add(frontIcon);
+
+  /* The back print uses a second plane facing the opposite direction so the
+  symbol stays readable from behind instead of appearing mirrored through a
+  single double-sided plane. */
+  const backIcon = new THREE.Mesh(
+    new THREE.PlaneGeometry(0.5, 0.5),
+    coinIconMaterial.clone()
+  );
+  backIcon.position.x = -0.051;
+  backIcon.rotation.y = -Math.PI * 0.5;
+  setShadow(backIcon, castShadow, receiveShadow);
+  root.add(backIcon);
 
   return {
     root,

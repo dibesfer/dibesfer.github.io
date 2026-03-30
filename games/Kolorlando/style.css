@@ -631,6 +631,16 @@ img {
     object-fit: contain;
 }
 
+.coin-symbol-icon__img {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 22px;
+    height: 22px;
+    object-fit: contain;
+    transform: translate(-50%, -50%);
+}
+
 .voxel-icon {}
 
 .voxel-icon__svg {

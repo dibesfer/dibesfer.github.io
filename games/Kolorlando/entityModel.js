@@ -10,6 +10,17 @@ function createPartMaterial(color, roughness, metalness) {
   return new THREE.MeshStandardMaterial({ color, roughness, metalness });
 }
 
+function createFacePlaneMaterial(texture) {
+  return new THREE.MeshStandardMaterial({
+    map: texture,
+    transparent: true,
+    roughness: 0.85,
+    metalness: 0.03,
+    depthTest: true,
+    depthWrite: false,
+  });
+}
+
 function setShadow(mesh, castShadow, receiveShadow) {
   mesh.castShadow = castShadow;
   mesh.receiveShadow = receiveShadow;
@@ -30,12 +41,7 @@ function createEmojiFace(emoji) {
 
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
-  const material = new THREE.MeshBasicMaterial({
-    map: texture,
-    transparent: true,
-    depthTest: true,
-    depthWrite: false,
-  });
+  const material = createFacePlaneMaterial(texture);
   /* Matching the head box face exactly keeps the emoji texture flush with the
   front square of the cube instead of hanging slightly wider than the head. */
   const plane = new THREE.Mesh(new THREE.PlaneGeometry(HEAD_FACE_SIZE, HEAD_FACE_SIZE), material);
@@ -58,12 +64,7 @@ function createSfcFace(faceData) {
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
 
-  const material = new THREE.MeshBasicMaterial({
-    map: texture,
-    transparent: true,
-    depthTest: true,
-    depthWrite: false,
-  });
+  const material = createFacePlaneMaterial(texture);
 
   /* The SFC face uses the same exact square as the head front so both the
   default preset and imported faces fit the cube face cleanly edge to edge. */
@@ -97,15 +98,24 @@ export function createHumanoidModel({
   castShadow = true,
   receiveShadow = false,
 } = {}) {
+  const normalizedFaceData = outfit.faceData
+    ? normalizeSfcFaceData(outfit.faceData)
+    : null;
+
   const resolvedOutfit = {
-    skin: outfit.skin ?? 0xf0c9a5,
+    /* When the player has a Square Face Creator face configured, the same
+    background color should drive the 3D skin blocks too so the head cube and
+    hands stay visually matched with the customized face base color. */
+    skin: normalizedFaceData?.background ?? outfit.skin ?? 0xf0c9a5,
     shirt: outfit.shirt ?? 0x7aa8ff,
     sleeves: outfit.sleeves ?? outfit.shirt ?? 0x7aa8ff,
     pants: outfit.pants ?? 0x3d4b64,
     shoes: outfit.shoes ?? 0x1d1d1d,
     hair: outfit.hair ?? 0x2a1d16,
     faceEmoji: outfit.faceEmoji ?? '🙂',
-    faceData: outfit.faceData ?? null,
+    /* Reusing the normalized payload below avoids skin and face reading from
+    slightly different SFC values when old or partial save data is loaded. */
+    faceData: normalizedFaceData,
   };
 
   const skinMat = createPartMaterial(resolvedOutfit.skin, 0.85, 0.03);
