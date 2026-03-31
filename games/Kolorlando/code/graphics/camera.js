@@ -65,9 +65,10 @@ export function createCameraModeController(options) {
   function setWowCameraScreenActive(nextActive) {
     wowCameraScreenActive = Boolean(nextActive) && isScreenDragCameraMode();
     if (wowCameraScreenActive) {
-      if (typeof onSyncDesktopLookAngles === 'function') {
-        onSyncDesktopLookAngles();
-      }
+      /* Re-entering WoW cursor mode after opening UI should preserve the
+      current gameplay camera exactly as it was. Re-syncing yaw/pitch here can
+      cause a visible one-frame snap when the cursor becomes active again, so
+      angle synchronization is reserved for true camera-mode changes instead. */
       return;
     }
     if (typeof onDeactivateScreenDrag === 'function') {

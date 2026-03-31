@@ -505,11 +505,28 @@ function handlePointerLockRetryHotkey(event) {
   retryPointerLockFromUserGesture();
 }
 
-function closeDesktopMenuAndArmGameplayResume() {
-  /* Browsers commonly reject pointer-lock reacquire on the very first click
-  after the player pressed Escape to leave lock. Closing the menu first and
-  arming the retry lets the following trusted gesture restore gameplay cleanly. */
+function closeDesktopMenuAndArmGameplayResume(event = null) {
+  /* This close path is shared by Skyrim and WoW desktop flows, so it must
+  restore the correct gameplay interaction model for the currently selected
+  camera mode instead of assuming pointer lock is always the next step. */
   hideMenuCentral();
+
+  /* WoW desktop mode does not depend on pointer lock after closing the menu.
+  It immediately returns to screen-drag gameplay and uses the visible cursor
+  position for voxel targeting, so we reactivate that path here and seed the
+  cursor raycast from the same pointer event that closed the menu. */
+  if (isScreenDragCameraMode()) {
+    disarmPointerLockRetry();
+    setWowCameraScreenActive(true);
+    if (typeof event?.clientX === 'number' && typeof event?.clientY === 'number') {
+      updateWowCursorRaycastPointer(event.clientX, event.clientY);
+      refreshVoxelRaycast(true);
+    }
+    return;
+  }
+
+  /* Skyrim still needs the deferred retry because browsers commonly reject
+  pointer-lock reacquire on the same gesture that just dismissed the menu. */
   armPointerLockRetry();
 }
 
@@ -813,7 +830,7 @@ if (menuCloseButton) {
       hideMenuCentral();
       return;
     }
-    closeDesktopMenuAndArmGameplayResume();
+    closeDesktopMenuAndArmGameplayResume(event);
   });
 }
 
@@ -995,7 +1012,7 @@ function controlLocker(event) {
     ? event.button
     : null;
   event.preventDefault();
-  closeDesktopMenuAndArmGameplayResume();
+  closeDesktopMenuAndArmGameplayResume(event);
 }
 
 document.addEventListener('pointerdown', controlLocker);

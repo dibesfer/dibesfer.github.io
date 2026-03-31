@@ -57,45 +57,45 @@ export function renderKolorlandoMenuPanel(container) {
                     <div></div>
                     <div></div>
                     <div></div>
-                    <div>
+                    <div title="Cape">
                         <img src="assets/armor/cape.png" alt="">
                     </div>
                     <div></div>
                     <div></div>
-                    <div>
+                    <div title="Helmet">
                         <img src="assets/armor/crested-helmet.png" alt="">
                     </div>
                     <div></div>
                     <div></div>
                     <div></div>
-                    <div>
+                    <div title="Shoulder Right">
                         <img src="assets/armor/spiked-shoulder-armor.png" alt="">
                     </div>
-                    <div>
+                    <div title="Chest">
                         <img src="assets/armor/chest-armor.png" alt="">
                     </div>
-                    <div>
+                    <div title="Shoulder Left">
                         <img class="inverted" src="assets/armor/spiked-shoulder-armor.png" alt="">
                     </div>
                     <div></div>
                     <div></div>
-                    <div>
+                    <div title="Right Glove">
                         <img class="inverted" src="assets/armor/gauntlet.png" alt="">
                     </div>
-                    <div>
+                    <div title="Pants">
                         <img src="assets/armor/armored-pants.png" alt="">
                     </div>
-                    <div>
+                    <div title="Left Glove">
                         <img src="assets/armor/gauntlet.png" alt="">
                     </div>
                     <div></div>
-                    <div>✋</div>
+                    <div title="Cape"Right Hand>✋</div>
                     <div></div>
-                    <div>
+                    <div title="Boots">
                         <img src="assets/armor/steeltoe-boots.png" alt="">
                     </div>
                     <div></div>
-                    <div>🤚</div>
+                    <div title="Left Hand">🤚</div>
                 </div>
 
                 <div id="kolorlandiaCharacterMenu_info">
