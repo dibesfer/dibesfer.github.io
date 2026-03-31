@@ -113,6 +113,12 @@
         border-color: #0f766e !important;
         box-shadow: 4px 4px 0 rgba(15, 118, 110, 0.2) !important;
       }
+
+      #chart_item .google-visualization-orgchart-node {
+        background: linear-gradient(135deg, #fefce8 0%, #fef3c7 100%) !important;
+        border-color: #b45309 !important;
+        box-shadow: 4px 4px 0 rgba(180, 83, 9, 0.2) !important;
+      }
     </style>
     <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
     <script type="text/javascript">
@@ -260,6 +266,18 @@
           { id: 'multi-sync', parent: 'multi-presence', label: 'Remote Sync<div style="color:#dc2626; font-style:italic">applyRemoteBroadcast()</div>', tooltip: 'Remote player transform updates' }
         ]);
 
+        // The Item chart is intentionally hypothetical. It prints a target
+        // architecture for a future unified item model that can drive pickup
+        // appearance, UI rendering, equipped visuals, and behavior from one
+        // shared definition instead of scattering those concerns by feature.
+        drawSingleChart('chart_item', [
+          { id: 'item-root', parent: '', label: 'Item Class<div style="color:#2563eb; font-style:italic">unified item model</div>', tooltip: 'Future shared item definition root' },
+          { id: 'item-appearance', parent: 'item-root', label: 'Item Appearance<div style="color:#059669; font-style:italic">world pickup / render model</div>', tooltip: 'World-space item appearance and pickup visuals' },
+          { id: 'item-icon', parent: 'item-root', label: 'UI Icon<div style="color:#059669; font-style:italic">inventory / hotbar / encyclopedia</div>', tooltip: 'UI-facing icon definition' },
+          { id: 'item-attachment', parent: 'item-root', label: 'Attachment<div style="color:#059669; font-style:italic">equipped visual on player</div>', tooltip: 'Mounted visual attachment on the character body' },
+          { id: 'item-action', parent: 'item-root', label: 'Action Type<div style="color:#059669; font-style:italic">use / equip / consume / tool</div>', tooltip: 'Behavior family used by gameplay systems' }
+        ]);
+
         enableDesktopDragScroll();
       }
    </script>
@@ -285,6 +303,11 @@
     <section class="chartSection">
       <h2>Multiplayer</h2>
       <div id="chart_multiplayer" class="chartHost"></div>
+    </section>
+
+    <section class="chartSection">
+      <h2>Item (hypothetical)</h2>
+      <div id="chart_item" class="chartHost"></div>
     </section>
 </body>
 </html>
