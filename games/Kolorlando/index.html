@@ -215,68 +215,22 @@
     <script src="/assets/scripts/supabase.js"></script>
     <script src="Kusers.js"></script>
     <script>
-        // The landing page presence widget now mirrors the more useful
-        // multiplayer roster behavior: a visible count, a small status line,
-        // and a readable list of who is connected right now.
         const peopleOnlineCount = document.getElementById('peopleOnlineCount')
-        const PLAYER_ID_STORAGE_KEY = 'kolorlando.multiplayer.localPlayerId'
 
-        function generateId(prefix) {
-            // The landing page should follow the same id rules as multiplayer:
-            // a stable player id in localStorage and a fresh session id per tab.
-            if (window.crypto && typeof window.crypto.randomUUID === 'function') {
-                return `${prefix}-${window.crypto.randomUUID()}`
-            }
-
-            return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
-        }
-
-        function getOrCreateLocalPlayerId() {
-            const existingPlayerId = window.localStorage.getItem(PLAYER_ID_STORAGE_KEY)
-            if (existingPlayerId) {
-                return existingPlayerId
-            }
-
-            const generatedPlayerId = generateId('player')
-            window.localStorage.setItem(PLAYER_ID_STORAGE_KEY, generatedPlayerId)
-            return generatedPlayerId
-        }
-
-        // Use the same session id format as multiplayer so Presence data does
-        // not leak page-type details into the shared room state.
-        const localSessionId = generateId('session')
-        const localPlayerId = getOrCreateLocalPlayerId()
-
-        function countPresenceSessions(state) {
-            return Object.entries(state).reduce((total, [, sessions]) => {
-                if (!Array.isArray(sessions) || sessions.length === 0) {
-                    return total
-                }
-
-                return total + 1
-            }, 0)
-        }
-
-        // Using the per-tab session id as the Presence key makes the roster
-        // stable and prevents one browser tab from overwriting another.
-        const channel = database.channel('kolorlando-world', {
-            config: {
-                presence: {
-                    key: localSessionId,
-                },
-            },
-        })
+        // Keep the landing page Presence flow intentionally simple, following
+        // the chat page pattern: one channel, one sync listener, one track.
+        const channel = database.channel('kolorlando-world')
 
         channel
             .on('presence', { event: 'sync' }, () => {
                 const state = channel.presenceState()
-                peopleOnlineCount.textContent = String(countPresenceSessions(state))
+                console.log('Kolorlando sessions:', state)
+                peopleOnlineCount.textContent = String(Object.keys(state).length)
             })
             .subscribe(async (status) => {
                 if (status === 'SUBSCRIBED') {
                     await channel.track({
-                        playerId: localPlayerId,
-                        sessionId: localSessionId,
+                        url: window.location.href,
                     })
                 }
             })
