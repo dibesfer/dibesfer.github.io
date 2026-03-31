@@ -174,6 +174,7 @@
             <div id="peopleOnlineHeader">
                 <h2>Players online <span id="peopleOnlineCount">0</span></h2>
             </div>
+            <ul id="peopleOnlineList" aria-label="Online session list"></ul>
         </section>
 
 
@@ -216,6 +217,97 @@
     <script src="Kusers.js"></script>
     <script>
         const peopleOnlineCount = document.getElementById('peopleOnlineCount')
+        const peopleOnlineList = document.getElementById('peopleOnlineList')
+
+        function resolveLandingPresenceDisplayName() {
+            // The landing page should show the same public-facing identity that
+            // the rest of Kolorlando already caches for the game scene. When no
+            // cached username exists yet, Presence should still publish a clear
+            // anonymous fallback instead of an empty label.
+            const storedName = window.localStorage.getItem('kolorlando.playerName')
+            const trimmedStoredName = typeof storedName === 'string' ? storedName.trim() : ''
+            return trimmedStoredName || 'Anon'
+        }
+
+        function normalizeLandingPresenceUrl(rawUrl) {
+            // Presence payloads may contain either an absolute URL or a direct
+            // path string, so we normalize both into the same path-oriented
+            // value before rendering the roster label.
+            if (typeof rawUrl !== 'string' || rawUrl.trim() === '') {
+                return window.location.pathname
+            }
+
+            try {
+                return new URL(rawUrl, window.location.origin).pathname
+            } catch (error) {
+                return rawUrl
+            }
+        }
+
+        function formatLandingPresenceUrlLabel(rawUrl) {
+            // The landing page deserves a friendlier label than repeating the
+            // raw pathname alone, but we still keep the concrete URL visible so
+            // the roster remains useful once more Kolorlando pages join Presence.
+            const normalizedUrl = normalizeLandingPresenceUrl(rawUrl)
+            const isLandingPage =
+                normalizedUrl === '/Kolorlando/index.html' ||
+                normalizedUrl === '/games/Kolorlando/index.html' ||
+                normalizedUrl.endsWith('/Kolorlando/index.html')
+
+            if (isLandingPage) {
+                return `Landing page`
+            }
+
+            return normalizedUrl
+        }
+
+        function renderLandingPresenceList(state) {
+            // Rendering from DOM nodes instead of HTML strings keeps remote
+            // Presence data harmless even if another client sends unexpected
+            // characters in the display name or url fields.
+            peopleOnlineList.replaceChildren()
+
+            const presenceEntries = Object.values(state).flat()
+
+            if (presenceEntries.length === 0) {
+                const emptyItem = document.createElement('li')
+                emptyItem.textContent = 'No sessions yet.'
+                peopleOnlineList.appendChild(emptyItem)
+                return
+            }
+
+            presenceEntries.forEach((sessionEntry) => {
+                const sessionItem = document.createElement('li')
+                const displayName = typeof sessionEntry?.displayName === 'string' && sessionEntry.displayName.trim()
+                    ? sessionEntry.displayName.trim()
+                    : 'Anon'
+                const urlLabel = formatLandingPresenceUrlLabel(sessionEntry?.url)
+                sessionItem.textContent = `${displayName} - ${urlLabel}`
+                peopleOnlineList.appendChild(sessionItem)
+            })
+        }
+
+        function countLandingPresenceSessions(state) {
+            // The landing page renders one row per tracked Presence session, so
+            // the counter should follow that same flattened session total.
+            return Object.values(state).flat().length
+        }
+
+        let landingPresenceIsSubscribed = false
+
+        async function publishLandingPresence() {
+            // The landing page may stay mounted while auth state changes, so we
+            // centralize Presence tracking in one helper that can be reused both
+            // on first subscribe and on later username/logout updates.
+            if (!landingPresenceIsSubscribed) {
+                return
+            }
+
+            await channel.track({
+                displayName: resolveLandingPresenceDisplayName(),
+                url: window.location.pathname,
+            })
+        }
 
         // Keep the landing page Presence flow intentionally simple, following
         // the chat page pattern: one channel, one sync listener, one track.
@@ -224,16 +316,25 @@
         channel
             .on('presence', { event: 'sync' }, () => {
                 const state = channel.presenceState()
-                console.log('Kolorlando sessions:', state)
-                peopleOnlineCount.textContent = String(Object.keys(state).length)
+               
+                peopleOnlineCount.textContent = String(countLandingPresenceSessions(state))
+                renderLandingPresenceList(state)
             })
             .subscribe(async (status) => {
                 if (status === 'SUBSCRIBED') {
-                    await channel.track({
-                        url: window.location.href,
-                    })
+                    landingPresenceIsSubscribed = true
+                    await publishLandingPresence()
                 }
             })
+
+        window.addEventListener('kolorlando:player-name-change', () => {
+            // Auth updates already refresh the local cache, so the landing page
+            // only needs to re-track the same Presence session with the latest
+            // resolved display name to keep the public roster truthful.
+            publishLandingPresence().catch((error) => {
+                console.error('Could not refresh Kolorlando landing Presence.', error)
+            })
+        })
     </script>
 </body>
 

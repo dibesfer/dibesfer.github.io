@@ -96,6 +96,19 @@ footer {
     color: rgb(125, 255, 155);
 }
 
+#peopleOnlineList {
+    /* The landing page roster should read like a compact session monitor,
+    keeping each connected client on its own line without the browser's
+    default list spacing making the card feel loose. */
+    margin: 14px 0 0;
+    padding-left: 20px;
+    color: white;
+}
+
+#peopleOnlineList li + li {
+    margin-top: 8px;
+}
+
 #playButton {
     border: solid 6px green;
     color: rgb(0, 52, 0);

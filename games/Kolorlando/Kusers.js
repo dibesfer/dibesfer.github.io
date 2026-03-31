@@ -13,6 +13,7 @@ const kAuthSubmit = document.getElementById("kAuthSubmit")
 const kAuthLogout = document.getElementById("kAuthLogout")
 const idDiv = document.getElementById("idDiv")
 const idDivUsername = document.getElementById("idDiv_username")
+const idDivIconWrapper = document.getElementById("idDiv_icon_wrapper")
 const KOLORLANDO_PLAYER_NAME_STORAGE_KEY = "kolorlando.playerName"
 
 let kolorlandoAuthUser = null
@@ -36,7 +37,9 @@ function setIdentityVisual(username, isLoggedIn) {
     so the logged-in state is visible even when the auth modal is closed. */
     idDivUsername.textContent = isLoggedIn ? username : ""
     idDiv.title = isLoggedIn ? `Logged in as ${username}` : "Anonymous user"
-    idDiv_icon_wrapper.style = isLoggedIn ? "background-color: green" : "background-color: pink"
+    if (idDivIconWrapper) {
+        idDivIconWrapper.style = isLoggedIn ? "background-color: green" : "background-color: pink"
+    }
 }
 
 function persistKolorlandoPlayerName(username) {
@@ -47,10 +50,27 @@ function persistKolorlandoPlayerName(username) {
 
     if (!safeUsername) {
         window.localStorage.removeItem(KOLORLANDO_PLAYER_NAME_STORAGE_KEY)
+        /* The landing page Presence card is a separate script, so we emit one
+        tiny browser event whenever the cached public player name changes. This
+        lets the roster re-track immediately on logout instead of waiting for a
+        future reload or another Presence reconnect to fix stale labels. */
+        window.dispatchEvent(new CustomEvent("kolorlando:player-name-change", {
+            detail: {
+                displayName: "Anon"
+            }
+        }))
         return
     }
 
     window.localStorage.setItem(KOLORLANDO_PLAYER_NAME_STORAGE_KEY, safeUsername)
+    /* Login, signup confirmation, and future profile edits all flow through the
+    same local cache helper, so a single event here keeps Presence metadata and
+    any other identity-driven UI in sync without duplicating update calls. */
+    window.dispatchEvent(new CustomEvent("kolorlando:player-name-change", {
+        detail: {
+            displayName: safeUsername
+        }
+    }))
 }
 
 function setAuthMode(isLoggedIn) {
@@ -298,6 +318,11 @@ async function handleAuthSubmit(event) {
 async function handleLogOut() {
     try {
         kAuthLogout.disabled = true
+        /* Clearing the cached display name before the auth request finishes
+        guarantees the landing page roster immediately falls back to Anon even
+        if a reload is delayed or another auth refresh path throws later on. */
+        persistKolorlandoPlayerName("")
+        setIdentityVisual("Anonymous", false)
         const { error } = await database.auth.signOut()
 
         if (error) {
