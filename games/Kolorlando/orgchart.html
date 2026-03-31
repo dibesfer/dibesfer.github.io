@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kolorlando Org Charts</title>
+    <style>
+      /* The page acts like a lightweight architecture board, so the layout
+         keeps each chart in its own card with enough room to scan modules. */
+      body {
+        margin: 0;
+        padding: 24px;
+        font-family: sans-serif;
+        background: #f4f4f4;
+      }
+
+      h1 {
+        margin: 0 0 24px;
+        text-align: center;
+      }
+
+      .chartSection {
+        font-size: 1.25rem;
+        margin-bottom: 40px;
+        padding: 20px;
+        border-radius: 18px;
+        background: white;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+      }
+
+      .chartSection > h2 {
+        margin: 0 0 18px;
+        text-align: center;
+      }
+
+      .chartHost {
+        width: 100%;
+        overflow: auto;
+        text-align: center;
+      }
+
+      @media (hover: hover) and (pointer: fine) {
+        /* Desktop chart hosts advertise drag-scroll only when the device
+           actually has a mouse-like pointer, so touch devices keep native
+           scrolling and do not inherit the desktop interaction pattern. */
+        .chartHost {
+          cursor: grab;
+          user-select: none;
+        }
+
+        .chartHost.is-dragging {
+          cursor: grabbing;
+        }
+      }
+
+      /* Google OrgChart renders as a table. Keeping it inline-table preserves
+         its natural width while text-align centers the whole rendered chart. */
+      .chartHost table {
+        display: inline-table;
+      }
+
+      /* Google OrgChart uses its own generated table cells, so these selectors
+         restyle the actual chart nodes directly without changing the chart data. */
+      .google-visualization-orgchart-node {
+        border: 3px solid #172033 !important;
+        border-radius: 18px !important;
+        padding: 6px 8px !important;
+        background: linear-gradient(135deg, #ffffff 0%, #f7f7ff 100%) !important;
+        color: #172033 !important;
+        box-shadow: 4px 4px 0 rgba(23, 32, 51, 0.18) !important;
+        font-family: sans-serif !important;
+        transition: transform 0.18s ease, box-shadow 0.18s ease !important;
+      }
+
+      /* A tiny hover lift gives the chart a cleaner, more alive presentation
+         while still staying restrained and easy to scan. */
+      .google-visualization-orgchart-node:hover {
+        transform: translateY(-2px);
+        box-shadow: 6px 6px 0 rgba(23, 32, 51, 0.22) !important;
+      }
+
+      /* The default Google connector colors are fairly muted, so brightening
+         them helps the whole chart feel more intentional and playful. */
+      .google-visualization-orgchart-lineleft,
+      .google-visualization-orgchart-lineright,
+      .google-visualization-orgchart-linebottom {
+        border-color: #003aa7 !important;
+        border-width: 4px !important;
+      }
+
+      /* The top-level nodes get warm gradient accents to separate the major
+         Kolorlando areas without adding heavy borders or noisy decoration. */
+      #chart_game .google-visualization-orgchart-node {
+        background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%) !important;
+        border-color: #9a3412 !important;
+        box-shadow: 4px 4px 0 rgba(154, 52, 18, 0.2) !important;
+      }
+
+      #chart_web .google-visualization-orgchart-node {
+        background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
+        border-color: #1d4ed8 !important;
+        box-shadow: 4px 4px 0 rgba(29, 78, 216, 0.2) !important;
+      }
+
+      #chart_avatar .google-visualization-orgchart-node {
+        background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%) !important;
+        border-color: #6d28d9 !important;
+        box-shadow: 4px 4px 0 rgba(109, 40, 217, 0.2) !important;
+      }
+
+      #chart_multiplayer .google-visualization-orgchart-node {
+        background: linear-gradient(135deg, #ecfeff 0%, #cffafe 100%) !important;
+        border-color: #0f766e !important;
+        box-shadow: 4px 4px 0 rgba(15, 118, 110, 0.2) !important;
+      }
+    </style>
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script type="text/javascript">
+      google.charts.load('current', { packages: ['orgchart'] });
+      google.charts.setOnLoadCallback(drawCharts);
+
+      function createChartRows(entries) {
+        return entries.map(function (entry) {
+          return [
+            { v: entry.id, f: entry.label },
+            entry.parent || '',
+            entry.tooltip || ''
+          ];
+        });
+      }
+
+      function drawSingleChart(hostId, entries) {
+        var data = new google.visualization.DataTable();
+        data.addColumn('string', 'Name');
+        data.addColumn('string', 'Manager');
+        data.addColumn('string', 'ToolTip');
+        data.addRows(createChartRows(entries));
+
+        var chart = new google.visualization.OrgChart(document.getElementById(hostId));
+        chart.draw(data, { allowHtml: true });
+      }
+
+      function enableDesktopDragScroll() {
+        var desktopPointerQuery = window.matchMedia('(hover: hover) and (pointer: fine)');
+        if (!desktopPointerQuery.matches) {
+          return;
+        }
+
+        var chartHosts = document.querySelectorAll('.chartHost');
+
+        chartHosts.forEach(function (chartHost) {
+          var dragState = null;
+
+          chartHost.addEventListener('pointerdown', function (event) {
+            // Restricting this behavior to primary-button drags prevents right
+            // clicks or touch-like interactions from hijacking the chart host.
+            if (event.pointerType !== 'mouse' || event.button !== 0) {
+              return;
+            }
+
+            dragState = {
+              startX: event.clientX,
+              startY: event.clientY,
+              startScrollLeft: chartHost.scrollLeft,
+              startScrollTop: chartHost.scrollTop
+            };
+
+            chartHost.classList.add('is-dragging');
+            chartHost.setPointerCapture(event.pointerId);
+          });
+
+          chartHost.addEventListener('pointermove', function (event) {
+            if (!dragState) {
+              return;
+            }
+
+            chartHost.scrollLeft = dragState.startScrollLeft - (event.clientX - dragState.startX);
+            chartHost.scrollTop = dragState.startScrollTop - (event.clientY - dragState.startY);
+          });
+
+          function stopDrag(event) {
+            if (!dragState) {
+              return;
+            }
+
+            dragState = null;
+            chartHost.classList.remove('is-dragging');
+
+            if (chartHost.hasPointerCapture(event.pointerId)) {
+              chartHost.releasePointerCapture(event.pointerId);
+            }
+          }
+
+          chartHost.addEventListener('pointerup', stopDrag);
+          chartHost.addEventListener('pointercancel', stopDrag);
+        });
+      }
+
+      function drawCharts() {
+        // The Game chart focuses on the singleplayer runtime and its main
+        // local subsystems rather than mixing in the landing site structure.
+        drawSingleChart('chart_game', [
+          { id: 'game-root', parent: '', label: 'Game<div style="color:#2563eb; font-style:italic">game.html + script.js</div>', tooltip: 'Singleplayer runtime root' },
+          { id: 'game-graphics', parent: 'game-root', label: 'Graphics<div style="color:#059669; font-style:italic">camera.js + screen.js</div>', tooltip: 'Camera modes and screen behavior' },
+          { id: 'game-ui', parent: 'game-root', label: 'UI<div style="color:#059669; font-style:italic">code/UI</div>', tooltip: 'HUD, menu, inventory, minimap and chat' },
+          { id: 'game-world', parent: 'game-root', label: 'World<div style="color:#059669; font-style:italic">maps + worldSaving.js</div>', tooltip: 'Voxel maps and local persistence' },
+          { id: 'game-entities', parent: 'game-root', label: 'Entities<div style="color:#059669; font-style:italic">entity.js family</div>', tooltip: 'NPCs, model logic, items and vehicles' },
+          { id: 'game-commands', parent: 'game-root', label: 'Commands<div style="color:#059669; font-style:italic">code/commands.js</div>', tooltip: 'Debug and command controls' },
+          { id: 'game-audio', parent: 'game-root', label: 'Audio<div style="color:#059669; font-style:italic">audio.js</div>', tooltip: 'Synthesized gameplay audio' },
+          { id: 'game-camera', parent: 'game-graphics', label: 'Camera Modes<div style="color:#dc2626; font-style:italic">Skyrim / WoW / Lego LoL</div>', tooltip: '3 camera styles' },
+          { id: 'game-screen', parent: 'game-graphics', label: 'Screen<div style="color:#dc2626; font-style:italic">desktop / mobile</div>', tooltip: 'Resize and device modes' },
+          { id: 'game-menu', parent: 'game-ui', label: 'Menu<div style="color:#dc2626; font-style:italic">menu.js</div>', tooltip: 'Central panel navigation' },
+          { id: 'game-inventory', parent: 'game-ui', label: 'Inventory<div style="color:#dc2626; font-style:italic">inventory.js</div>', tooltip: 'Hotbar, inventory and encyclopedia' },
+          { id: 'game-minimap', parent: 'game-ui', label: 'Minimap<div style="color:#dc2626; font-style:italic">minimap.js</div>', tooltip: 'Map renderer and markers' },
+          { id: 'game-chat', parent: 'game-ui', label: 'Chat<div style="color:#dc2626; font-style:italic">chat.js</div>', tooltip: 'Chat UI flow' },
+          { id: 'game-hud', parent: 'game-ui', label: 'Player HUD<div style="color:#dc2626; font-style:italic">playerHud.js</div>', tooltip: 'Health and target readout' },
+          { id: 'game-maps', parent: 'game-world', label: 'Maps<div style="color:#dc2626; font-style:italic">city / simple / voxelandia</div>', tooltip: 'Base world templates' },
+          { id: 'game-saving', parent: 'game-world', label: 'World Saving<div style="color:#dc2626; font-style:italic">worldSaving.js</div>', tooltip: 'Local voxel edit saves' },
+          { id: 'game-entity-core', parent: 'game-entities', label: 'Entity Core<div style="color:#dc2626; font-style:italic">entity.js</div>', tooltip: 'NPC logic' },
+          { id: 'game-entity-model', parent: 'game-entities', label: 'Entity Model<div style="color:#dc2626; font-style:italic">entityModel.js</div>', tooltip: 'Humanoid rigs and animation helpers' },
+          { id: 'game-items', parent: 'game-entities', label: 'Item Appearance<div style="color:#dc2626; font-style:italic">itemAppearance.js</div>', tooltip: 'Item and pickup visuals' },
+          { id: 'game-vehicle', parent: 'game-entities', label: 'Vehicle<div style="color:#dc2626; font-style:italic">vehicle.js</div>', tooltip: 'Vehicle support' }
+        ]);
+
+        // The Web chart stays focused on the public-facing site and page flow.
+        drawSingleChart('chart_web', [
+          { id: 'web-root', parent: '', label: 'Web<div style="color:#2563eb; font-style:italic">index.html</div>', tooltip: 'Kolorlando landing experience' },
+          { id: 'web-home', parent: 'web-root', label: 'Home<div style="color:#059669; font-style:italic">mainMenu</div>', tooltip: 'Landing tiles and gallery' },
+          { id: 'web-avatar', parent: 'web-root', label: 'Avatar Menu<div style="color:#059669; font-style:italic">avatarMenu</div>', tooltip: 'Character customization entry points' },
+          { id: 'web-worlds', parent: 'web-root', label: 'Worlds Menu<div style="color:#059669; font-style:italic">yourWorldsMenu</div>', tooltip: 'Singleplayer and multiplayer entry' },
+          { id: 'web-auth', parent: 'web-root', label: 'Auth<div style="color:#059669; font-style:italic">authModal + Kusers.js</div>', tooltip: 'Sign in and profile state' },
+          { id: 'web-script', parent: 'web-root', label: 'Web Logic<div style="color:#059669; font-style:italic">webscript.js</div>', tooltip: 'Page switching and landing interactions' },
+          { id: 'web-style', parent: 'web-root', label: 'Web Style<div style="color:#059669; font-style:italic">webstyle.css</div>', tooltip: 'Landing page styling' },
+          { id: 'web-singleplayer', parent: 'web-worlds', label: 'Singleplayer<div style="color:#dc2626; font-style:italic">game.html</div>', tooltip: 'Launch local game' },
+          { id: 'web-multiplayer', parent: 'web-worlds', label: 'Multiplayer<div style="color:#dc2626; font-style:italic">multiplayer.html</div>', tooltip: 'Launch online game' },
+          { id: 'web-characteristics', parent: 'web-home', label: 'Karakteristiks<div style="color:#dc2626; font-style:italic">characteristics.html</div>', tooltip: 'Feature overview page' }
+        ]);
+
+        // The Avatar chart groups the shared face data with the editor pages.
+        drawSingleChart('chart_avatar', [
+          { id: 'avatar-root', parent: '', label: 'Avatar<div style="color:#2563eb; font-style:italic">Face System</div>', tooltip: 'Character customization area' },
+          { id: 'avatar-shared', parent: 'avatar-root', label: 'Shared Face Data<div style="color:#059669; font-style:italic">sfcFace.js</div>', tooltip: 'Normalized face payload and resolver helpers' },
+          { id: 'avatar-editor', parent: 'avatar-root', label: 'SquareFaceCreator<div style="color:#059669; font-style:italic">/web/SquareFaceCreator</div>', tooltip: 'Face editor application' },
+          { id: 'avatar-index', parent: 'avatar-editor', label: 'Editor Page<div style="color:#dc2626; font-style:italic">index.html</div>', tooltip: 'Face creator markup' },
+          { id: 'avatar-script', parent: 'avatar-editor', label: 'Editor Logic<div style="color:#dc2626; font-style:italic">script.js</div>', tooltip: 'Catalog, selection and drawing' },
+          { id: 'avatar-style', parent: 'avatar-editor', label: 'Editor Style<div style="color:#dc2626; font-style:italic">style.css</div>', tooltip: 'SquareFaceCreator styling' },
+          { id: 'avatar-assets', parent: 'avatar-editor', label: 'Face Assets<div style="color:#dc2626; font-style:italic">assets/categories</div>', tooltip: 'Eyes, nose, mouth, ears and mirrored assets' }
+        ]);
+
+        // The Multiplayer chart isolates network-specific behavior from the
+        // core game so the online runtime can be discussed on its own.
+        drawSingleChart('chart_multiplayer', [
+          { id: 'multi-root', parent: '', label: 'Multiplayer<div style="color:#2563eb; font-style:italic">multiplayer.html + multiplayer.js</div>', tooltip: 'Online runtime root' },
+          { id: 'multi-page', parent: 'multi-root', label: 'Multiplayer Page<div style="color:#059669; font-style:italic">multiplayer.html</div>', tooltip: 'Online HUD and page shell' },
+          { id: 'multi-presence', parent: 'multi-root', label: 'Presence / Broadcast<div style="color:#059669; font-style:italic">multiplayer.js</div>', tooltip: 'Realtime sessions and transforms' },
+          { id: 'multi-remote', parent: 'multi-root', label: 'Remote Avatars<div style="color:#059669; font-style:italic">entityModel.js</div>', tooltip: 'Rendered remote players' },
+          { id: 'multi-ui', parent: 'multi-root', label: 'Online HUD<div style="color:#059669; font-style:italic">peopleOnlineHud</div>', tooltip: 'Player count and debug list' },
+          { id: 'multi-auth', parent: 'multi-root', label: 'Supabase Session<div style="color:#059669; font-style:italic">window.database</div>', tooltip: 'Auth and realtime connection' },
+          { id: 'multi-state', parent: 'multi-presence', label: 'Local Player State<div style="color:#dc2626; font-style:italic">getLocalPlayerState()</div>', tooltip: 'Published x y z and rotation' },
+          { id: 'multi-sync', parent: 'multi-presence', label: 'Remote Sync<div style="color:#dc2626; font-style:italic">applyRemoteBroadcast()</div>', tooltip: 'Remote player transform updates' }
+        ]);
+
+        enableDesktopDragScroll();
+      }
+   </script>
+</head>
+<body>
+    <h1>Kolorlando Charts</h1>
+
+    <section class="chartSection">
+      <h2>Game</h2>
+      <div id="chart_game" class="chartHost"></div>
+    </section>
+
+    <section class="chartSection">
+      <h2>Web</h2>
+      <div id="chart_web" class="chartHost"></div>
+    </section>
+
+    <section class="chartSection">
+      <h2>Avatar</h2>
+      <div id="chart_avatar" class="chartHost"></div>
+    </section>
+
+    <section class="chartSection">
+      <h2>Multiplayer</h2>
+      <div id="chart_multiplayer" class="chartHost"></div>
+    </section>
+</body>
+</html>
