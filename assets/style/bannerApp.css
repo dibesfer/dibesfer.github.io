@@ -52,9 +52,9 @@
 
 .bannerApp_title {
     padding: 5px;
-    flex: 50%;
-    height: 50%;
-    font-size: 1.5rem;
+    flex: 1;
+    
+    font-size: 1.25rem;
     border-bottom: 1px white solid;
     font-family: monospace;
     white-space: nowrap;
@@ -67,13 +67,14 @@
 }
 
 .bannerApp_desc {
-    flex: 50%;
+    flex: 2;
+    
     padding: 5px;
-    font-size: 1rem;
+    font-size: 0.75rem;
 
     background-color: rgba(255, 199, 95, 0.084);
     border-bottom-left-radius: 10px;
     border-bottom-right-radius: 10px;
-    height: unset;
+    
     overflow: auto;
 }
