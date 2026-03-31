@@ -7,9 +7,7 @@ import {
 
 const PRESENCE_CHANNEL_NAME = 'kolorlando-world';
 const PLAYER_TRANSFORM_BROADCAST_EVENT = 'player:transform';
-const LOCAL_PLAYER_ID_STORAGE_KEY = 'kolorlando.multiplayer.localPlayerId';
 const LOCAL_PLAYER_NAME_STORAGE_KEY = 'kolorlando.playerName';
-const LOCAL_PRESENCE_PUSH_INTERVAL = 0.1;
 const LOCAL_BROADCAST_PUSH_INTERVAL = 0.1;
 const REMOTE_POSITION_LERP_SPEED = 10;
 const REMOTE_ROTATION_LERP_SPEED = 12;
@@ -52,28 +50,6 @@ function generateId(prefix) {
   return `${prefix}-${Date.now()}-${randomPart}`;
 }
 
-function getOrCreateLocalPlayerId() {
-  const existingPlayerId = window.localStorage.getItem(LOCAL_PLAYER_ID_STORAGE_KEY);
-  if (existingPlayerId) return existingPlayerId;
-
-  const generatedPlayerId = generateId('player');
-  window.localStorage.setItem(LOCAL_PLAYER_ID_STORAGE_KEY, generatedPlayerId);
-  return generatedPlayerId;
-}
-
-function resolvePresenceDisplayName(payloadDisplayName = '') {
-  /* The online panel should show a human-readable name for every session. We
-  prefer an explicit Presence payload name when available, otherwise we fall
-  back to the same cached local username used by the in-world player label,
-  and finally to "Anon" so anonymous guests still render cleanly. */
-  const payloadName = typeof payloadDisplayName === 'string' ? payloadDisplayName.trim() : '';
-  if (payloadName) return payloadName;
-
-  const storedName = window.localStorage.getItem(LOCAL_PLAYER_NAME_STORAGE_KEY);
-  const trimmedStoredName = typeof storedName === 'string' ? storedName.trim() : '';
-  return trimmedStoredName || 'Anon';
-}
-
 function escapeHtml(text) {
   /* Presence data can come from other clients, so escaping keeps the debug
   list safe even if a display name contains characters that look like HTML. */
@@ -83,6 +59,17 @@ function escapeHtml(text) {
     .replaceAll('>', '&gt;')
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&#39;');
+}
+
+function resolvePresenceDisplayName(payloadDisplayName = '') {
+  /* Keep the multiplayer name logic tiny: use the payload name when present,
+  otherwise fall back to the locally cached username, and finally to Anon. */
+  const payloadName = typeof payloadDisplayName === 'string' ? payloadDisplayName.trim() : '';
+  if (payloadName) return payloadName;
+
+  const storedName = window.localStorage.getItem(LOCAL_PLAYER_NAME_STORAGE_KEY);
+  const trimmedStoredName = typeof storedName === 'string' ? storedName.trim() : '';
+  return trimmedStoredName || 'Anon';
 }
 
 function buildRemoteOutfit() {
@@ -97,7 +84,7 @@ function buildRemoteOutfit() {
   };
 }
 
-function createRemoteAvatar(playerId) {
+function createRemoteAvatar() {
   const root = new THREE.Group();
   const humanoid = createHumanoidModel({
     outfit: buildRemoteOutfit(),
@@ -184,29 +171,19 @@ function createRemoteAvatar(playerId) {
   };
 }
 
-function snapshotPresencePayload(state, localPlayerId) {
+function snapshotPresencePayload(state) {
   return {
-    playerId: localPlayerId,
+    /* Keep Presence minimal while still exposing a human-readable player name
+    in the online list and debug console. */
     sessionId: state.sessionId,
     displayName: resolvePresenceDisplayName(),
-    online_at: new Date().toISOString(),
   };
 }
 
-function arePresencePayloadsEqual(a, b) {
-  if (!a || !b) return false;
-  return (
-    a.playerId === b.playerId
-    && a.sessionId === b.sessionId
-    && a.displayName === b.displayName
-  );
-}
-
-function snapshotBroadcastPayload(state, localPlayerId, localSessionId) {
+function snapshotBroadcastPayload(state, localSessionId) {
   /* Broadcast carries the short-lived high-frequency gameplay state that would
   otherwise make Presence feel sluggish for moment-to-moment avatar motion. */
   return {
-    playerId: localPlayerId,
     sessionId: localSessionId,
     x: roundNetworkNumber(state.x),
     y: roundNetworkNumber(state.y),
@@ -221,8 +198,7 @@ function snapshotBroadcastPayload(state, localPlayerId, localSessionId) {
 function areBroadcastPayloadsEqual(a, b) {
   if (!a || !b) return false;
   return (
-    a.playerId === b.playerId
-    && a.sessionId === b.sessionId
+    a.sessionId === b.sessionId
     && a.x === b.x
     && a.y === b.y
     && a.z === b.z
@@ -252,7 +228,6 @@ export function createMultiplayerController({
   peopleOnlineToggleElement = document.getElementById('peopleOnlineToggle'),
   peopleOnlineListElement = document.getElementById('peopleOnlineList'),
 } = {}) {
-  const localPlayerId = getOrCreateLocalPlayerId();
   /* This id intentionally lives only in memory for the lifetime of this page.
   Some browsers copy sessionStorage when duplicating a tab, which can make two
   different tabs look like the same Presence session and hide remote players. */
@@ -261,9 +236,7 @@ export function createMultiplayerController({
   let channel = null;
   let isSubscribed = false;
   let isRealtimeConnected = false;
-  let publishAccumulator = 0;
   let broadcastAccumulator = 0;
-  let lastPublishedPresence = null;
   let lastBroadcastPayload = null;
   let lastPresenceState = {};
   const latestTransformsBySessionId = new Map();
@@ -286,40 +259,22 @@ export function createMultiplayerController({
   function renderPeopleOnlineList(state) {
     if (!peopleOnlineListElement) return;
 
-    const rows = [];
-    Object.entries(state).forEach(([presenceKey, sessions]) => {
-      if (!Array.isArray(sessions) || sessions.length === 0) return;
+    const sessionIds = Object.keys(state).sort();
 
-      const payload = sessions[sessions.length - 1];
-      const sessionId = String(payload?.sessionId || presenceKey || '');
-      if (!sessionId) return;
-
-      rows.push({
-        id: sessionId,
-        displayName: resolvePresenceDisplayName(payload.displayName),
-        onlineAt: Date.parse(payload.online_at ?? '') || 0,
-        coordsLabel: formatCoordsLabel(latestTransformsBySessionId.get(sessionId)),
-        isLocalSession: sessionId === localSessionId,
-      });
-    });
-
-    rows.sort((left, right) => {
-      if (left.onlineAt !== right.onlineAt) {
-        return left.onlineAt - right.onlineAt;
-      }
-
-      return left.id.localeCompare(right.id);
-    });
-
-    if (rows.length === 0) {
+    if (sessionIds.length === 0) {
       peopleOnlineListElement.textContent = 'No players yet.';
       return;
     }
 
-    peopleOnlineListElement.innerHTML = rows
-      .map((row, index) => {
-        const ownLabel = row.isLocalSession ? ' (you)' : '';
-        return `<div>${index + 1}. ${escapeHtml(row.displayName)}${escapeHtml(ownLabel)} ${escapeHtml(row.coordsLabel)}</div>`;
+    peopleOnlineListElement.innerHTML = sessionIds
+      .map((sessionId, index) => {
+        const ownLabel = sessionId === localSessionId ? ' (you)' : '';
+        const coordsLabel = formatCoordsLabel(latestTransformsBySessionId.get(sessionId));
+        const latestSession = Array.isArray(state[sessionId]) && state[sessionId].length > 0
+          ? state[sessionId][state[sessionId].length - 1]
+          : null;
+        const displayName = resolvePresenceDisplayName(latestSession?.displayName);
+        return `<div>${index + 1}. ${escapeHtml(displayName)}${escapeHtml(ownLabel)} ${escapeHtml(coordsLabel)}</div>`;
       })
       .join('');
   }
@@ -338,7 +293,7 @@ export function createMultiplayerController({
     const existingRemotePlayer = remotePlayers.get(sessionId);
     if (existingRemotePlayer) return existingRemotePlayer;
 
-    const remotePlayer = createRemoteAvatar(sessionId);
+    const remotePlayer = createRemoteAvatar();
     scene.add(remotePlayer.root);
     remotePlayers.set(sessionId, remotePlayer);
     return remotePlayer;
@@ -411,20 +366,12 @@ export function createMultiplayerController({
     isRealtimeConnected = nextConnected;
   }
 
-  async function publishLocalPresence(force = false) {
-    if (!isSubscribed || !isRealtimeConnected || !channel || typeof getLocalPlayerState !== 'function') return;
+  async function publishLocalPresence() {
+    if (!channel) return;
 
-    const localPlayerState = getLocalPlayerState();
-    if (!localPlayerState) return;
-
-    const nextPresencePayload = snapshotPresencePayload({
-      ...localPlayerState,
+    await channel.track(snapshotPresencePayload({
       sessionId: localSessionId,
-    }, localPlayerId);
-    if (!force && arePresencePayloadsEqual(lastPublishedPresence, nextPresencePayload)) return;
-
-    lastPublishedPresence = nextPresencePayload;
-    await channel.track(nextPresencePayload);
+    }));
   }
 
   async function broadcastLocalPlayerState() {
@@ -435,7 +382,6 @@ export function createMultiplayerController({
 
     const nextBroadcastPayload = snapshotBroadcastPayload(
       localPlayerState,
-      localPlayerId,
       localSessionId
     );
     if (areBroadcastPayloadsEqual(lastBroadcastPayload, nextBroadcastPayload)) return;
@@ -468,14 +414,7 @@ export function createMultiplayerController({
 
     channel
       .on('presence', { event: 'sync' }, () => {
-        const presenceState = channel.presenceState();
-        /* Keep a direct console view of the latest Presence payloads so
-        multiplayer debugging does not depend on the HUD alone. */
-        console.log('[Kolorlando presence:sync]', Object.entries(presenceState).map(([presenceKey, sessions]) => ({
-          presenceKey,
-          sessions,
-        })));
-        handlePresenceSync(presenceState);
+        handlePresenceSync(channel.presenceState());
       })
       .on('broadcast', { event: PLAYER_TRANSFORM_BROADCAST_EVENT }, ({ payload }) => {
         if (!payload?.sessionId || payload.sessionId === localSessionId) return;
@@ -486,7 +425,7 @@ export function createMultiplayerController({
         if (status === 'SUBSCRIBED') {
           isSubscribed = true;
           setRealtimeConnectionState(true);
-          await publishLocalPresence(true);
+          await publishLocalPresence();
           await broadcastLocalPlayerState();
           return;
         }
@@ -529,14 +468,6 @@ export function createMultiplayerController({
     connect();
     updateRemotePlayers(deltaTime);
 
-    publishAccumulator += deltaTime;
-    if (publishAccumulator >= LOCAL_PRESENCE_PUSH_INTERVAL) {
-      publishAccumulator = 0;
-      publishLocalPresence().catch(error => {
-        console.error('Failed to publish multiplayer presence.', error);
-      });
-    }
-
     broadcastAccumulator += deltaTime;
     if (broadcastAccumulator < LOCAL_BROADCAST_PUSH_INTERVAL) return;
 
@@ -548,7 +479,6 @@ export function createMultiplayerController({
 
   return {
     update,
-    localPlayerId,
     localSessionId,
   };
 }
