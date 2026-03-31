@@ -7,6 +7,7 @@
 - Prefer bullet lists over large paragraphs.
 - Do not explain implementations in chat.
 - Put implementation details in code comments instead.
+- We do not patch, we redesign flow to allow new behaviors. From big to specific.
 
 
 ## Code Style
