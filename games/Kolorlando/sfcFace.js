@@ -30,57 +30,57 @@ export const DEFAULT_SFC_FACE = {
 
 export const SFC_CATEGORY_ITEMS = {
   eyes: [
-    { imgUrl: '/web/SquareFaceCreator/assets/categories/eyes/SFC_eyes1.png' },
-    { imgUrl: '/web/SquareFaceCreator/assets/categories/eyes/SFC_eyes2.png' },
+    { imgUrl: '../../web/SquareFaceCreator/assets/categories/eyes/SFC_eyes1.png' },
+    { imgUrl: '../../web/SquareFaceCreator/assets/categories/eyes/SFC_eyes2.png' },
   ],
   eyebrows: [
-    { imgUrl: '/web/SquareFaceCreator/assets/categories/eyebrows/SFC_eyebrows1.png' },
+    { imgUrl: '../../web/SquareFaceCreator/assets/categories/eyebrows/SFC_eyebrows1.png' },
   ],
   nose: [
-    { imgUrl: '/web/SquareFaceCreator/assets/categories/nose/SFC_nose1.png' },
-    { imgUrl: '/web/SquareFaceCreator/assets/categories/nose/SFC_nose2.svg' },
+    { imgUrl: '../../web/SquareFaceCreator/assets/categories/nose/SFC_nose1.png' },
+    { imgUrl: '../../web/SquareFaceCreator/assets/categories/nose/SFC_nose2.svg' },
   ],
   mouth: [
-    { imgUrl: '/web/SquareFaceCreator/assets/categories/mouth/SFC_mouth1.png' },
+    { imgUrl: '../../web/SquareFaceCreator/assets/categories/mouth/SFC_mouth1.png' },
     { imgUrl: '' },
   ],
   ears: [
-    { imgUrl: '/web/SquareFaceCreator/assets/categories/ears/SFC_ear2.svg' },
+    { imgUrl: '../../web/SquareFaceCreator/assets/categories/ears/SFC_ear2.svg' },
   ],
   hair: [
-    { imgUrl: '/web/SquareFaceCreator/assets/categories/hair/SFC_hair1.png' },
+    { imgUrl: '../../web/SquareFaceCreator/assets/categories/hair/SFC_hair1.png' },
     { imgUrl: '' },
   ],
   glasses: [
-    { imgUrl: '/web/SquareFaceCreator/assets/categories/glasses/SFC_glasses1.png' },
+    { imgUrl: '../../web/SquareFaceCreator/assets/categories/glasses/SFC_glasses1.png' },
     { imgUrl: '' },
   ],
   beard: [
-    { imgUrl: '/web/SquareFaceCreator/assets/categories/beard/SFC_beard1.png' },
+    { imgUrl: '../../web/SquareFaceCreator/assets/categories/beard/SFC_beard1.png' },
     { imgUrl: '' },
   ],
 };
 
 export const SFC_LEGACY_IMAGE_URL_ALIASES = {
-  'https://www.pngmart.com/files/23/Cartoon-Eye-PNG-Picture.png': '/web/SquareFaceCreator/assets/categories/_mirrored/www.pngmart.com_files_23_Cartoon-Eye-PNG-Picture.png',
-  'https://pngimg.com/d/eye_PNG6187.png': '/web/SquareFaceCreator/assets/categories/_mirrored/pngimg.com_d_eye_PNG6187.png',
-  'https://www.freeiconspng.com/uploads/eyes-icon-0.png': '/web/SquareFaceCreator/assets/categories/_mirrored/www.freeiconspng.com_uploads_eyes-icon-0.png',
-  'https://www.onlygfx.com/wp-content/uploads/2021/08/simple-eye-5144.svg': '/web/SquareFaceCreator/assets/categories/_mirrored/www.onlygfx.com_wp-content_uploads_2021_08_simple-eye-5144.svg',
-  'https://www.pngall.com/wp-content/uploads/14/Eyebrow-PNG.png': '/web/SquareFaceCreator/assets/categories/_mirrored/www.pngall.com_wp-content_uploads_14_Eyebrow-PNG.png',
-  'https://static.vecteezy.com/system/resources/thumbnails/022/924/750/small/black-eyebrow-drawing-png.png': '/web/SquareFaceCreator/assets/categories/_mirrored/static.vecteezy.com_system_resources_thumbnails_022_924_750_small_black-eyebrow-drawing-png.png',
-  'https://static.vecteezy.com/system/resources/thumbnails/016/658/101/small/brown-brow-line-art-png.png': '/web/SquareFaceCreator/assets/categories/_mirrored/static.vecteezy.com_system_resources_thumbnails_016_658_101_small_brown-brow-line-art-png.png',
-  'https://images.vexels.com/media/users/3/252474/isolated/preview/81c2548b31a26f089248ab4022c0d8da-anime-nose-stroke.png': '/web/SquareFaceCreator/assets/categories/_mirrored/images.vexels.com_media_users_3_252474_isolated_preview_81c2548b31a26f089248ab4022c0d8da-anime-nose-stroke.png',
-  'https://pngimg.com/d/nose_PNG12.png': '/web/SquareFaceCreator/assets/categories/_mirrored/pngimg.com_d_nose_PNG12.png',
-  'https://pngimg.com/d/nose_PNG8.png': '/web/SquareFaceCreator/assets/categories/_mirrored/pngimg.com_d_nose_PNG8.png',
-  'https://images.vexels.com/media/users/3/252302/isolated/preview/49cb11a5214ad6339f540faf86a91c01-anime-open-mouth.png': '/web/SquareFaceCreator/assets/categories/_mirrored/images.vexels.com_media_users_3_252302_isolated_preview_49cb11a5214ad6339f540faf86a91c01-anime-open-mouth.png',
-  'https://static.vecteezy.com/system/resources/thumbnails/025/868/361/small/happy-smile-046-png.png': '/web/SquareFaceCreator/assets/categories/_mirrored/static.vecteezy.com_system_resources_thumbnails_025_868_361_small_happy-smile-046-png.png',
-  'https://www.pngall.com/wp-content/uploads/15/Anime-Mouth-PNG-Image-File.png': '/web/SquareFaceCreator/assets/categories/_mirrored/www.pngall.com_wp-content_uploads_15_Anime-Mouth-PNG-Image-File.png',
-  'https://images.vexels.com/media/users/3/252487/isolated/preview/d9b94e35af6fb920c619807df06c9c75-boca-de-sonrisa-feliz.png': '/web/SquareFaceCreator/assets/categories/_mirrored/images.vexels.com_media_users_3_252487_isolated_preview_d9b94e35af6fb920c619807df06c9c75-boca-de-sonrisa-feliz.png',
-  'https://images.vexels.com/media/users/3/252291/isolated/preview/bbd9948356d3fdd2f162226b7f1fe78c-anime-smile-color-stroke.png': '/web/SquareFaceCreator/assets/categories/_mirrored/images.vexels.com_media_users_3_252291_isolated_preview_bbd9948356d3fdd2f162226b7f1fe78c-anime-smile-color-stroke.png',
-  'https://cdn.creazilla.com/cliparts/69759/ear-clipart-md.png': '/web/SquareFaceCreator/assets/categories/_mirrored/cdn.creazilla.com_cliparts_69759_ear-clipart-md.png',
-  'https://www.freepnglogos.com/uploads/ear-png/vector-graphic-ear-listen-hear-gossip-sound-image-pixabay-15.png': '/web/SquareFaceCreator/assets/categories/_mirrored/www.freepnglogos.com_uploads_ear-png_vector-graphic-ear-listen-hear-gossip-sound-image-pixabay-15.png',
-  'https://www.freepnglogos.com/uploads/ear-png/ear-very-basic-listen-icon-ios-iconset-icons-35.png': '/web/SquareFaceCreator/assets/categories/_mirrored/www.freepnglogos.com_uploads_ear-png_ear-very-basic-listen-icon-ios-iconset-icons-35.png',
-  'https://freepngimg.com/thumb/ear/142094-ear-vector-download-hq.png': '/web/SquareFaceCreator/assets/categories/_mirrored/freepngimg.com_thumb_ear_142094-ear-vector-download-hq.png',
+  'https://www.pngmart.com/files/23/Cartoon-Eye-PNG-Picture.png': '../../web/SquareFaceCreator/assets/categories/_mirrored/eyes-cartoon.png',
+  'https://pngimg.com/d/eye_PNG6187.png': '../../web/SquareFaceCreator/assets/categories/_mirrored/eyes-single.png',
+  'https://www.freeiconspng.com/uploads/eyes-icon-0.png': '../../web/SquareFaceCreator/assets/categories/_mirrored/eyes-icon.png',
+  'https://www.onlygfx.com/wp-content/uploads/2021/08/simple-eye-5144.svg': '../../web/SquareFaceCreator/assets/categories/_mirrored/eyes-simple.svg',
+  'https://www.pngall.com/wp-content/uploads/14/Eyebrow-PNG.png': '../../web/SquareFaceCreator/assets/categories/_mirrored/eyebrows-arched.png',
+  'https://static.vecteezy.com/system/resources/thumbnails/022/924/750/small/black-eyebrow-drawing-png.png': '../../web/SquareFaceCreator/assets/categories/_mirrored/eyebrows-black.png',
+  'https://static.vecteezy.com/system/resources/thumbnails/016/658/101/small/brown-brow-line-art-png.png': '../../web/SquareFaceCreator/assets/categories/_mirrored/eyebrows-brown.png',
+  'https://images.vexels.com/media/users/3/252474/isolated/preview/81c2548b31a26f089248ab4022c0d8da-anime-nose-stroke.png': '../../web/SquareFaceCreator/assets/categories/_mirrored/nose-anime.png',
+  'https://pngimg.com/d/nose_PNG12.png': '../../web/SquareFaceCreator/assets/categories/_mirrored/nose-profile.png',
+  'https://pngimg.com/d/nose_PNG8.png': '../../web/SquareFaceCreator/assets/categories/_mirrored/nose-front.png',
+  'https://images.vexels.com/media/users/3/252302/isolated/preview/49cb11a5214ad6339f540faf86a91c01-anime-open-mouth.png': '../../web/SquareFaceCreator/assets/categories/_mirrored/mouth-open.png',
+  'https://static.vecteezy.com/system/resources/thumbnails/025/868/361/small/happy-smile-046-png.png': '../../web/SquareFaceCreator/assets/categories/_mirrored/mouth-happy.png',
+  'https://www.pngall.com/wp-content/uploads/15/Anime-Mouth-PNG-Image-File.png': '../../web/SquareFaceCreator/assets/categories/_mirrored/mouth-anime.png',
+  'https://images.vexels.com/media/users/3/252487/isolated/preview/d9b94e35af6fb920c619807df06c9c75-boca-de-sonrisa-feliz.png': '../../web/SquareFaceCreator/assets/categories/_mirrored/mouth-smile.png',
+  'https://images.vexels.com/media/users/3/252291/isolated/preview/bbd9948356d3fdd2f162226b7f1fe78c-anime-smile-color-stroke.png': '../../web/SquareFaceCreator/assets/categories/_mirrored/mouth-stroke.png',
+  'https://cdn.creazilla.com/cliparts/69759/ear-clipart-md.png': '../../web/SquareFaceCreator/assets/categories/_mirrored/ears-clipart.png',
+  'https://www.freepnglogos.com/uploads/ear-png/vector-graphic-ear-listen-hear-gossip-sound-image-pixabay-15.png': '../../web/SquareFaceCreator/assets/categories/_mirrored/ears-vector.png',
+  'https://www.freepnglogos.com/uploads/ear-png/ear-very-basic-listen-icon-ios-iconset-icons-35.png': '../../web/SquareFaceCreator/assets/categories/_mirrored/ears-basic.png',
+  'https://freepngimg.com/thumb/ear/142094-ear-vector-download-hq.png': '../../web/SquareFaceCreator/assets/categories/_mirrored/ears-outline.png',
 };
 
 const SFC_CATEGORY_DRAW_SETTINGS = {
