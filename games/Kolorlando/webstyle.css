@@ -64,6 +64,62 @@ footer {
     color: white
 }
 
+#peopleOnlineSection {
+    /* The landing page needs the online roster to feel like a real UI card
+    instead of a loose heading, so we give it a compact framed container that
+    still matches Kolorlando's blue-toned menu styling. */
+    width: min(720px, calc(100% - 24px));
+    margin: 30px auto;
+    padding: 18px 20px;
+    border: solid 2px rgba(255, 255, 255, 0.8);
+    border-radius: 18px;
+    background: linear-gradient(180deg, rgba(7, 34, 61, 0.92), rgba(6, 14, 31, 0.95));
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.28);
+    text-align: left;
+}
+
+#peopleOnlineHeader {
+    /* The count and status line are grouped so players can instantly tell
+    whether the roster is simply empty or the realtime socket is still joining. */
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 8px 16px;
+}
+
+#peopleOnlineHeader h2 {
+    margin: 0;
+}
+
+#peopleOnlineCount {
+    color: rgb(125, 255, 155);
+}
+
+#peopleOnlineStatus {
+    margin: 0;
+    color: rgb(187, 229, 255);
+    font-size: 0.95rem;
+}
+
+#peopleOnlineStatus.is-error {
+    color: rgb(255, 170, 170);
+}
+
+#peopleOnlineList {
+    /* A bounded list height keeps long presence tests from pushing the rest
+    of the landing page too far down while still allowing inspection. */
+    margin-top: 14px;
+    max-height: 220px;
+    overflow: auto;
+    padding-right: 6px;
+    line-height: 1.5;
+}
+
+#peopleOnlineList > div + div {
+    margin-top: 6px;
+}
+
 #playButton {
     border: solid 6px green;
     color: rgb(0, 52, 0);
@@ -203,6 +259,12 @@ footer {
 
     .desktopDiv{
         display: none;
+    }
+
+    #peopleOnlineSection {
+        width: calc(100% - 16px);
+        margin: 20px 8px;
+        padding: 14px;
     }
 }
 

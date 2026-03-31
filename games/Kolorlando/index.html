@@ -170,7 +170,13 @@
             </div>
         </div>
 
-        <h2>People online <span id="peopleOnlineCount">0</span></h2>
+        <section id="peopleOnlineSection" aria-live="polite">
+            <div id="peopleOnlineHeader">
+                <h2>People online <span id="peopleOnlineCount">0</span></h2>
+                <p id="peopleOnlineStatus">Connecting...</p>
+            </div>
+            <div id="peopleOnlineList">No players yet.</div>
+        </section>
 
 
         <div id="info">
@@ -211,44 +217,127 @@
     <script src="/assets/scripts/supabase.js"></script>
     <script src="Kusers.js"></script>
     <script>
-        // This element shows how many live sessions are currently connected
-        // to the shared Kolorlando Presence channel.
+        // The landing page presence widget now mirrors the more useful
+        // multiplayer roster behavior: a visible count, a small status line,
+        // and a readable list of who is connected right now.
         const peopleOnlineCount = document.getElementById('peopleOnlineCount')
+        const peopleOnlineStatus = document.getElementById('peopleOnlineStatus')
+        const peopleOnlineList = document.getElementById('peopleOnlineList')
 
-        // This helper converts the full Presence state object into a single
-        // session count. Each key can contain one or more presence payloads,
-        // so we sum every array length to get the total connected sessions.
-        function updatePeopleOnline(state) {
-            const totalSessions = Object.values(state).reduce((count, sessions) => {
-                return count + sessions.length
-            }, 0)
+        // Keep the same player-name cache key used by the auth flow so the
+        // roster can immediately show a friendly label even before the user
+        // opens multiplayer.
+        const PLAYER_NAME_STORAGE_KEY = 'kolorlando.playerName'
 
-            peopleOnlineCount.textContent = totalSessions
+        // A fresh session id per tab avoids multiple duplicated tabs fighting
+        // over the same Presence slot and makes the online list more reliable.
+        const localSessionId = `landing-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
+
+        function escapeHtml(text) {
+            return String(text).replace(/[&<>"']/g, (character) => {
+                return ({
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#39;',
+                })[character]
+            })
         }
 
-        // All players join the same live room so everyone can see the current
-        // connected sessions and, later, each other's position/state.
-        const channel = database.channel('kolorlando-world')
+        function resolveDisplayName(rawName = '') {
+            const storedName = window.localStorage.getItem(PLAYER_NAME_STORAGE_KEY) || ''
+            const normalizedName = String(rawName || storedName).trim()
+            return normalizedName || 'Anonymous'
+        }
+
+        function setPeopleOnlineStatus(message, isError = false) {
+            peopleOnlineStatus.textContent = message
+            peopleOnlineStatus.classList.toggle('is-error', isError)
+        }
+
+        function renderPeopleOnline(state) {
+            // Supabase Presence stores one or more payloads per key, so we
+            // flatten every session into a single sorted list for this UI.
+            const rows = []
+
+            Object.entries(state).forEach(([, sessions]) => {
+                if (!Array.isArray(sessions)) {
+                    return
+                }
+
+                sessions.forEach((session) => {
+                    rows.push({
+                        sessionId: String(session?.sessionId || ''),
+                        displayName: resolveDisplayName(session?.displayName),
+                        onlineAt: Date.parse(session?.online_at || '') || 0,
+                    })
+                })
+            })
+
+            rows.sort((left, right) => {
+                if (left.onlineAt !== right.onlineAt) {
+                    return left.onlineAt - right.onlineAt
+                }
+
+                return left.sessionId.localeCompare(right.sessionId)
+            })
+
+            peopleOnlineCount.textContent = String(rows.length)
+
+            if (rows.length === 0) {
+                peopleOnlineList.textContent = 'No players yet.'
+                return
+            }
+
+            // The "you" badge helps explain which row belongs to this tab when
+            // the same player has multiple windows open during testing.
+            peopleOnlineList.innerHTML = rows.map((row, index) => {
+                const ownLabel = row.sessionId === localSessionId ? ' <strong>(you)</strong>' : ''
+                return `<div>${index + 1}. ${escapeHtml(row.displayName)}${ownLabel}</div>`
+            }).join('')
+        }
+
+        // Using the per-tab session id as the Presence key makes the roster
+        // stable and prevents one browser tab from overwriting another.
+        const channel = database.channel('kolorlando-world', {
+            config: {
+                presence: {
+                    key: localSessionId,
+                },
+            },
+        })
 
         channel
             .on('presence', { event: 'sync' }, () => {
                 const state = channel.presenceState()
 
-                // Every Presence sync gives us the latest merged view of who is
-                // connected, so this is the right moment to refresh the counter.
-                updatePeopleOnline(state)
-
-                console.log(state)
+                // Presence sync is the authoritative snapshot for the landing
+                // page, so we redraw the full count and roster every time.
+                renderPeopleOnline(state)
+                setPeopleOnlineStatus('Live now')
             })
             .subscribe(async (status) => {
                 if (status === 'SUBSCRIBED') {
-                    // For now we publish a tiny test payload so this browser
-                    // session appears in the shared Presence state immediately.
+                    setPeopleOnlineStatus('Connected')
+
+                    // Publish a minimal but human-readable payload so the list
+                    // can show names instead of opaque anonymous sessions.
                     await channel.track({
-                        x: 120,
-                        y: 80,
+                        sessionId: localSessionId,
+                        displayName: resolveDisplayName(),
                         online_at: new Date().toISOString(),
                     })
+                    return
+                }
+
+                if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+                    setPeopleOnlineStatus('Connection error', true)
+                    return
+                }
+
+                if (status === 'CLOSED') {
+                    setPeopleOnlineStatus('Disconnected', true)
                 }
             })
     </script>
