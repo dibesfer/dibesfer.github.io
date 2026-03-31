@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supabase presence</title>
+    <!-- SUPABASE cdn -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+
+</head>
+
+<body>
+    <h1>Supabase Presence</h1>
+    <div id="usersOnline"></div>
+    <script>
+        const supabaseUrl = 'https://qugihsopwjemzakhrbvw.supabase.co'
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF1Z2loc29wd2plbXpha2hyYnZ3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE2OTg0OTQxMDksImV4cCI6MjAxNDA3MDEwOX0.1q5fBic1cjueaiP2-p6W19C68ye8FTPLFne2a-fKwZ8'
+        const database = supabase.createClient(supabaseUrl, supabaseKey)
+
+        const channel = database.channel("testing", {
+            config: {
+                presence: { key: 0 }
+            }
+        })
+
+        channel
+            .on("presence", { event: "sync" }, () => {
+                const state = channel.presenceState()
+                console.log("Online users:", state)
+                const count = Object.keys(channel.presenceState()).length
+                usersOnline.textContent = count
+            })
+            .subscribe(async (status) => {
+                if (status === "SUBSCRIBED") {
+                    await channel.track({
+
+                        user_id: "ANON",
+                        username: "ANON"
+
+                    })
+                }
+            })
+
+
+
+    </script>
+</body>
+
+</html>
