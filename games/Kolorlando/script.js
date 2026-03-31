@@ -306,6 +306,7 @@ let lastRaycastModeKey = '';
 let lastWowCursorRaycastActive = false;
 let openingChatFromPointerLock = false;
 let pointerLockRetryArmed = false;
+let pointerLockRetryBlockedUntil = 0;
 let suppressNextDesktopAttack = false;
 let suppressNextDesktopAttackUntil = 0;
 let suppressNextDesktopAttackButton = null;
@@ -321,6 +322,7 @@ const SHADOWS_STORAGE_KEY = 'kolorlando.settings.shadows';
 const RENDER_SCALE_STORAGE_KEY = 'kolorlando.settings.renderScale';
 const DEFAULT_RENDER_SCALE = 1;
 const VALID_RENDER_SCALE_VALUES = new Set(['1', '0.75', '0.5']);
+const POINTER_LOCK_RETRY_COOLDOWN_MS = 350;
 let rendererPixelRatioBase = Math.min(window.devicePixelRatio, 2);
 let renderScaleMultiplier = DEFAULT_RENDER_SCALE;
 const VOXEL_RAYCAST_REFRESH_INTERVAL = 1 / 30;
@@ -419,7 +421,7 @@ function syncCameraModeAvailability() {
   cameraModeController.syncCameraModeAvailability();
 }
 
-function shouldRetryPointerLockNow() {
+function shouldWantGameplayPointerLock() {
   return (
     !mobileMode
     && shouldUsePointerLock()
@@ -428,6 +430,12 @@ function shouldRetryPointerLockNow() {
     && !isMenuCentralVisible()
     && !chatUI.isInputOpen()
   );
+}
+
+function canRetryPointerLockNow() {
+  /* Browsers impose a short grace period after exiting pointer lock. Waiting
+  out that cooldown avoids immediate SecurityError rejections on relock. */
+  return performance.now() >= pointerLockRetryBlockedUntil;
 }
 
 function disarmPointerLockRetry() {
@@ -440,7 +448,7 @@ function armPointerLockRetry() {
   then tries to relock, that request can land outside the allowed gesture
   window. Arming a retry lets the next click or key press re-enter gameplay
   cleanly instead of leaving desktop look stuck half-disabled. */
-  if (!shouldRetryPointerLockNow()) return;
+  if (!shouldWantGameplayPointerLock()) return;
   pointerLockRetryArmed = true;
 }
 
@@ -448,14 +456,28 @@ function requestGameplayPointerLock() {
   /* This helper centralizes every desktop relock request so we can keep the
   browser's gesture requirements in one place and avoid scattered direct
   controls.lock() calls that are hard to reason about. */
-  if (!shouldRetryPointerLockNow()) {
+  if (!shouldWantGameplayPointerLock()) {
     disarmPointerLockRetry();
+    return;
+  }
+
+  if (!canRetryPointerLockNow()) {
+    armPointerLockRetry();
     return;
   }
 
   try {
     disarmPointerLockRetry();
-    controls.lock();
+    const lockRequest = controls.lock();
+
+    /* Some PointerLockControls builds surface browser denials as promise
+    rejections instead of synchronous throws, so we catch both shapes here. */
+    if (lockRequest && typeof lockRequest.catch === 'function') {
+      lockRequest.catch(error => {
+        console.warn('Failed to request pointer lock immediately.', error);
+        armPointerLockRetry();
+      });
+    }
   } catch (error) {
     console.warn('Failed to request pointer lock immediately.', error);
     armPointerLockRetry();
@@ -476,6 +498,19 @@ function requestGameplayPointerLock() {
 function retryPointerLockFromUserGesture() {
   if (!pointerLockRetryArmed) return;
   requestGameplayPointerLock();
+}
+
+function handlePointerLockRetryHotkey(event) {
+  if (event.repeat || isTypingTarget(event.target) || chatUI.isInputOpen()) return;
+  retryPointerLockFromUserGesture();
+}
+
+function closeDesktopMenuAndArmGameplayResume() {
+  /* Browsers commonly reject pointer-lock reacquire on the very first click
+  after the player pressed Escape to leave lock. Closing the menu first and
+  arming the retry lets the following trusted gesture restore gameplay cleanly. */
+  hideMenuCentral();
+  armPointerLockRetry();
 }
 
 function activateDesktopScreenActivity() {
@@ -566,10 +601,10 @@ const chatUI = createChatUI({
   onHide: () => {
     setMobileChatToggleState(false);
     if (shouldUsePointerLock() && typeof controls !== 'undefined' && !controls.isLocked && !isMenuCentralVisible()) {
-      // Closing chat after a command still happens inside a trusted user action
-      // like Enter or Escape, so we can try to restore gameplay pointer lock
-      // immediately instead of leaving Skyrim mode with a loose cursor.
-      requestGameplayPointerLock();
+      /* Browsers can treat the same Escape/Enter gesture that closed chat as
+      ineligible for an immediate pointer-lock reacquire. Arming the retry
+      keeps the next click/key available for relock without throwing errors. */
+      armPointerLockRetry();
     }
   },
 });
@@ -778,7 +813,7 @@ if (menuCloseButton) {
       hideMenuCentral();
       return;
     }
-    activateDesktopScreenActivity();
+    closeDesktopMenuAndArmGameplayResume();
   });
 }
 
@@ -911,10 +946,14 @@ spawnPadTexture.anisotropy = maxAnisotropy;
 // --------------------
 const controls = new PointerLockControls(camera, document.body);
 controls.addEventListener('lock', () => {
+  pointerLockRetryBlockedUntil = 0;
   disarmPointerLockRetry();
   hideMenuCentral();
 });
 controls.addEventListener('unlock', () => {
+  /* The browser rejects pointer-lock re-entry for a brief period after any
+  unlock, including the same Escape/Enter gesture that just closed chat. */
+  pointerLockRetryBlockedUntil = performance.now() + POINTER_LOCK_RETRY_COOLDOWN_MS;
   if (openingChatFromPointerLock) {
     openingChatFromPointerLock = false;
     return;
@@ -956,11 +995,12 @@ function controlLocker(event) {
     ? event.button
     : null;
   event.preventDefault();
-  activateDesktopScreenActivity();
+  closeDesktopMenuAndArmGameplayResume();
 }
 
 document.addEventListener('pointerdown', controlLocker);
 document.addEventListener('pointerdown', retryPointerLockFromUserGesture);
+document.addEventListener('keydown', handlePointerLockRetryHotkey);
 
 function setInventoryPanelOpen(nextOpen, { allowMobile = false } = {}) {
   if (mobileMode) {
@@ -1018,7 +1058,6 @@ function clearTrackedKeys() {
 
 document.addEventListener('keydown', e => {
   gameAudio.unlockAudio(true);
-  retryPointerLockFromUserGesture();
   if (!mobileMode && (chatUI.isInputOpen() || isTypingTarget(e.target))) return;
   keys[e.code] = true;
 });
@@ -2580,7 +2619,15 @@ function syncCameraToPlayerView(deltaTime = 0) {
 }
 
 function handleDesktopWheelThirdPerson(event) {
-  if (mobileMode || !isDesktopGameplayActive()) return;
+  /* Keep zoom responsive while gameplay is visible even if pointer lock is
+  temporarily down during a browser-mandated relock cooldown. */
+  if (
+    mobileMode
+    || isMenuCentralVisible()
+    || chatUI.isInputOpen()
+    || isTypingTarget(event.target)
+    || (!controls.isLocked && !isScreenDragCameraActive() && !isLegoLolCameraMode())
+  ) return;
 
   // Scroll out to move into third-person; scroll in back to first-person.
   setThirdPersonDistance(thirdPersonDistance + event.deltaY * THIRD_PERSON_DISTANCE_INPUT_SCALE);
@@ -4465,10 +4512,15 @@ document.addEventListener('keydown', e => {
     return;
   }
 
-  if (e.code === 'Escape' && (isScreenDragCameraActive() || (isLegoLolCameraMode() && !mobileMode && !isMenuCentralVisible()))) {
+  if (!mobileMode && e.code === 'Tab') {
+    /* Tab becomes the dedicated desktop menu toggle so the game no longer
+    depends on Escape for opening the settings menu. Preventing the browser's
+    default focus traversal keeps the gameplay surface from losing focus or
+    jumping to other controls while the player is trying to pause/open UI. */
     e.preventDefault();
     e.stopPropagation();
-    deactivateDesktopScreenActivity(getActiveMenuCentralTab() || 'settings');
+    if (e.repeat) return;
+    toggleMenuCentralTab('settings');
     return;
   }
 
