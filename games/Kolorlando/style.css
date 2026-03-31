@@ -425,10 +425,11 @@ img {
 #kolorlandiaCharacterMenu {
     display: flex;
     flex-wrap: wrap;
+    justify-content: space-between;
 }
 
 #kolorlandiaCharacterMenu_info {
-    width: 50%;
+    width: 25%;
     padding: 15px;
 }
 
@@ -457,7 +458,7 @@ img {
 #kolorlandiaCharacterMenu_slots {
     line-height: 0;
     
-    width: 25%;
+    width: 40%;
     aspect-ratio: 1;
     margin: auto 0;
     height: max-content;

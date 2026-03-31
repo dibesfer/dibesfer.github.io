@@ -99,12 +99,12 @@ export function renderKolorlandoMenuPanel(container) {
                 </div>
 
                 <div id="kolorlandiaCharacterMenu_info">
-                    <p>Name: singleplayer</p>
+                    <p>Name: Anon</p>
                     <p>Life: 100/100</p>
                     <p>Money: 0</p>
                     <p>Face: 😎</p>
                     <p>Height: 1.70</p>
-                    <p>Health and selected block are shown in the HUD while playing.</p>
+                    
                 </div>
             </div>
             <p>Edit your face in <a href="/web/SquareFaceCreator">SquareFaceCreator</a></p>
