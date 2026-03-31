@@ -252,7 +252,9 @@
             const isLandingPage =
                 normalizedUrl === '/Kolorlando/index.html' ||
                 normalizedUrl === '/games/Kolorlando/index.html' ||
-                normalizedUrl.endsWith('/Kolorlando/index.html')
+                normalizedUrl.endsWith('/Kolorlando/index.html') ||
+                normalizedUrl.endsWith('/Kolorlando/')  ||
+                normalizedUrl.endsWith('/Kolorlando')
 
             if (isLandingPage) {
                 return `Landing page`

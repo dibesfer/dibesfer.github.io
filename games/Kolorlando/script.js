@@ -2250,20 +2250,23 @@ const fpLeftElbowBaseRot = firstPersonArmsRig.joints.leftElbow.rotation.clone();
 scene.add(playerBody);
 
 /* The gameplay code stays shared across singleplayer and multiplayer pages.
-Singleplayer skips the Supabase controller entirely so the page can load with
-no online dependencies, while multiplayer keeps the existing room sync path. */
-const multiplayerController = MULTIPLAYER_ENABLED
-  ? createMultiplayerController({
-    scene,
-    getLocalPlayerState: () => ({
+Both pages now publish Presence so the landing page can work as a global
+online roster. Only multiplayer enables transform broadcast and remote avatar
+rendering, while singleplayer stays presence-only and therefore remains local
+gameplay with no remote simulation mixed into the scene. */
+const multiplayerController = createMultiplayerController({
+  scene,
+  presenceOnly: !MULTIPLAYER_ENABLED,
+  getLocalPlayerState: MULTIPLAYER_ENABLED
+    ? () => ({
       x: playerBody.position.x,
       y: playerBody.position.y,
       z: playerBody.position.z,
       rotationY: playerBody.rotation.y,
       isMoving: horizontalMove.lengthSq() > 0.00001 || Math.abs(playerState.velocity.y) > 0.01,
-    }),
-  })
-  : null;
+    })
+    : null,
+});
 
 const playerFacingDir = new THREE.Vector3();
 let playerWalkCycle = 0;

@@ -174,9 +174,11 @@ function createRemoteAvatar() {
 function snapshotPresencePayload(state) {
   return {
     /* Keep Presence minimal while still exposing a human-readable player name
-    in the online list and debug console. */
+    in the online list and debug console. The shared lobby roster also needs
+    the current page url so it can label where each live session currently is. */
     sessionId: state.sessionId,
     displayName: resolvePresenceDisplayName(),
+    url: resolvePresenceUrl(),
   };
 }
 
@@ -220,9 +222,17 @@ function formatCoordsLabel(transform) {
   return `x:${formatCoordValue(transform.x)} y:${formatCoordValue(transform.y)} z:${formatCoordValue(transform.z)}`;
 }
 
+function resolvePresenceUrl() {
+  /* The landing page roster groups sessions by page, so every gameplay page
+  must publish the same pathname-style location into Presence. Using only the
+  pathname keeps local development and deployed hosting aligned automatically. */
+  return window.location.pathname;
+}
+
 export function createMultiplayerController({
   scene,
   getLocalPlayerState,
+  presenceOnly = false,
   peopleOnlineCountElement = document.getElementById('peopleOnlineCount'),
   peopleOnlineHudElement = document.getElementById('peopleOnlineHud'),
   peopleOnlineToggleElement = document.getElementById('peopleOnlineToggle'),
@@ -375,6 +385,9 @@ export function createMultiplayerController({
   }
 
   async function broadcastLocalPlayerState() {
+    /* Presence now runs for both singleplayer and multiplayer, but transform
+    broadcast still belongs only to the multiplayer simulation path. */
+    if (presenceOnly) return;
     if (!isSubscribed || !isRealtimeConnected || !channel || typeof getLocalPlayerState !== 'function') return;
 
     const localPlayerState = getLocalPlayerState();
@@ -417,6 +430,7 @@ export function createMultiplayerController({
         handlePresenceSync(channel.presenceState());
       })
       .on('broadcast', { event: PLAYER_TRANSFORM_BROADCAST_EVENT }, ({ payload }) => {
+        if (presenceOnly) return;
         if (!payload?.sessionId || payload.sessionId === localSessionId) return;
         applyRemoteBroadcast(payload.sessionId, payload);
         renderPeopleOnlineList(lastPresenceState);
@@ -438,6 +452,8 @@ export function createMultiplayerController({
   }
 
   function updateRemotePlayers(deltaTime) {
+    if (presenceOnly) return;
+
     remotePlayers.forEach(remotePlayer => {
       if (!remotePlayer.initialized) return;
 
@@ -476,6 +492,14 @@ export function createMultiplayerController({
       console.error('Failed to broadcast multiplayer transform.', error);
     });
   }
+
+  window.addEventListener('kolorlando:player-name-change', () => {
+    /* Re-tracking the existing Presence session is enough to refresh the lobby
+    roster whenever auth updates the cached player name on an already-open page. */
+    publishLocalPresence().catch(error => {
+      console.error('Failed to refresh Kolorlando scene Presence.', error);
+    });
+  });
 
   return {
     update,
