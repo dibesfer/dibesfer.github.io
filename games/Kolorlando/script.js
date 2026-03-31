@@ -21,6 +21,7 @@ import {
 import { createChatUI } from './code/UI/chat.js';
 import { createPlayerHud } from './playerHud.js';
 import { BoxelSelectionToolItemAppearance, CoinItemAppearance, GoxelItemAppearance, ItemAppearance } from './itemAppearance.js';
+import { BOXEL_SELECTION_TOOL_ITEM, COIN_ITEM, GUN_ITEM, SPAWN_POINT_ITEM, SWORD_ITEM } from './code/item.js';
 import { buildSimpleMap } from './maps/simpleMap.js';
 import { buildCityMap } from './maps/cityMap.js';
 import { buildVoxelandiaMap } from './maps/voxelandiaMap.js';
@@ -1465,7 +1466,12 @@ entities.push(new SpaceShipVehicle({
 }));
 
 const itemAppearances = [];
-const PICKUP_ITEM_TYPES = new Set(['Sword', 'Gun', 'Coin', 'Boxel Selection Tool']);
+const PICKUP_ITEM_TYPES = new Set([
+  SWORD_ITEM.id,
+  GUN_ITEM.id,
+  COIN_ITEM.id,
+  BOXEL_SELECTION_TOOL_ITEM.id,
+]);
 const PLAYER_PICKUP_RADIUS = 3;
 const PLAYER_PICKUP_RADIUS_SQ = PLAYER_PICKUP_RADIUS * PLAYER_PICKUP_RADIUS;
 const ITEM_APPEARANCE_NEARBY_UPDATE_RADIUS = 18;
@@ -1485,32 +1491,32 @@ const firstItemSpawnPosition = new THREE.Vector3(0, 0, 0);
 itemAppearances.push(new ItemAppearance({
   scene,
   position: firstItemSpawnPosition,
-  label: 'Spawn Point',
-  inventoryType: 'Spawn Point',
-  pickable: false,
-  groundY: GROUND_Y + 2,
+  label: SPAWN_POINT_ITEM.label,
+  inventoryType: SPAWN_POINT_ITEM.id,
+  pickable: SPAWN_POINT_ITEM.pickable,
+  groundY: GROUND_Y + (SPAWN_POINT_ITEM.itemAppearance?.groundYOffset ?? 2),
 }));
 
 const swordItemSpawnPosition = playerSpawnPoint.clone().add(new THREE.Vector3(TEST_ITEM_SIDE_OFFSET, 0, -TEST_ITEM_BEHIND_DISTANCE));
 itemAppearances.push(new GoxelItemAppearance({
   scene,
   position: swordItemSpawnPosition,
-  label: 'Sword',
-  inventoryType: 'Sword',
-  pickable: true,
+  label: SWORD_ITEM.label,
+  inventoryType: SWORD_ITEM.id,
+  pickable: SWORD_ITEM.pickable,
   groundY: GROUND_Y,
-  modelUrl: 'assets/3D/weapons/sword.gltf',
+  modelUrl: SWORD_ITEM.itemAppearance?.modelUrl ?? 'assets/3D/weapons/sword.gltf',
 }));
 
 const gunItemSpawnPosition = playerSpawnPoint.clone().add(new THREE.Vector3(-TEST_ITEM_SIDE_OFFSET, 0, -TEST_ITEM_BEHIND_DISTANCE));
 itemAppearances.push(new GoxelItemAppearance({
   scene,
   position: gunItemSpawnPosition,
-  label: 'Gun',
-  inventoryType: 'Gun',
-  pickable: true,
+  label: GUN_ITEM.label,
+  inventoryType: GUN_ITEM.id,
+  pickable: GUN_ITEM.pickable,
   groundY: GROUND_Y,
-  modelUrl: 'assets/3D/weapons/gun.gltf',
+  modelUrl: GUN_ITEM.itemAppearance?.modelUrl ?? 'assets/3D/weapons/gun.gltf',
 }));
 
 const boxelSelectionToolSpawnPosition = playerSpawnPoint.clone().add(new THREE.Vector3(0, 0, -TEST_ITEM_BEHIND_DISTANCE - 3.2));
@@ -1519,11 +1525,11 @@ itemAppearances.push(new BoxelSelectionToolItemAppearance({
   position: boxelSelectionToolSpawnPosition,
   /* The Boxel Selection Tool now renders as its own floating sigil plane so
   the world pickup matches the icon used in the encyclopedia and inventory. */
-  label: 'Boxel Selection Tool',
-  inventoryType: 'Boxel Selection Tool',
-  pickable: true,
+  label: BOXEL_SELECTION_TOOL_ITEM.label,
+  inventoryType: BOXEL_SELECTION_TOOL_ITEM.id,
+  pickable: BOXEL_SELECTION_TOOL_ITEM.pickable,
   groundY: GROUND_Y,
-  iconUrl: 'assets/icons/Asymmetrical_symbol_of_Chaos.png',
+  iconUrl: BOXEL_SELECTION_TOOL_ITEM.itemAppearance?.iconUrl ?? 'assets/icons/Asymmetrical_symbol_of_Chaos.png',
 }));
 
 const coinSpawnOffsets = [
@@ -1546,9 +1552,9 @@ for (let i = 0; i < coinSpawnOffsets.length; i++) {
   itemAppearances.push(new CoinItemAppearance({
     scene,
     position: coinPosition,
-    label: 'Coin',
-    inventoryType: 'Coin',
-    pickable: true,
+    label: COIN_ITEM.label,
+    inventoryType: COIN_ITEM.id,
+    pickable: COIN_ITEM.pickable,
     groundY: GROUND_Y,
   }));
 }
@@ -1808,31 +1814,55 @@ const HELD_ITEM_DEFAULTS = {
 // Held-item definitions now only need to provide asset-specific data unless an
 // item wants to opt out of the neutral defaults above.
 const HELD_ITEM_DEFINITIONS = {
-  Sword: {
+  [SWORD_ITEM.id]: {
     // Swords use the middle of their base footprint as the hand anchor, then
     // rotate around that anchored point.
-    modelUrl: 'assets/3D/weapons/sword.gltf',
-    pivotMode: 'baseCenter',
+    modelUrl: SWORD_ITEM.attachment?.modelUrl ?? 'assets/3D/weapons/sword.gltf',
+    pivotMode: SWORD_ITEM.attachment?.pivotMode ?? 'baseCenter',
     // Negative Y lifts the sword upward relative to the base-center hand anchor
     // so the grip point can sit a bit higher on the handle while preserving the
     // same base-derived attachment logic.
-    position: new THREE.Vector3(0,0,  -0.2),
+    position: new THREE.Vector3(
+      SWORD_ITEM.attachment?.position?.x ?? 0,
+      SWORD_ITEM.attachment?.position?.y ?? 0,
+      SWORD_ITEM.attachment?.position?.z ?? -0.2
+    ),
     // First-person uses its own placement so the base of the sword can sit
     // directly on the hand placeholder without changing the third-person grip.
-    firstPersonPosition: new THREE.Vector3(0, 0, 0.2),
+    firstPersonPosition: new THREE.Vector3(
+      SWORD_ITEM.attachment?.firstPersonPosition?.x ?? 0,
+      SWORD_ITEM.attachment?.firstPersonPosition?.y ?? 0,
+      SWORD_ITEM.attachment?.firstPersonPosition?.z ?? 0.2
+    ),
     // Adjust this authored hand rotation per sword if needed.
-    rotation: new THREE.Euler(Math.PI * 0.5, 0, 0),
+    rotation: new THREE.Euler(
+      SWORD_ITEM.attachment?.rotation?.x ?? Math.PI * 0.5,
+      SWORD_ITEM.attachment?.rotation?.y ?? 0,
+      SWORD_ITEM.attachment?.rotation?.z ?? 0
+    ),
   },
-  Gun: {
+  [GUN_ITEM.id]: {
     // Guns can grip more naturally from the bottom-back of the model, so this
     // pivot uses the base center on X, the bottom on Y, and the back face on Z.
-    modelUrl: 'assets/3D/weapons/gun.gltf',
-    modelScale: 0.05,
-    pivotMode: 'baseCenter',
-    position: new THREE.Vector3(0,-0.2,0),
-    firstPersonPosition: new THREE.Vector3(0, -0.2, 0.15),
+    modelUrl: GUN_ITEM.attachment?.modelUrl ?? 'assets/3D/weapons/gun.gltf',
+    modelScale: GUN_ITEM.attachment?.modelScale ?? 0.05,
+    pivotMode: GUN_ITEM.attachment?.pivotMode ?? 'baseCenter',
+    position: new THREE.Vector3(
+      GUN_ITEM.attachment?.position?.x ?? 0,
+      GUN_ITEM.attachment?.position?.y ?? -0.2,
+      GUN_ITEM.attachment?.position?.z ?? 0
+    ),
+    firstPersonPosition: new THREE.Vector3(
+      GUN_ITEM.attachment?.firstPersonPosition?.x ?? 0,
+      GUN_ITEM.attachment?.firstPersonPosition?.y ?? -0.2,
+      GUN_ITEM.attachment?.firstPersonPosition?.z ?? 0.15
+    ),
 
-    rotation: new THREE.Euler(0, -Math.PI * 0.5, -Math.PI * 0.5),
+    rotation: new THREE.Euler(
+      GUN_ITEM.attachment?.rotation?.x ?? 0,
+      GUN_ITEM.attachment?.rotation?.y ?? -Math.PI * 0.5,
+      GUN_ITEM.attachment?.rotation?.z ?? -Math.PI * 0.5
+    ),
   },
 };
 const heldItemTemplateCache = new Map();
@@ -2043,7 +2073,7 @@ async function mountHeldItem(itemType) {
 
 function updateHeldItemSelection() {
   const selectedStack = inventoryUI.getSelectedHotbarStack();
-  const selectedItemType = selectedStack?.typeName ?? null;
+  const selectedItemType = selectedStack?.itemId ?? null;
 
   if (!selectedItemType || !HELD_ITEM_DEFINITIONS[selectedItemType]) {
     if (activeHeldItemRoot || activeHeldItemType || pendingHeldItemType) {
@@ -3008,18 +3038,18 @@ function getSelectedActionItemType() {
   // creative and survival so equipped tools/items behave consistently once the
   // player puts them in a visible hotbar slot.
   const selectedStack = inventoryUI.getSelectedHotbarStack();
-  return selectedStack?.typeName ?? null;
+  return selectedStack?.itemId ?? null;
 }
 
 function isGunSelectedForAction() {
-  return getSelectedActionItemType() === 'Gun';
+  return getSelectedActionItemType() === GUN_ITEM.id;
 }
 
 function isBoxelSelectionToolSelected() {
   /* Boxel mode is intentionally driven by the hotbar selection because the
   user asked for this tool to behave like a dedicated editing mode that only
   becomes active when the Boxel Selection Tool is equipped. */
-  return getSelectedActionItemType() === 'Boxel Selection Tool';
+  return getSelectedActionItemType() === BOXEL_SELECTION_TOOL_ITEM.id;
 }
 
 function syncVoxelHighlightStyle() {

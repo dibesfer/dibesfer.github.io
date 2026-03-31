@@ -266,16 +266,19 @@
           { id: 'multi-sync', parent: 'multi-presence', label: 'Remote Sync<div style="color:#dc2626; font-style:italic">applyRemoteBroadcast()</div>', tooltip: 'Remote player transform updates' }
         ]);
 
-        // The Item chart is intentionally hypothetical. It prints a target
-        // architecture for a future unified item model that can drive pickup
-        // appearance, UI rendering, equipped visuals, and behavior from one
-        // shared definition instead of scattering those concerns by feature.
+        // The Item chart now reflects the implemented declaration-based item
+        // flow. It also keeps one explicit pending node for the last cleanup
+        // step: removing the intermediate held-item table from script.js so
+        // hand mounting can read directly from Holdable definitions.
         drawSingleChart('chart_item', [
-          { id: 'item-root', parent: '', label: 'Item Class<div style="color:#2563eb; font-style:italic">unified item model</div>', tooltip: 'Future shared item definition root' },
+          { id: 'item-root', parent: '', label: 'Item System<div style="color:#2563eb; font-style:italic">code/item.js + inventory.js + script.js</div>', tooltip: 'Implemented shared item definition flow' },
+          { id: 'item-base', parent: 'item-root', label: 'Item / Holdable / Wearable<div style="color:#059669; font-style:italic">code/item.js</div>', tooltip: 'Declared item classes and concrete item definitions' },
           { id: 'item-appearance', parent: 'item-root', label: 'Item Appearance<div style="color:#059669; font-style:italic">world pickup / render model</div>', tooltip: 'World-space item appearance and pickup visuals' },
           { id: 'item-icon', parent: 'item-root', label: 'UI Icon<div style="color:#059669; font-style:italic">inventory / hotbar / encyclopedia</div>', tooltip: 'UI-facing icon definition' },
           { id: 'item-attachment', parent: 'item-root', label: 'Attachment<div style="color:#059669; font-style:italic">equipped visual on player</div>', tooltip: 'Mounted visual attachment on the character body' },
-          { id: 'item-action', parent: 'item-root', label: 'Action Type<div style="color:#059669; font-style:italic">use / equip / consume / tool</div>', tooltip: 'Behavior family used by gameplay systems' }
+          { id: 'item-action', parent: 'item-root', label: 'Action Type<div style="color:#059669; font-style:italic">weapon / tool</div>', tooltip: 'Behavior family used by holdable gameplay systems' },
+          { id: 'item-inventory-id', parent: 'item-root', label: 'Inventory itemId<div style="color:#059669; font-style:italic">stack storage identity</div>', tooltip: 'Inventory stacks now store stable item ids instead of item labels' },
+          { id: 'item-leftover-held-table', parent: 'item-root', label: 'Held Mount Cleanup<div style="color:#dc2626; font-style:italic">left feature</div>', tooltip: 'Still pending: remove HELD_ITEM_DEFINITIONS and mount directly from Holdable attachment data' }
         ]);
 
         enableDesktopDragScroll();
@@ -306,7 +309,7 @@
     </section>
 
     <section class="chartSection">
-      <h2>Item (hypothetical)</h2>
+      <h2>Item</h2>
       <div id="chart_item" class="chartHost"></div>
     </section>
 </body>

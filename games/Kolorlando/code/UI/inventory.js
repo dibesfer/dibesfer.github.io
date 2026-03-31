@@ -1,4 +1,5 @@
 import { createCoinSymbolIcon, createImageIcon, createVoxelIcon } from './icon.js';
+import { BOXEL_SELECTION_TOOL_ITEM, COIN_ITEM, GUN_ITEM, ITEM_DEFINITIONS, SPAWN_POINT_ITEM, SWORD_ITEM } from '../item.js';
 
 export const GAME_MODE_CREATIVE = 'creative';
 export const GAME_MODE_SURVIVAL = 'survival';
@@ -18,6 +19,15 @@ export function createInventoryUI(options) {
     ? options.onSelectedHotbarStackChange
     : null;
   const voxelTypeNames = new Set(voxelTypes.map(function (type) { return type.name; }));
+  const itemDefinitionList = Object.values(ITEM_DEFINITIONS);
+  const itemDefinitionById = itemDefinitionList.reduce(function (lookup, itemDefinition) {
+    lookup[itemDefinition.id] = itemDefinition;
+    return lookup;
+  }, {});
+  const itemDefinitionByLabel = itemDefinitionList.reduce(function (lookup, itemDefinition) {
+    lookup[itemDefinition.label] = itemDefinition;
+    return lookup;
+  }, {});
 
   const PLAYER_INVENTORY_SLOT_COUNT = 32;
   const PLAYER_STACK_LIMIT = 99;
@@ -31,14 +41,39 @@ export function createInventoryUI(options) {
   let suppressInventorySlotClick = false;
   const inventoryDragPreview = document.createElement('div');
   const INVENTORY_DRAG_START_DISTANCE = 6;
-  let lastSelectedHotbarStackTypeName = null;
+  let lastSelectedHotbarItemId = null;
 
   const encyclopediaItems = [
-    { name: 'Spawn Point', iconSrc: 'assets/icons/diamonds.png' },
-    { name: 'Gun', iconSrc: 'assets/weapons/pistol-gun.png' },
-    { name: 'Sword', iconSrc: 'assets/weapons/gladius.png' },
-    { name: 'Boxel Selection Tool', iconSrc: 'assets/icons/Asymmetrical_symbol_of_Chaos.png' },
-    { name: 'Coin', iconKind: 'coin', iconSrc: 'assets/icons/KoloraMonero.png' },
+    {
+      itemId: SPAWN_POINT_ITEM.id,
+      name: SPAWN_POINT_ITEM.label,
+      iconKind: SPAWN_POINT_ITEM.icon?.kind ?? null,
+      iconSrc: SPAWN_POINT_ITEM.icon?.src ?? null,
+    },
+    {
+      itemId: GUN_ITEM.id,
+      name: GUN_ITEM.label,
+      iconKind: GUN_ITEM.icon?.kind ?? null,
+      iconSrc: GUN_ITEM.icon?.src ?? null,
+    },
+    {
+      itemId: SWORD_ITEM.id,
+      name: SWORD_ITEM.label,
+      iconKind: SWORD_ITEM.icon?.kind ?? null,
+      iconSrc: SWORD_ITEM.icon?.src ?? null,
+    },
+    {
+      itemId: BOXEL_SELECTION_TOOL_ITEM.id,
+      name: BOXEL_SELECTION_TOOL_ITEM.label,
+      iconKind: BOXEL_SELECTION_TOOL_ITEM.icon?.kind ?? null,
+      iconSrc: BOXEL_SELECTION_TOOL_ITEM.icon?.src ?? null,
+    },
+    {
+      itemId: COIN_ITEM.id,
+      name: COIN_ITEM.label,
+      iconKind: COIN_ITEM.icon?.kind ?? null,
+      iconSrc: COIN_ITEM.icon?.src ?? null,
+    },
   ];
   const itemIconByName = encyclopediaItems.reduce(function (lookup, item) {
     lookup[item.name] = item;
@@ -50,30 +85,50 @@ export function createInventoryUI(options) {
   inventoryDragPreview.hidden = true;
   document.body.appendChild(inventoryDragPreview);
 
-  function getVoxelTypeColor(typeName) {
-    const found = voxelTypes.find(function (type) { return type.name === typeName; });
+  function resolveInventoryItemId(rawValue) {
+    /* The migration keeps existing callers working while shifting storage onto
+    stable item ids. Known labels map to declared item ids; voxel names and
+    already-canonical ids pass through unchanged. */
+    if (typeof rawValue !== 'string' || !rawValue) return null;
+    if (itemDefinitionById[rawValue]) return rawValue;
+    if (itemDefinitionByLabel[rawValue]) return itemDefinitionByLabel[rawValue].id;
+    return rawValue;
+  }
+
+  function getItemDefinition(itemId) {
+    return itemDefinitionById[itemId] ?? null;
+  }
+
+  function getInventoryItemLabel(itemId) {
+    const itemDefinition = getItemDefinition(itemId);
+    return itemDefinition?.label ?? itemId;
+  }
+
+  function getVoxelTypeColor(itemId) {
+    const found = voxelTypes.find(function (type) { return type.name === itemId; });
     return found ? found.color : 0xffffff;
   }
 
-  function getVoxelTypeHexColor(typeName) {
-    return '#' + getVoxelTypeColor(typeName).toString(16).padStart(6, '0');
+  function getVoxelTypeHexColor(itemId) {
+    return '#' + getVoxelTypeColor(itemId).toString(16).padStart(6, '0');
   }
 
-  function createInventoryStackIcon(typeName) {
-    const iconDefinition = itemIconByName[typeName];
+  function createInventoryStackIcon(itemId) {
+    const itemLabel = getInventoryItemLabel(itemId);
+    const iconDefinition = itemIconByName[itemLabel];
     if (iconDefinition?.iconKind === 'coin') {
       return createCoinSymbolIcon({
         symbolSrc: iconDefinition.iconSrc,
-        symbolAlt: typeName,
+        symbolAlt: itemLabel,
         symbolOpacity: 0.75,
       });
     }
     if (iconDefinition?.iconSrc) {
       // Item pickups like sword and gun should keep their authored icons in both
       // the inventory window and the hotbar instead of falling back to voxel cubes.
-      return createImageIcon(iconDefinition.iconSrc, typeName);
+      return createImageIcon(iconDefinition.iconSrc, itemLabel);
     }
-    return createVoxelIcon(getVoxelTypeHexColor(typeName));
+    return createVoxelIcon(getVoxelTypeHexColor(itemId));
   }
 
   function createEncyclopediaItemIcon(itemEntry) {
@@ -109,44 +164,45 @@ export function createInventoryUI(options) {
     if (!onSelectedHotbarStackChange) return;
 
     const selectedStack = getSelectedHotbarStack();
-    const nextTypeName = selectedStack?.typeName ?? null;
+    const nextItemId = selectedStack?.itemId ?? null;
 
     // The held item model only depends on the selected hotbar item type, so we
     // skip notifying the game when only the stack count changes in place.
-    if (!force && nextTypeName === lastSelectedHotbarStackTypeName) return;
+    if (!force && nextItemId === lastSelectedHotbarItemId) return;
 
-    lastSelectedHotbarStackTypeName = nextTypeName;
+    lastSelectedHotbarItemId = nextItemId;
     onSelectedHotbarStackChange(selectedStack);
   }
 
   function getSelectedPlaceableVoxelType() {
     const selectedStack = getSelectedSurvivalStack();
-    if (!selectedStack?.typeName) return null;
+    if (!selectedStack?.itemId) return null;
 
     // Only real voxel entries may be used by the world placement flow.
     // Inventory collectibles like coins, guns, and swords should stay intact
     // even when the player right-clicks while aiming at an editable block.
-    if (!voxelTypeNames.has(selectedStack.typeName)) return null;
-    return selectedStack.typeName;
+    if (!voxelTypeNames.has(selectedStack.itemId)) return null;
+    return selectedStack.itemId;
   }
 
-  function findInventorySlotIndexByType(typeName) {
-    if (!typeName) return -1;
-    return playerInventory.findIndex(function (stack) { return stack && stack.typeName === typeName; });
+  function findInventorySlotIndexByItemId(itemIdOrLabel) {
+    const itemId = resolveInventoryItemId(itemIdOrLabel);
+    if (!itemId) return -1;
+    return playerInventory.findIndex(function (stack) { return stack && stack.itemId === itemId; });
   }
 
-  function inventoryHasType(typeName) {
-    return findInventorySlotIndexByType(typeName) >= 0;
+  function inventoryHasType(itemIdOrLabel) {
+    return findInventorySlotIndexByItemId(itemIdOrLabel) >= 0;
   }
 
-  function isVoxelInventoryType(typeName) {
-    return voxelTypeNames.has(typeName);
+  function isVoxelInventoryType(itemId) {
+    return voxelTypeNames.has(itemId);
   }
 
   function syncSelectedVoxelTypeFromMode() {
     const selectedStack = getSelectedSurvivalStack();
-    if (selectedStack && selectedStack.typeName) {
-      selectedVoxelType = selectedStack.typeName;
+    if (selectedStack && selectedStack.itemId) {
+      selectedVoxelType = selectedStack.itemId;
     }
   }
 
@@ -156,7 +212,7 @@ export function createInventoryUI(options) {
     if (!selectedStack) {
       return 'Selected slot: ' + slotNumber + ' (empty)';
     }
-    return 'Selected slot: ' + slotNumber + ' (' + selectedStack.typeName + (selectedStack.count > 1 ? ' x' + selectedStack.count : '') + ')';
+    return 'Selected slot: ' + slotNumber + ' (' + getInventoryItemLabel(selectedStack.itemId) + (selectedStack.count > 1 ? ' x' + selectedStack.count : '') + ')';
   }
 
   function updateGameModeUI() {
@@ -186,10 +242,10 @@ export function createInventoryUI(options) {
       if (i < hotbarSlotEls.length) slot.classList.add('inventory-hotbar-slot');
       if (!stack) slot.classList.add('is-empty');
       if (i === selectedInventorySlotIndex) slot.classList.add('is-selected');
-      if (stack) slot.appendChild(createInventoryStackIcon(stack.typeName));
+      if (stack) slot.appendChild(createInventoryStackIcon(stack.itemId));
 
       label.className = 'hotbar-slot-label';
-      label.textContent = stack ? stack.typeName : 'empty';
+      label.textContent = stack ? getInventoryItemLabel(stack.itemId) : 'empty';
       slot.appendChild(label);
 
       count.className = 'hotbar-slot-count';
@@ -227,14 +283,14 @@ export function createInventoryUI(options) {
     if (inventorySelected) {
       const selectedStack = getSelectedSurvivalStack();
       inventorySelected.textContent = selectedStack
-        ? 'Selected: ' + selectedStack.typeName + (selectedStack.count > 1 ? ' x' + selectedStack.count : '')
+        ? 'Selected: ' + getInventoryItemLabel(selectedStack.itemId) + (selectedStack.count > 1 ? ' x' + selectedStack.count : '')
         : 'Selected: empty slot';
     }
     if (!inventorySlots) return;
 
     for (let i = 0; i < inventorySlotEls.length; i += 1) {
       const selectedStack = getSelectedSurvivalStack();
-      const isSelected = inventorySlotEls[i].dataset.voxelType === (selectedStack ? selectedStack.typeName : null);
+      const isSelected = inventorySlotEls[i].dataset.voxelType === (selectedStack ? selectedStack.itemId : null);
       inventorySlotEls[i].classList.toggle('is-selected', isSelected);
     }
 
@@ -244,11 +300,11 @@ export function createInventoryUI(options) {
       hotbarSlotEls[i].textContent = '';
       if (!stack) continue;
 
-      hotbarSlotEls[i].appendChild(createInventoryStackIcon(stack.typeName));
+      hotbarSlotEls[i].appendChild(createInventoryStackIcon(stack.itemId));
 
       const label = document.createElement('span');
       label.className = 'hotbar-slot-label';
-      label.textContent = stack.typeName;
+      label.textContent = getInventoryItemLabel(stack.itemId);
       hotbarSlotEls[i].appendChild(label);
 
       const count = document.createElement('span');
@@ -282,22 +338,33 @@ export function createInventoryUI(options) {
     emitSelectedHotbarStackChangeIfNeeded(false);
   }
 
-  function addItemToInventory(typeName, amount) {
+  function getInventoryStackLimit(itemId) {
+    const itemDefinition = getItemDefinition(itemId);
+    if (itemDefinition) {
+      return itemDefinition.stackLimit;
+    }
+    return PLAYER_STACK_LIMIT;
+  }
+
+  function addItemToInventory(itemIdOrLabel, amount) {
+    const itemId = resolveInventoryItemId(itemIdOrLabel);
     let remaining = amount === undefined ? 1 : amount;
-    if (!typeName || remaining <= 0) return 0;
+    if (!itemId || remaining <= 0) return 0;
+    const stackLimit = getInventoryStackLimit(itemId);
+    if (stackLimit <= 0) return 0;
 
     for (let i = 0; i < playerInventory.length && remaining > 0; i += 1) {
       const stack = playerInventory[i];
-      if (!stack || stack.typeName !== typeName || stack.count >= PLAYER_STACK_LIMIT) continue;
-      const movedAmount = Math.min(PLAYER_STACK_LIMIT - stack.count, remaining);
+      if (!stack || stack.itemId !== itemId || stack.count >= stackLimit) continue;
+      const movedAmount = Math.min(stackLimit - stack.count, remaining);
       stack.count += movedAmount;
       remaining -= movedAmount;
     }
 
     for (let i = 0; i < playerInventory.length && remaining > 0; i += 1) {
       if (playerInventory[i]) continue;
-      const movedAmount = Math.min(PLAYER_STACK_LIMIT, remaining);
-      playerInventory[i] = { typeName: typeName, count: movedAmount };
+      const movedAmount = Math.min(stackLimit, remaining);
+      playerInventory[i] = { itemId: itemId, count: movedAmount };
       remaining -= movedAmount;
     }
 
@@ -467,10 +534,11 @@ export function createInventoryUI(options) {
     stopInventoryDrag();
   }
 
-  function addCreativeInventoryItem(typeName) {
-    const added = addItemToInventory(typeName, 1);
+  function addCreativeInventoryItem(itemIdOrLabel) {
+    const itemId = resolveInventoryItemId(itemIdOrLabel);
+    const added = addItemToInventory(itemId, 1);
     if (added <= 0) return;
-    const slotIndex = findInventorySlotIndexByType(typeName);
+    const slotIndex = findInventorySlotIndexByItemId(itemId);
     if (slotIndex >= 0) selectInventorySlot(slotIndex);
   }
 
@@ -502,7 +570,7 @@ export function createInventoryUI(options) {
           creative mode so every listed item can be pulled straight into the
           inventory without needing a separate world pickup first. */
           if (gameMode !== GAME_MODE_CREATIVE) return;
-          addCreativeInventoryItem(itemEntry.name);
+          addCreativeInventoryItem(itemEntry.itemId ?? itemEntry.name);
         });
       }
 
