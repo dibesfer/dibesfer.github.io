@@ -4624,9 +4624,19 @@ function checkFPS(delta) {
     accTime = 0;
   }
 
-  const { x, z } = playerEye;
-  const y = playerFoot.y;
-  consola.textContent = 'FPS: ' + fps + ` XYZ: ${x.toFixed(2)} | ${y.toFixed(2)} | ${z.toFixed(2)}`;
+  /* The debug coordinate readout should expose one coherent gameplay-space
+  position. Using the grounded playerFoot vector for X, Y, and Z avoids mixing
+  camera-eye axes with collider-foot axes, which made Y appear inconsistent. */
+  const { x, y, z } = playerFoot;
+  /* Tiny floating-point corrections around world zero can round to "-0.00",
+  which looks like throttling even though the position is effectively stable.
+  Snapping near-zero display values back to exact zero keeps the debug readout
+  calm without changing any real gameplay or physics data. */
+  const formatDebugCoord = (value) => {
+    const safeValue = Math.abs(value) < 0.005 ? 0 : value;
+    return safeValue.toFixed(2);
+  };
+  consola.textContent = 'FPS: ' + fps + ` XYZ: ${formatDebugCoord(x)} | ${formatDebugCoord(y)} | ${formatDebugCoord(z)}`;
 }
 
 // --------------------

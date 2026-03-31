@@ -246,8 +246,9 @@
 
         function formatLandingPresenceUrlLabel(rawUrl) {
             // The landing page deserves a friendlier label than repeating the
-            // raw pathname alone, but we still keep the concrete URL visible so
-            // the roster remains useful once more Kolorlando pages join Presence.
+            // raw pathname alone. Translating known Kolorlando scene routes
+            // into player-facing status labels makes the lobby instantly easier
+            // to scan than exposing implementation URLs.
             const normalizedUrl = normalizeLandingPresenceUrl(rawUrl)
             const isLandingPage =
                 normalizedUrl === '/Kolorlando/index.html' ||
@@ -255,9 +256,23 @@
                 normalizedUrl.endsWith('/Kolorlando/index.html') ||
                 normalizedUrl.endsWith('/Kolorlando/')  ||
                 normalizedUrl.endsWith('/Kolorlando')
+            const isMultiplayerPage =
+                normalizedUrl === '/games/Kolorlando/multiplayer.html' ||
+                normalizedUrl.endsWith('/Kolorlando/multiplayer.html')
+            const isSingleplayerPage =
+                normalizedUrl === '/games/Kolorlando/game.html' ||
+                normalizedUrl.endsWith('/Kolorlando/game.html')
 
             if (isLandingPage) {
                 return `Landing page`
+            }
+
+            if (isMultiplayerPage) {
+                return `Multiplayer`
+            }
+
+            if (isSingleplayerPage) {
+                return `Playing offline`
             }
 
             return normalizedUrl
