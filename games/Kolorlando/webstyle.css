@@ -96,30 +96,6 @@ footer {
     color: rgb(125, 255, 155);
 }
 
-#peopleOnlineStatus {
-    margin: 0;
-    color: rgb(187, 229, 255);
-    font-size: 0.95rem;
-}
-
-#peopleOnlineStatus.is-error {
-    color: rgb(255, 170, 170);
-}
-
-#peopleOnlineList {
-    /* A bounded list height keeps long presence tests from pushing the rest
-    of the landing page too far down while still allowing inspection. */
-    margin-top: 14px;
-    max-height: 220px;
-    overflow: auto;
-    padding-right: 6px;
-    line-height: 1.5;
-}
-
-#peopleOnlineList > div + div {
-    margin-top: 6px;
-}
-
 #playButton {
     border: solid 6px green;
     color: rgb(0, 52, 0);

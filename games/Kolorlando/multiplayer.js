@@ -36,10 +36,9 @@ function normalizeAngleRadians(value) {
 }
 
 function countPresenceSessions(state) {
-  return Object.values(state).reduce((total, sessions) => {
-    if (!Array.isArray(sessions)) return total;
-    return total + sessions.length;
-  }, 0);
+  /* Keep the counter tied to the actual Presence keys so one connected session
+  shows up exactly once in the HUD. */
+  return Object.keys(state).length;
 }
 
 function generateId(prefix) {
@@ -288,17 +287,19 @@ export function createMultiplayerController({
     if (!peopleOnlineListElement) return;
 
     const rows = [];
-    Object.entries(state).forEach(([, sessions]) => {
-      if (!Array.isArray(sessions)) return;
+    Object.entries(state).forEach(([presenceKey, sessions]) => {
+      if (!Array.isArray(sessions) || sessions.length === 0) return;
 
-      sessions.forEach(payload => {
-        if (!payload?.sessionId) return;
-        rows.push({
-          id: String(payload.sessionId),
-          displayName: resolvePresenceDisplayName(payload.displayName),
-          onlineAt: Date.parse(payload.online_at ?? '') || 0,
-          coordsLabel: formatCoordsLabel(latestTransformsBySessionId.get(String(payload.sessionId))),
-        });
+      const payload = sessions[sessions.length - 1];
+      const sessionId = String(payload?.sessionId || presenceKey || '');
+      if (!sessionId) return;
+
+      rows.push({
+        id: sessionId,
+        displayName: resolvePresenceDisplayName(payload.displayName),
+        onlineAt: Date.parse(payload.online_at ?? '') || 0,
+        coordsLabel: formatCoordsLabel(latestTransformsBySessionId.get(sessionId)),
+        isLocalSession: sessionId === localSessionId,
       });
     });
 
@@ -316,7 +317,10 @@ export function createMultiplayerController({
     }
 
     peopleOnlineListElement.innerHTML = rows
-      .map((row, index) => `<div>${index + 1}. ${escapeHtml(row.displayName)} ${escapeHtml(row.coordsLabel)}</div>`)
+      .map((row, index) => {
+        const ownLabel = row.isLocalSession ? ' (you)' : '';
+        return `<div>${index + 1}. ${escapeHtml(row.displayName)}${escapeHtml(ownLabel)} ${escapeHtml(row.coordsLabel)}</div>`;
+      })
       .join('');
   }
 
@@ -372,15 +376,18 @@ export function createMultiplayerController({
   function syncRemotePlayersFromState(state) {
     const seenRemoteSessionIds = new Set();
 
-    Object.entries(state).forEach(([, sessions]) => {
+    Object.entries(state).forEach(([presenceKey, sessions]) => {
       if (!Array.isArray(sessions) || sessions.length === 0) return;
 
       const latestPayload = sessions[sessions.length - 1];
-      if (!latestPayload || !latestPayload.sessionId) return;
-      if (latestPayload.sessionId === localSessionId) return;
+      const sessionId = String(latestPayload?.sessionId || presenceKey || '');
+      if (!sessionId) return;
+      if (sessionId === localSessionId) return;
 
-      seenRemoteSessionIds.add(latestPayload.sessionId);
-      getOrCreateRemotePlayer(latestPayload.sessionId);
+      /* Presence tells us which remote sessions are alive, but not where they
+      are. We therefore wait for the first transform broadcast before creating
+      a visible avatar, which avoids phantom players appearing at spawn. */
+      seenRemoteSessionIds.add(sessionId);
     });
 
     Array.from(remotePlayers.keys()).forEach(sessionId => {
@@ -451,11 +458,24 @@ export function createMultiplayerController({
     const database = window.database;
     if (channel || !database?.channel) return;
 
-    channel = database.channel(PRESENCE_CHANNEL_NAME);
+    channel = database.channel(PRESENCE_CHANNEL_NAME, {
+      config: {
+        presence: {
+          key: localSessionId,
+        },
+      },
+    });
 
     channel
       .on('presence', { event: 'sync' }, () => {
-        handlePresenceSync(channel.presenceState());
+        const presenceState = channel.presenceState();
+        /* Keep a direct console view of the latest Presence payloads so
+        multiplayer debugging does not depend on the HUD alone. */
+        console.log('[Kolorlando presence:sync]', Object.entries(presenceState).map(([presenceKey, sessions]) => ({
+          presenceKey,
+          sessions,
+        })));
+        handlePresenceSync(presenceState);
       })
       .on('broadcast', { event: PLAYER_TRANSFORM_BROADCAST_EVENT }, ({ payload }) => {
         if (!payload?.sessionId || payload.sessionId === localSessionId) return;
@@ -472,6 +492,7 @@ export function createMultiplayerController({
         }
 
         if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+          isSubscribed = false;
           setRealtimeConnectionState(false);
         }
       });

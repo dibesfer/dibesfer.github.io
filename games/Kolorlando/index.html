@@ -172,10 +172,8 @@
 
         <section id="peopleOnlineSection" aria-live="polite">
             <div id="peopleOnlineHeader">
-                <h2>People online <span id="peopleOnlineCount">0</span></h2>
-                <p id="peopleOnlineStatus">Connecting...</p>
+                <h2>Sessions online <span id="peopleOnlineCount">0</span></h2>
             </div>
-            <div id="peopleOnlineList">No players yet.</div>
         </section>
 
 
@@ -221,81 +219,42 @@
         // multiplayer roster behavior: a visible count, a small status line,
         // and a readable list of who is connected right now.
         const peopleOnlineCount = document.getElementById('peopleOnlineCount')
-        const peopleOnlineStatus = document.getElementById('peopleOnlineStatus')
-        const peopleOnlineList = document.getElementById('peopleOnlineList')
+        const PLAYER_ID_STORAGE_KEY = 'kolorlando.multiplayer.localPlayerId'
 
-        // Keep the same player-name cache key used by the auth flow so the
-        // roster can immediately show a friendly label even before the user
-        // opens multiplayer.
-        const PLAYER_NAME_STORAGE_KEY = 'kolorlando.playerName'
-
-        // A fresh session id per tab avoids multiple duplicated tabs fighting
-        // over the same Presence slot and makes the online list more reliable.
-        const localSessionId = `landing-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
-
-        function escapeHtml(text) {
-            return String(text).replace(/[&<>"']/g, (character) => {
-                return ({
-                    '&': '&amp;',
-                    '<': '&lt;',
-                    '>': '&gt;',
-                    '"': '&quot;',
-                    "'": '&#39;',
-                })[character]
-            })
-        }
-
-        function resolveDisplayName(rawName = '') {
-            const storedName = window.localStorage.getItem(PLAYER_NAME_STORAGE_KEY) || ''
-            const normalizedName = String(rawName || storedName).trim()
-            return normalizedName || 'Anonymous'
-        }
-
-        function setPeopleOnlineStatus(message, isError = false) {
-            peopleOnlineStatus.textContent = message
-            peopleOnlineStatus.classList.toggle('is-error', isError)
-        }
-
-        function renderPeopleOnline(state) {
-            // Supabase Presence stores one or more payloads per key, so we
-            // flatten every session into a single sorted list for this UI.
-            const rows = []
-
-            Object.entries(state).forEach(([, sessions]) => {
-                if (!Array.isArray(sessions)) {
-                    return
-                }
-
-                sessions.forEach((session) => {
-                    rows.push({
-                        sessionId: String(session?.sessionId || ''),
-                        displayName: resolveDisplayName(session?.displayName),
-                        onlineAt: Date.parse(session?.online_at || '') || 0,
-                    })
-                })
-            })
-
-            rows.sort((left, right) => {
-                if (left.onlineAt !== right.onlineAt) {
-                    return left.onlineAt - right.onlineAt
-                }
-
-                return left.sessionId.localeCompare(right.sessionId)
-            })
-
-            peopleOnlineCount.textContent = String(rows.length)
-
-            if (rows.length === 0) {
-                peopleOnlineList.textContent = 'No players yet.'
-                return
+        function generateId(prefix) {
+            // The landing page should follow the same id rules as multiplayer:
+            // a stable player id in localStorage and a fresh session id per tab.
+            if (window.crypto && typeof window.crypto.randomUUID === 'function') {
+                return `${prefix}-${window.crypto.randomUUID()}`
             }
 
-            // The "you" badge helps explain which row belongs to this tab when
-            // the same player has multiple windows open during testing.
-            peopleOnlineList.innerHTML = rows.map((row, index) => {
-                const ownLabel = row.sessionId === localSessionId ? ' <strong>(you)</strong>' : ''
-                return `<div>${index + 1}. ${escapeHtml(row.displayName)}${ownLabel}</div>`
-            }).join('')
+            return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
+        }
+
+        function getOrCreateLocalPlayerId() {
+            const existingPlayerId = window.localStorage.getItem(PLAYER_ID_STORAGE_KEY)
+            if (existingPlayerId) {
+                return existingPlayerId
+            }
+
+            const generatedPlayerId = generateId('player')
+            window.localStorage.setItem(PLAYER_ID_STORAGE_KEY, generatedPlayerId)
+            return generatedPlayerId
+        }
+
+        // Use the same session id format as multiplayer so Presence data does
+        // not leak page-type details into the shared room state.
+        const localSessionId = generateId('session')
+        const localPlayerId = getOrCreateLocalPlayerId()
+
+        function countPresenceSessions(state) {
+            return Object.entries(state).reduce((total, [, sessions]) => {
+                if (!Array.isArray(sessions) || sessions.length === 0) {
+                    return total
+                }
+
+                return total + 1
+            }, 0)
         }
 
         // Using the per-tab session id as the Presence key makes the roster
@@ -311,33 +270,14 @@
         channel
             .on('presence', { event: 'sync' }, () => {
                 const state = channel.presenceState()
-
-                // Presence sync is the authoritative snapshot for the landing
-                // page, so we redraw the full count and roster every time.
-                renderPeopleOnline(state)
-                setPeopleOnlineStatus('Live now')
+                peopleOnlineCount.textContent = String(countPresenceSessions(state))
             })
             .subscribe(async (status) => {
                 if (status === 'SUBSCRIBED') {
-                    setPeopleOnlineStatus('Connected')
-
-                    // Publish a minimal but human-readable payload so the list
-                    // can show names instead of opaque anonymous sessions.
                     await channel.track({
+                        playerId: localPlayerId,
                         sessionId: localSessionId,
-                        displayName: resolveDisplayName(),
-                        online_at: new Date().toISOString(),
                     })
-                    return
-                }
-
-                if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-                    setPeopleOnlineStatus('Connection error', true)
-                    return
-                }
-
-                if (status === 'CLOSED') {
-                    setPeopleOnlineStatus('Disconnected', true)
                 }
             })
     </script>
