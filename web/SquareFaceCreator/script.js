@@ -1,9 +1,12 @@
 import {
     DEFAULT_SFC_FACE,
     SFC_CATEGORY_ITEMS,
-    SFC_FACE_STORAGE_KEY,
     resolveSfcImageUrlAlias
 } from "../../games/Kolorlando/sfcFace.js";
+import {
+    loadPlayerFaceData,
+    savePlayerFaceData
+} from "../../games/Kolorlando/code/data/playerSaving.js";
 
 const canvasWrapper = document.querySelector(".canvas-wrapper");
 const canvas = document.querySelector("canvas");
@@ -25,8 +28,8 @@ const loadedImageCache = {};
 const recoloredImageCache = {};
 let canvasBackgroundColor = DEFAULT_SFC_FACE.background;
 const saveCodeVersion = DEFAULT_SFC_FACE.version;
-const playerFaceStorageKey = SFC_FACE_STORAGE_KEY;
 const desktopPointerMediaQuery = window.matchMedia("(hover: hover) and (pointer: fine)");
+let faceSaveTimeoutId = 0;
 
 function createResolvedCategoryItems(rawCategoryItems) {
     return Object.fromEntries(
@@ -551,19 +554,14 @@ function generateSaveCode() {
 function updateSaveDataPre() {
     // The save-code preview should always reflect the live face state so
     // users do not need a separate save click before copying the code.
-    const saveCode = generateSaveCode();
+    const savePayload = buildSaveDataPayload();
+    const saveCode = JSON.stringify(savePayload);
 
     if (saveDataPre) {
         saveDataPre.textContent = saveCode;
     }
 
-    // Keeping the latest generated payload in localStorage lets Kolorlando
-    // read the same face data locally without needing a manual paste step.
-    try {
-        window.localStorage.setItem(playerFaceStorageKey, saveCode);
-    } catch (error) {
-        console.warn("Failed to persist Square Face Creator data locally.", error);
-    }
+    scheduleFacePersistence(savePayload);
 }
 
 function applySaveDataPayload(saveData) {
@@ -643,24 +641,17 @@ function readSaveCodeFromPre() {
     applySaveDataPayload(parsedSaveData);
 }
 
-function readStoredPlayerFaceData() {
-    try {
-        const storedSaveCode = window.localStorage.getItem(playerFaceStorageKey);
-
-        if (!storedSaveCode) {
-            return null;
-        }
-
-        const parsedSaveData = JSON.parse(storedSaveCode);
-
-        if (parsedSaveData?.version !== saveCodeVersion) {
-            return null;
-        }
-
-        return parsedSaveData;
-    } catch (error) {
-        return null;
+function scheduleFacePersistence(saveData) {
+    // Coalescing rapid editor changes avoids firing one remote write per
+    // pointer move while still keeping the latest face state authoritative.
+    if (faceSaveTimeoutId) {
+        window.clearTimeout(faceSaveTimeoutId);
     }
+
+    faceSaveTimeoutId = window.setTimeout(() => {
+        faceSaveTimeoutId = 0;
+        savePlayerFaceData(saveData);
+    }, 250);
 }
 
 function enableDesktopCategoryDragScroll() {
@@ -1153,9 +1144,10 @@ readDataButton?.addEventListener("click", () => {
 // Rendering once at startup makes the initial "eyes" category come
 // from the data object instead of relying on hardcoded HTML images.
 updatePossibleCombinationsTitle();
-const storedPlayerFaceData = readStoredPlayerFaceData();
+const storedPlayerFaceDataResult = await loadPlayerFaceData();
+const storedPlayerFaceData = storedPlayerFaceDataResult?.faceData;
 
-if (storedPlayerFaceData) {
+if (storedPlayerFaceData?.version === saveCodeVersion) {
     applySaveDataPayload(storedPlayerFaceData);
 } else {
     loadDefaultSelections();

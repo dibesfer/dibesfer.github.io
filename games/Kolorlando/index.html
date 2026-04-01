@@ -23,9 +23,8 @@
 
     <div id="idDiv">
         <span id="idDiv_username"></span>
-        <div id="idDiv_icon_wrapper"> 
-            <img id="idDiv_icon" 
-            src="https://upload.wikimedia.org/wikipedia/commons/9/99/Sample_User_Icon.png"
+        <div id="idDiv_icon_wrapper">
+            <img id="idDiv_icon" src="https://upload.wikimedia.org/wikipedia/commons/9/99/Sample_User_Icon.png"
                 alt="user sign">
         </div> <!-- <p>Sign/Log in</p> -->
     </div>
@@ -59,10 +58,11 @@
             </form>
         </div>
     </div>
-
     <header>
         <h1 onclick="changePage('home')">Kolorlando</h1>
-        <p>A 3D world to build, explore, create, combat, settle, conquer, chat, befriend, share</p>
+            <div class="gradient-text">
+                A 3D world to build, explore, create, combat, settle, conquer, chat, befriend, share
+            </div>
     </header>
 
     <main>
@@ -72,8 +72,6 @@
         </div>
 
         <div id="mainMenu" class="kLevelsDisplay">
-
-
             <div class="kLevels" onclick="changePage('avatar')">
                 <h2>Avatar</h2>
                 <div>
@@ -99,15 +97,12 @@
                 <p>Explore others' worlds!</p>
             </div> -->
 
-
         </div>
-
 
         <div id="avatarMenu" class="kLevelsDisplay invisible">
             <div class="kLevels" onclick="window.location = '/web/SquareFaceCreator/' ">
                 <h2>Face</h2>
                 <div>
-
                     <img style="object-fit: contain;" src="assets/icons/SFC.png" alt="">
                 </div>
                 <p>Smile or grunge</p>
@@ -132,7 +127,6 @@
         </div>
 
         <div id="yourWorldsMenu" class=" invisible">
-
 
             <div class="box">
                 <p>Create your singleplayer world</p>
@@ -200,19 +194,18 @@
                 <div>
                     <img src="assets/imagenesPortada/Captura desde 2026-03-10 13-02-09.png" alt="">
                 </div>
-                
+
             </div>
         </div>
 
         <div class="textCenter" style="line-height: 0;">
-                    <img style="width: 400px;" src="assets/imagenesPortada/blue_soldier.jpg" alt="">
-                </div>
+            <img style="width: 400px;" src="assets/imagenesPortada/blue_soldier.jpg" alt="">
+        </div>
     </main>
 
     <footer>
 
         <p>Contact <a href="mailto:dibesfer@gmail.com">dibesfer@gmail.com</a></p>
-
         <p>ThreeJS + <a href="https://dibesfer.github.io">dibesfer</a> + Codex</p>
 
     </footer>
@@ -259,7 +252,7 @@
                 normalizedUrl === '/Kolorlando/index.html' ||
                 normalizedUrl === '/games/Kolorlando/index.html' ||
                 normalizedUrl.endsWith('/Kolorlando/index.html') ||
-                normalizedUrl.endsWith('/Kolorlando/')  ||
+                normalizedUrl.endsWith('/Kolorlando/') ||
                 normalizedUrl.endsWith('/Kolorlando')
             const isMultiplayerPage =
                 normalizedUrl === '/games/Kolorlando/multiplayer.html' ||
@@ -338,7 +331,7 @@
         channel
             .on('presence', { event: 'sync' }, () => {
                 const state = channel.presenceState()
-               
+
                 peopleOnlineCount.textContent = String(countLandingPresenceSessions(state))
                 renderLandingPresenceList(state)
             })

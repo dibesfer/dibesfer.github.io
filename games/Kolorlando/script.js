@@ -28,12 +28,13 @@ import { buildVoxelandiaMap } from './maps/voxelandiaMap.js';
 import { createMultiplayerController } from './multiplayer.js';
 import { createCommandHandler } from './code/commands.js';
 import { createLocalWorldSaveStore } from './code/data/worldSaving.js';
+import { loadPlayerFaceData } from './code/data/playerSaving.js';
 import { SpaceShipVehicle } from './vehicle.js';
-import { DEFAULT_SFC_FACE, SFC_FACE_STORAGE_KEY, normalizeSfcFaceData } from './sfcFace.js';
 
 const KOLORLANDO_MODE = window.KOLORLANDO_MODE === 'multiplayer' ? 'multiplayer' : 'singleplayer';
 const MULTIPLAYER_ENABLED = KOLORLANDO_MODE === 'multiplayer';
 const KOLORLANDO_PLAYER_NAME_STORAGE_KEY = 'kolorlando.playerName';
+const playerFaceDataResult = await loadPlayerFaceData();
 
 function resolveLocalPlayerDisplayName() {
   /* The in-world player body lives on the game page, while auth currently
@@ -42,7 +43,7 @@ function resolveLocalPlayerDisplayName() {
   script being loaded here. */
   const storedName = window.localStorage.getItem(KOLORLANDO_PLAYER_NAME_STORAGE_KEY);
   const trimmedStoredName = typeof storedName === 'string' ? storedName.trim() : '';
-  return trimmedStoredName || 'Anon';
+  return trimmedStoredName || 'Anonymous';
 }
 
 function persistLocalPlayerDisplayName(name) {
@@ -59,28 +60,10 @@ function persistLocalPlayerDisplayName(name) {
   window.localStorage.setItem(KOLORLANDO_PLAYER_NAME_STORAGE_KEY, trimmedName);
 }
 
-function readStoredLocalPlayerFaceData() {
-  /* The game reads the latest SFC payload directly from localStorage so the
-  player can customize their face in Square Face Creator and immediately have
-  that same design picked up locally without introducing server sync yet. */
-  try {
-    const storedFaceData = window.localStorage.getItem(SFC_FACE_STORAGE_KEY);
-    if (!storedFaceData) {
-      return normalizeSfcFaceData(DEFAULT_SFC_FACE);
-    }
-
-    const parsedFaceData = JSON.parse(storedFaceData);
-    return normalizeSfcFaceData(parsedFaceData, DEFAULT_SFC_FACE);
-  } catch (error) {
-    console.warn('Failed to read the local Kolorlando player face data.', error);
-    return normalizeSfcFaceData(DEFAULT_SFC_FACE);
-  }
-}
-
 function drawPlayerNameLabel(context, canvas, name) {
   /* Centralizing the canvas drawing lets both the initial sprite creation and
   later auth-driven refreshes render the exact same label styling. */
-  const safeName = typeof name === 'string' && name.trim() ? name.trim() : 'Anon';
+  const safeName = typeof name === 'string' && name.trim() ? name.trim() : 'Anonymous';
 
   context.clearRect(0, 0, canvas.width, canvas.height);
   context.fillStyle = 'rgba(0, 0, 0, 0.6)';
@@ -214,6 +197,7 @@ async function syncLocalPlayerDisplayNameFromAuth(sprite) {
 
   persistLocalPlayerDisplayName(authenticatedName);
   updatePlayerNameSprite(sprite, authenticatedName);
+  updateCharacterMenuIdentity(authenticatedName);
 }
 
 let mobileMode = false;
@@ -265,6 +249,7 @@ const hotbarSlotEls = Array.from(document.querySelectorAll('#hotbar .hotbar-slot
 const gameModeReadout = document.getElementById('gameModeReadout');
 const gameModeButtons = Array.from(document.querySelectorAll('[data-game-mode]'));
 const characterMenuPlayer = document.getElementById('kolorlandiaCharacterMenu_player');
+const characterMenuNameValue = document.getElementById('characterMenuNameValue');
 const loadingScreen = document.getElementById('loadingScreen');
 const loadingBarFill = document.getElementById('loadingBarFill');
 const loadingText = document.getElementById('loadingText');
@@ -318,6 +303,17 @@ let wowCameraDragState = null;
 let wowCursorRaycastActive = false;
 let cameraModeController = null;
 let screenController = null;
+
+function updateCharacterMenuIdentity(name) {
+  /* The Character tab should mirror the same resolved identity the rest of the
+  game uses, so anonymous and authenticated states stay in sync. */
+  if (!characterMenuNameValue) return;
+
+  const safeName = typeof name === 'string' && name.trim() ? name.trim() : 'Anonymous';
+  characterMenuNameValue.textContent = safeName;
+}
+
+updateCharacterMenuIdentity(resolveLocalPlayerDisplayName());
 let miniMapUI = null;
 const SHADOWS_STORAGE_KEY = 'kolorlando.settings.shadows';
 const RENDER_SCALE_STORAGE_KEY = 'kolorlando.settings.renderScale';
@@ -1780,7 +1776,9 @@ const PLAYER_OUTFIT = {
   shoes: 0x161616,
   hair: 0x221710,
   faceEmoji: '😎',
-  faceData: readStoredLocalPlayerFaceData(),
+  /* The shared player save module resolves remote-vs-local ownership before
+  the avatar model is created, so both game modes render one face source. */
+  faceData: playerFaceDataResult.faceData,
 };
 initCharacterPreview();
 const playerHumanoid = createHumanoidModel({

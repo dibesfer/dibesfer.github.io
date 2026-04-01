@@ -35,8 +35,8 @@ header {
     text-align: left;
 }
 
-header>h1 { 
-       text-shadow: 5px 5px black;
+header>h1 {
+    text-shadow: 5px 5px black;
 
     cursor: pointer;
 }
@@ -99,7 +99,7 @@ footer {
     color: white;
 }
 
-#peopleOnlineList li + li {
+#peopleOnlineList li+li {
     margin-top: 8px;
 }
 
@@ -184,6 +184,7 @@ footer {
     aspect-ratio: 4/3.5;
     display: flex;
     flex-direction: column;
+    cursor: pointer;
 }
 
 .kLevels>div {
@@ -249,7 +250,7 @@ footer {
         margin: 10px;
     }
 
-    .desktopDiv{
+    .desktopDiv {
         display: none;
     }
 
@@ -289,7 +290,7 @@ footer {
     margin-left: 15px;
     border: solid 2px white;
     border-radius: 50%;
-    
+
     cursor: pointer;
     overflow: hidden;
 
@@ -415,4 +416,12 @@ footer {
         max-height: calc(100vh - 24px);
         padding: 18px;
     }
+}
+
+.gradient-text {
+    background: linear-gradient(90deg, rgb(136, 255, 172), #00c2ff);
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
 }

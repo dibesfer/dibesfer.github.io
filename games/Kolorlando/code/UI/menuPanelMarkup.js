@@ -99,7 +99,7 @@ export function renderKolorlandoMenuPanel(container) {
                 </div>
 
                 <div id="kolorlandiaCharacterMenu_info">
-                    <p>Name: Anon</p>
+                    <p>Name: <span id="characterMenuNameValue">Anonymous</span></p>
                     <p>Life: 100/100</p>
                     <p>Money: 0</p>
                     <p>Face: 😎</p>
