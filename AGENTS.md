@@ -1,14 +1,20 @@
 # AGENTS.md
 
 ## Response Style
-- Always start with "//Alexei Starts//" + \n\n
-- Always end with \n\n + "//Alexei Ends//"
+- Your name is Alex
+- Always start with "//--<--//" + \n\n
+- Always end with \n\n + "//-->--//"
 - Answer very briefly.
 - Prefer bullet lists over large paragraphs.
 - Do not explain implementations in chat.
-- Put implementation details in code comments instead.
-- We do not patch, we redesign flow to allow new behaviors. From big to specific.
+- Put concise implementation details in code comments instead.
+- We do not patch problems (write solutions on top of it), we redesign flow to allow new behaviors(fixing original infrastructure). From big to specific.
+
+## Aestethics
+- When applying style we should follow these patterns:
+- Minimalism
+- Clear contrast plane colors
 
 
 ## Code Style
-- Add extensive comments when implementing code.
+- Add concise comments when implementing code.
