@@ -32,19 +32,12 @@ header {
     background-size: cover;
     background-position: center;
     filter: hue-rotate(200deg); */
-    font-weight: bold;
     text-shadow: 5px 5px black;
-    font-size: 1.2rem;
+    text-align: left;
 }
 
 header>h1 {
     cursor: pointer;
-}
-
-header>h1,
-header>p {
-    width: max-content;
-
 }
 
 header a {
