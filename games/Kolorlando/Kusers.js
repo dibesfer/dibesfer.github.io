@@ -40,6 +40,7 @@ let kolorlandoBlockedDisplayName = "Anonymous"
 let kolorlandoBlockedReason = ""
 let kolorlandoManualLoginAttempt = false
 let kolorlandoAccountSessionId = ""
+let kolorlandoClaimedAccountSessionId = ""
 let kolorlandoAccountHeartbeatIntervalId = 0
 let kolorlandoAccountHeartbeatInFlight = false
 let kolorlandoClaimProbeRequested = false
@@ -258,6 +259,7 @@ async function claimKolorlandoAccountSession() {
         throw error
     }
 
+    kolorlandoClaimedAccountSessionId = sessionId
     return data
 }
 
@@ -336,8 +338,18 @@ async function heartbeatKolorlandoAccountSession() {
     kolorlandoAccountHeartbeatInFlight = true
 
     try {
+        const sessionId = ensureKolorlandoAccountSessionId()
+
+        /* Duplicate-tab resolution can rotate the per-tab session id after the
+        lock was first claimed. Re-claiming first keeps heartbeat aligned with
+        the latest local tab identity instead of sending a stale/unknown id. */
+        if (!kolorlandoClaimedAccountSessionId || kolorlandoClaimedAccountSessionId !== sessionId) {
+            await claimKolorlandoAccountSession()
+            return
+        }
+
         await database.rpc("heartbeat_active_account_session", {
-            incoming_session_id: ensureKolorlandoAccountSessionId()
+            incoming_session_id: sessionId
         })
     } catch (error) {
         /* A lost lock should surface quickly and clearly instead of silently
@@ -368,6 +380,7 @@ function startKolorlandoAccountHeartbeat() {
 async function releaseKolorlandoAccountSession() {
     stopKolorlandoAccountHeartbeat()
     persistKolorlandoClaimedState(false)
+    kolorlandoClaimedAccountSessionId = ""
 
     if (!kolorlandoAuthUser) {
         return
@@ -796,6 +809,7 @@ kAuthAcknowledge?.addEventListener("click", () => {
     kolorlandoUserProfile = null
     window.kolorlandoAuthUser = null
     window.kolorlandoUserProfile = null
+    kolorlandoClaimedAccountSessionId = ""
     authIdentity.value = ""
     authPassword.value = ""
     persistKolorlandoPlayerName("")
@@ -827,26 +841,19 @@ authIconButton?.addEventListener("pointerdown", async (event) => {
 }, true)
 
 authMainMenuWorldsCard?.addEventListener("click", (event) => {
-    /* Worlds is the first protected landing action, so it should claim the
-    local account session before the router opens that section. */
+    /* Worlds is now a public landing route. Anonymous visitors can browse
+    into the world choices, while blocked account sessions still stay gated. */
     event.preventDefault()
     event.stopImmediatePropagation()
 
-    requestKolorlandoClaimProbe()
+    if (kolorlandoAuthIsBlocked) {
+        openAuthModalIfAvailable()
+        return
+    }
 
-    refreshAuthState()
-        .then((user) => {
-            if (user && !kolorlandoAuthIsBlocked && typeof changePage === "function") {
-                changePage("yourWorlds")
-                return
-            }
-
-            openAuthModalIfAvailable()
-        })
-        .catch((error) => {
-            setAuthMessage(error.message || "Could not refresh auth", true)
-            openAuthModalIfAvailable()
-        })
+    if (typeof changePage === "function") {
+        changePage("yourWorlds")
+    }
 }, true)
 
 /* This listener keeps the landing page identity widget synced when another

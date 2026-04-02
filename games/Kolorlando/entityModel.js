@@ -93,6 +93,69 @@ function createSfcFace(faceData) {
   return plane;
 }
 
+function drawPlayerNameLabel(context, canvas, name) {
+  /* One shared renderer keeps local and remote player labels visually aligned
+  so identity reads the same everywhere in the world. */
+  const safeName = typeof name === 'string' && name.trim() ? name.trim() : 'Anonymous';
+
+  context.clearRect(0, 0, canvas.width, canvas.height);
+  context.fillStyle = 'rgba(0, 0, 0, 0.6)';
+  context.fillRect(32, 22, canvas.width - 64, 52);
+  context.lineWidth = 4;
+  context.strokeStyle = 'rgba(255, 255, 255, 0.18)';
+  context.strokeRect(32, 22, canvas.width - 64, 52);
+  context.textAlign = 'center';
+  context.textBaseline = 'middle';
+  context.font = 'bold 28px "Ubuntu Sans Mono", monospace';
+  context.fillStyle = '#ffffff';
+  context.fillText(safeName, canvas.width * 0.5, canvas.height * 0.5);
+}
+
+export function createPlayerNameSprite(name) {
+  /* Canvas sprites keep in-world labels lightweight and easy to attach to any
+  humanoid without introducing a separate DOM overlay system. */
+  const canvas = document.createElement('canvas');
+  canvas.width = 320;
+  canvas.height = 96;
+  const context = canvas.getContext('2d');
+
+  if (!context) return null;
+
+  drawPlayerNameLabel(context, canvas, name);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+
+  const material = new THREE.SpriteMaterial({
+    map: texture,
+    transparent: true,
+    depthWrite: false,
+    depthTest: false,
+  });
+
+  const sprite = new THREE.Sprite(material);
+  sprite.scale.set(1.85, 0.56, 1);
+  sprite.frustumCulled = false;
+  sprite.renderOrder = 20;
+  sprite.userData.playerNameCanvas = canvas;
+  sprite.userData.playerNameContext = context;
+  sprite.userData.playerNameTexture = texture;
+  return sprite;
+}
+
+export function updatePlayerNameSprite(sprite, name) {
+  /* Updating the existing sprite keeps avatar identity changes cheap and
+  avoids rebuilding any world-space UI attachments. */
+  const canvas = sprite?.userData?.playerNameCanvas;
+  const context = sprite?.userData?.playerNameContext;
+  const texture = sprite?.userData?.playerNameTexture;
+
+  if (!canvas || !context || !texture) return;
+
+  drawPlayerNameLabel(context, canvas, name);
+  texture.needsUpdate = true;
+}
+
 export function createHumanoidModel({
   outfit = {},
   castShadow = true,

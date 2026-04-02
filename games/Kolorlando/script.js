@@ -8,6 +8,8 @@ import {
   applyHumanoidWalkAnimation,
   applyHumanoidRightPunchAnimation,
   applyHumanoidLeftPunchAnimation,
+  createPlayerNameSprite,
+  updatePlayerNameSprite,
 } from './entityModel.js';
 import { createGameAudio } from './audio.js';
 import { createMiniMapUI } from './code/UI/minimap.js';
@@ -34,6 +36,7 @@ import { SpaceShipVehicle } from './vehicle.js';
 const KOLORLANDO_MODE = window.KOLORLANDO_MODE === 'multiplayer' ? 'multiplayer' : 'singleplayer';
 const MULTIPLAYER_ENABLED = KOLORLANDO_MODE === 'multiplayer';
 const KOLORLANDO_PLAYER_NAME_STORAGE_KEY = 'kolorlando.playerName';
+const KOLORLANDO_DEBUG_MODE_EVENT = 'kolorlando:debug-mode-change';
 const playerFaceDataResult = await loadPlayerFaceData();
 
 function resolveLocalPlayerDisplayName() {
@@ -58,77 +61,6 @@ function persistLocalPlayerDisplayName(name) {
   }
 
   window.localStorage.setItem(KOLORLANDO_PLAYER_NAME_STORAGE_KEY, trimmedName);
-}
-
-function drawPlayerNameLabel(context, canvas, name) {
-  /* Centralizing the canvas drawing lets both the initial sprite creation and
-  later auth-driven refreshes render the exact same label styling. */
-  const safeName = typeof name === 'string' && name.trim() ? name.trim() : 'Anonymous';
-
-  context.clearRect(0, 0, canvas.width, canvas.height);
-  context.fillStyle = 'rgba(0, 0, 0, 0.6)';
-  context.fillRect(32, 22, canvas.width - 64, 52);
-  context.lineWidth = 4;
-  context.strokeStyle = 'rgba(255, 255, 255, 0.18)';
-  context.strokeRect(32, 22, canvas.width - 64, 52);
-  context.textAlign = 'center';
-  context.textBaseline = 'middle';
-  context.font = 'bold 28px "Ubuntu Sans Mono", monospace';
-  context.fillStyle = '#ffffff';
-  context.fillText(safeName, canvas.width * 0.5, canvas.height * 0.5);
-}
-
-function createPlayerNameSprite(name) {
-  /* A canvas-backed sprite keeps the label lightweight, crisp, and easy to
-  place above the avatar head without introducing DOM overlays into the 3D HUD. */
-  const canvas = document.createElement('canvas');
-  canvas.width = 320;
-  canvas.height = 96;
-  const context = canvas.getContext('2d');
-
-  if (!context) {
-    return null;
-  }
-
-  drawPlayerNameLabel(context, canvas, name);
-
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.colorSpace = THREE.SRGBColorSpace;
-
-  const material = new THREE.SpriteMaterial({
-    map: texture,
-    transparent: true,
-    depthWrite: false,
-    /* Player names should behave like a floating overlay so they remain
-    readable even when the avatar body or nearby geometry crosses in front. */
-    depthTest: false,
-  });
-
-  const sprite = new THREE.Sprite(material);
-  sprite.scale.set(1.85, 0.56, 1);
-  sprite.frustumCulled = false;
-  /* The local player name should sit above the rest of the floating world HUD
-  stack so it stays readable when labels or dialog sprites overlap nearby. */
-  sprite.renderOrder = 20;
-  sprite.userData.playerNameCanvas = canvas;
-  sprite.userData.playerNameContext = context;
-  sprite.userData.playerNameTexture = texture;
-  return sprite;
-}
-
-function updatePlayerNameSprite(sprite, name) {
-  /* Reusing the same sprite avoids detach/reattach work on the player body
-  while still letting the text update as soon as auth data becomes available. */
-  const canvas = sprite?.userData?.playerNameCanvas;
-  const context = sprite?.userData?.playerNameContext;
-  const texture = sprite?.userData?.playerNameTexture;
-
-  if (!canvas || !context || !texture) {
-    return;
-  }
-
-  drawPlayerNameLabel(context, canvas, name);
-  texture.needsUpdate = true;
 }
 
 async function resolveAuthenticatedPlayerDisplayName() {
@@ -1089,6 +1021,7 @@ const gravity = 30;
 const jumpSpeed = 11;
 const maxJumps = 2;
 const PLAYER_MAX_HEALTH = 100;
+const PLAYER_RESPAWN_DELAY = 1.2;
 let flyMode = false;
 
 function updatePlayerHealthUI() {
@@ -1098,19 +1031,38 @@ function updatePlayerHealthUI() {
 function resetPlayerHealth() {
   playerState.health = playerState.maxHealth;
   updatePlayerHealthUI();
+  multiplayerController?.notifyLocalStateChanged?.().catch(error => {
+    console.error('Failed to sync Kolorlando player health reset.', error);
+  });
 }
 
 function respawnPlayerAfterDeath() {
+  playerState.isDead = false;
+  playerState.respawnTimer = 0;
   respawnPlayerAtSpawn();
   resetPlayerHealth();
 }
 
 function applyPlayerDamage(amount) {
   if (!Number.isFinite(amount) || amount <= 0) return false;
+  if (playerState.isDead) return false;
+
   playerState.health = Math.max(0, playerState.health - amount);
   updatePlayerHealthUI();
-  if (playerState.health > 0) return false;
-  respawnPlayerAfterDeath();
+  if (playerState.health > 0) {
+    multiplayerController?.notifyLocalStateChanged?.().catch(error => {
+      console.error('Failed to sync Kolorlando player damage.', error);
+    });
+    return false;
+  }
+
+  playerState.isDead = true;
+  playerState.respawnTimer = PLAYER_RESPAWN_DELAY;
+  playerState.velocity.set(0, 0, 0);
+  playerState.jumpQueued = false;
+  multiplayerController?.notifyLocalStateChanged?.().catch(error => {
+    console.error('Failed to sync Kolorlando player death.', error);
+  });
   return true;
 }
 
@@ -1702,6 +1654,8 @@ const playerState = {
   jumpsUsed: 0,
   maxHealth: PLAYER_MAX_HEALTH,
   health: PLAYER_MAX_HEALTH,
+  isDead: false,
+  respawnTimer: 0,
 };
 const playerHud = createPlayerHud({
   fillEl: playerHealthFill,
@@ -2292,7 +2246,15 @@ const multiplayerController = createMultiplayerController({
       z: playerBody.position.z,
       rotationY: playerBody.rotation.y,
       isMoving: horizontalMove.lengthSq() > 0.00001 || Math.abs(playerState.velocity.y) > 0.01,
+      health: playerState.health,
+      maxHealth: playerState.maxHealth,
+      isDead: playerState.isDead || playerState.health <= 0,
     })
+    : null,
+  onApplyLocalDamage: MULTIPLAYER_ENABLED
+    ? amount => {
+      applyPlayerDamage(amount);
+    }
     : null,
 });
 
@@ -2372,9 +2334,11 @@ function getDebugCollisionHelper(index) {
 }
 
 let debugModeEnabled = false;
+window.kolorlandoDebugModeEnabled = false;
 
 function setDebugMode(nextEnabled) {
   debugModeEnabled = nextEnabled;
+  window.kolorlandoDebugModeEnabled = nextEnabled;
   debugCollisionGroup.visible = nextEnabled;
   firstPersonRightHandAxisHelper.visible = nextEnabled;
   firstPersonLeftHandAxisHelper.visible = nextEnabled;
@@ -2391,6 +2355,9 @@ function setDebugMode(nextEnabled) {
     // game is not currently in debug mode.
     updateDebugCollisionVisuals();
   }
+  window.dispatchEvent(new CustomEvent(KOLORLANDO_DEBUG_MODE_EVENT, {
+    detail: { enabled: nextEnabled },
+  }));
   chatUI.appendLine(`Debug mode ${nextEnabled ? 'enabled' : 'disabled'}.`);
 }
 
@@ -2696,7 +2663,9 @@ const PROJECTILE_RADIUS = 0.14;
 const PROJECTILE_SPEED = 42;
 const PROJECTILE_LIFETIME = 3;
 const PROJECTILE_DAMAGE = 20;
+const PROJECTILE_REMOTE_HIT_DISTANCE = 1.35;
 const PUNCH_DAMAGE = 10;
+const PUNCH_REMOTE_HIT_DISTANCE = 1.25;
 const PUNCH_PUSH_FORCE = 8;
 const CHASER_PUNCH_DAMAGE = 8;
 const CHASER_ATTACK_INTERVAL = 0.4;
@@ -2843,6 +2812,15 @@ function projectileHitsEntity(position, radius) {
     return true;
   }
 
+  if (MULTIPLAYER_ENABLED) {
+    return multiplayerController.tryApplyDamageToRemotePlayersIntersectingSphere({
+      sphere: projectileSphere,
+      damage: PROJECTILE_DAMAGE,
+      sourceType: 'projectile',
+      maxDistance: PROJECTILE_REMOTE_HIT_DISTANCE,
+    });
+  }
+
   return false;
 }
 
@@ -2895,6 +2873,7 @@ function spawnPunchHitbox(side) {
     mesh,
     forwardDir: punchForwardDir.clone(),
     hitEntities: new Set(),
+    hitRemoteSessionIds: new Set(),
     hitSomething: false,
   });
 }
@@ -2931,6 +2910,19 @@ function updatePunchHitboxes(deltaTime) {
       if (killed) {
         scene.remove(entity.group);
         entities.splice(j, 1);
+      }
+    }
+
+    if (MULTIPLAYER_ENABLED) {
+      const hitRemotePlayer = multiplayerController.tryApplyDamageToRemotePlayersIntersectingSphere({
+        sphere: hitbox.sphere,
+        damage: PUNCH_DAMAGE,
+        sourceType: 'punch',
+        maxDistance: PUNCH_REMOTE_HIT_DISTANCE,
+        ignoredSessionIds: hitbox.hitRemoteSessionIds,
+      });
+      if (hitRemotePlayer) {
+        hitThisFrame = true;
       }
     }
 
@@ -3965,7 +3957,18 @@ function updateVoxelRaycast() {
   const voxelLabel = voxelHit ? resolveRaycastLabel(voxelHit) : null;
   const voxelDistance = voxelHit ? cameraRayOrigin.distanceTo(voxelHit.point) : Infinity;
   const entityHit = getEntityRaycastHit(cameraRayOrigin, cameraRayDirection, maxRayDistance);
+  const remotePlayerHit = MULTIPLAYER_ENABLED
+    ? multiplayerController.getRemotePlayerRaycastHit(
+      cameraRayOrigin,
+      cameraRaycaster.ray,
+      maxRayDistance,
+      entityRaycastPoint
+    )
+    : null;
   const itemHit = getItemRaycastHit(cameraRayOrigin, cameraRayDirection, maxRayDistance);
+  const closestCharacterHit = entityHit && remotePlayerHit
+    ? (entityHit.distance <= remotePlayerHit.distance ? entityHit : remotePlayerHit)
+    : (entityHit ?? remotePlayerHit);
 
   let readoutLabel = 'none';
   let activeVoxelHit = null;
@@ -3973,18 +3976,18 @@ function updateVoxelRaycast() {
   let activeHitKind = null;
   let activeEntity = null;
 
-  if (voxelLabel && voxelDistance <= Math.min(entityHit?.distance ?? Infinity, itemHit?.distance ?? Infinity)) {
+  if (voxelLabel && voxelDistance <= Math.min(closestCharacterHit?.distance ?? Infinity, itemHit?.distance ?? Infinity)) {
     readoutLabel = voxelLabel;
     activeVoxelHit = voxelHit;
     activeHit = voxelHit;
     activeHitKind = 'voxel';
     cameraRayEnd.copy(voxelHit.point);
-  } else if (entityHit && entityHit.distance <= (itemHit?.distance ?? Infinity)) {
-    readoutLabel = entityHit.label;
-    activeHit = entityHit;
+  } else if (closestCharacterHit && closestCharacterHit.distance <= (itemHit?.distance ?? Infinity)) {
+    readoutLabel = closestCharacterHit.label;
+    activeHit = closestCharacterHit;
     activeHitKind = 'entity';
-    activeEntity = entityHit.entity;
-    cameraRayEnd.copy(entityHit.point);
+    activeEntity = closestCharacterHit.entity;
+    cameraRayEnd.copy(closestCharacterHit.point);
   } else if (itemHit) {
     readoutLabel = itemHit.label;
     activeHit = itemHit;
@@ -4060,6 +4063,16 @@ function respawnPlayerAtSpawn() {
 function updatePlayer(deltaTime) {
   if (playerEye.y < FALL_RESPAWN_Y) {
     respawnPlayerAtSpawn();
+    syncPlayerBody();
+    syncCameraToPlayerView(deltaTime);
+    return;
+  }
+
+  if (playerState.isDead) {
+    playerState.respawnTimer = Math.max(0, playerState.respawnTimer - deltaTime);
+    if (playerState.respawnTimer <= 0) {
+      respawnPlayerAfterDeath();
+    }
     syncPlayerBody();
     syncCameraToPlayerView(deltaTime);
     return;

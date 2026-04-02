@@ -3,16 +3,39 @@ import {
   createHumanoidModel,
   applyHumanoidIdleAnimation,
   applyHumanoidWalkAnimation,
+  createPlayerNameSprite,
+  updatePlayerNameSprite,
 } from './entityModel.js';
+import { createHealthBarSprite, drawHealthBarSprite } from './entity.js';
+import {
+  PLAYER_STATE_BROADCAST_EVENT,
+  PLAYER_DAMAGE_ATTEMPT_EVENT,
+  snapshotPlayerStatePayload,
+  arePlayerStatePayloadsEqual,
+  readPlayerStatePayload,
+  createDamageAttemptPayload,
+  readDamageAttemptPayload,
+} from './multiplayerCombat.js';
 
 const PRESENCE_CHANNEL_NAME = 'kolorlando-world';
 const PLAYER_TRANSFORM_BROADCAST_EVENT = 'player:transform';
 const LOCAL_PLAYER_NAME_STORAGE_KEY = 'kolorlando.playerName';
 const LOCAL_BROADCAST_PUSH_INTERVAL = 0.1;
+const LOCAL_STATE_PUSH_INTERVAL = 0.12;
 const REMOTE_POSITION_LERP_SPEED = 10;
 const REMOTE_ROTATION_LERP_SPEED = 12;
 const REMOTE_MOVE_DISTANCE_THRESHOLD = 0.0004;
 const REMOTE_PLAYER_HEIGHT = 1.8;
+const REMOTE_PLAYER_MAX_HEALTH = 100;
+const KOLORLANDO_DEBUG_MODE_EVENT = 'kolorlando:debug-mode-change';
+const REMOTE_PLAYER_HALF_WIDTH = 0.36;
+const REMOTE_PLAYER_HALF_DEPTH = 0.28;
+const DAMAGE_ATTEMPT_MAX_AGE_MS = 1600;
+const DAMAGE_ATTEMPT_VALIDATION_PADDING = 1.1;
+
+function isDebugModeEnabled() {
+  return window.kolorlandoDebugModeEnabled === true;
+}
 
 function roundNetworkNumber(value, digits = 3) {
   const numericValue = Number(value);
@@ -61,15 +84,22 @@ function escapeHtml(text) {
     .replaceAll("'", '&#39;');
 }
 
-function resolvePresenceDisplayName(payloadDisplayName = '') {
-  /* Keep the multiplayer name logic tiny: use the payload name when present,
-  otherwise fall back to the locally cached username, and finally to Anon. */
+function resolveRemoteDisplayName(payloadDisplayName = '') {
+  /* Remote avatars should only trust the replicated payload; if another
+  session has no published name yet, Anonymous is safer than leaking this
+  browser's cached local username onto someone else's character. */
   const payloadName = typeof payloadDisplayName === 'string' ? payloadDisplayName.trim() : '';
   if (payloadName) return payloadName;
 
+  return 'Anonymous';
+}
+
+function resolveLocalPresenceDisplayName() {
+  /* The publishing client can enrich its own Presence payload from the cached
+  auth name so other sessions receive a stable display string. */
   const storedName = window.localStorage.getItem(LOCAL_PLAYER_NAME_STORAGE_KEY);
   const trimmedStoredName = typeof storedName === 'string' ? storedName.trim() : '';
-  return trimmedStoredName || 'Anon';
+  return trimmedStoredName || 'Anonymous';
 }
 
 function buildRemoteOutfit() {
@@ -95,6 +125,26 @@ function createRemoteAvatar() {
   root.add(humanoid.root);
   root.scale.setScalar(REMOTE_PLAYER_HEIGHT / humanoid.baseHeight);
 
+  const nameSprite = createPlayerNameSprite('Anonymous');
+  if (nameSprite) {
+    /* Remote labels follow the same head-relative anchor as the local player
+    so both identities read from a single shared world-space system. */
+    nameSprite.position.set(0, REMOTE_PLAYER_HEIGHT + 0.62, 0);
+    root.add(nameSprite);
+  }
+
+  const healthBarSprite = createHealthBarSprite(1);
+  if (healthBarSprite) {
+    /* Remote players reuse the same head-space life bar language as enemies so
+    combat readability stays consistent across the world. */
+    healthBarSprite.position.set(0, REMOTE_PLAYER_HEIGHT + 0.94, 0);
+    root.add(healthBarSprite);
+  }
+
+  const debugVisuals = new THREE.Group();
+  debugVisuals.visible = isDebugModeEnabled();
+  root.add(debugVisuals);
+
   /* A bright floating beacon makes remote players much easier to spot during
   early multiplayer testing, especially when two sessions begin at the exact
   same spawn point or when the camera is still in a tight first-person view. */
@@ -110,7 +160,7 @@ function createRemoteAvatar() {
   );
   beacon.position.set(0, 3.2, 0);
   beacon.renderOrder = 3000;
-  root.add(beacon);
+  debugVisuals.add(beacon);
 
   /* A tall always-on-top pillar gives us a guaranteed visual anchor for each
   remote player even if the humanoid rig is hidden by world geometry, spawn
@@ -127,7 +177,7 @@ function createRemoteAvatar() {
   );
   pillar.position.set(0, 1.6, 0);
   pillar.renderOrder = 2999;
-  root.add(pillar);
+  debugVisuals.add(pillar);
 
   /* The ring gives each remote avatar a second clear silhouette cue at ground
   level, which helps when the body overlaps props or stands at the same spawn
@@ -146,7 +196,7 @@ function createRemoteAvatar() {
   groundRing.rotation.x = -Math.PI / 2;
   groundRing.position.y = 0.03;
   groundRing.renderOrder = 2998;
-  root.add(groundRing);
+  debugVisuals.add(groundRing);
 
   /* Remote avatars are display-only. Disabling raycast participation now keeps
   future gameplay interactions focused on the local world until multiplayer
@@ -161,6 +211,11 @@ function createRemoteAvatar() {
   return {
     root,
     humanoid,
+    nameSprite,
+    healthBarSprite,
+    debugVisuals,
+    collider: new THREE.Box3(),
+    displayName: 'Anonymous',
     walkCycle: Math.random() * Math.PI * 2,
     idleCycle: Math.random() * Math.PI * 2,
     targetPosition: new THREE.Vector3(),
@@ -168,7 +223,57 @@ function createRemoteAvatar() {
     targetRotationY: 0,
     initialized: false,
     isMoving: false,
+    health: REMOTE_PLAYER_MAX_HEALTH,
+    maxHealth: REMOTE_PLAYER_MAX_HEALTH,
+    isDead: false,
   };
+}
+
+function findPresenceSessionBySessionId(state, targetSessionId) {
+  return Object.values(state).flat().find(session => String(session?.sessionId || '') === targetSessionId) || null;
+}
+
+function syncRemotePlayerDisplayName(remotePlayer, displayName) {
+  if (!remotePlayer?.nameSprite) return;
+  remotePlayer.displayName = resolveRemoteDisplayName(displayName);
+  updatePlayerNameSprite(remotePlayer.nameSprite, remotePlayer.displayName);
+}
+
+function syncRemotePlayerHealthBar(remotePlayer) {
+  if (!remotePlayer?.healthBarSprite) return;
+  drawHealthBarSprite(
+    remotePlayer.healthBarSprite,
+    remotePlayer.health / Math.max(1, remotePlayer.maxHealth)
+  );
+}
+
+function syncRemotePlayerLifeState(remotePlayer) {
+  if (!remotePlayer) return;
+
+  /* Remote death should be immediately readable to other clients. Hiding the
+  whole avatar stack keeps the state crisp until the owner respawns and
+  publishes fresh health plus transform again. */
+  remotePlayer.root.visible = !remotePlayer.isDead;
+
+  if (remotePlayer.isDead && remotePlayer.collider) {
+    remotePlayer.collider.makeEmpty();
+  }
+}
+
+function syncRemotePlayerCollider(remotePlayer) {
+  if (!remotePlayer?.collider) return;
+
+  const basePosition = remotePlayer.root.position;
+  remotePlayer.collider.min.set(
+    basePosition.x - REMOTE_PLAYER_HALF_WIDTH,
+    basePosition.y,
+    basePosition.z - REMOTE_PLAYER_HALF_DEPTH
+  );
+  remotePlayer.collider.max.set(
+    basePosition.x + REMOTE_PLAYER_HALF_WIDTH,
+    basePosition.y + REMOTE_PLAYER_HEIGHT,
+    basePosition.z + REMOTE_PLAYER_HALF_DEPTH
+  );
 }
 
 function snapshotPresencePayload(state) {
@@ -177,7 +282,7 @@ function snapshotPresencePayload(state) {
     in the online list and debug console. The shared lobby roster also needs
     the current page url so it can label where each live session currently is. */
     sessionId: state.sessionId,
-    displayName: resolvePresenceDisplayName(),
+    displayName: resolveLocalPresenceDisplayName(),
     url: resolvePresenceUrl(),
   };
 }
@@ -232,6 +337,7 @@ function resolvePresenceUrl() {
 export function createMultiplayerController({
   scene,
   getLocalPlayerState,
+  onApplyLocalDamage,
   presenceOnly = false,
   peopleOnlineCountElement = document.getElementById('peopleOnlineCount'),
   peopleOnlineHudElement = document.getElementById('peopleOnlineHud'),
@@ -247,9 +353,21 @@ export function createMultiplayerController({
   let isSubscribed = false;
   let isRealtimeConnected = false;
   let broadcastAccumulator = 0;
+  let stateBroadcastAccumulator = 0;
   let lastBroadcastPayload = null;
+  let lastPlayerStatePayload = null;
   let lastPresenceState = {};
   const latestTransformsBySessionId = new Map();
+  const latestPlayerStateBySessionId = new Map();
+
+  function syncRemoteDebugVisibility() {
+    const nextVisible = isDebugModeEnabled();
+    remotePlayers.forEach(remotePlayer => {
+      if (remotePlayer?.debugVisuals) {
+        remotePlayer.debugVisuals.visible = nextVisible;
+      }
+    });
+  }
 
   /* The small dropdown is a debugging aid so we can inspect the raw Presence
   player/session data without opening devtools every time a sync arrives. */
@@ -283,7 +401,7 @@ export function createMultiplayerController({
         const latestSession = Array.isArray(state[sessionId]) && state[sessionId].length > 0
           ? state[sessionId][state[sessionId].length - 1]
           : null;
-        const displayName = resolvePresenceDisplayName(latestSession?.displayName);
+        const displayName = resolveRemoteDisplayName(latestSession?.displayName);
         return `<div>${index + 1}. ${escapeHtml(displayName)}${escapeHtml(ownLabel)} ${escapeHtml(coordsLabel)}</div>`;
       })
       .join('');
@@ -292,6 +410,7 @@ export function createMultiplayerController({
   function removeRemotePlayer(sessionId) {
     const remotePlayer = remotePlayers.get(sessionId);
     latestTransformsBySessionId.delete(sessionId);
+    latestPlayerStateBySessionId.delete(sessionId);
     if (!remotePlayer) return;
     if (remotePlayer.root.parent) {
       remotePlayer.root.parent.remove(remotePlayer.root);
@@ -304,6 +423,14 @@ export function createMultiplayerController({
     if (existingRemotePlayer) return existingRemotePlayer;
 
     const remotePlayer = createRemoteAvatar();
+    const latestPlayerState = latestPlayerStateBySessionId.get(sessionId);
+    if (latestPlayerState) {
+      remotePlayer.health = latestPlayerState.health;
+      remotePlayer.maxHealth = latestPlayerState.maxHealth;
+      remotePlayer.isDead = latestPlayerState.isDead;
+      syncRemotePlayerHealthBar(remotePlayer);
+      syncRemotePlayerLifeState(remotePlayer);
+    }
     scene.add(remotePlayer.root);
     remotePlayers.set(sessionId, remotePlayer);
     return remotePlayer;
@@ -311,6 +438,8 @@ export function createMultiplayerController({
 
   function applyRemoteBroadcast(sessionId, payload) {
     const remotePlayer = getOrCreateRemotePlayer(sessionId);
+    const latestPresenceSession = findPresenceSessionBySessionId(lastPresenceState, sessionId);
+    syncRemotePlayerDisplayName(remotePlayer, latestPresenceSession?.displayName);
 
     /* Cache the most recent network transform so the "People online" panel can
     show live coordinates for each connected session instead of opaque ids. */
@@ -335,7 +464,24 @@ export function createMultiplayerController({
       remotePlayer.root.position.copy(remotePlayer.targetPosition);
       remotePlayer.root.rotation.y = remotePlayer.targetRotationY;
       remotePlayer.initialized = true;
+      syncRemotePlayerCollider(remotePlayer);
     }
+  }
+
+  function applyRemotePlayerState(payload) {
+    const nextPlayerState = readPlayerStatePayload(payload);
+    if (!nextPlayerState || nextPlayerState.sessionId === localSessionId) return;
+
+    latestPlayerStateBySessionId.set(nextPlayerState.sessionId, nextPlayerState);
+
+    const remotePlayer = remotePlayers.get(nextPlayerState.sessionId);
+    if (!remotePlayer) return;
+
+    remotePlayer.health = nextPlayerState.health;
+    remotePlayer.maxHealth = nextPlayerState.maxHealth;
+    remotePlayer.isDead = nextPlayerState.isDead;
+    syncRemotePlayerHealthBar(remotePlayer);
+    syncRemotePlayerLifeState(remotePlayer);
   }
 
   function syncRemotePlayersFromState(state) {
@@ -367,6 +513,10 @@ export function createMultiplayerController({
     setPeopleOnlineCount(countPresenceSessions(state));
     renderPeopleOnlineList(state);
     syncRemotePlayersFromState(state);
+    remotePlayers.forEach((remotePlayer, sessionId) => {
+      const latestPresenceSession = findPresenceSessionBySessionId(state, sessionId);
+      syncRemotePlayerDisplayName(remotePlayer, latestPresenceSession?.displayName);
+    });
   }
 
   function setRealtimeConnectionState(nextConnected) {
@@ -413,6 +563,169 @@ export function createMultiplayerController({
     });
   }
 
+  async function broadcastLocalCombatState(force = false) {
+    if (presenceOnly) return;
+    if (!isSubscribed || !isRealtimeConnected || !channel || typeof getLocalPlayerState !== 'function') return;
+
+    const localPlayerState = getLocalPlayerState();
+    if (!localPlayerState) return;
+
+    const nextPlayerStatePayload = snapshotPlayerStatePayload(localPlayerState, localSessionId);
+    if (!force && arePlayerStatePayloadsEqual(lastPlayerStatePayload, nextPlayerStatePayload)) return;
+
+    lastPlayerStatePayload = nextPlayerStatePayload;
+    latestPlayerStateBySessionId.set(localSessionId, nextPlayerStatePayload);
+    await channel.send({
+      type: 'broadcast',
+      event: PLAYER_STATE_BROADCAST_EVENT,
+      payload: nextPlayerStatePayload,
+    });
+  }
+
+  async function notifyLocalStateChanged() {
+    if (presenceOnly) return;
+
+    /* Health, death, and respawn transitions should replicate immediately so
+    remote HUD state does not wait for the normal movement tick cadence. */
+    await broadcastLocalPlayerState();
+    await broadcastLocalCombatState(true);
+  }
+
+  function isLocalDamageAttemptValid(payload) {
+    if (!payload) return false;
+    if (Date.now() - payload.sentAt > DAMAGE_ATTEMPT_MAX_AGE_MS) return false;
+
+    const localPlayerState = typeof getLocalPlayerState === 'function' ? getLocalPlayerState() : null;
+    if (!localPlayerState) return false;
+    if (Boolean(localPlayerState.isDead) || readFiniteNumber(localPlayerState.health, 0) <= 0) return false;
+
+    const localX = readFiniteNumber(localPlayerState.x);
+    const localY = readFiniteNumber(localPlayerState.y);
+    const localZ = readFiniteNumber(localPlayerState.z);
+    const deltaX = localX - payload.origin.x;
+    const deltaY = localY - payload.origin.y;
+    const deltaZ = localZ - payload.origin.z;
+    const allowedDistance = Math.max(0.4, payload.maxDistance + DAMAGE_ATTEMPT_VALIDATION_PADDING);
+
+    return (deltaX * deltaX) + (deltaY * deltaY) + (deltaZ * deltaZ) <= allowedDistance * allowedDistance;
+  }
+
+  function applyIncomingDamageAttempt(payload) {
+    if (presenceOnly) return;
+
+    const damageAttempt = readDamageAttemptPayload(payload);
+    if (!damageAttempt) return;
+    if (damageAttempt.targetSessionId !== localSessionId) return;
+    if (!isLocalDamageAttemptValid(damageAttempt)) return;
+    if (typeof onApplyLocalDamage !== 'function') return;
+
+    onApplyLocalDamage(damageAttempt.damage, {
+      sourceType: damageAttempt.sourceType,
+      attackerSessionId: damageAttempt.attackerSessionId,
+    });
+  }
+
+  function sendDamageAttempt({
+    targetSessionId,
+    damage,
+    sourceType,
+    origin,
+    maxDistance,
+  } = {}) {
+    if (presenceOnly) return false;
+    if (!isSubscribed || !isRealtimeConnected || !channel) return false;
+
+    const payload = createDamageAttemptPayload({
+      attackerSessionId: localSessionId,
+      targetSessionId,
+      damage,
+      sourceType,
+      origin,
+      maxDistance,
+    });
+
+    if (!payload.targetSessionId || payload.damage <= 0) return false;
+
+    Promise.resolve(channel.send({
+      type: 'broadcast',
+      event: PLAYER_DAMAGE_ATTEMPT_EVENT,
+      payload,
+    })).catch(error => {
+      console.error('Failed to broadcast multiplayer damage attempt.', error);
+    });
+    return true;
+  }
+
+  function findRemotePlayerIntersectingSphere(sphere, ignoredSessionIds) {
+    let hitSessionId = '';
+    let hitDistanceSq = Infinity;
+
+    remotePlayers.forEach((remotePlayer, sessionId) => {
+      if (!remotePlayer.initialized) return;
+      if ((ignoredSessionIds instanceof Set) && ignoredSessionIds.has(sessionId)) return;
+      if (remotePlayer.health <= 0) return;
+      if (!remotePlayer.collider.intersectsSphere(sphere)) return;
+
+      const distanceSq = remotePlayer.currentPosition.distanceToSquared(sphere.center);
+      if (distanceSq >= hitDistanceSq) return;
+
+      hitDistanceSq = distanceSq;
+      hitSessionId = sessionId;
+    });
+
+    return hitSessionId;
+  }
+
+  function tryApplyDamageToRemotePlayersIntersectingSphere({
+    sphere,
+    damage,
+    sourceType,
+    maxDistance,
+    ignoredSessionIds,
+  } = {}) {
+    if (presenceOnly || !sphere) return false;
+
+    const hitSessionId = findRemotePlayerIntersectingSphere(sphere, ignoredSessionIds);
+    if (!hitSessionId) return false;
+
+    if (ignoredSessionIds instanceof Set) {
+      ignoredSessionIds.add(hitSessionId);
+    }
+
+    return sendDamageAttempt({
+      targetSessionId: hitSessionId,
+      damage,
+      sourceType,
+      origin: sphere.center,
+      maxDistance,
+    });
+  }
+
+  function getRemotePlayerRaycastHit(origin, ray, maxDistance, reusablePoint) {
+    let closestHit = null;
+    let closestDistance = maxDistance;
+
+    remotePlayers.forEach((remotePlayer, sessionId) => {
+      if (!remotePlayer.initialized || remotePlayer.isDead) return;
+      if (!remotePlayer.collider || !ray.intersectBox(remotePlayer.collider, reusablePoint)) return;
+
+      const distance = origin.distanceTo(reusablePoint);
+      if (!Number.isFinite(distance) || distance > maxDistance || distance >= closestDistance) return;
+
+      closestDistance = distance;
+      closestHit = {
+        kind: 'remote-player',
+        label: `Player (${remotePlayer.displayName || 'Anonymous'})`,
+        entity: remotePlayer,
+        sessionId,
+        distance,
+        point: reusablePoint.clone(),
+      };
+    });
+
+    return closestHit;
+  }
+
   function connect() {
     const database = window.database;
     if (channel || !database?.channel) return;
@@ -435,12 +748,19 @@ export function createMultiplayerController({
         applyRemoteBroadcast(payload.sessionId, payload);
         renderPeopleOnlineList(lastPresenceState);
       })
+      .on('broadcast', { event: PLAYER_STATE_BROADCAST_EVENT }, ({ payload }) => {
+        applyRemotePlayerState(payload);
+      })
+      .on('broadcast', { event: PLAYER_DAMAGE_ATTEMPT_EVENT }, ({ payload }) => {
+        applyIncomingDamageAttempt(payload);
+      })
       .subscribe(async status => {
         if (status === 'SUBSCRIBED') {
           isSubscribed = true;
           setRealtimeConnectionState(true);
           await publishLocalPresence();
           await broadcastLocalPlayerState();
+          await broadcastLocalCombatState(true);
           return;
         }
 
@@ -460,6 +780,7 @@ export function createMultiplayerController({
       const lerpAlpha = Math.min(1, deltaTime * REMOTE_POSITION_LERP_SPEED);
       remotePlayer.currentPosition.lerp(remotePlayer.targetPosition, lerpAlpha);
       remotePlayer.root.position.copy(remotePlayer.currentPosition);
+      syncRemotePlayerCollider(remotePlayer);
 
       const rotationDelta = normalizeAngleRadians(remotePlayer.targetRotationY - remotePlayer.root.rotation.y);
       const maxRotationStep = deltaTime * REMOTE_ROTATION_LERP_SPEED;
@@ -485,11 +806,19 @@ export function createMultiplayerController({
     updateRemotePlayers(deltaTime);
 
     broadcastAccumulator += deltaTime;
-    if (broadcastAccumulator < LOCAL_BROADCAST_PUSH_INTERVAL) return;
+    if (broadcastAccumulator >= LOCAL_BROADCAST_PUSH_INTERVAL) {
+      broadcastAccumulator = 0;
+      broadcastLocalPlayerState().catch(error => {
+        console.error('Failed to broadcast multiplayer transform.', error);
+      });
+    }
 
-    broadcastAccumulator = 0;
-    broadcastLocalPlayerState().catch(error => {
-      console.error('Failed to broadcast multiplayer transform.', error);
+    stateBroadcastAccumulator += deltaTime;
+    if (stateBroadcastAccumulator < LOCAL_STATE_PUSH_INTERVAL) return;
+
+    stateBroadcastAccumulator = 0;
+    broadcastLocalCombatState().catch(error => {
+      console.error('Failed to broadcast multiplayer combat state.', error);
     });
   }
 
@@ -501,8 +830,17 @@ export function createMultiplayerController({
     });
   });
 
+  window.addEventListener(KOLORLANDO_DEBUG_MODE_EVENT, () => {
+    /* Remote avatar helpers belong to the same runtime debug switch as the
+    rest of the gameplay diagnostics, so they flip in place on every session. */
+    syncRemoteDebugVisibility();
+  });
+
   return {
     update,
     localSessionId,
+    notifyLocalStateChanged,
+    tryApplyDamageToRemotePlayersIntersectingSphere,
+    getRemotePlayerRaycastHit,
   };
 }

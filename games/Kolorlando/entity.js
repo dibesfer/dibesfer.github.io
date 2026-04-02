@@ -94,7 +94,7 @@ function createDialogSprite(lines) {
   return sprite;
 }
 
-function createHealthBarSprite(healthRatio = 1) {
+export function createHealthBarSprite(healthRatio = 1) {
   const canvas = document.createElement('canvas');
   canvas.width = 136;
   canvas.height = 32;
@@ -123,7 +123,7 @@ function createHealthBarSprite(healthRatio = 1) {
   return sprite;
 }
 
-function drawHealthBarSprite(sprite, healthRatio) {
+export function drawHealthBarSprite(sprite, healthRatio) {
   const canvas = sprite.userData.healthCanvas;
   const ctx = sprite.userData.healthCtx;
   const texture = sprite.userData.healthTexture;
