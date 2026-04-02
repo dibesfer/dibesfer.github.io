@@ -19,7 +19,7 @@ const navigablePages = new Set(["home", "avatar", "yourWorlds"])
 function isAuthModalLockedOpen(){
     /* Duplicate-session state is a stop-state, so the shared shell should not
     let outside click or Escape dismiss the modal until the user leaves. */
-    return window.kolorlandoAuthIsBlocked === true
+    return window.kolorlandoAuthIsBlocked === true && window.kolorlandoBlockedReason !== "login-attempt"
 }
 
 function setAuthModalState(shouldOpen){

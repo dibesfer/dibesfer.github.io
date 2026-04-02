@@ -10,8 +10,11 @@ const authMessage = document.getElementById("authMessage")
 const authUserDisplay = document.getElementById("authUserDisplay")
 const authModalTitle = document.getElementById("authModal_title")
 const authStatusBadge = document.getElementById("authStatusBadge")
+const authIconButton = document.getElementById("idDiv_icon")
 const kAuthForm = document.getElementById("kAuthForm")
 const kAuthSubmit = document.getElementById("kAuthSubmit")
+const kAuthAcknowledge = document.getElementById("kAuthAcknowledge")
+const kAuthLogout = document.getElementById("kAuthLogout")
 const idDiv = document.getElementById("idDiv")
 const idDivUsername = document.getElementById("idDiv_username")
 const idDivIconWrapper = document.getElementById("idDiv_icon_wrapper")
@@ -34,6 +37,8 @@ let kolorlandoAuthRefreshToken = 0
 let kolorlandoForcedSignedOutMessage = ""
 let kolorlandoAuthIsBlocked = false
 let kolorlandoBlockedDisplayName = "Anonymous"
+let kolorlandoBlockedReason = ""
+let kolorlandoManualLoginAttempt = false
 let kolorlandoAccountSessionId = ""
 let kolorlandoAccountHeartbeatIntervalId = 0
 let kolorlandoAccountHeartbeatInFlight = false
@@ -41,6 +46,7 @@ let kolorlandoClaimProbeRequested = false
 const kolorlandoRedirectedBlockedHint = new URLSearchParams(window.location.search).get("session_blocked") === "1"
 
 window.kolorlandoAuthIsBlocked = false
+window.kolorlandoBlockedReason = ""
 
 /* The landing page should always start from a neutral modal shell. Any real
 blocked state must be re-established by fresh auth + lock checks, not stale
@@ -60,6 +66,11 @@ function setAuthMessage(message, isError) {
     authMessage.style.color = isError ? "rgb(255, 82, 82)" : "rgb(255, 238, 174)"
     authMessage.style.fontWeight = isError ? "700" : "400"
     authMessage.classList.toggle("is-session-blocked", Boolean(isError && kolorlandoAuthIsBlocked))
+}
+
+function setKolorlandoBlockedReason(nextReason = "") {
+    kolorlandoBlockedReason = nextReason
+    window.kolorlandoBlockedReason = nextReason
 }
 
 function persistKolorlandoClaimedState(isClaimed) {
@@ -93,6 +104,16 @@ function openAuthModalIfAvailable() {
     to open from auth logic without duplicating visibility code here. */
     if (typeof setAuthModalState === "function") {
         setAuthModalState(true)
+    }
+}
+
+async function prepareAuthModalForOpen() {
+    /* The modal should resolve auth and duplicate-session state before it
+    becomes visible, so blocked tabs never flash the default blue shell. */
+    try {
+        await refreshAuthState()
+    } catch (error) {
+        setAuthMessage(error.message || "Could not refresh auth", true)
     }
 }
 
@@ -137,15 +158,23 @@ function setBlockedModalState(isBlocked) {
     } else if (!kolorlandoAuthUser) {
         authUserDisplay.textContent = "Anonymous"
     }
+
+    kAuthAcknowledge?.classList.toggle("invisible", !(isBlocked && kolorlandoBlockedReason === "login-attempt"))
     applyBlockedWorldEntryState()
 }
 
-function applyKolorlandoBlockedState(message = AUTH_ACCOUNT_BLOCKED_MESSAGE, displayName = "Anonymous") {
+function applyKolorlandoBlockedState(message = AUTH_ACCOUNT_BLOCKED_MESSAGE, displayName = "Anonymous", reason = "shared-session") {
     stopKolorlandoAccountHeartbeat()
     kolorlandoForcedSignedOutMessage = message
+    kolorlandoLoginReloadPending = false
     kolorlandoAuthIsBlocked = true
     window.kolorlandoAuthIsBlocked = true
     kolorlandoBlockedDisplayName = displayName || "Anonymous"
+    setKolorlandoBlockedReason(reason)
+    if (reason === "login-attempt") {
+        /* A rejected manual login should end here and stay dismissible. */
+        kolorlandoClaimProbeRequested = false
+    }
     persistKolorlandoClaimedState(false)
     kolorlandoAuthUser = null
     kolorlandoUserProfile = null
@@ -165,6 +194,7 @@ function clearKolorlandoBlockedState() {
     kolorlandoAuthIsBlocked = false
     window.kolorlandoAuthIsBlocked = false
     kolorlandoBlockedDisplayName = "Anonymous"
+    setKolorlandoBlockedReason("")
     setBlockedModalState(false)
     applyBlockedWorldEntryState()
 }
@@ -265,6 +295,39 @@ async function hasKolorlandoSessionConflict(user) {
     return isLiveActiveSession && String(activeSessionRow.session_id || "") !== localSessionId
 }
 
+async function hasKolorlandoSessionConflictForUserId(userId) {
+    /* Login attempts know the target account before sign-in succeeds, so we
+    can detect a protected live session without first authenticating this tab. */
+    if (!userId) {
+        return false
+    }
+
+    const { data: sessionRows, error: sessionError } = await database
+        .from(AUTH_ACCOUNT_SESSIONS_TABLE)
+        .select("session_id, status, last_seen_at, released_at")
+        .eq("user_id", userId)
+        .limit(1)
+
+    if (sessionError) {
+        throw sessionError
+    }
+
+    const activeSessionRow = sessionRows?.[0]
+
+    if (!activeSessionRow) {
+        return false
+    }
+
+    const isLiveActiveSession =
+        activeSessionRow.status === "active"
+        && !activeSessionRow.released_at
+        && typeof activeSessionRow.last_seen_at === "string"
+        && Date.now() - new Date(activeSessionRow.last_seen_at).getTime() < 20000
+
+    const localSessionId = ensureKolorlandoAccountSessionId()
+    return isLiveActiveSession && String(activeSessionRow.session_id || "") !== localSessionId
+}
+
 async function heartbeatKolorlandoAccountSession() {
     if (kolorlandoAccountHeartbeatInFlight || !kolorlandoAuthUser) {
         return
@@ -329,7 +392,7 @@ function setIdentityVisual(username, isLoggedIn) {
     idDivUsername.textContent = isLoggedIn ? username : ""
     idDiv.title = isLoggedIn ? `Logged in as ${username}` : "Anonymous user"
     if (idDivIconWrapper) {
-        idDivIconWrapper.style = isLoggedIn ? "background-color: green" : "background-color: pink"
+        idDivIconWrapper.style = isLoggedIn ? "background-color: green" : "background-color: gray"
     }
 }
 
@@ -377,6 +440,8 @@ function setAuthMode(isLoggedIn) {
     document.querySelector('label[for="authIdentity"]').style.display = shouldHideCredentials ? "none" : "block"
     document.querySelector('label[for="authPassword"]').style.display = shouldHideCredentials ? "none" : "block"
     kAuthSubmit.classList.toggle("invisible", shouldHideCredentials)
+    kAuthAcknowledge?.classList.toggle("invisible", !(kolorlandoAuthIsBlocked && kolorlandoBlockedReason === "login-attempt"))
+    kAuthLogout?.classList.toggle("invisible", !(isLoggedIn && !kolorlandoAuthIsBlocked))
 }
 
 async function findUserByIdentity(identity) {
@@ -531,7 +596,7 @@ async function refreshAuthState() {
         stopKolorlandoAccountHeartbeat()
         if (await hasKolorlandoSessionConflict(user)) {
             const passiveProfile = await ensureConfirmedProfile(user)
-            applyKolorlandoBlockedState(AUTH_ACCOUNT_BLOCKED_MESSAGE, resolveKolorlandoDisplayName(user, passiveProfile))
+            applyKolorlandoBlockedState(AUTH_ACCOUNT_BLOCKED_MESSAGE, resolveKolorlandoDisplayName(user, passiveProfile), "shared-session")
             return null
         }
 
@@ -554,7 +619,8 @@ async function refreshAuthState() {
     } catch (claimError) {
         if (isAccountSessionAlreadyActiveError(claimError)) {
             kolorlandoClaimProbeRequested = false
-            applyKolorlandoBlockedState(AUTH_ACCOUNT_BLOCKED_MESSAGE, resolveKolorlandoDisplayName(user))
+            const blockedReason = kolorlandoManualLoginAttempt ? "login-attempt" : "shared-session"
+            applyKolorlandoBlockedState(AUTH_ACCOUNT_BLOCKED_MESSAGE, resolveKolorlandoDisplayName(user), blockedReason)
             return null
         } else {
             kolorlandoForcedSignedOutMessage = "Could not validate your Kolorlando session."
@@ -653,10 +719,35 @@ async function logInWithEmail(email, password) {
     window.location.reload()
 }
 
+async function handleAuthLogout() {
+    /* Normal owner sessions can log out from the modal, but blocked tabs
+    should never get a destructive account action here. */
+    if (kolorlandoAuthIsBlocked) {
+        return
+    }
+
+    try {
+        kAuthLogout.disabled = true
+        await releaseKolorlandoAccountSession()
+        const { error } = await database.auth.signOut()
+
+        if (error) {
+            throw error
+        }
+
+        setAuthModalState?.(false)
+    } catch (error) {
+        setAuthMessage(error.message || "Could not log out", true)
+    } finally {
+        kAuthLogout.disabled = false
+    }
+}
+
 async function handleAuthSubmit(event) {
     event.preventDefault()
     clearKolorlandoBlockedState()
     requestKolorlandoClaimProbe()
+    kolorlandoManualLoginAttempt = true
 
     const identity = authIdentity.value.trim()
     const password = authPassword.value
@@ -673,6 +764,11 @@ async function handleAuthSubmit(event) {
         const existingProfile = await findUserByIdentity(identity)
 
         if (existingProfile) {
+            if (await hasKolorlandoSessionConflictForUserId(existingProfile.user_id)) {
+                kolorlandoClaimProbeRequested = false
+                applyKolorlandoBlockedState(AUTH_ACCOUNT_BLOCKED_MESSAGE, existingProfile.username || "Anonymous", "login-attempt")
+                return
+            }
             await logInWithEmail(existingProfile.email, password)
         } else if (identity.includes("@")) {
             await signUpWithEmail(identity.toLowerCase(), password)
@@ -682,11 +778,53 @@ async function handleAuthSubmit(event) {
     } catch (error) {
         setAuthMessage(error.message || "Auth error", true)
     } finally {
+        kolorlandoManualLoginAttempt = false
         kAuthSubmit.disabled = false
     }
 }
 
 kAuthForm.addEventListener("submit", handleAuthSubmit)
+kAuthLogout?.addEventListener("click", handleAuthLogout)
+kAuthAcknowledge?.addEventListener("click", () => {
+    /* A blocked login attempt should dismiss back to an anonymous modal so the
+    player can try another account without affecting the protected session. */
+    clearKolorlandoBlockedState()
+    persistKolorlandoClaimedState(false)
+    kolorlandoClaimProbeRequested = false
+    kolorlandoManualLoginAttempt = false
+    kolorlandoAuthUser = null
+    kolorlandoUserProfile = null
+    window.kolorlandoAuthUser = null
+    window.kolorlandoUserProfile = null
+    authIdentity.value = ""
+    authPassword.value = ""
+    persistKolorlandoPlayerName("")
+    setIdentityVisual("Anonymous", false)
+    setAuthMode(false)
+    setAuthMessage("Join the adventure!", false)
+    Promise.resolve(database.auth.signOut()).catch(() => {})
+    if (typeof setAuthModalState === "function") {
+        setAuthModalState(false)
+    }
+})
+
+authIconButton?.addEventListener("pointerdown", async (event) => {
+    /* Opening through the identity icon is the main entry path, so we gate it
+    here and let the shared shell open only after auth state is fully resolved. */
+    if (typeof setAuthModalState !== "function") {
+        return
+    }
+
+    if (!document.getElementById("authModal")?.classList.contains("invisible")) {
+        return
+    }
+
+    event.preventDefault()
+    event.stopImmediatePropagation()
+
+    await prepareAuthModalForOpen()
+    setAuthModalState(true)
+}, true)
 
 authMainMenuWorldsCard?.addEventListener("click", (event) => {
     /* Worlds is the first protected landing action, so it should claim the
