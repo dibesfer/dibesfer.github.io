@@ -495,10 +495,11 @@ export function createMultiplayerController({
       if (!sessionId) return;
       if (sessionId === localSessionId) return;
 
+      seenRemoteSessionIds.add(sessionId);
+
       /* Presence tells us which remote sessions are alive, but not where they
       are. We therefore wait for the first transform broadcast before creating
       a visible avatar, which avoids phantom players appearing at spawn. */
-      seenRemoteSessionIds.add(sessionId);
     });
 
     Array.from(remotePlayers.keys()).forEach(sessionId => {

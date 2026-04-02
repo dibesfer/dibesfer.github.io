@@ -234,12 +234,18 @@
     <script type="module">
         import { guardKolorlandoAccountSessionOrRedirect } from "./accountSessionGuard.js";
         import { renderKolorlandoMenuPanel } from "./code/UI/menuPanelMarkup.js";
+        import { createMultiplayerWorldStore } from "./code/data/worldMultiplayerSaving.js";
 
         const canEnterKolorlandoPage = await guardKolorlandoAccountSessionOrRedirect();
 
         if (!canEnterKolorlandoPage) {
             throw new Error("Kolorlando multiplayer entry blocked by another active session.");
         }
+
+        window.KOLORLANDO_MULTIPLAYER_WORLD_STORE = await createMultiplayerWorldStore({
+            worldId: "voxelandia",
+        });
+        window.KOLORLANDO_MULTIPLAYER_WORLD_STATE = window.KOLORLANDO_MULTIPLAYER_WORLD_STORE.getCurrentState();
 
         renderKolorlandoMenuPanel(document.getElementById("menuCentralMount"));
         await import("./script.js");

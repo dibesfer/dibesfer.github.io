@@ -1034,6 +1034,7 @@ function resetPlayerHealth() {
   multiplayerController?.notifyLocalStateChanged?.().catch(error => {
     console.error('Failed to sync Kolorlando player health reset.', error);
   });
+  persistMultiplayerPlayerState(true);
 }
 
 function respawnPlayerAfterDeath() {
@@ -1041,6 +1042,7 @@ function respawnPlayerAfterDeath() {
   playerState.respawnTimer = 0;
   respawnPlayerAtSpawn();
   resetPlayerHealth();
+  persistMultiplayerPlayerState(true);
 }
 
 function applyPlayerDamage(amount) {
@@ -1053,6 +1055,7 @@ function applyPlayerDamage(amount) {
     multiplayerController?.notifyLocalStateChanged?.().catch(error => {
       console.error('Failed to sync Kolorlando player damage.', error);
     });
+    persistMultiplayerPlayerState(true);
     return false;
   }
 
@@ -1063,6 +1066,7 @@ function applyPlayerDamage(amount) {
   multiplayerController?.notifyLocalStateChanged?.().catch(error => {
     console.error('Failed to sync Kolorlando player death.', error);
   });
+  persistMultiplayerPlayerState(true);
   return true;
 }
 
@@ -1253,12 +1257,22 @@ const getVoxelBoxFromRaycastHit = typeof mapData.getVoxelBoxFromRaycastHit === '
   ? mapData.getVoxelBoxFromRaycastHit
   : () => null;
 const voxelTypes = Array.isArray(mapData.voxelTypes) ? mapData.voxelTypes : [];
+const multiplayerWorldBootstrap = MULTIPLAYER_ENABLED && MAP_PRESET === 'voxelandia'
+  ? window.KOLORLANDO_MULTIPLAYER_WORLD_STATE ?? null
+  : null;
+const multiplayerWorldStore = MULTIPLAYER_ENABLED && MAP_PRESET === 'voxelandia'
+  ? window.KOLORLANDO_MULTIPLAYER_WORLD_STORE ?? null
+  : null;
 const localWorldSaveStore = !MULTIPLAYER_ENABLED && MAP_PRESET === 'voxelandia'
   ? createLocalWorldSaveStore({
     worldId: `${KOLORLANDO_MODE}-${MAP_PRESET}`,
   })
   : null;
 const entityRaycastPoint = new THREE.Vector3();
+const MULTIPLAYER_WORLD_PLAYER_SAVE_INTERVAL = 2;
+let multiplayerWorldPlayerSaveAccumulator = MULTIPLAYER_WORLD_PLAYER_SAVE_INTERVAL;
+let lastSavedMultiplayerPlayerStateKey = '';
+let currentMultiplayerWorldState = multiplayerWorldBootstrap;
 
 function applyLocalSavedWorld() {
   /* Replaying saved voxel diffs immediately after the map boots keeps local
@@ -1282,7 +1296,145 @@ function applyLocalSavedWorld() {
   }
 }
 
-applyLocalSavedWorld();
+function applyMultiplayerSharedWorld() {
+  /* Multiplayer keeps the authored Voxelandia map as the base world and only
+  replays shared voxel mutations fetched from Supabase during page bootstrap. */
+  if (!multiplayerWorldBootstrap) return;
+
+  const voxelEdits = Array.isArray(multiplayerWorldBootstrap.voxelEditsList)
+    ? multiplayerWorldBootstrap.voxelEditsList
+    : [];
+
+  for (let i = 0; i < voxelEdits.length; i += 1) {
+    const edit = voxelEdits[i];
+    if (edit.action === 'remove') {
+      removeVoxelAtCell(edit.cellX, edit.cellY, edit.cellZ);
+      continue;
+    }
+
+    if (edit.action === 'add') {
+      addVoxelAtCell(edit.cellX, edit.cellY, edit.cellZ, {
+        voxelType: edit.voxelType,
+      });
+    }
+  }
+}
+
+if (MULTIPLAYER_ENABLED) {
+  applyMultiplayerSharedWorld();
+} else {
+  applyLocalSavedWorld();
+}
+
+function areMultiplayerVoxelEditsEqual(a, b) {
+  if (!a || !b) return false;
+  return a.action === b.action && a.voxelType === b.voxelType;
+}
+
+function applyMultiplayerVoxelEditToWorld(cellKey, edit) {
+  if (typeof cellKey !== 'string' || !edit) return;
+
+  const parts = cellKey.split(',');
+  if (parts.length !== 3) return;
+
+  const cellX = Number(parts[0]);
+  const cellY = Number(parts[1]);
+  const cellZ = Number(parts[2]);
+  if (!Number.isInteger(cellX) || !Number.isInteger(cellY) || !Number.isInteger(cellZ)) return;
+
+  if (edit.action === 'remove') {
+    removeVoxelAtCell(cellX, cellY, cellZ);
+    return;
+  }
+
+  if (edit.action === 'add' && typeof edit.voxelType === 'string' && edit.voxelType.trim()) {
+    addVoxelAtCell(cellX, cellY, cellZ, {
+      voxelType: edit.voxelType.trim(),
+    });
+  }
+}
+
+function applyIncomingMultiplayerWorldState(nextState, previousState = currentMultiplayerWorldState) {
+  if (!nextState || !MULTIPLAYER_ENABLED) return;
+
+  const previousVoxelEdits = previousState?.voxelEdits ?? {};
+  const nextVoxelEdits = nextState?.voxelEdits ?? {};
+
+  Object.entries(nextVoxelEdits).forEach(([cellKey, nextEdit]) => {
+    const previousEdit = previousVoxelEdits[cellKey] ?? null;
+    if (areMultiplayerVoxelEditsEqual(previousEdit, nextEdit)) {
+      return;
+    }
+
+    applyMultiplayerVoxelEditToWorld(cellKey, nextEdit);
+  });
+
+  currentMultiplayerWorldState = nextState;
+  window.KOLORLANDO_MULTIPLAYER_WORLD_STATE = nextState;
+}
+
+if (multiplayerWorldStore?.subscribe) {
+  multiplayerWorldStore.subscribe(({ currentState, previousState, source }) => {
+    /* Realtime shared-world updates should only replay actual voxel edit
+    diffs, keeping the authored base map and local interaction flow intact. */
+    if (source === 'refresh' && previousState === currentState) {
+      return;
+    }
+    applyIncomingMultiplayerWorldState(currentState, previousState);
+  });
+}
+
+function buildMultiplayerPlayerStatePayload() {
+  if (!MULTIPLAYER_ENABLED || !multiplayerWorldStore || !multiplayerController?.localSessionId) {
+    return null;
+  }
+
+  return {
+    playerKey: multiplayerController.localSessionId,
+    state: {
+      x: playerBody.position.x,
+      y: playerBody.position.y,
+      z: playerBody.position.z,
+      rotationY: playerBody.rotation.y,
+      health: playerState.health,
+      maxHealth: playerState.maxHealth,
+      isDead: playerState.isDead || playerState.health <= 0,
+      displayName: resolveLocalPlayerDisplayName(),
+    },
+  };
+}
+
+function buildMultiplayerPlayerStateKey(payload) {
+  if (!payload?.state) return '';
+
+  const state = payload.state;
+  return [
+    payload.playerKey,
+    state.x?.toFixed?.(3) ?? '',
+    state.y?.toFixed?.(3) ?? '',
+    state.z?.toFixed?.(3) ?? '',
+    state.rotationY?.toFixed?.(3) ?? '',
+    state.health,
+    state.maxHealth,
+    state.isDead ? '1' : '0',
+    state.displayName ?? '',
+  ].join('|');
+}
+
+function persistMultiplayerPlayerState(force = false) {
+  const payload = buildMultiplayerPlayerStatePayload();
+  if (!payload) return;
+
+  const nextStateKey = buildMultiplayerPlayerStateKey(payload);
+  if (!force && nextStateKey === lastSavedMultiplayerPlayerStateKey) {
+    return;
+  }
+
+  lastSavedMultiplayerPlayerStateKey = nextStateKey;
+  multiplayerWorldStore.setPlayerState(payload.playerKey, payload.state).catch(error => {
+    console.error('Failed to persist the Kolorlando multiplayer player state.', error);
+  });
+}
 
 if (settingsReloadWorldButton) {
   /* Reload World only makes sense for local singleplayer saves. In multiplayer
@@ -2258,6 +2410,8 @@ const multiplayerController = createMultiplayerController({
     : null,
 });
 
+persistMultiplayerPlayerState(true);
+
 const playerFacingDir = new THREE.Vector3();
 let playerWalkCycle = 0;
 let playerIdleCycle = Math.random() * Math.PI * 2;
@@ -3186,6 +3340,15 @@ function triggerActionForMouseButton(button, options = {}) {
             removedVoxelCell.cellZ
           );
         }
+        if (removedVoxelCell && multiplayerWorldStore) {
+          multiplayerWorldStore.recordVoxelRemoved(
+            removedVoxelCell.cellX,
+            removedVoxelCell.cellY,
+            removedVoxelCell.cellZ
+          ).catch(error => {
+            console.error('Failed to persist the Kolorlando multiplayer voxel removal.', error);
+          });
+        }
         if (inventoryUI.getGameMode() === GAME_MODE_SURVIVAL) {
           inventoryUI.addItemToInventory(removedVoxelType, 1);
         } else if (!inventoryUI.inventoryHasType(removedVoxelType)) {
@@ -3227,6 +3390,16 @@ function triggerActionForMouseButton(button, options = {}) {
           addedVoxelCell.cellZ,
           selectedVoxelType
         );
+      }
+      if (added && addedVoxelCell && multiplayerWorldStore) {
+        multiplayerWorldStore.recordVoxelAdded(
+          addedVoxelCell.cellX,
+          addedVoxelCell.cellY,
+          addedVoxelCell.cellZ,
+          selectedVoxelType
+        ).catch(error => {
+          console.error('Failed to persist the Kolorlando multiplayer voxel addition.', error);
+        });
       }
       if (added && inventoryUI.getGameMode() === GAME_MODE_SURVIVAL) {
           inventoryUI.consumeSelectedInventoryItem(1);
@@ -4723,6 +4896,13 @@ renderer.setAnimationLoop(() => {
   }
   if (multiplayerController) {
     multiplayerController.update(delta);
+  }
+  if (multiplayerWorldStore && multiplayerController?.localSessionId) {
+    multiplayerWorldPlayerSaveAccumulator += delta;
+    if (multiplayerWorldPlayerSaveAccumulator >= MULTIPLAYER_WORLD_PLAYER_SAVE_INTERVAL) {
+      multiplayerWorldPlayerSaveAccumulator = 0;
+      persistMultiplayerPlayerState();
+    }
   }
   checkFPS(delta);
 
