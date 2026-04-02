@@ -230,11 +230,20 @@
     </div>
 
     <script src="/assets/scripts/supabase.js"></script>
+    <script src="accountSessionShared.js"></script>
     <script type="module">
+        import { guardKolorlandoAccountSessionOrRedirect } from "./accountSessionGuard.js";
         import { renderKolorlandoMenuPanel } from "./code/UI/menuPanelMarkup.js";
+
+        const canEnterKolorlandoPage = await guardKolorlandoAccountSessionOrRedirect();
+
+        if (!canEnterKolorlandoPage) {
+            throw new Error("Kolorlando multiplayer entry blocked by another active session.");
+        }
+
         renderKolorlandoMenuPanel(document.getElementById("menuCentralMount"));
+        await import("./script.js");
     </script>
-    <script type="module" src="script.js"></script>
 </body>
 
 </html>

@@ -35,6 +35,7 @@
         <div id="authModal_panel" class="authModal_panel" role="dialog" aria-modal="true"
             aria-labelledby="authModal_title">
             <h2 id="authModal_title">Sign / Log in</h2>
+            <p id="authStatusBadge" class="authModal_statusBadge invisible">Session blocked</p>
 
             <p id="authUserDisplay" class="authModal_message" aria-live="polite">Anonymous</p>
 
@@ -54,12 +55,11 @@
                 </p>
 
                 <button id="kAuthSubmit" class="authModal_sendButton" type="submit">SEND</button>
-                <button id="kAuthLogout" class="authModal_sendButton invisible" type="button">LOG OUT</button>
             </form>
         </div>
     </div>
     <header>
-        <h1 onclick="changePage('home')">Kolorlando</h1>
+        <h1><a href="index.html">Kolorlando</a></h1>
             <div class="gradient-text">
                 A 3D world to build, explore, create, combat, settle, conquer, chat, befriend, share
             </div>
@@ -80,7 +80,7 @@
                 <p>Customize your character</p>
             </div>
 
-            <div class="kLevels" onclick="changePage('yourWorlds')">
+            <div id="mainMenu_worldsCard" class="kLevels" onclick="changePage('yourWorlds')">
                 <h2>Worlds</h2>
                 <div>
                     <img src="assets/imagenesPortada/Captura desde 2026-03-09 11-11-06.png" alt="">
@@ -128,7 +128,7 @@
 
         <div id="yourWorldsMenu" class=" invisible">
 
-            <div class="box">
+            <div id="yourWorldsIntroBox" class="box">
                 <p>Create your singleplayer world</p>
                 <p>Choose a template</p>
                 <ol>
@@ -138,7 +138,7 @@
                 </ol>
             </div>
             <div class="kLevelsDisplay">
-                <div class="kLevels" onclick="window.location = '/games/Kolorlando/game.html' ">
+                <div id="yourWorldsSingleplayerCard" class="kLevels" onclick="window.location = '/games/Kolorlando/singleplayer.html' ">
                     <h2>Singleplayer</h2>
                     <div>
                         <img src="assets/imagenesPortada/Captura desde 2026-03-09 11-11-06.png" alt="">
@@ -154,7 +154,7 @@
                     <p>Start a new world slot</p>
                 </div> -->
 
-                <div class="kLevels" onclick="window.location = '/games/Kolorlando/multiplayer.html' ">
+                <div id="yourWorldsMultiplayerCard" class="kLevels" onclick="window.location = '/games/Kolorlando/multiplayer.html' ">
                     <h2>Multiplayer</h2>
                     <div>
                         <img src="assets/imagenesPortada/Captura desde 2026-03-09 11-11-06.png" alt="">
@@ -212,16 +212,29 @@
     <script src="webscript.js"></script>
 
     <script src="/assets/scripts/supabase.js"></script>
+    <script src="accountSessionShared.js"></script>
     <script src="Kusers.js"></script>
     <script>
         const peopleOnlineCount = document.getElementById('peopleOnlineCount')
         const peopleOnlineList = document.getElementById('peopleOnlineList')
+        const LANDING_ACCOUNT_CLAIMED_STORAGE_KEY = 'kolorlando.accountClaimed'
+
+        function isLandingAccountClaimed() {
+            // Shared browser auth is not enough to publish a username here;
+            // the landing tab should only identify itself after it owns the
+            // Kolorlando account lock for this specific tab session.
+            return window.sessionStorage.getItem(LANDING_ACCOUNT_CLAIMED_STORAGE_KEY) === '1'
+        }
 
         function resolveLandingPresenceDisplayName() {
             // The landing page should show the same public-facing identity that
             // the rest of Kolorlando already caches for the game scene. When no
             // cached username exists yet, Presence should still publish a clear
             // anonymous fallback instead of an empty label.
+            if (!isLandingAccountClaimed()) {
+                return 'Anon'
+            }
+
             const storedName = window.localStorage.getItem('kolorlando.playerName')
             const trimmedStoredName = typeof storedName === 'string' ? storedName.trim() : ''
             return trimmedStoredName || 'Anon'
@@ -258,8 +271,8 @@
                 normalizedUrl === '/games/Kolorlando/multiplayer.html' ||
                 normalizedUrl.endsWith('/Kolorlando/multiplayer.html')
             const isSingleplayerPage =
-                normalizedUrl === '/games/Kolorlando/game.html' ||
-                normalizedUrl.endsWith('/Kolorlando/game.html')
+                normalizedUrl === '/games/Kolorlando/singleplayer.html' ||
+                normalizedUrl.endsWith('/Kolorlando/singleplayer.html')
 
             if (isLandingPage) {
                 return `Landing page`
@@ -348,6 +361,14 @@
             // resolved display name to keep the public roster truthful.
             publishLandingPresence().catch((error) => {
                 console.error('Could not refresh Kolorlando landing Presence.', error)
+            })
+        })
+
+        window.addEventListener('kolorlando:account-claimed-change', () => {
+            // Claim ownership decides whether this tab can publish a username
+            // at all, so the landing Presence row must refresh immediately.
+            publishLandingPresence().catch((error) => {
+                console.error('Could not refresh claimed Kolorlando Presence.', error)
             })
         })
     </script>

@@ -1,7 +1,7 @@
 export function renderKolorlandoMenuPanel(container) {
   if (!container) return;
 
-  /* The menu panel markup is shared by both game.html and multiplayer.html so
+  /* The menu panel markup is shared by both singleplayer.html and multiplayer.html so
   future menu edits land in one place instead of drifting between two copies.
   This renderer stays intentionally small and string-based because the menu is
   still static markup today; if scenario-specific branches appear later we can
@@ -187,7 +187,7 @@ export function renderKolorlandoMenuPanel(container) {
             <h3>Links</h3>
             <ul>
                 <li><a href="/games/Kolorlando/">Landing Page</a></li>
-                <li><a href="/games/Kolorlando/game.html">Game</a></li>
+                <li><a href="/games/Kolorlando/singleplayer.html">Singleplayer</a></li>
                 <li><a href="/games/Kolorlando/characteristics.html">Characteristics</a></li>
             </ul>
             <p>Game made with Three.js by dibesfer.</p>

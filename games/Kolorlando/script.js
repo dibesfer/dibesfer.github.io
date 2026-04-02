@@ -145,7 +145,7 @@ async function resolveAuthenticatedPlayerDisplayName() {
     if (error) {
       /* Anonymous visitors reach this branch when Supabase has no persisted
       session for the current browser yet. That state is expected on both
-      game.html and multiplayer.html, so we quietly keep the locally cached
+      singleplayer.html and multiplayer.html, so we quietly keep the locally cached
       fallback name instead of printing a scary console error. */
       const isMissingSessionError =
         error?.name === 'AuthSessionMissingError' ||

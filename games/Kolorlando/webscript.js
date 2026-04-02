@@ -16,6 +16,12 @@ let authModalPanel = document.getElementById("authModal_panel")
 let currentPage = "home"
 const navigablePages = new Set(["home", "avatar", "yourWorlds"])
 
+function isAuthModalLockedOpen(){
+    /* Duplicate-session state is a stop-state, so the shared shell should not
+    let outside click or Escape dismiss the modal until the user leaves. */
+    return window.kolorlandoAuthIsBlocked === true
+}
+
 function setAuthModalState(shouldOpen){
     /* One helper keeps every open/close path in sync so touch, click, escape,
     and future auth actions all update visibility and accessibility together. */
@@ -131,6 +137,10 @@ document.addEventListener("pointerdown", (event) => {
         return
     }
 
+    if (isAuthModalLockedOpen()){
+        return
+    }
+
     if (!authModalPanel.contains(event.target) && event.target !== idDivIcon){
         setAuthModalState(false)
     }
@@ -140,6 +150,9 @@ document.addEventListener("keydown", (event) => {
     /* Escape gives keyboard users a quick and familiar way to dismiss the
     auth modal without needing an extra visible close button right now. */
     if (event.key === "Escape"){
+        if (isAuthModalLockedOpen()){
+            return
+        }
         setAuthModalState(false)
     }
 })

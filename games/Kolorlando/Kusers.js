@@ -8,24 +8,315 @@ const authIdentity = document.getElementById("authIdentity")
 const authPassword = document.getElementById("authPassword")
 const authMessage = document.getElementById("authMessage")
 const authUserDisplay = document.getElementById("authUserDisplay")
+const authModalTitle = document.getElementById("authModal_title")
+const authStatusBadge = document.getElementById("authStatusBadge")
 const kAuthForm = document.getElementById("kAuthForm")
 const kAuthSubmit = document.getElementById("kAuthSubmit")
-const kAuthLogout = document.getElementById("kAuthLogout")
 const idDiv = document.getElementById("idDiv")
 const idDivUsername = document.getElementById("idDiv_username")
 const idDivIconWrapper = document.getElementById("idDiv_icon_wrapper")
-const KOLORLANDO_PLAYER_NAME_STORAGE_KEY = "kolorlando.playerName"
+const authStatusModalPanel = document.getElementById("authModal_panel")
+const authMainMenuWorldsCard = document.getElementById("mainMenu_worldsCard")
+const authYourWorldsIntroBox = document.getElementById("yourWorldsIntroBox")
+const authYourWorldsSingleplayerCard = document.getElementById("yourWorldsSingleplayerCard")
+const authYourWorldsMultiplayerCard = document.getElementById("yourWorldsMultiplayerCard")
+const AUTH_PLAYER_NAME_STORAGE_KEY = "kolorlando.playerName"
+const AUTH_ACCOUNT_SESSION_STORAGE_KEY = "kolorlando.accountSessionId"
+const AUTH_ACCOUNT_CLAIMED_STORAGE_KEY = "kolorlando.accountClaimed"
+const AUTH_ACCOUNT_SESSIONS_TABLE = "active_account_sessions"
+const AUTH_ACCOUNT_SESSION_HEARTBEAT_MS = 8000
+const AUTH_ACCOUNT_BLOCKED_MESSAGE = "This account is already active in another tab/window."
 
 let kolorlandoAuthUser = null
 let kolorlandoUserProfile = null
 let kolorlandoLoginReloadPending = false
+let kolorlandoAuthRefreshToken = 0
+let kolorlandoForcedSignedOutMessage = ""
+let kolorlandoAuthIsBlocked = false
+let kolorlandoBlockedDisplayName = "Anonymous"
+let kolorlandoAccountSessionId = ""
+let kolorlandoAccountHeartbeatIntervalId = 0
+let kolorlandoAccountHeartbeatInFlight = false
+let kolorlandoClaimProbeRequested = false
+const kolorlandoRedirectedBlockedHint = new URLSearchParams(window.location.search).get("session_blocked") === "1"
+
+window.kolorlandoAuthIsBlocked = false
+
+/* The landing page should always start from a neutral modal shell. Any real
+blocked state must be re-established by fresh auth + lock checks, not stale
+DOM classes or leftover per-tab storage from an older navigation. */
+authStatusBadge?.classList.add("invisible")
+authStatusModalPanel?.classList.remove("is-session-blocked")
+if (authModalTitle) {
+    authModalTitle.textContent = "Sign / Log in"
+}
+authUserDisplay.textContent = "Anonymous"
 
 /* These small text helpers keep the UI copy consistent every time auth
 state changes, whether that change comes from a page load, sign in, sign up,
 or sign out. */
 function setAuthMessage(message, isError) {
     authMessage.textContent = message
-    authMessage.style.color = isError ? "rgb(255, 165, 165)" : "rgb(255, 238, 174)"
+    authMessage.style.color = isError ? "rgb(255, 82, 82)" : "rgb(255, 238, 174)"
+    authMessage.style.fontWeight = isError ? "700" : "400"
+    authMessage.classList.toggle("is-session-blocked", Boolean(isError && kolorlandoAuthIsBlocked))
+}
+
+function persistKolorlandoClaimedState(isClaimed) {
+    /* Shared Supabase auth can exist in many tabs, but only the claimed tab
+    should behave like an authenticated Kolorlando owner. */
+    if (isClaimed) {
+        window.sessionStorage.setItem(AUTH_ACCOUNT_CLAIMED_STORAGE_KEY, "1")
+    } else {
+        window.sessionStorage.removeItem(AUTH_ACCOUNT_CLAIMED_STORAGE_KEY)
+    }
+
+    window.dispatchEvent(new CustomEvent("kolorlando:account-claimed-change", {
+        detail: {
+            isClaimed
+        }
+    }))
+}
+
+function hasKolorlandoClaimedState() {
+    return window.sessionStorage.getItem(AUTH_ACCOUNT_CLAIMED_STORAGE_KEY) === "1"
+}
+
+function requestKolorlandoClaimProbe() {
+    /* Landing should stay anonymous on passive load, but explicit account
+    actions like opening auth or entering Worlds should verify ownership now. */
+    kolorlandoClaimProbeRequested = true
+}
+
+function openAuthModalIfAvailable() {
+    /* The landing page owns the account modal, so redirect targets can ask it
+    to open from auth logic without duplicating visibility code here. */
+    if (typeof setAuthModalState === "function") {
+        setAuthModalState(true)
+    }
+}
+
+function resolveKolorlandoDisplayName(user, profile = null) {
+    if (typeof profile?.username === "string" && profile.username.trim()) {
+        return profile.username.trim()
+    }
+
+    if (typeof user?.email === "string" && user.email.includes("@")) {
+        return user.email.split("@")[0]
+    }
+
+    return "Anonymous"
+}
+
+function applyBlockedWorldEntryState() {
+    /* Blocking world entry at the menu level keeps the landing page truthful:
+    when an account lock is owned elsewhere, no local card should suggest the
+    player can still enter a world from this tab. */
+    const shouldHideWorldEntry = kolorlandoAuthIsBlocked
+
+    authMainMenuWorldsCard?.classList.toggle("invisible", shouldHideWorldEntry)
+    authYourWorldsIntroBox?.classList.toggle("invisible", shouldHideWorldEntry)
+    authYourWorldsSingleplayerCard?.classList.toggle("invisible", shouldHideWorldEntry)
+    authYourWorldsMultiplayerCard?.classList.toggle("invisible", shouldHideWorldEntry)
+
+    if (shouldHideWorldEntry && typeof renderPage === "function") {
+        renderPage("home")
+    }
+}
+
+function setBlockedModalState(isBlocked) {
+    /* The modal needs its own blocked presentation so duplicate sessions read
+    as a hard account state, not like a generic form validation error. */
+    authStatusBadge?.classList.add("invisible")
+    authStatusModalPanel?.classList.toggle("is-session-blocked", isBlocked)
+    if (authModalTitle) {
+        authModalTitle.textContent = isBlocked ? "Session Blocked" : "Sign / Log in"
+    }
+    if (isBlocked) {
+        authUserDisplay.textContent = kolorlandoBlockedDisplayName || "Anonymous"
+    } else if (!kolorlandoAuthUser) {
+        authUserDisplay.textContent = "Anonymous"
+    }
+    applyBlockedWorldEntryState()
+}
+
+function applyKolorlandoBlockedState(message = AUTH_ACCOUNT_BLOCKED_MESSAGE, displayName = "Anonymous") {
+    stopKolorlandoAccountHeartbeat()
+    kolorlandoForcedSignedOutMessage = message
+    kolorlandoAuthIsBlocked = true
+    window.kolorlandoAuthIsBlocked = true
+    kolorlandoBlockedDisplayName = displayName || "Anonymous"
+    persistKolorlandoClaimedState(false)
+    kolorlandoAuthUser = null
+    kolorlandoUserProfile = null
+    window.kolorlandoAuthUser = null
+    window.kolorlandoUserProfile = null
+    authIdentity.value = ""
+    authPassword.value = ""
+    setIdentityVisual(displayName, false)
+    setBlockedModalState(true)
+    setAuthMode(false)
+    setAuthMessage(message, true)
+    openAuthModalIfAvailable()
+}
+
+function clearKolorlandoBlockedState() {
+    kolorlandoForcedSignedOutMessage = ""
+    kolorlandoAuthIsBlocked = false
+    window.kolorlandoAuthIsBlocked = false
+    kolorlandoBlockedDisplayName = "Anonymous"
+    setBlockedModalState(false)
+    applyBlockedWorldEntryState()
+}
+
+function ensureKolorlandoAccountSessionId() {
+    /* A per-tab session id lets refreshes reclaim the same account lock while
+    a second tab still gets a genuinely different identity and is blocked. */
+    if (typeof window.ensureKolorlandoUniqueAccountSessionId === "function") {
+        kolorlandoAccountSessionId = window.ensureKolorlandoUniqueAccountSessionId()
+        return kolorlandoAccountSessionId
+    }
+
+    if (kolorlandoAccountSessionId) {
+        return kolorlandoAccountSessionId
+    }
+
+    const existingSessionId = window.sessionStorage.getItem(AUTH_ACCOUNT_SESSION_STORAGE_KEY)
+
+    if (existingSessionId) {
+        kolorlandoAccountSessionId = existingSessionId
+        return kolorlandoAccountSessionId
+    }
+
+    const generatedSessionId = typeof crypto?.randomUUID === "function"
+        ? crypto.randomUUID()
+        : `kolorlando-${Date.now()}-${Math.random().toString(16).slice(2)}`
+
+    kolorlandoAccountSessionId = generatedSessionId
+    window.sessionStorage.setItem(AUTH_ACCOUNT_SESSION_STORAGE_KEY, generatedSessionId)
+    return kolorlandoAccountSessionId
+}
+
+function stopKolorlandoAccountHeartbeat() {
+    /* The heartbeat must fully stop as soon as the tab loses ownership so a
+    stale interval cannot keep touching an account row after logout. */
+    if (kolorlandoAccountHeartbeatIntervalId) {
+        window.clearInterval(kolorlandoAccountHeartbeatIntervalId)
+        kolorlandoAccountHeartbeatIntervalId = 0
+    }
+}
+
+function isAccountSessionAlreadyActiveError(error) {
+    return /ACCOUNT_SESSION_ALREADY_ACTIVE/i.test(String(error?.message || error || ""))
+}
+
+function isMissingAuthSessionError(error) {
+    return error?.name === "AuthSessionMissingError"
+        || /auth session missing/i.test(String(error?.message || ""))
+}
+
+async function claimKolorlandoAccountSession() {
+    /* Claiming the account lock belongs in one helper so startup restore,
+    manual sign-in, and future protected pages all follow the same rule. */
+    const sessionId = ensureKolorlandoAccountSessionId()
+    const { data, error } = await database.rpc("claim_active_account_session", {
+        incoming_session_id: sessionId,
+        stale_after_seconds: 20
+    })
+
+    if (error) {
+        throw error
+    }
+
+    return data
+}
+
+async function hasKolorlandoSessionConflict(user) {
+    /* Passive landing tabs should be able to detect that another tab already
+    owns this account without claiming the lock or switching this tab into the
+    logged-in owner state. */
+    if (!user?.id) {
+        return false
+    }
+
+    const { data: sessionRows, error: sessionError } = await database
+        .from(AUTH_ACCOUNT_SESSIONS_TABLE)
+        .select("session_id, status, last_seen_at, released_at")
+        .eq("user_id", user.id)
+        .limit(1)
+
+    if (sessionError) {
+        throw sessionError
+    }
+
+    const activeSessionRow = sessionRows?.[0]
+
+    if (!activeSessionRow) {
+        return false
+    }
+
+    const isLiveActiveSession =
+        activeSessionRow.status === "active"
+        && !activeSessionRow.released_at
+        && typeof activeSessionRow.last_seen_at === "string"
+        && Date.now() - new Date(activeSessionRow.last_seen_at).getTime() < 20000
+
+    const localSessionId = ensureKolorlandoAccountSessionId()
+    return isLiveActiveSession && String(activeSessionRow.session_id || "") !== localSessionId
+}
+
+async function heartbeatKolorlandoAccountSession() {
+    if (kolorlandoAccountHeartbeatInFlight || !kolorlandoAuthUser) {
+        return
+    }
+
+    kolorlandoAccountHeartbeatInFlight = true
+
+    try {
+        await database.rpc("heartbeat_active_account_session", {
+            incoming_session_id: ensureKolorlandoAccountSessionId()
+        })
+    } catch (error) {
+        /* A lost lock should surface quickly and clearly instead of silently
+        leaving the page in a half-authenticated state. */
+        if (isAccountSessionAlreadyActiveError(error)) {
+            applyKolorlandoBlockedState()
+            return
+        }
+        stopKolorlandoAccountHeartbeat()
+        throw error
+    } finally {
+        kolorlandoAccountHeartbeatInFlight = false
+    }
+}
+
+function startKolorlandoAccountHeartbeat() {
+    stopKolorlandoAccountHeartbeat()
+    heartbeatKolorlandoAccountSession().catch((error) => {
+        console.error("Could not refresh the Kolorlando account session lock.", error)
+    })
+    kolorlandoAccountHeartbeatIntervalId = window.setInterval(() => {
+        heartbeatKolorlandoAccountSession().catch((error) => {
+            console.error("Could not refresh the Kolorlando account session lock.", error)
+        })
+    }, AUTH_ACCOUNT_SESSION_HEARTBEAT_MS)
+}
+
+async function releaseKolorlandoAccountSession() {
+    stopKolorlandoAccountHeartbeat()
+    persistKolorlandoClaimedState(false)
+
+    if (!kolorlandoAuthUser) {
+        return
+    }
+
+    try {
+        await database.rpc("release_active_account_session", {
+            incoming_session_id: ensureKolorlandoAccountSessionId()
+        })
+    } catch (error) {
+        console.warn("Could not release the Kolorlando account session lock.", error)
+    }
 }
 
 function setIdentityVisual(username, isLoggedIn) {
@@ -49,7 +340,7 @@ function persistKolorlandoPlayerName(username) {
     const safeUsername = typeof username === "string" ? username.trim() : ""
 
     if (!safeUsername) {
-        window.localStorage.removeItem(KOLORLANDO_PLAYER_NAME_STORAGE_KEY)
+        window.localStorage.removeItem(AUTH_PLAYER_NAME_STORAGE_KEY)
         /* The landing page Presence card is a separate script, so we emit one
         tiny browser event whenever the cached public player name changes. This
         lets the roster re-track immediately on logout instead of waiting for a
@@ -62,7 +353,7 @@ function persistKolorlandoPlayerName(username) {
         return
     }
 
-    window.localStorage.setItem(KOLORLANDO_PLAYER_NAME_STORAGE_KEY, safeUsername)
+    window.localStorage.setItem(AUTH_PLAYER_NAME_STORAGE_KEY, safeUsername)
     /* Login, signup confirmation, and future profile edits all flow through the
     same local cache helper, so a single event here keeps Presence metadata and
     any other identity-driven UI in sync without duplicating update calls. */
@@ -77,14 +368,15 @@ function setAuthMode(isLoggedIn) {
     /* The same modal handles both anonymous and authenticated users, so we
     hide the credential fields once a session exists and swap the action
     buttons instead of opening a second account panel. */
-    authIdentity.disabled = isLoggedIn
-    authPassword.disabled = isLoggedIn
-    authIdentity.style.display = isLoggedIn ? "none" : "block"
-    authPassword.style.display = isLoggedIn ? "none" : "block"
-    document.querySelector('label[for="authIdentity"]').style.display = isLoggedIn ? "none" : "block"
-    document.querySelector('label[for="authPassword"]').style.display = isLoggedIn ? "none" : "block"
-    kAuthSubmit.classList.toggle("invisible", isLoggedIn)
-    kAuthLogout.classList.toggle("invisible", !isLoggedIn)
+    const shouldHideCredentials = isLoggedIn || kolorlandoAuthIsBlocked
+
+    authIdentity.disabled = shouldHideCredentials
+    authPassword.disabled = shouldHideCredentials
+    authIdentity.style.display = shouldHideCredentials ? "none" : "block"
+    authPassword.style.display = shouldHideCredentials ? "none" : "block"
+    document.querySelector('label[for="authIdentity"]').style.display = shouldHideCredentials ? "none" : "block"
+    document.querySelector('label[for="authPassword"]').style.display = shouldHideCredentials ? "none" : "block"
+    kAuthSubmit.classList.toggle("invisible", shouldHideCredentials)
 }
 
 async function findUserByIdentity(identity) {
@@ -187,15 +479,36 @@ async function createUserProfile(newUser) {
 async function refreshAuthState() {
     /* The page can be opened with an existing Supabase session already saved
     in the browser, so we always reconcile the modal state from auth first. */
+    const refreshToken = ++kolorlandoAuthRefreshToken
     const { data, error } = await database.auth.getUser()
 
     if (error) {
+        if (isMissingAuthSessionError(error)) {
+            stopKolorlandoAccountHeartbeat()
+            clearKolorlandoBlockedState()
+            persistKolorlandoClaimedState(false)
+            kolorlandoAuthUser = null
+            kolorlandoUserProfile = null
+            window.kolorlandoAuthUser = null
+            window.kolorlandoUserProfile = null
+            persistKolorlandoPlayerName("")
+            authIdentity.value = ""
+            authPassword.value = ""
+            setIdentityVisual("Anonymous", false)
+            setAuthMode(false)
+            setAuthMessage("Join the adventure!", false)
+            return null
+        }
+
         throw error
     }
 
     const user = data.user
 
     if (!user) {
+        stopKolorlandoAccountHeartbeat()
+        clearKolorlandoBlockedState()
+        persistKolorlandoClaimedState(false)
         kolorlandoAuthUser = null
         kolorlandoUserProfile = null
         window.kolorlandoAuthUser = null
@@ -205,8 +518,55 @@ async function refreshAuthState() {
         authPassword.value = ""
         setIdentityVisual("Anonymous", false)
         setAuthMode(false)
-        setAuthMessage("Save and keep your data by logging in", false)
+        setAuthMessage("Join the adventure!", false)
         return null
+    }
+
+    const shouldAttemptLocalClaim =
+        kolorlandoLoginReloadPending ||
+        hasKolorlandoClaimedState() ||
+        kolorlandoClaimProbeRequested
+
+    if (!shouldAttemptLocalClaim) {
+        stopKolorlandoAccountHeartbeat()
+        if (await hasKolorlandoSessionConflict(user)) {
+            const passiveProfile = await ensureConfirmedProfile(user)
+            applyKolorlandoBlockedState(AUTH_ACCOUNT_BLOCKED_MESSAGE, resolveKolorlandoDisplayName(user, passiveProfile))
+            return null
+        }
+
+        clearKolorlandoBlockedState()
+        persistKolorlandoClaimedState(false)
+        kolorlandoAuthUser = null
+        kolorlandoUserProfile = null
+        window.kolorlandoAuthUser = null
+        window.kolorlandoUserProfile = null
+        authIdentity.value = ""
+        authPassword.value = ""
+        setIdentityVisual("Anonymous", false)
+        setAuthMode(false)
+        setAuthMessage("Join the adventure!", false)
+        return null
+    }
+
+    try {
+        await claimKolorlandoAccountSession()
+    } catch (claimError) {
+        if (isAccountSessionAlreadyActiveError(claimError)) {
+            kolorlandoClaimProbeRequested = false
+            applyKolorlandoBlockedState(AUTH_ACCOUNT_BLOCKED_MESSAGE, resolveKolorlandoDisplayName(user))
+            return null
+        } else {
+            kolorlandoForcedSignedOutMessage = "Could not validate your Kolorlando session."
+            console.error("Failed to claim the Kolorlando account session lock.", claimError)
+            clearKolorlandoBlockedState()
+        }
+
+        throw claimError
+    }
+
+    if (refreshToken !== kolorlandoAuthRefreshToken) {
+        return user
     }
 
     const confirmedProfile = await ensureConfirmedProfile(user)
@@ -220,10 +580,14 @@ async function refreshAuthState() {
     window.kolorlandoAuthUser = user
     window.kolorlandoUserProfile = confirmedProfile
 
+    clearKolorlandoBlockedState()
+    persistKolorlandoClaimedState(true)
+    kolorlandoClaimProbeRequested = false
     authIdentity.value = ""
     authPassword.value = ""
     persistKolorlandoPlayerName(username)
     setIdentityVisual(username, true)
+    startKolorlandoAccountHeartbeat()
 
     /* A successful password login now reloads the page immediately after the
     session is created. While that handoff is in progress we deliberately keep
@@ -275,7 +639,12 @@ async function logInWithEmail(email, password) {
         throw error
     }
 
-    await refreshAuthState()
+    const refreshedUser = await refreshAuthState()
+
+    if (!refreshedUser || kolorlandoAuthIsBlocked) {
+        kolorlandoLoginReloadPending = false
+        return
+    }
 
     /* A full reload right after a confirmed login makes the rest of the
     landing page boot again from the authenticated state, which is safer than
@@ -286,6 +655,8 @@ async function logInWithEmail(email, password) {
 
 async function handleAuthSubmit(event) {
     event.preventDefault()
+    clearKolorlandoBlockedState()
+    requestKolorlandoClaimProbe()
 
     const identity = authIdentity.value.trim()
     const password = authPassword.value
@@ -315,33 +686,30 @@ async function handleAuthSubmit(event) {
     }
 }
 
-async function handleLogOut() {
-    try {
-        kAuthLogout.disabled = true
-        /* Clearing the cached display name before the auth request finishes
-        guarantees the landing page roster immediately falls back to Anon even
-        if a reload is delayed or another auth refresh path throws later on. */
-        persistKolorlandoPlayerName("")
-        setIdentityVisual("Anonymous", false)
-        const { error } = await database.auth.signOut()
-
-        if (error) {
-            throw error
-        }
-
-        /* A full reload is the safest way to guarantee every Kolorlando menu
-        script, presence subscription, and cached UI fragment goes back to the
-        anonymous boot state immediately after the session is destroyed. */
-        window.location.reload()
-    } catch (error) {
-        setAuthMessage(error.message || "Log out error", true)
-    } finally {
-        kAuthLogout.disabled = false
-    }
-}
-
 kAuthForm.addEventListener("submit", handleAuthSubmit)
-kAuthLogout.addEventListener("click", handleLogOut)
+
+authMainMenuWorldsCard?.addEventListener("click", (event) => {
+    /* Worlds is the first protected landing action, so it should claim the
+    local account session before the router opens that section. */
+    event.preventDefault()
+    event.stopImmediatePropagation()
+
+    requestKolorlandoClaimProbe()
+
+    refreshAuthState()
+        .then((user) => {
+            if (user && !kolorlandoAuthIsBlocked && typeof changePage === "function") {
+                changePage("yourWorlds")
+                return
+            }
+
+            openAuthModalIfAvailable()
+        })
+        .catch((error) => {
+            setAuthMessage(error.message || "Could not refresh auth", true)
+            openAuthModalIfAvailable()
+        })
+}, true)
 
 /* This listener keeps the landing page identity widget synced when another
 tab signs in or out using the same Supabase session storage. */
@@ -351,6 +719,17 @@ database.auth.onAuthStateChange(() => {
     })
 })
 
+window.addEventListener("beforeunload", () => {
+    stopKolorlandoAccountHeartbeat()
+})
+
 refreshAuthState().catch((error) => {
     setAuthMessage(error.message || "Could not load auth", true)
 })
+
+if (kolorlandoRedirectedBlockedHint) {
+    /* A redirect from a protected page should only open the modal and seed the
+    explanation. The real blocked state still depends on auth + lock claim. */
+    openAuthModalIfAvailable()
+    window.history.replaceState({}, "", window.location.pathname)
+}

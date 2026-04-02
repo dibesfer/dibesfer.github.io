@@ -206,7 +206,7 @@
         // The Game chart focuses on the singleplayer runtime and its main
         // local subsystems rather than mixing in the landing site structure.
         drawSingleChart('chart_game', [
-          { id: 'game-root', parent: '', label: 'Game<div style="color:#2563eb; font-style:italic">game.html + script.js</div>', tooltip: 'Singleplayer runtime root' },
+          { id: 'game-root', parent: '', label: 'Game<div style="color:#2563eb; font-style:italic">singleplayer.html + script.js</div>', tooltip: 'Singleplayer runtime root' },
           { id: 'game-graphics', parent: 'game-root', label: 'Graphics<div style="color:#059669; font-style:italic">camera.js + screen.js</div>', tooltip: 'Camera modes and screen behavior' },
           { id: 'game-ui', parent: 'game-root', label: 'UI<div style="color:#059669; font-style:italic">code/UI</div>', tooltip: 'HUD, menu, inventory, minimap and chat' },
           { id: 'game-world', parent: 'game-root', label: 'World<div style="color:#059669; font-style:italic">maps + worldSaving.js</div>', tooltip: 'Voxel maps and local persistence' },
@@ -237,7 +237,7 @@
           { id: 'web-auth', parent: 'web-root', label: 'Auth<div style="color:#059669; font-style:italic">authModal + Kusers.js</div>', tooltip: 'Sign in and profile state' },
           { id: 'web-script', parent: 'web-root', label: 'Web Logic<div style="color:#059669; font-style:italic">webscript.js</div>', tooltip: 'Page switching and landing interactions' },
           { id: 'web-style', parent: 'web-root', label: 'Web Style<div style="color:#059669; font-style:italic">webstyle.css</div>', tooltip: 'Landing page styling' },
-          { id: 'web-singleplayer', parent: 'web-worlds', label: 'Singleplayer<div style="color:#dc2626; font-style:italic">game.html</div>', tooltip: 'Launch local game' },
+          { id: 'web-singleplayer', parent: 'web-worlds', label: 'Singleplayer<div style="color:#dc2626; font-style:italic">singleplayer.html</div>', tooltip: 'Launch local game' },
           { id: 'web-multiplayer', parent: 'web-worlds', label: 'Multiplayer<div style="color:#dc2626; font-style:italic">multiplayer.html</div>', tooltip: 'Launch online game' },
           { id: 'web-characteristics', parent: 'web-home', label: 'Karakteristiks<div style="color:#dc2626; font-style:italic">characteristics.html</div>', tooltip: 'Feature overview page' }
         ]);
