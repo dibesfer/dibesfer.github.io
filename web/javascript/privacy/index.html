@@ -42,6 +42,20 @@
 
         document.write("<p><b>System color therme:</b> " + colorTheme + "</p>")
 
+        let localVisits = localStorage.getItem("jsprivacy-localVisits")
+
+        if (localVisits == null){
+            localStorage.setItem("jsprivacy-localVisits", 1)
+            localVisits = localStorage.getItem("jsprivacy-localVisits")
+        }
+
+        else {
+            localVisits++
+            localStorage.setItem("jsprivacy-localVisits", localVisits)
+            localVisits = localStorage.getItem("jsprivacy-localVisits")
+        }
+
+        document.write("<p><b>Local visits:</b> " + localVisits + "</p>")
         
 
     </script>
