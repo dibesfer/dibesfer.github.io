@@ -9,55 +9,133 @@
         body {
             font-family: sans-serif;
         }
+
+        h3 {
+            background-color: rgb(192, 192, 192);
+            padding: 5px;
+        }
     </style>
 </head>
 
 <body>
     <h1>Javascript Privacy</h1>
     <h2>What does javascript know about you?</h2>
+
+    <h3>🌐 Page and Session</h3>
+    <p><b>Href</b>: <span id="href"></span></p>
+    <p><b>Referrer</b>: <span id="referrer"></span></p>
+    <p><b>History length</b>: <span id="history-length"></span></p>
+    <p><b>Date</b>: <span id="date"></span></p>
+
+    <h3>💻 Browser and Device</h3>
+    <p><b>UserAgent</b>: <span id="user-agent"></span></p>
+    <p><b>Platform</b>: <span id="platform"></span></p>
+    <p><b>Language</b>: <span id="language"></span></p>
+    <p><b>Cookies enabled</b>: <span id="cookies-enabled"></span></p>
+    <p><b>Online</b>: <span id="online"></span></p>
+    <p><b>Timezone</b>: <span id="timezone"></span></p>
+    <p><b>Screen width</b>: <span id="screen-width"></span></p>
+    <p><b>Screen height</b>: <span id="screen-height"></span></p>
+    <p><b>Device pixel ratio</b>: <span id="device-pixel-ratio"></span></p>
+    <p><b>Hardware concurrency</b>: <span id="hardware-concurrency"></span></p>
+    <p><b>Max touch points</b>: <span id="max-touch-points"></span></p>
+    <p><b>System color theme</b>: <span id="system-color-theme"></span></p>
+
+    <h3>🖱️ Live Interaction</h3>
+    <p><b>Window width</b>: <span id="window-width"></span></p>
+    <p><b>Window height</b>: <span id="window-height"></span></p>
+    <p><b>Display orientation</b>: <span id="display-orientation"></span></p>
+    <p><b>Cursor position</b>: <span id="cursor-position">x: 0, y: 0</span></p>
+
+    <h3>🗂️ Local Storage</h3>
+    <p><b>Local visits</b>: <span id="local-visits"></span></p>
+
     <script>
-        document.write("<p><b>Href</b>: " + window.location.href + "</p>")
-        document.write("<p><b>UserAgent</b>: " + navigator.userAgent + "</p>")
-        document.write("<p><b>Language</b>: " + (navigator.language || navigator.userLanguage) + "</p>")
+        // Bind each row to the DOM once, then push values into the page.
+        let href = document.getElementById("href")
+        let referrer = document.getElementById("referrer")
+        let userAgent = document.getElementById("user-agent")
+        let platform = document.getElementById("platform")
+        let language = document.getElementById("language")
+        let cookiesEnabled = document.getElementById("cookies-enabled")
+        let online = document.getElementById("online")
+        let timezone = document.getElementById("timezone")
+        let date = document.getElementById("date")
+        let screenWidth = document.getElementById("screen-width")
+        let screenHeight = document.getElementById("screen-height")
+        let devicePixelRatio = document.getElementById("device-pixel-ratio")
+        let windowWidth = document.getElementById("window-width")
+        let windowHeight = document.getElementById("window-height")
+        let displayOrientation = document.getElementById("display-orientation")
+        let historyLength = document.getElementById("history-length")
+        let hardwareConcurrency = document.getElementById("hardware-concurrency")
+        let maxTouchPoints = document.getElementById("max-touch-points")
+        let cursorPosition = document.getElementById("cursor-position")
+        let systemColorTheme = document.getElementById("system-color-theme")
+        let localVisitsElement = document.getElementById("local-visits")
+
         let userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
-        document.write("<p><b>Timezone</b>: " + userTimeZone + "</p>")
         let newDate = new Date()
-        document.write("<p><b>Date</b>: " + newDate + "</p>")
         let colorTheme = "light"
-        let screenHeight = screen.height
-        let screenWidth = screen.width
 
-        document.write("<p><b>Screen width</b>: " + screenWidth + "px </p>")
-        document.write("<p><b>Screen height</b>: " + screenHeight + "px </p>")
-
-        let w = window.innerWidth;
-        let h = window.innerHeight;
-
-        document.write("<p><b>Window width</b>: " + w + "px </p>")
-        document.write("<p><b>Window height</b>: " + h + "px </p>")
-
-        if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
             colorTheme = "dark"
         }
 
-        document.write("<p><b>System color therme:</b> " + colorTheme + "</p>")
+        href.textContent = window.location.href
+        referrer.textContent = document.referrer
+        userAgent.textContent = navigator.userAgent
+        platform.textContent = navigator.platform
+        language.textContent = navigator.language || navigator.userLanguage
+        cookiesEnabled.textContent = navigator.cookieEnabled
+        online.textContent = navigator.onLine
+        timezone.textContent = userTimeZone
+        date.textContent = newDate
+        screenWidth.textContent = screen.width + "px"
+        screenHeight.textContent = screen.height + "px"
+        devicePixelRatio.textContent = window.devicePixelRatio
+        historyLength.textContent = history.length
+        hardwareConcurrency.textContent = navigator.hardwareConcurrency
+        maxTouchPoints.textContent = navigator.maxTouchPoints
+        systemColorTheme.textContent = colorTheme
 
         let localVisits = localStorage.getItem("jsprivacy-localVisits")
 
-        if (localVisits == null){
+        if (localVisits == null) {
             localStorage.setItem("jsprivacy-localVisits", 1)
             localVisits = localStorage.getItem("jsprivacy-localVisits")
-        }
-
-        else {
+        } else {
             localVisits++
             localStorage.setItem("jsprivacy-localVisits", localVisits)
             localVisits = localStorage.getItem("jsprivacy-localVisits")
         }
 
-        document.write("<p><b>Local visits:</b> " + localVisits + "</p>")
-        
+        localVisitsElement.textContent = localVisits
 
+        // Keep window size live so resizing updates the current viewport values.
+        function updateWindowSize() {
+            let currentWidth = window.innerWidth
+            let currentHeight = window.innerHeight
+
+            if (currentWidth > currentHeight) {
+                displayOrientation.textContent = "landscape"
+            } else if (currentHeight > currentWidth) {
+                displayOrientation.textContent = "portrait"
+            } else {
+                displayOrientation.textContent = "perfect square"
+            }
+
+            windowWidth.textContent = currentWidth + "px"
+            windowHeight.textContent = currentHeight + "px"
+        }
+
+        // Show pointer tracking as the cursor moves across the page.
+        window.addEventListener("mousemove", function (event) {
+            cursorPosition.textContent = "x: " + event.clientX + ", y: " + event.clientY
+        })
+
+        updateWindowSize()
+        window.addEventListener("resize", updateWindowSize)
     </script>
 </body>
 
