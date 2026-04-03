@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>dibesfer</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <header>
+        <div class="invertable">
+            <img style="width: 60px;" src="/assets/branding/dibesfer-logo.png" alt="logo">
+        </div>
+
+        <div>
+            <a href="." onclick="reloadPage(event)"><img style="height: 80px;" class="invertable" src="/assets/branding/dibesfer-title.png" alt="dibesfer"></a>
+        </div>
+        <p>Dibujos y escritos de Fer</p>
+        <nav>
+            <p>
+                <span data-page="gallery" onclick="changePage('gallery')">Gallery</span> |
+                <span data-page="games" onclick="changePage('games')">Games</span> |
+                <span data-page="web" onclick="changePage('web')">Web</span>
+            </p>
+        </nav>
+    </header>
+    <main>
+        <iframe id="myIframe" src="gallery.html" frameborder="0"></iframe>
+    </main>
+    <footer>
+        <p>Visits 123</p>
+        <p><a href="https://dibesfer.github.io/web/donate/">donate</a></p>
+        <p><a href="mailto:dibesfer@gmail.com">dibesfer@gmail.com</a></p>
+        <div class="invertable">
+            <img style="width: 80px;" src="/assets/branding/fer-logo.png" alt="logo">
+        </div>
+    </footer>
+
+    <script>
+
+        const myIframe = document.getElementById("myIframe")
+        const navItems = document.querySelectorAll("nav > p > span")
+        const iframeStyle = `<link rel="stylesheet" href="iframeStyle.css">`
+        const pageMap = {
+            gallery: "gallery.html",
+            games: "games.html",
+            web: "web.html"
+        }
+
+        function setSelectedPage(pageKey) {
+            // Keep nav state derived from the current route.
+            navItems.forEach(item => {
+                item.classList.toggle("selected", item.dataset.page === pageKey)
+            })
+        }
+
+        function loadIframePage(pageKey) {
+            fetch(pageMap[pageKey])
+                .then(response => response.text())
+                .then(html => {
+                    myIframe.srcdoc = `${iframeStyle}${html}`
+                })
+        }
+
+        function renderPage(pageKey, shouldPushState = false) {
+            const safePageKey = pageMap[pageKey] ? pageKey : "gallery"
+            const nextUrl = safePageKey === "gallery"
+                ? window.location.pathname
+                : `${window.location.pathname}?page=${safePageKey}`
+
+            setSelectedPage(safePageKey)
+            loadIframePage(safePageKey)
+
+            if (shouldPushState && window.location.href !== new URL(nextUrl, window.location.origin).href) {
+                history.pushState({ page: safePageKey }, "", nextUrl)
+            }
+        }
+
+        function changePage(pageKey) {
+            renderPage(pageKey, true)
+        }
+
+        function reloadPage(event) {
+            // Reload from the base route so iframe state is rebuilt cleanly.
+            event.preventDefault()
+            window.location.href = window.location.pathname
+        }
+
+        window.addEventListener("popstate", event => {
+            renderPage(event.state?.page || getPageFromUrl())
+        })
+
+        function getPageFromUrl() {
+            const currentPage = new URLSearchParams(window.location.search).get("page")
+            return pageMap[currentPage] ? currentPage : "gallery"
+        }
+
+        renderPage(getPageFromUrl())
+
+
+    </script>
+</body>
+
+</html>
