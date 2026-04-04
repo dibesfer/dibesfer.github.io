@@ -1,5 +1,4 @@
 .bannerApp {
-    border: solid 1px white;
     border-radius: 10px;
     padding: 10px;
     display: flex;
@@ -34,9 +33,7 @@
     drop-shadow(0 0 0.5px white) 
     drop-shadow(0 0 0.5px white)
     drop-shadow(0 0 0.5px white)
-    drop-shadow(0 0 0.5px white) 
-    drop-shadow(0 0 0.5px white);
-}
+    }
 
 .bannerApp_icon>img {
     width: 100%;

@@ -59,7 +59,7 @@ banner = new Banner();
 
 
 
-banner.icon = "https://dibesfer.github.io/assets/branding/monochat-logo.png";
+banner.icon = "/assets/branding/monochat-logo150.png";
 banner.title = "Monochat";
 banner.desc = " Realtime anonymous chatting";
 banner.link = "https://dibesfer.com/web/chat/";
