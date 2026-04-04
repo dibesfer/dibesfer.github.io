@@ -1227,6 +1227,9 @@ const mapData = selectedMapBuilder({
   brickTexture,
   spawnPadTexture,
   brickTileSize: BRICK_TILE_SIZE,
+  /* Multiplayer should not synthesize extra authored NPCs locally; dynamic
+  shared instances will move behind the shared-world bootstrap instead. */
+  spawnDynamicEntities: !MULTIPLAYER_ENABLED,
 });
 const GROUND_Y = mapData.groundY;
 const buildingColliders = mapData.buildingColliders;
@@ -1555,16 +1558,6 @@ entities.push(new TalkerEntity({
   dialogLines: ['Welcome back to Kolorlando', 'Check the item appearances nearby', 'Debug mode shows the item spheres'],
 }));
 
-/* Vehicles are tracked alongside other world entities for now so existing
-HUD, minimap, and frame update systems can see them without another registry.
-This first spaceship is intentionally parked close to spawn for quick testing. */
-const firstSpaceShipPosition = new THREE.Vector3(30, 6, -7);
-entities.push(new SpaceShipVehicle({
-  scene,
-  position: firstSpaceShipPosition,
-  name: 'SpaceShip1',
-}));
-
 const itemAppearances = [];
 const PICKUP_ITEM_TYPES = new Set([
   SWORD_ITEM.id,
@@ -1597,66 +1590,77 @@ itemAppearances.push(new ItemAppearance({
   groundY: GROUND_Y + (SPAWN_POINT_ITEM.itemAppearance?.groundYOffset ?? 2),
 }));
 
-const swordItemSpawnPosition = playerSpawnPoint.clone().add(new THREE.Vector3(TEST_ITEM_SIDE_OFFSET, 0, -TEST_ITEM_BEHIND_DISTANCE));
-itemAppearances.push(new GoxelItemAppearance({
-  scene,
-  position: swordItemSpawnPosition,
-  label: SWORD_ITEM.label,
-  inventoryType: SWORD_ITEM.id,
-  pickable: SWORD_ITEM.pickable,
-  groundY: GROUND_Y,
-  modelUrl: SWORD_ITEM.itemAppearance?.modelUrl ?? 'assets/3D/weapons/sword.gltf',
-}));
-
-const gunItemSpawnPosition = playerSpawnPoint.clone().add(new THREE.Vector3(-TEST_ITEM_SIDE_OFFSET, 0, -TEST_ITEM_BEHIND_DISTANCE));
-itemAppearances.push(new GoxelItemAppearance({
-  scene,
-  position: gunItemSpawnPosition,
-  label: GUN_ITEM.label,
-  inventoryType: GUN_ITEM.id,
-  pickable: GUN_ITEM.pickable,
-  groundY: GROUND_Y,
-  modelUrl: GUN_ITEM.itemAppearance?.modelUrl ?? 'assets/3D/weapons/gun.gltf',
-}));
-
-const boxelSelectionToolSpawnPosition = playerSpawnPoint.clone().add(new THREE.Vector3(0, 0, -TEST_ITEM_BEHIND_DISTANCE - 3.2));
-itemAppearances.push(new BoxelSelectionToolItemAppearance({
-  scene,
-  position: boxelSelectionToolSpawnPosition,
-  /* The Boxel Selection Tool now renders as its own floating sigil plane so
-  the world pickup matches the icon used in the encyclopedia and inventory. */
-  label: BOXEL_SELECTION_TOOL_ITEM.label,
-  inventoryType: BOXEL_SELECTION_TOOL_ITEM.id,
-  pickable: BOXEL_SELECTION_TOOL_ITEM.pickable,
-  groundY: GROUND_Y,
-  iconUrl: BOXEL_SELECTION_TOOL_ITEM.itemAppearance?.iconUrl ?? 'assets/icons/Asymmetrical_symbol_of_Chaos.png',
-}));
-
-const coinSpawnOffsets = [
-  new THREE.Vector3(0, 0, -10),
-  new THREE.Vector3(3.2, 0, -9.4),
-  new THREE.Vector3(-3.2, 0, -9.4),
-  new THREE.Vector3(6.2, 0, -7.5),
-  new THREE.Vector3(-6.2, 0, -7.5),
-  new THREE.Vector3(8.1, 0, -4.2),
-  new THREE.Vector3(-8.1, 0, -4.2),
-  new THREE.Vector3(8.4, 0, 0.5),
-  new THREE.Vector3(-8.4, 0, 0.5),
-  new THREE.Vector3(0, 0, 9.5),
-];
-
-for (let i = 0; i < coinSpawnOffsets.length; i++) {
-  // These fixed offsets keep the coins around the same outer starter ring as the
-  // sword and gun so players naturally encounter them while exploring the area.
-  const coinPosition = playerSpawnPoint.clone().add(coinSpawnOffsets[i]);
-  itemAppearances.push(new CoinItemAppearance({
+if (!MULTIPLAYER_ENABLED) {
+  /* Singleplayer keeps the current authored starter kit, while multiplayer now
+  boots only the guide plus Spawn Point until shared dynamic instances land. */
+  const firstSpaceShipPosition = new THREE.Vector3(30, 6, -7);
+  entities.push(new SpaceShipVehicle({
     scene,
-    position: coinPosition,
-    label: COIN_ITEM.label,
-    inventoryType: COIN_ITEM.id,
-    pickable: COIN_ITEM.pickable,
-    groundY: GROUND_Y,
+    position: firstSpaceShipPosition,
+    name: 'SpaceShip1',
   }));
+
+  const swordItemSpawnPosition = playerSpawnPoint.clone().add(new THREE.Vector3(TEST_ITEM_SIDE_OFFSET, 0, -TEST_ITEM_BEHIND_DISTANCE));
+  itemAppearances.push(new GoxelItemAppearance({
+    scene,
+    position: swordItemSpawnPosition,
+    label: SWORD_ITEM.label,
+    inventoryType: SWORD_ITEM.id,
+    pickable: SWORD_ITEM.pickable,
+    groundY: GROUND_Y,
+    modelUrl: SWORD_ITEM.itemAppearance?.modelUrl ?? 'assets/3D/weapons/sword.gltf',
+  }));
+
+  const gunItemSpawnPosition = playerSpawnPoint.clone().add(new THREE.Vector3(-TEST_ITEM_SIDE_OFFSET, 0, -TEST_ITEM_BEHIND_DISTANCE));
+  itemAppearances.push(new GoxelItemAppearance({
+    scene,
+    position: gunItemSpawnPosition,
+    label: GUN_ITEM.label,
+    inventoryType: GUN_ITEM.id,
+    pickable: GUN_ITEM.pickable,
+    groundY: GROUND_Y,
+    modelUrl: GUN_ITEM.itemAppearance?.modelUrl ?? 'assets/3D/weapons/gun.gltf',
+  }));
+
+  const boxelSelectionToolSpawnPosition = playerSpawnPoint.clone().add(new THREE.Vector3(0, 0, -TEST_ITEM_BEHIND_DISTANCE - 3.2));
+  itemAppearances.push(new BoxelSelectionToolItemAppearance({
+    scene,
+    position: boxelSelectionToolSpawnPosition,
+    /* The Boxel Selection Tool now renders as its own floating sigil plane so
+    the world pickup matches the icon used in the encyclopedia and inventory. */
+    label: BOXEL_SELECTION_TOOL_ITEM.label,
+    inventoryType: BOXEL_SELECTION_TOOL_ITEM.id,
+    pickable: BOXEL_SELECTION_TOOL_ITEM.pickable,
+    groundY: GROUND_Y,
+    iconUrl: BOXEL_SELECTION_TOOL_ITEM.itemAppearance?.iconUrl ?? 'assets/icons/Asymmetrical_symbol_of_Chaos.png',
+  }));
+
+  const coinSpawnOffsets = [
+    new THREE.Vector3(0, 0, -10),
+    new THREE.Vector3(3.2, 0, -9.4),
+    new THREE.Vector3(-3.2, 0, -9.4),
+    new THREE.Vector3(6.2, 0, -7.5),
+    new THREE.Vector3(-6.2, 0, -7.5),
+    new THREE.Vector3(8.1, 0, -4.2),
+    new THREE.Vector3(-8.1, 0, -4.2),
+    new THREE.Vector3(8.4, 0, 0.5),
+    new THREE.Vector3(-8.4, 0, 0.5),
+    new THREE.Vector3(0, 0, 9.5),
+  ];
+
+  for (let i = 0; i < coinSpawnOffsets.length; i++) {
+    // These fixed offsets keep the coins around the same outer starter ring as the
+    // sword and gun so players naturally encounter them while exploring the area.
+    const coinPosition = playerSpawnPoint.clone().add(coinSpawnOffsets[i]);
+    itemAppearances.push(new CoinItemAppearance({
+      scene,
+      position: coinPosition,
+      label: COIN_ITEM.label,
+      inventoryType: COIN_ITEM.id,
+      pickable: COIN_ITEM.pickable,
+      groundY: GROUND_Y,
+    }));
+  }
 }
 
 
@@ -2402,6 +2406,9 @@ const multiplayerController = createMultiplayerController({
       maxHealth: playerState.maxHealth,
       isDead: playerState.isDead || playerState.health <= 0,
     })
+    : null,
+  getSharedWorldPlayerStates: MULTIPLAYER_ENABLED
+    ? () => currentMultiplayerWorldState?.players ?? null
     : null,
   onApplyLocalDamage: MULTIPLAYER_ENABLED
     ? amount => {

@@ -129,14 +129,17 @@ export function createPlayerNameSprite(name) {
   const material = new THREE.SpriteMaterial({
     map: texture,
     transparent: true,
-    depthWrite: false,
-    depthTest: false,
+    /* Nameplates are part of the 3D world, so they should participate in the
+    depth buffer instead of rendering as HUD overlays through geometry. */
+    depthWrite: true,
+    depthTest: true,
+    alphaTest: 0.12,
   });
 
   const sprite = new THREE.Sprite(material);
   sprite.scale.set(1.85, 0.56, 1);
   sprite.frustumCulled = false;
-  sprite.renderOrder = 20;
+  sprite.renderOrder = 10;
   sprite.userData.playerNameCanvas = canvas;
   sprite.userData.playerNameContext = context;
   sprite.userData.playerNameTexture = texture;

@@ -67,7 +67,10 @@ function createBorderedVoxelTexture() {
   return texture;
 }
 
-export function buildVoxelandiaMap({ scene }) {
+export function buildVoxelandiaMap({
+  scene,
+  spawnDynamicEntities = true,
+}) {
   const gridWidth = 100;
   const gridDepth = 100;
   const gridHeight = 3;
@@ -395,44 +398,48 @@ export function buildVoxelandiaMap({ scene }) {
     return intersectColliderBox(entitySpawnBox) !== null;
   }
 
-  let attempts = 0;
-  while (entities.length < WALKER_COUNT + CHASER_COUNT && attempts < 1200) {
-    attempts++;
-    const x = THREE.MathUtils.randFloat(jailMinX + 4, jailMaxX - 4);
-    const z = THREE.MathUtils.randFloat(jailMinZ + 4, jailMaxZ - 4);
-    if (collidesAtGround(x, z, ENTITY_SPAWN_MARGIN)) continue;
-    if (spawnPoint.distanceToSquared(new THREE.Vector3(x, spawnPoint.y, z)) < 64) continue;
+  if (spawnDynamicEntities) {
+    /* Multiplayer is moving toward shared dynamic-instance ownership, so this
+    authored map only injects its local random NPC set when the caller opts in. */
+    let attempts = 0;
+    while (entities.length < WALKER_COUNT + CHASER_COUNT && attempts < 1200) {
+      attempts++;
+      const x = THREE.MathUtils.randFloat(jailMinX + 4, jailMaxX - 4);
+      const z = THREE.MathUtils.randFloat(jailMinZ + 4, jailMaxZ - 4);
+      if (collidesAtGround(x, z, ENTITY_SPAWN_MARGIN)) continue;
+      if (spawnPoint.distanceToSquared(new THREE.Vector3(x, spawnPoint.y, z)) < 64) continue;
 
-    let tooClose = false;
-    entitySpawnPos.set(x, groundY, z);
-    for (let i = 0; i < entities.length; i++) {
-      if (entities[i].position.distanceToSquared(entitySpawnPos) < ENTITY_MIN_SPAWN_DIST_SQ) {
-        tooClose = true;
-        break;
+      let tooClose = false;
+      entitySpawnPos.set(x, groundY, z);
+      for (let i = 0; i < entities.length; i++) {
+        if (entities[i].position.distanceToSquared(entitySpawnPos) < ENTITY_MIN_SPAWN_DIST_SQ) {
+          tooClose = true;
+          break;
+        }
       }
-    }
-    if (tooClose) continue;
+      if (tooClose) continue;
 
-    if (entities.length < WALKER_COUNT) {
-      entities.push(new Entity({
-        scene,
-        position: entitySpawnPos,
-        groundY,
-        outfit: createWalkerOutfit(),
-        speed: THREE.MathUtils.randFloat(1.2, 2.1),
-        clearance: 1.0,
-      }));
-    } else {
-      entities.push(new HunterEntity({
-        scene,
-        position: entitySpawnPos,
-        groundY,
-        color: 0x7e1313,
-        speed: THREE.MathUtils.randFloat(2.0, 2.8),
-        clearance: 1.0,
-        detectionRadius: 10.0,
-        stopDistance: 1.5,
-      }));
+      if (entities.length < WALKER_COUNT) {
+        entities.push(new Entity({
+          scene,
+          position: entitySpawnPos,
+          groundY,
+          outfit: createWalkerOutfit(),
+          speed: THREE.MathUtils.randFloat(1.2, 2.1),
+          clearance: 1.0,
+        }));
+      } else {
+        entities.push(new HunterEntity({
+          scene,
+          position: entitySpawnPos,
+          groundY,
+          color: 0x7e1313,
+          speed: THREE.MathUtils.randFloat(2.0, 2.8),
+          clearance: 1.0,
+          detectionRadius: 10.0,
+          stopDistance: 1.5,
+        }));
+      }
     }
   }
 

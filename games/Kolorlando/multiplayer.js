@@ -337,6 +337,7 @@ function resolvePresenceUrl() {
 export function createMultiplayerController({
   scene,
   getLocalPlayerState,
+  getSharedWorldPlayerStates,
   onApplyLocalDamage,
   presenceOnly = false,
   peopleOnlineCountElement = document.getElementById('peopleOnlineCount'),
@@ -484,8 +485,66 @@ export function createMultiplayerController({
     syncRemotePlayerLifeState(remotePlayer);
   }
 
+  function readSharedWorldPlayerTransform(playerRecord) {
+    if (!playerRecord || typeof playerRecord !== 'object') return null;
+
+    return {
+      x: readFiniteNumber(playerRecord.x),
+      y: readFiniteNumber(playerRecord.y),
+      z: readFiniteNumber(playerRecord.z),
+      rotationY: readFiniteNumber(playerRecord.rotationY),
+      isMoving: false,
+    };
+  }
+
+  function applySharedWorldPlayerBootstrap(sessionId, playerRecord) {
+    if (!sessionId || sessionId === localSessionId) return;
+
+    const bootstrapTransform = readSharedWorldPlayerTransform(playerRecord);
+    if (!bootstrapTransform) return;
+
+    const remotePlayer = getOrCreateRemotePlayer(sessionId);
+    remotePlayer.targetPosition.set(
+      bootstrapTransform.x,
+      bootstrapTransform.y,
+      bootstrapTransform.z
+    );
+    remotePlayer.targetRotationY = bootstrapTransform.rotationY;
+    remotePlayer.isMoving = false;
+    latestTransformsBySessionId.set(sessionId, {
+      x: bootstrapTransform.x,
+      y: bootstrapTransform.y,
+      z: bootstrapTransform.z,
+    });
+
+    if (!remotePlayer.initialized) {
+      /* A late join should be able to materialize already-connected players
+      from the persisted world snapshot before any fresh movement packet lands. */
+      remotePlayer.currentPosition.copy(remotePlayer.targetPosition);
+      remotePlayer.root.position.copy(remotePlayer.targetPosition);
+      remotePlayer.root.rotation.y = remotePlayer.targetRotationY;
+      remotePlayer.initialized = true;
+      syncRemotePlayerCollider(remotePlayer);
+    }
+
+    if (playerRecord.displayName) {
+      syncRemotePlayerDisplayName(remotePlayer, playerRecord.displayName);
+    }
+
+    if (Number.isFinite(playerRecord.health) || Number.isFinite(playerRecord.maxHealth) || typeof playerRecord.isDead === 'boolean') {
+      remotePlayer.health = readFiniteNumber(playerRecord.health, remotePlayer.health);
+      remotePlayer.maxHealth = Math.max(1, readFiniteNumber(playerRecord.maxHealth, remotePlayer.maxHealth));
+      remotePlayer.isDead = Boolean(playerRecord.isDead) || remotePlayer.health <= 0;
+      syncRemotePlayerHealthBar(remotePlayer);
+      syncRemotePlayerLifeState(remotePlayer);
+    }
+  }
+
   function syncRemotePlayersFromState(state) {
     const seenRemoteSessionIds = new Set();
+    const sharedWorldPlayerStates = typeof getSharedWorldPlayerStates === 'function'
+      ? getSharedWorldPlayerStates()
+      : null;
 
     Object.entries(state).forEach(([presenceKey, sessions]) => {
       if (!Array.isArray(sessions) || sessions.length === 0) return;
@@ -497,9 +556,11 @@ export function createMultiplayerController({
 
       seenRemoteSessionIds.add(sessionId);
 
-      /* Presence tells us which remote sessions are alive, but not where they
-      are. We therefore wait for the first transform broadcast before creating
-      a visible avatar, which avoids phantom players appearing at spawn. */
+      /* Presence tells us which sessions are alive; the shared world snapshot
+      fills the initial transform gap for motionless players on late joins. */
+      if (sharedWorldPlayerStates && typeof sharedWorldPlayerStates === 'object') {
+        applySharedWorldPlayerBootstrap(sessionId, sharedWorldPlayerStates[sessionId]);
+      }
     });
 
     Array.from(remotePlayers.keys()).forEach(sessionId => {
