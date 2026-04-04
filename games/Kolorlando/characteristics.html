@@ -10,6 +10,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Ubuntu+Sans+Mono:ital,wght@0,400..700;1,400..700&display=swap"
         rel="stylesheet">
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
 
     <style>
         * {
@@ -100,7 +101,354 @@
             height: 400px;
             overflow: auto;
         }
+
+        .characteristicChart {
+            margin-top: 20px;
+            padding: 14px;
+            border: solid 2px white;
+            border-radius: 18px;
+            background: #0f0f0f;
+            box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+        }
+
+        .characteristicChartTitle {
+            margin-bottom: 10px;
+            color: #d4af37;
+            font-size: 0.95rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .chartHost {
+            width: 100%;
+            overflow: auto;
+            text-align: center;
+            transition: box-shadow 0.18s ease;
+        }
+
+        .chartHost.has-left-overflow {
+            box-shadow: inset 18px 0 20px -18px rgba(255, 255, 255, 0.34);
+        }
+
+        .chartHost.has-right-overflow {
+            box-shadow: inset -18px 0 20px -18px rgba(255, 255, 255, 0.34);
+        }
+
+        .chartHost.has-left-overflow.has-right-overflow {
+            box-shadow:
+                inset 18px 0 20px -18px rgba(255, 255, 255, 0.34),
+                inset -18px 0 20px -18px rgba(255, 255, 255, 0.34);
+        }
+
+        @media (hover: hover) and (pointer: fine) {
+            .chartHost {
+                cursor: grab;
+                user-select: none;
+                scrollbar-width: none;
+            }
+
+            .chartHost.is-dragging {
+                cursor: grabbing;
+            }
+
+            .chartHost::-webkit-scrollbar {
+                display: none;
+            }
+        }
+
+        .chartHost table {
+            display: inline-table;
+        }
+
+        .google-visualization-orgchart-node {
+            border: 3px solid #f5f5f5 !important;
+            border-radius: 18px !important;
+            padding: 6px 8px !important;
+            background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 100%) !important;
+            color: #f5f5f5 !important;
+            box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.45) !important;
+            font-family: "Ubuntu Sans Mono", monospace !important;
+            transition: transform 0.18s ease, box-shadow 0.18s ease !important;
+        }
+
+        .google-visualization-orgchart-node:hover {
+            transform: translateY(-2px);
+            box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.55) !important;
+        }
+
+        .google-visualization-orgchart-lineleft,
+        .google-visualization-orgchart-lineright,
+        .google-visualization-orgchart-linebottom {
+            border-color: #d4af37 !important;
+            border-width: 4px !important;
+        }
     </style>
+    <script>
+        google.charts.load('current', { packages: ['orgchart'] });
+        google.charts.setOnLoadCallback(drawCharacteristicsCharts);
+
+        function createChartRows(entries) {
+            return entries.map(function (entry) {
+                return [
+                    { v: entry.id, f: entry.label },
+                    entry.parent || '',
+                    entry.tooltip || ''
+                ];
+            });
+        }
+
+        function findRootEntry(entries) {
+            return entries.find(function (entry) {
+                return !entry.parent;
+            }) || null;
+        }
+
+        function createChildMap(entries) {
+            var childMap = new Map();
+
+            entries.forEach(function (entry) {
+                var parentId = entry.parent || '';
+                if (!childMap.has(parentId)) {
+                    childMap.set(parentId, []);
+                }
+
+                childMap.get(parentId).push(entry.id);
+            });
+
+            return childMap;
+        }
+
+        function createInitialCollapsedSet(entries) {
+            var collapsedIds = new Set();
+            var rootEntry = findRootEntry(entries);
+            if (!rootEntry) {
+                return collapsedIds;
+            }
+
+            entries.forEach(function (entry) {
+                if (entry.parent === rootEntry.id) {
+                    collapsedIds.add(entry.id);
+                }
+            });
+
+            return collapsedIds;
+        }
+
+        function hasCollapsedAncestor(entry, collapsedIds, entryById) {
+            var currentParentId = entry.parent || '';
+
+            while (currentParentId) {
+                if (collapsedIds.has(currentParentId)) {
+                    return true;
+                }
+
+                currentParentId = entryById.get(currentParentId)?.parent || '';
+            }
+
+            return false;
+        }
+
+        function buildVisibleEntries(entries, collapsedIds) {
+            var entryById = new Map(entries.map(function (entry) {
+                return [entry.id, entry];
+            }));
+
+            return entries.filter(function (entry) {
+                return !hasCollapsedAncestor(entry, collapsedIds, entryById);
+            });
+        }
+
+        function centerSingleChartHorizontally(chartHost) {
+            if (!chartHost) {
+                return;
+            }
+
+            var maxScrollLeft = Math.max(0, chartHost.scrollWidth - chartHost.clientWidth);
+            chartHost.scrollLeft = maxScrollLeft > 0 ? maxScrollLeft / 2 : 0;
+        }
+
+        function syncChartOverflowCues() {
+            document.querySelectorAll('.chartHost').forEach(function (chartHost) {
+                var maxScrollLeft = Math.max(0, chartHost.scrollWidth - chartHost.clientWidth);
+                var hasHorizontalOverflow = maxScrollLeft > 8;
+                var showLeftCue = hasHorizontalOverflow && chartHost.scrollLeft > 8;
+                var showRightCue = hasHorizontalOverflow && chartHost.scrollLeft < maxScrollLeft - 8;
+
+                chartHost.classList.toggle('has-left-overflow', showLeftCue);
+                chartHost.classList.toggle('has-right-overflow', showRightCue);
+            });
+        }
+
+        function enableDesktopDragScroll() {
+            var desktopPointerQuery = window.matchMedia('(hover: hover) and (pointer: fine)');
+            var DRAG_START_THRESHOLD = 8;
+            if (!desktopPointerQuery.matches) {
+                return;
+            }
+
+            document.querySelectorAll('.chartHost').forEach(function (chartHost) {
+                var dragState = null;
+
+                chartHost.addEventListener('pointerdown', function (event) {
+                    if (event.pointerType !== 'mouse' || event.button !== 0) {
+                        return;
+                    }
+
+                    if (event.target.closest('.google-visualization-orgchart-node')) {
+                        return;
+                    }
+
+                    dragState = {
+                        startX: event.clientX,
+                        startY: event.clientY,
+                        startScrollLeft: chartHost.scrollLeft,
+                        startScrollTop: chartHost.scrollTop,
+                        activated: false
+                    };
+                });
+
+                chartHost.addEventListener('pointermove', function (event) {
+                    if (!dragState) {
+                        return;
+                    }
+
+                    var deltaX = event.clientX - dragState.startX;
+                    var deltaY = event.clientY - dragState.startY;
+
+                    if (!dragState.activated) {
+                        if (Math.hypot(deltaX, deltaY) < DRAG_START_THRESHOLD) {
+                            return;
+                        }
+
+                        dragState.activated = true;
+                        chartHost.classList.add('is-dragging');
+                        chartHost.setPointerCapture(event.pointerId);
+                    }
+
+                    chartHost.scrollLeft = dragState.startScrollLeft - deltaX;
+                    chartHost.scrollTop = dragState.startScrollTop - deltaY;
+                });
+
+                function stopDrag(event) {
+                    if (!dragState) {
+                        return;
+                    }
+
+                    var wasDragging = dragState.activated;
+                    dragState = null;
+                    chartHost.classList.remove('is-dragging');
+
+                    if (wasDragging && chartHost.hasPointerCapture(event.pointerId)) {
+                        chartHost.releasePointerCapture(event.pointerId);
+                    }
+                }
+
+                chartHost.addEventListener('pointerup', stopDrag);
+                chartHost.addEventListener('pointercancel', stopDrag);
+                chartHost.addEventListener('scroll', syncChartOverflowCues, { passive: true });
+            });
+        }
+
+        function drawSingleChart(hostId, entries) {
+            var host = document.getElementById(hostId);
+            if (!host) {
+                return;
+            }
+
+            var childMap = createChildMap(entries);
+            var collapsedIds = createInitialCollapsedSet(entries);
+
+            function redrawChart() {
+                var visibleEntries = buildVisibleEntries(entries, collapsedIds);
+                var data = new google.visualization.DataTable();
+                data.addColumn('string', 'Name');
+                data.addColumn('string', 'Manager');
+                data.addColumn('string', 'ToolTip');
+                data.addRows(createChartRows(visibleEntries));
+
+                var chart = new google.visualization.OrgChart(host);
+
+                google.visualization.events.addListener(chart, 'ready', function () {
+                    centerSingleChartHorizontally(host);
+                    syncChartOverflowCues();
+                });
+
+                google.visualization.events.addListener(chart, 'select', function () {
+                    var selection = chart.getSelection();
+                    if (!selection.length) {
+                        return;
+                    }
+
+                    var selectedEntry = visibleEntries[selection[0].row];
+                    if (!selectedEntry) {
+                        return;
+                    }
+
+                    if (!(childMap.get(selectedEntry.id) || []).length) {
+                        return;
+                    }
+
+                    if (collapsedIds.has(selectedEntry.id)) {
+                        collapsedIds.delete(selectedEntry.id);
+                    } else {
+                        collapsedIds.add(selectedEntry.id);
+                    }
+
+                    redrawChart();
+                });
+
+                chart.draw(data, { allowHtml: true, allowCollapse: false });
+            }
+
+            redrawChart();
+        }
+
+        function drawCharacteristicsCharts() {
+            drawSingleChart('chart_web', [
+                { id: 'web-root', parent: '', label: 'Web<div style="color:#d4af37; font-style:italic">Landing experience</div>' },
+                { id: 'web-home', parent: 'web-root', label: 'Home<div style="color:#cfcfcf; font-style:italic">mainMenu</div>' },
+                { id: 'web-avatar', parent: 'web-root', label: 'Avatar Menu<div style="color:#cfcfcf; font-style:italic">avatarMenu</div>' },
+                { id: 'web-worlds', parent: 'web-root', label: 'Worlds Menu<div style="color:#cfcfcf; font-style:italic">yourWorldsMenu</div>' },
+                { id: 'web-auth', parent: 'web-root', label: 'Auth<div style="color:#cfcfcf; font-style:italic">authModal + Kusers.js</div>' },
+                { id: 'web-script', parent: 'web-root', label: 'Web Logic<div style="color:#cfcfcf; font-style:italic">webscript.js</div>' },
+                { id: 'web-style', parent: 'web-root', label: 'Web Style<div style="color:#cfcfcf; font-style:italic">webstyle.css</div>' },
+                { id: 'web-singleplayer', parent: 'web-worlds', label: 'Singleplayer<div style="color:#cfcfcf; font-style:italic">singleplayer.html</div>' },
+                { id: 'web-multiplayer', parent: 'web-worlds', label: 'Multiplayer<div style="color:#cfcfcf; font-style:italic">multiplayer.html</div>' },
+                { id: 'web-characteristics', parent: 'web-home', label: 'Karakteristiks<div style="color:#cfcfcf; font-style:italic">characteristics.html</div>' }
+            ]);
+
+            drawSingleChart('chart_player', [
+                { id: 'player-root', parent: '', label: 'Player<div style="color:#d4af37; font-style:italic">Avatar and gameplay body</div>' },
+                { id: 'player-avatar', parent: 'player-root', label: 'Avatar<div style="color:#cfcfcf; font-style:italic">Face system</div>' },
+                { id: 'player-avatar-shared', parent: 'player-avatar', label: 'Shared Face Data<div style="color:#cfcfcf; font-style:italic">sfcFace.js</div>' },
+                { id: 'player-avatar-editor', parent: 'player-avatar', label: 'SquareFaceCreator<div style="color:#cfcfcf; font-style:italic">/web/SquareFaceCreator</div>' },
+                { id: 'player-avatar-index', parent: 'player-avatar-editor', label: 'Editor Page<div style="color:#cfcfcf; font-style:italic">index.html</div>' },
+                { id: 'player-avatar-script', parent: 'player-avatar-editor', label: 'Editor Logic<div style="color:#cfcfcf; font-style:italic">script.js</div>' },
+                { id: 'player-avatar-style', parent: 'player-avatar-editor', label: 'Editor Style<div style="color:#cfcfcf; font-style:italic">style.css</div>' },
+                { id: 'player-avatar-assets', parent: 'player-avatar-editor', label: 'Face Assets<div style="color:#cfcfcf; font-style:italic">assets/categories</div>' }
+            ]);
+
+            drawSingleChart('chart_item', [
+                { id: 'item-root', parent: '', label: 'Item<div style="color:#d4af37; font-style:italic">Shared item model</div>' },
+                { id: 'item-base', parent: 'item-root', label: 'Definitions<div style="color:#cfcfcf; font-style:italic">code/item.js</div>' },
+                { id: 'item-holdable', parent: 'item-root', label: 'Holdables<div style="color:#cfcfcf; font-style:italic">attachment + action type</div>' },
+                { id: 'item-wearable', parent: 'item-root', label: 'Wearables<div style="color:#cfcfcf; font-style:italic">equipment flow pending</div>' },
+                { id: 'item-id', parent: 'item-root', label: 'Stable itemId<div style="color:#cfcfcf; font-style:italic">inventory identity</div>' }
+            ]);
+
+            drawSingleChart('chart_multiplayer', [
+                { id: 'multi-root', parent: '', label: 'Multiplayer<div style="color:#d4af37; font-style:italic">Online runtime</div>' },
+                { id: 'multi-presence', parent: 'multi-root', label: 'Presence<div style="color:#cfcfcf; font-style:italic">session roster</div>' },
+                { id: 'multi-broadcast', parent: 'multi-root', label: 'Broadcasting<div style="color:#cfcfcf; font-style:italic">transform sync</div>' },
+                { id: 'multi-auth', parent: 'multi-root', label: 'Authentication<div style="color:#cfcfcf; font-style:italic">landing auth bridge</div>' },
+                { id: 'multi-chat', parent: 'multi-root', label: 'Chat<div style="color:#cfcfcf; font-style:italic">shared UI path</div>' }
+            ]);
+
+            enableDesktopDragScroll();
+            syncChartOverflowCues();
+            window.addEventListener('resize', syncChartOverflowCues);
+        }
+    </script>
 </head>
 
 <body>
@@ -179,6 +527,15 @@
     </details>
 
     <details>
+        <summary>🕸️ Web</summary>
+        <p>Landing page, account entry, world access and page navigation.</p>
+        <div class="characteristicChart">
+            <p class="characteristicChartTitle">Chart</p>
+            <div id="chart_web" class="chartHost"></div>
+        </div>
+    </details>
+
+    <details>
         <summary>🧍 Player</summary>
         <ol>
             <li class="done">Movement, double jump and <span class="not-done">crouch</span>.</li>
@@ -216,6 +573,10 @@
             <li class="not-done">Telekinesis</li>
             <p>Moving, pulling or pushing objects around from a distance</p>
         </ol>
+        <div class="characteristicChart">
+            <p class="characteristicChartTitle">Chart</p>
+            <div id="chart_player" class="chartHost"></div>
+        </div>
     </details>
 
     <details>
@@ -230,6 +591,10 @@
             <li class="done">Stable inventory item ids</li>
             <p>Inventory-facing items are moving away from display-name-only identity <span class="implemented-in">code/item.js, code/UI/inventory.js, script.js</span></p>
         </ol>
+        <div class="characteristicChart">
+            <p class="characteristicChartTitle">Chart</p>
+            <div id="chart_item" class="chartHost"></div>
+        </div>
     </details>
 
     <details>
@@ -334,6 +699,10 @@
             <li class="not-used">Chat</li>
             <p><span class="implemented-in">code/UI/chat.js, singleplayer.html, multiplayer.html, style.css</span></p>
         </ol>
+        <div class="characteristicChart">
+            <p class="characteristicChartTitle">Chart</p>
+            <div id="chart_multiplayer" class="chartHost"></div>
+        </div>
 
         <pre class="myPre">
 Play Online Plan
