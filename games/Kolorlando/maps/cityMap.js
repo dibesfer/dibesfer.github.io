@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { Entity, HunterEntity, TalkerEntity } from '../entity.js';
+import { Entity, HunterEntity, TalkerEntity } from '../code/entities/entity.js';
 
 const ENTITY_MIN_SPAWN_DIST_SQ = 6.25;
 

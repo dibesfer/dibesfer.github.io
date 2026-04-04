@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { Entity, HunterEntity } from '../entity.js';
+import { Entity, HunterEntity } from '../code/entities/entity.js';
 
 const VOXEL_TYPES = [
   { name: 'red', color: 0xff4040 },

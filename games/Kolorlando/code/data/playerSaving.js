@@ -1,4 +1,4 @@
-import { DEFAULT_SFC_FACE, SFC_FACE_STORAGE_KEY, normalizeSfcFaceData } from '../../sfcFace.js';
+import { DEFAULT_SFC_FACE, SFC_FACE_STORAGE_KEY, normalizeSfcFaceData } from '../avatar/sfcFace.js';
 
 const KOLOR_PLAYERS_TABLE = 'KolorPlayers';
 

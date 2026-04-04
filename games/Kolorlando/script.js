@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { HunterEntity, TalkerEntity } from './entity.js';
+import { HunterEntity, TalkerEntity } from './code/entities/entity.js';
 import {
   createHumanoidModel,
   applyHumanoidIdleAnimation,
@@ -10,8 +10,8 @@ import {
   applyHumanoidLeftPunchAnimation,
   createPlayerNameSprite,
   updatePlayerNameSprite,
-} from './entityModel.js';
-import { createGameAudio } from './audio.js';
+} from './code/entities/entityModel.js';
+import { createGameAudio } from './code/audio/audio.js';
 import { createMiniMapUI } from './code/UI/minimap.js';
 import { createMenuUI } from './code/UI/menu.js';
 import { createCameraModeController } from './code/graphics/camera.js';
@@ -22,22 +22,33 @@ import {
 } from './code/UI/inventory.js';
 import { createChatUI } from './code/UI/chat.js';
 import { createPlayerHud } from './playerHud.js';
-import { BoxelSelectionToolItemAppearance, CoinItemAppearance, GoxelItemAppearance, ItemAppearance } from './itemAppearance.js';
+import { BoxelSelectionToolItemAppearance, CoinItemAppearance, GoxelItemAppearance, ItemAppearance } from './code/entities/itemAppearance.js';
 import { BOXEL_SELECTION_TOOL_ITEM, COIN_ITEM, GUN_ITEM, SPAWN_POINT_ITEM, SWORD_ITEM } from './code/item.js';
 import { buildSimpleMap } from './maps/simpleMap.js';
 import { buildCityMap } from './maps/cityMap.js';
 import { buildVoxelandiaMap } from './maps/voxelandiaMap.js';
-import { createMultiplayerController } from './multiplayer.js';
+import { createMultiplayerController } from './code/multiplayer/multiplayer.js';
 import { createCommandHandler } from './code/commands.js';
 import { createLocalWorldSaveStore } from './code/data/worldSaving.js';
 import { loadPlayerFaceData } from './code/data/playerSaving.js';
-import { SpaceShipVehicle } from './vehicle.js';
+import { SpaceShipVehicle } from './code/entities/vehicle.js';
 
 const KOLORLANDO_MODE = window.KOLORLANDO_MODE === 'multiplayer' ? 'multiplayer' : 'singleplayer';
 const MULTIPLAYER_ENABLED = KOLORLANDO_MODE === 'multiplayer';
 const KOLORLANDO_PLAYER_NAME_STORAGE_KEY = 'kolorlando.playerName';
+const KOLORLANDO_ACCOUNT_CLAIMED_STORAGE_KEY = 'kolorlando.accountClaimed';
 const KOLORLANDO_DEBUG_MODE_EVENT = 'kolorlando:debug-mode-change';
 const playerFaceDataResult = await loadPlayerFaceData();
+
+function canEditCurrentVoxelWorld() {
+  /* Shared multiplayer voxel edits should only run for authenticated tabs
+  that actually own a claimed Kolorlando account session on this page. */
+  if (!MULTIPLAYER_ENABLED) {
+    return true;
+  }
+
+  return window.sessionStorage.getItem(KOLORLANDO_ACCOUNT_CLAIMED_STORAGE_KEY) === '1';
+}
 
 function resolveLocalPlayerDisplayName() {
   /* The in-world player body lives on the game page, while auth currently
@@ -2633,6 +2644,19 @@ function syncPlayerFacing(facingDirection) {
   playerBody.rotation.y = Math.atan2(playerFacingDir.x, playerFacingDir.z);
 }
 
+function syncFirstPersonPlayerFacing() {
+  if (isLegoLolCameraMode()) return;
+  if (currentThirdPersonDistance > 0.001) return;
+
+  /* First-person camera yaw should still own the player body facing so every
+  downstream system that reads body rotation stays aligned while standing still. */
+  camera.getWorldDirection(playerFacingDir);
+  playerFacingDir.y = 0;
+  if (playerFacingDir.lengthSq() <= 0.0001) return;
+  playerFacingDir.normalize();
+  playerBody.rotation.y = Math.atan2(playerFacingDir.x, playerFacingDir.z);
+}
+
 function animatePlayerBody(deltaTime, isMoving) {
   if (isMoving) {
     playerWalkCycle += deltaTime * 10;
@@ -3336,6 +3360,8 @@ function triggerActionForMouseButton(button, options = {}) {
     }
 
     if (currentRaycastState.voxelEditionMode) {
+      if (!canEditCurrentVoxelWorld()) return;
+
       const removedVoxelType = resolveRaycastLabel(currentRaycastState.hit);
       const removedVoxelCell = getVoxelCellFromRaycastHit(currentRaycastState.hit);
       const removed = removeVoxelAtRaycastHit(currentRaycastState.hit);
@@ -3378,6 +3404,8 @@ function triggerActionForMouseButton(button, options = {}) {
     }
 
     if (currentRaycastState.voxelEditionMode) {
+      if (!canEditCurrentVoxelWorld()) return;
+
       // Placement must only consume actual voxel stacks. Non-build items can share
       // the hotbar, so we resolve a voxel-safe selection before touching the world.
       const selectedVoxelType = inventoryUI.getSelectedPlaceableVoxelType();
@@ -4324,6 +4352,8 @@ function updatePlayer(deltaTime) {
       syncPlayerFacing(playerAimFacing);
     } else if (horizontalMove.lengthSq() > 0.00001) {
       syncPlayerFacing(horizontalMove);
+    } else {
+      syncFirstPersonPlayerFacing();
     }
     animatePlayerBody(deltaTime, isMoving);
     syncCameraToPlayerView(deltaTime);
@@ -4356,6 +4386,8 @@ function updatePlayer(deltaTime) {
   } else if (isMoving) {
     playerMoveFacing.copy(horizontalMove);
     syncPlayerFacing(playerMoveFacing);
+  } else {
+    syncFirstPersonPlayerFacing();
   }
   animatePlayerBody(deltaTime, isMoving);
   syncCameraToPlayerView(deltaTime);

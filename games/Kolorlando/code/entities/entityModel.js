@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { drawSfcFaceToContext, normalizeSfcFaceData } from './sfcFace.js';
+import { drawSfcFaceToContext, normalizeSfcFaceData } from '../avatar/sfcFace.js';
 
 const MODEL_PART_SCALE = 0.9;
 const LIMB_PART_GAP = 0.04;
