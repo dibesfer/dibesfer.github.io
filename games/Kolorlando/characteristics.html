@@ -182,7 +182,8 @@
         <summary>🧍 Player</summary>
         <ol>
             <li class="done">Movement, double jump and <span class="not-done">crouch</span>.</li>
-            <p><span class="implemented-in">script.js. Crouch has no dedicated file yet.</span></p>
+            <p><span class="implemented-in">script.js</span></p>
+            <p>Crouch has no dedicated file yet.</p>
             <li class="done">Step-up movement over one-block obstacles</li>
             <p><span class="implemented-in">script.js</span></p>
             <li class="done">Fly mode</li>
@@ -197,23 +198,37 @@
                 <li class="done">Face creator</li>
                 <li class="not-done">Clothing design</li>
             </ol>
-            <p><span class="implemented-in">singleplayer.html, script.js, entityModel.js, sfcFace.js, index.html,
+            <p><span class="implemented-in">singleplayer.html, script.js, code/entities/entityModel.js, sfcFace.js, index.html,
                     /web/SquareFaceCreator/index.html, /web/SquareFaceCreator/script.js</span></p>
             <li class="not-done">Equipment/wearables</li>
             <p><span class="implemented-in">singleplayer.html, style.css</span></p>
             <li class="to-improve">Tools</li>
             <p>weapons/goxels (gltf models scaled 0.1 and centered on X Y Z) <span class="implemented-in">script.js,
-                    itemAppearance.js</span></p>
+                    code/entities/itemAppearance.js</span></p>
             <li class="done">HUD </li>
             <p>with health bar, selected voxel and game mode <span class="implemented-in">playerHud.js,
                     code/UI/inventory.js, singleplayer.html, style.css</span></p>
 
             <li class="done">Left and right punch</li>
-            <p><span class="implemented-in">script.js, entityModel.js</span></p>
+            <p><span class="implemented-in">script.js, code/entities/entityModel.js</span></p>
             <li class="done">Shooting</li>
             <p><span class="implemented-in">script.js</span></p>
             <li class="not-done">Telekinesis</li>
             <p>Moving, pulling or pushing objects around from a distance</p>
+        </ol>
+    </details>
+
+    <details>
+        <summary>🧰 Item</summary>
+        <ol>
+            <li class="done">Shared item definitions</li>
+            <p>Items now have stable ids, labels, descriptions, icons and world appearance data <span class="implemented-in">code/item.js</span></p>
+            <li class="done">Holdable items</li>
+            <p>Weapons and tools can declare hand attachment data and action type <span class="implemented-in">code/item.js</span></p>
+            <li class="not-done">Wearable equipment flow</li>
+            <p>Wearable item definitions exist, but the full equipment system is not connected yet <span class="implemented-in">code/item.js, singleplayer.html, style.css</span></p>
+            <li class="done">Stable inventory item ids</li>
+            <p>Inventory-facing items are moving away from display-name-only identity <span class="implemented-in">code/item.js, code/UI/inventory.js, script.js</span></p>
         </ol>
     </details>
 
@@ -233,16 +248,16 @@
         <ol>
             <li class="done">Save / Load world data locally</li>
             <li class="done">NPCs (walker, chaser, talker)</li>
-            <p><span class="implemented-in">entity.js, maps/voxelandiaMap.js, maps/cityMap.js, script.js</span></p>
+            <p><span class="implemented-in">code/entities/entity.js, maps/voxelandiaMap.js, maps/cityMap.js, script.js</span></p>
             <li class="not-done">Animals</li>
             <p><span class="implemented-in">No implementation file yet.</span></p>
             <li class="not-done">Pets</li>
             <p><span class="implemented-in">No implementation file yet.</span></p>
             <li class="not-used">Mounts / Vehicles</li>
-            <p><span class="implemented-in">vehicle.js, script.js</span></p>
+            <p><span class="implemented-in">code/entities/vehicle.js, script.js</span></p>
             <ol>
                 <li class="not-used">Spaceship</li>
-                <p><span class="implemented-in">vehicle.js, script.js</span></p>
+                <p><span class="implemented-in">code/entities/vehicle.js, script.js</span></p>
             </ol>
         </ol>
     </details>
@@ -307,15 +322,15 @@
         <summary>🌐 Multiplayer</summary>
         <ol>
             <li class="done">Presence</li>
-            <p>Remote sessions detection <span class="implemented-in">multiplayer.js, multiplayer.html,
+            <p>Remote sessions detection <span class="implemented-in">code/multiplayer/multiplayer.js, multiplayer.html,
                     index.html</span>
             </p>
             <li class="done">Broadcasting</li>
             <p>Low-latency updates on position, rotation and animation. <span
-                    class="implemented-in">multiplayer.js</span>
+                    class="implemented-in">code/multiplayer/multiplayer.js</span>
             </p>
             <li class="not-used">Authentication</li>
-            <p><span class="implemented-in">index.html, Kusers.js, webscript.js, webstyle.css</span></p>
+            <p><span class="implemented-in">index.html, code/auth/Kusers.js, webscript.js, webstyle.css</span></p>
             <li class="not-used">Chat</li>
             <p><span class="implemented-in">code/UI/chat.js, singleplayer.html, multiplayer.html, style.css</span></p>
         </ol>
@@ -447,7 +462,8 @@ later, if needed, back it with a DB active_session
             <p><span class="implemented-in">code/UI/menu.js, code/UI/menuPanelMarkup.js, singleplayer.html,
                     multiplayer.html</span></p>
             <li class="not-done">Background music</li>
-            <p><span class="implemented-in">UI only in: code/UI/menuPanelMarkup.js, singleplayer.html, multiplayer.html</span></p>
+            <p><span class="implemented-in">code/UI/menuPanelMarkup.js, singleplayer.html, multiplayer.html</span></p>
+            <p>UI only for now.</p>
         </ol>
     </details>
 
