@@ -9,6 +9,15 @@ const KOLORLANDO_TAB_STARTED_AT = Date.now();
 let kolorlandoResolvedAccountSessionId = "";
 let kolorlandoSessionProbeAttached = false;
 
+function logSharedSessionDebug(label, extra = {}) {
+  window.kolorlandoDebugConsole?.logState?.(label, {
+    runtimeId: KOLORLANDO_TAB_RUNTIME_ID,
+    sessionId: kolorlandoResolvedAccountSessionId || "",
+    startedAt: KOLORLANDO_TAB_STARTED_AT,
+    ...extra,
+  });
+}
+
 function generateKolorlandoAccountSessionId() {
   return typeof crypto?.randomUUID === "function"
     ? crypto.randomUUID()
@@ -99,6 +108,7 @@ function attachKolorlandoAccountSessionProbe() {
 
         writeKolorlandoAccountSessionId(generateKolorlandoAccountSessionId());
         announceKolorlandoAccountSessionId();
+        logSharedSessionDebug("Session: rotated");
       }
     } catch (error) {
       console.warn("Could not parse Kolorlando tab session probe.", error);

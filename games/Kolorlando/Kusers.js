@@ -26,6 +26,7 @@ const authYourWorldsMultiplayerCard = document.getElementById("yourWorldsMultipl
 const AUTH_PLAYER_NAME_STORAGE_KEY = "kolorlando.playerName"
 const AUTH_ACCOUNT_SESSION_STORAGE_KEY = "kolorlando.accountSessionId"
 const AUTH_ACCOUNT_CLAIMED_STORAGE_KEY = "kolorlando.accountClaimed"
+const AUTH_BROWSER_OWNERSHIP_STORAGE_KEY = "kolorlando.browserOwnedAccounts"
 const AUTH_ACCOUNT_SESSIONS_TABLE = "active_account_sessions"
 const AUTH_ACCOUNT_SESSION_HEARTBEAT_MS = 8000
 const AUTH_ACCOUNT_BLOCKED_MESSAGE = "This account is already active in another tab/window."
@@ -45,6 +46,17 @@ let kolorlandoAccountHeartbeatIntervalId = 0
 let kolorlandoAccountHeartbeatInFlight = false
 let kolorlandoClaimProbeRequested = false
 const kolorlandoRedirectedBlockedHint = new URLSearchParams(window.location.search).get("session_blocked") === "1"
+
+function logKolorlandoAuthDebug(label, extra = {}) {
+    /* Keep a tiny symbolic trace for auth/session flow so future debugging can
+    follow the path without the previous full-state console flood. */
+    window.kolorlandoDebugConsole?.logState?.(label, {
+        blockedReason: kolorlandoBlockedReason || "",
+        authBlocked: kolorlandoAuthIsBlocked,
+        claimedState: hasKolorlandoClaimedState(),
+        ...extra,
+    })
+}
 
 window.kolorlandoAuthIsBlocked = false
 window.kolorlandoBlockedReason = ""
@@ -74,6 +86,12 @@ function setKolorlandoBlockedReason(nextReason = "") {
     window.kolorlandoBlockedReason = nextReason
 }
 
+function isKolorlandoBlockedReasonAcknowledgable(reason = kolorlandoBlockedReason) {
+    /* Some blocked states should let this browser step back into anonymous mode
+    so the player can immediately try a different account. */
+    return reason === "login-attempt" || reason === "restore-conflict"
+}
+
 function persistKolorlandoClaimedState(isClaimed) {
     /* Shared Supabase auth can exist in many tabs, but only the claimed tab
     should behave like an authenticated Kolorlando owner. */
@@ -88,6 +106,64 @@ function persistKolorlandoClaimedState(isClaimed) {
             isClaimed
         }
     }))
+}
+
+function readKolorlandoBrowserOwnershipMap() {
+    /* Same-browser tabs share localStorage, so ownership history that should
+    survive opening a new tab belongs in one browser-scoped registry. */
+    try {
+        const rawValue = window.localStorage.getItem(AUTH_BROWSER_OWNERSHIP_STORAGE_KEY)
+
+        if (!rawValue) {
+            return {}
+        }
+
+        const parsedValue = JSON.parse(rawValue)
+        return parsedValue && typeof parsedValue === "object" ? parsedValue : {}
+    } catch (error) {
+        console.warn("Could not read Kolorlando browser ownership history.", error)
+        return {}
+    }
+}
+
+function writeKolorlandoBrowserOwnershipMap(nextMap) {
+    try {
+        window.localStorage.setItem(AUTH_BROWSER_OWNERSHIP_STORAGE_KEY, JSON.stringify(nextMap))
+    } catch (error) {
+        console.warn("Could not write Kolorlando browser ownership history.", error)
+    }
+}
+
+function persistKolorlandoBrowserOwnership(userId, sessionId = "") {
+    if (!userId) {
+        return
+    }
+
+    const ownershipMap = readKolorlandoBrowserOwnershipMap()
+    ownershipMap[String(userId)] = {
+        sessionId: String(sessionId || ""),
+        updatedAt: Date.now(),
+    }
+    writeKolorlandoBrowserOwnershipMap(ownershipMap)
+}
+
+function clearKolorlandoBrowserOwnership(userId) {
+    if (!userId) {
+        return
+    }
+
+    const ownershipMap = readKolorlandoBrowserOwnershipMap()
+    delete ownershipMap[String(userId)]
+    writeKolorlandoBrowserOwnershipMap(ownershipMap)
+}
+
+function hasKolorlandoBrowserOwnership(userId) {
+    if (!userId) {
+        return false
+    }
+
+    const ownershipMap = readKolorlandoBrowserOwnershipMap()
+    return Boolean(ownershipMap[String(userId)])
 }
 
 function hasKolorlandoClaimedState() {
@@ -160,7 +236,7 @@ function setBlockedModalState(isBlocked) {
         authUserDisplay.textContent = "Anonymous"
     }
 
-    kAuthAcknowledge?.classList.toggle("invisible", !(isBlocked && kolorlandoBlockedReason === "login-attempt"))
+    kAuthAcknowledge?.classList.toggle("invisible", !(isBlocked && isKolorlandoBlockedReasonAcknowledgable()))
     applyBlockedWorldEntryState()
 }
 
@@ -187,6 +263,11 @@ function applyKolorlandoBlockedState(message = AUTH_ACCOUNT_BLOCKED_MESSAGE, dis
     setBlockedModalState(true)
     setAuthMode(false)
     setAuthMessage(message, true)
+    logKolorlandoAuthDebug("Blocked state applied", {
+        displayName,
+        message,
+        reason,
+    })
     openAuthModalIfAvailable()
 }
 
@@ -198,6 +279,7 @@ function clearKolorlandoBlockedState() {
     setKolorlandoBlockedReason("")
     setBlockedModalState(false)
     applyBlockedWorldEntryState()
+    logKolorlandoAuthDebug("Blocked state cleared")
 }
 
 function ensureKolorlandoAccountSessionId() {
@@ -228,6 +310,54 @@ function ensureKolorlandoAccountSessionId() {
     return kolorlandoAccountSessionId
 }
 
+function clearKolorlandoAccountSessionId() {
+    /* A browser that acknowledged a restore-conflict should not keep reusing a
+    stale local session id on the next passive auth restore. */
+    kolorlandoAccountSessionId = ""
+    kolorlandoClaimedAccountSessionId = ""
+    window.sessionStorage.removeItem(AUTH_ACCOUNT_SESSION_STORAGE_KEY)
+}
+
+function clearSupabaseLocalAuthStorage() {
+    /* Some blocked restore paths can keep the persisted auth token even after a
+    failed or partial sign-out attempt, so we explicitly remove the local auth
+    cache keys owned by this browser profile. */
+    const authStorageKeys = []
+    const configuredStorageKey = window.database?.auth?.storageKey
+
+    if (typeof configuredStorageKey === "string" && configuredStorageKey.trim()) {
+        authStorageKeys.push(configuredStorageKey)
+    }
+
+    Object.keys(window.localStorage).forEach((key) => {
+        if (/^sb-.*-auth-token$/.test(key)) {
+            authStorageKeys.push(key)
+        }
+    })
+
+    Object.keys(window.sessionStorage).forEach((key) => {
+        if (/^sb-.*-auth-token$/.test(key)) {
+            authStorageKeys.push(key)
+        }
+    })
+
+    Array.from(new Set(authStorageKeys)).forEach((key) => {
+        window.localStorage.removeItem(key)
+        window.sessionStorage.removeItem(key)
+    })
+}
+
+function readStoredKolorlandoAccountSessionId() {
+    /* Passive restore checks should inspect existing local tab identity without
+    creating a brand-new session id that changes how conflicts are classified. */
+    if (typeof kolorlandoAccountSessionId === "string" && kolorlandoAccountSessionId.trim()) {
+        return kolorlandoAccountSessionId
+    }
+
+    const storedSessionId = window.sessionStorage.getItem(AUTH_ACCOUNT_SESSION_STORAGE_KEY)
+    return typeof storedSessionId === "string" ? storedSessionId.trim() : ""
+}
+
 function stopKolorlandoAccountHeartbeat() {
     /* The heartbeat must fully stop as soon as the tab loses ownership so a
     stale interval cannot keep touching an account row after logout. */
@@ -256,10 +386,17 @@ async function claimKolorlandoAccountSession() {
     })
 
     if (error) {
+        logKolorlandoAuthDebug("Account session claim failed", {
+            errorMessage: String(error?.message || error || ""),
+            sessionId,
+        })
         throw error
     }
 
     kolorlandoClaimedAccountSessionId = sessionId
+    logKolorlandoAuthDebug("Account session claimed", {
+        sessionId,
+    })
     return data
 }
 
@@ -293,8 +430,18 @@ async function hasKolorlandoSessionConflict(user) {
         && typeof activeSessionRow.last_seen_at === "string"
         && Date.now() - new Date(activeSessionRow.last_seen_at).getTime() < 20000
 
-    const localSessionId = ensureKolorlandoAccountSessionId()
-    return isLiveActiveSession && String(activeSessionRow.session_id || "") !== localSessionId
+    const localSessionId = readStoredKolorlandoAccountSessionId()
+
+    if (!isLiveActiveSession) {
+        return false
+    }
+
+    if (!localSessionId) {
+        return true
+    }
+
+    const hasConflict = String(activeSessionRow.session_id || "") !== localSessionId
+    return hasConflict
 }
 
 async function hasKolorlandoSessionConflictForUserId(userId) {
@@ -326,8 +473,17 @@ async function hasKolorlandoSessionConflictForUserId(userId) {
         && typeof activeSessionRow.last_seen_at === "string"
         && Date.now() - new Date(activeSessionRow.last_seen_at).getTime() < 20000
 
-    const localSessionId = ensureKolorlandoAccountSessionId()
-    return isLiveActiveSession && String(activeSessionRow.session_id || "") !== localSessionId
+    const localSessionId = readStoredKolorlandoAccountSessionId()
+
+    if (!isLiveActiveSession) {
+        return false
+    }
+
+    if (!localSessionId) {
+        return true
+    }
+
+    return String(activeSessionRow.session_id || "") !== localSessionId
 }
 
 async function heartbeatKolorlandoAccountSession() {
@@ -453,8 +609,22 @@ function setAuthMode(isLoggedIn) {
     document.querySelector('label[for="authIdentity"]').style.display = shouldHideCredentials ? "none" : "block"
     document.querySelector('label[for="authPassword"]').style.display = shouldHideCredentials ? "none" : "block"
     kAuthSubmit.classList.toggle("invisible", shouldHideCredentials)
-    kAuthAcknowledge?.classList.toggle("invisible", !(kolorlandoAuthIsBlocked && kolorlandoBlockedReason === "login-attempt"))
+    kAuthAcknowledge?.classList.toggle("invisible", !(kolorlandoAuthIsBlocked && isKolorlandoBlockedReasonAcknowledgable()))
     kAuthLogout?.classList.toggle("invisible", !(isLoggedIn && !kolorlandoAuthIsBlocked))
+}
+
+function hasLocalKolorlandoAccountOwnershipHistory(userId = "") {
+    /* Same-tab ownership still lives in sessionStorage, while same-browser new
+    tabs need a browser-scoped marker to stay distinct from other devices. */
+    if (kolorlandoClaimedAccountSessionId) {
+        return true
+    }
+
+    if (hasKolorlandoClaimedState()) {
+        return true
+    }
+
+    return hasKolorlandoBrowserOwnership(userId)
 }
 
 async function findUserByIdentity(identity) {
@@ -575,6 +745,7 @@ async function refreshAuthState() {
             setIdentityVisual("Anonymous", false)
             setAuthMode(false)
             setAuthMessage("Join the adventure!", false)
+            logKolorlandoAuthDebug("Auth: anonymous")
             return null
         }
 
@@ -597,6 +768,7 @@ async function refreshAuthState() {
         setIdentityVisual("Anonymous", false)
         setAuthMode(false)
         setAuthMessage("Join the adventure!", false)
+        logKolorlandoAuthDebug("Auth: anonymous")
         return null
     }
 
@@ -609,7 +781,17 @@ async function refreshAuthState() {
         stopKolorlandoAccountHeartbeat()
         if (await hasKolorlandoSessionConflict(user)) {
             const passiveProfile = await ensureConfirmedProfile(user)
-            applyKolorlandoBlockedState(AUTH_ACCOUNT_BLOCKED_MESSAGE, resolveKolorlandoDisplayName(user, passiveProfile), "shared-session")
+            const blockedReason = hasLocalKolorlandoAccountOwnershipHistory(user.id)
+                ? "shared-session"
+                : "restore-conflict"
+            logKolorlandoAuthDebug("Auth: blocked", {
+                blockedReason,
+            })
+            applyKolorlandoBlockedState(
+                AUTH_ACCOUNT_BLOCKED_MESSAGE,
+                resolveKolorlandoDisplayName(user, passiveProfile),
+                blockedReason
+            )
             return null
         }
 
@@ -624,6 +806,7 @@ async function refreshAuthState() {
         setIdentityVisual("Anonymous", false)
         setAuthMode(false)
         setAuthMessage("Join the adventure!", false)
+        logKolorlandoAuthDebug("Auth: passive")
         return null
     }
 
@@ -632,7 +815,12 @@ async function refreshAuthState() {
     } catch (claimError) {
         if (isAccountSessionAlreadyActiveError(claimError)) {
             kolorlandoClaimProbeRequested = false
-            const blockedReason = kolorlandoManualLoginAttempt ? "login-attempt" : "shared-session"
+            const blockedReason = hasLocalKolorlandoAccountOwnershipHistory(user.id)
+                ? "shared-session"
+                : "login-attempt"
+            logKolorlandoAuthDebug("Auth: blocked", {
+                blockedReason,
+            })
             applyKolorlandoBlockedState(AUTH_ACCOUNT_BLOCKED_MESSAGE, resolveKolorlandoDisplayName(user), blockedReason)
             return null
         } else {
@@ -667,6 +855,7 @@ async function refreshAuthState() {
     persistKolorlandoPlayerName(username)
     setIdentityVisual(username, true)
     startKolorlandoAccountHeartbeat()
+    persistKolorlandoBrowserOwnership(user.id, kolorlandoClaimedAccountSessionId || ensureKolorlandoAccountSessionId())
 
     /* A successful password login now reloads the page immediately after the
     session is created. While that handoff is in progress we deliberately keep
@@ -679,6 +868,9 @@ async function refreshAuthState() {
     }
 
     setAuthMessage(`You are logged as ${username}`, false)
+    logKolorlandoAuthDebug("Auth: owner", {
+        username,
+    })
 
     return user
 }
@@ -741,6 +933,7 @@ async function handleAuthLogout() {
 
     try {
         kAuthLogout.disabled = true
+        clearKolorlandoBrowserOwnership(kolorlandoAuthUser?.id)
         await releaseKolorlandoAccountSession()
         const { error } = await database.auth.signOut()
 
@@ -755,6 +948,65 @@ async function handleAuthLogout() {
         kAuthLogout.disabled = false
     }
 }
+
+async function clearBlockedBrowserAuthIfNeeded() {
+    /* Any acknowledgeable blocked state should leave this browser in a truly
+    local-anonymous mode. With local-only sign-out that no longer affects the
+    real owner browser, and it prevents blocked retries from restoring auth on
+    the next reload. */
+    if (!isKolorlandoBlockedReasonAcknowledgable()) {
+        return
+    }
+
+    try {
+        logKolorlandoAuthDebug("Auth: OK clear", {
+            reason: kolorlandoBlockedReason,
+        })
+        const { error } = await database.auth.signOut({
+            scope: "local"
+        })
+
+        if (error) {
+            throw error
+        }
+    } catch (error) {
+        console.warn("Could not clear the blocked browser auth session.", error)
+        logKolorlandoAuthDebug("Blocked OK failed local auth clear", {
+            errorMessage: String(error?.message || error || ""),
+        })
+    } finally {
+        clearSupabaseLocalAuthStorage()
+        clearKolorlandoAccountSessionId()
+        logKolorlandoAuthDebug("Auth: OK done")
+    }
+}
+
+async function acknowledgeKolorlandoBlockedState() {
+    /* Every acknowledge path should clear the same local blocked/auth state so
+    clicking OK, outside the modal, or Escape all behave identically. */
+    await clearBlockedBrowserAuthIfNeeded()
+    clearKolorlandoBlockedState()
+    persistKolorlandoClaimedState(false)
+    kolorlandoClaimProbeRequested = false
+    kolorlandoManualLoginAttempt = false
+    kolorlandoAuthUser = null
+    kolorlandoUserProfile = null
+    window.kolorlandoAuthUser = null
+    window.kolorlandoUserProfile = null
+    kolorlandoClaimedAccountSessionId = ""
+    authIdentity.value = ""
+    authPassword.value = ""
+    persistKolorlandoPlayerName("")
+    setIdentityVisual("Anonymous", false)
+    setAuthMode(false)
+    setAuthMessage("Join the adventure!", false)
+    logKolorlandoAuthDebug("Blocked OK completed")
+    if (typeof setAuthModalState === "function") {
+        setAuthModalState(false)
+    }
+}
+
+window.acknowledgeKolorlandoBlockedState = acknowledgeKolorlandoBlockedState
 
 async function handleAuthSubmit(event) {
     event.preventDefault()
@@ -779,7 +1031,14 @@ async function handleAuthSubmit(event) {
         if (existingProfile) {
             if (await hasKolorlandoSessionConflictForUserId(existingProfile.user_id)) {
                 kolorlandoClaimProbeRequested = false
-                applyKolorlandoBlockedState(AUTH_ACCOUNT_BLOCKED_MESSAGE, existingProfile.username || "Anonymous", "login-attempt")
+                const blockedReason = hasLocalKolorlandoAccountOwnershipHistory(existingProfile.user_id)
+                    ? "shared-session"
+                    : "login-attempt"
+                applyKolorlandoBlockedState(
+                    AUTH_ACCOUNT_BLOCKED_MESSAGE,
+                    existingProfile.username || "Anonymous",
+                    blockedReason
+                )
                 return
             }
             await logInWithEmail(existingProfile.email, password)
@@ -798,28 +1057,10 @@ async function handleAuthSubmit(event) {
 
 kAuthForm.addEventListener("submit", handleAuthSubmit)
 kAuthLogout?.addEventListener("click", handleAuthLogout)
-kAuthAcknowledge?.addEventListener("click", () => {
+kAuthAcknowledge?.addEventListener("click", async () => {
     /* A blocked login attempt should dismiss back to an anonymous modal so the
     player can try another account without affecting the protected session. */
-    clearKolorlandoBlockedState()
-    persistKolorlandoClaimedState(false)
-    kolorlandoClaimProbeRequested = false
-    kolorlandoManualLoginAttempt = false
-    kolorlandoAuthUser = null
-    kolorlandoUserProfile = null
-    window.kolorlandoAuthUser = null
-    window.kolorlandoUserProfile = null
-    kolorlandoClaimedAccountSessionId = ""
-    authIdentity.value = ""
-    authPassword.value = ""
-    persistKolorlandoPlayerName("")
-    setIdentityVisual("Anonymous", false)
-    setAuthMode(false)
-    setAuthMessage("Join the adventure!", false)
-    Promise.resolve(database.auth.signOut()).catch(() => {})
-    if (typeof setAuthModalState === "function") {
-        setAuthModalState(false)
-    }
+    await acknowledgeKolorlandoBlockedState()
 })
 
 authIconButton?.addEventListener("pointerdown", async (event) => {

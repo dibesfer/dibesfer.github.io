@@ -19,7 +19,26 @@ const navigablePages = new Set(["home", "avatar", "yourWorlds"])
 function isAuthModalLockedOpen(){
     /* Duplicate-session state is a stop-state, so the shared shell should not
     let outside click or Escape dismiss the modal until the user leaves. */
-    return window.kolorlandoAuthIsBlocked === true && window.kolorlandoBlockedReason !== "login-attempt"
+    return window.kolorlandoAuthIsBlocked === true
+        && window.kolorlandoBlockedReason !== "login-attempt"
+        && window.kolorlandoBlockedReason !== "restore-conflict"
+}
+
+function dismissAuthModalFromShell(){
+    /* Acknowledgeable blocked states should run the same cleanup even when the
+    player dismisses the modal from the shared backdrop or Escape key. */
+    if (
+        window.kolorlandoAuthIsBlocked === true
+        && (window.kolorlandoBlockedReason === "login-attempt" || window.kolorlandoBlockedReason === "restore-conflict")
+        && typeof window.acknowledgeKolorlandoBlockedState === "function"
+    ){
+        window.acknowledgeKolorlandoBlockedState().catch((error) => {
+            console.error("Could not acknowledge blocked Kolorlando auth state.", error)
+        })
+        return
+    }
+
+    setAuthModalState(false)
 }
 
 function setAuthModalState(shouldOpen){
@@ -142,7 +161,7 @@ document.addEventListener("pointerdown", (event) => {
     }
 
     if (!authModalPanel.contains(event.target) && event.target !== idDivIcon){
-        setAuthModalState(false)
+        dismissAuthModalFromShell()
     }
 })
 
@@ -153,6 +172,6 @@ document.addEventListener("keydown", (event) => {
         if (isAuthModalLockedOpen()){
             return
         }
-        setAuthModalState(false)
+        dismissAuthModalFromShell()
     }
 })

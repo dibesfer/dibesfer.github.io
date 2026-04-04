@@ -233,8 +233,12 @@
     <script src="accountSessionShared.js"></script>
     <script type="module">
         import { guardKolorlandoAccountSessionOrRedirect } from "./accountSessionGuard.js";
+        import { printKolorlandoDebugBootSummary } from "./code/data/debugConsole.js";
         import { renderKolorlandoMenuPanel } from "./code/UI/menuPanelMarkup.js";
         import { createMultiplayerWorldStore } from "./code/data/worldMultiplayerSaving.js";
+
+        // Runtime pages print the same first-pass debug summary before boot.
+        printKolorlandoDebugBootSummary();
 
         const canEnterKolorlandoPage = await guardKolorlandoAccountSessionOrRedirect();
 
