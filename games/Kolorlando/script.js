@@ -2998,14 +2998,40 @@ function shouldBlockMobilePinchTouch(touch) {
   return Boolean(target instanceof Element && target.closest(MOBILE_PINCH_BLOCK_SELECTOR));
 }
 
-function handleMobilePinchStart(event) {
-  if (!mobileMode || event.touches.length < 2) return;
+function isTouchInsideSceneView(touch) {
+  if (!touch || !sceneView || !sceneView.isConnected) return false;
 
-  const firstTouch = event.touches[0];
-  const secondTouch = event.touches[1];
-  if (shouldBlockMobilePinchTouch(firstTouch) || shouldBlockMobilePinchTouch(secondTouch)) {
-    return;
+  /* Pinch ownership belongs to the visible scene rectangle, not the global
+  touch list, so mobile-landscape side controls cannot accidentally hijack one
+  finger and prevent the camera zoom gesture from ever starting. */
+  const rect = sceneView.getBoundingClientRect();
+  return (
+    touch.clientX >= rect.left
+    && touch.clientX <= rect.right
+    && touch.clientY >= rect.top
+    && touch.clientY <= rect.bottom
+  );
+}
+
+function resolveScenePinchTouches(touchList) {
+  const sceneTouches = [];
+
+  for (let i = 0; i < touchList.length; i += 1) {
+    const touch = touchList[i];
+    if (!isTouchInsideSceneView(touch) || shouldBlockMobilePinchTouch(touch)) continue;
+    sceneTouches.push(touch);
+    if (sceneTouches.length === 2) break;
   }
+
+  return sceneTouches;
+}
+
+function handleMobilePinchStart(event) {
+  if (!mobileMode || isMenuCentralVisible()) return;
+
+  const [firstTouch, secondTouch] = resolveScenePinchTouches(event.touches);
+  if (!firstTouch || !secondTouch) return;
+
   pinchZoomTouchIds = [firstTouch.identifier, secondTouch.identifier];
   pinchStartDistance = getTouchDistance(firstTouch, secondTouch);
   pinchStartThirdPersonDistance = thirdPersonDistance;
@@ -3013,11 +3039,15 @@ function handleMobilePinchStart(event) {
 }
 
 function handleMobilePinchMove(event) {
-  if (!mobileMode || pinchZoomTouchIds.length !== 2) return;
+  if (!mobileMode || isMenuCentralVisible() || pinchZoomTouchIds.length !== 2) return;
 
   const firstTouch = findTouchByIdentifier(event.touches, pinchZoomTouchIds[0]);
   const secondTouch = findTouchByIdentifier(event.touches, pinchZoomTouchIds[1]);
   if (!firstTouch || !secondTouch) return;
+  if (!isTouchInsideSceneView(firstTouch) || !isTouchInsideSceneView(secondTouch)) {
+    resetMobilePinchZoom();
+    return;
+  }
 
   const pinchDistance = getTouchDistance(firstTouch, secondTouch);
   const pinchDelta = pinchStartDistance - pinchDistance;

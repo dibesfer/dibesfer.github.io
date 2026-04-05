@@ -119,6 +119,7 @@ a:hover {
     outline: none;
     z-index: 0;
     contain: layout paint size;
+    touch-action: none;
 }
 
 #sceneView canvas {
