@@ -1,4 +1,4 @@
-import { DEFAULT_SFC_FACE, SFC_FACE_STORAGE_KEY, normalizeSfcFaceData } from '../avatar/sfcFace.js';
+import { DEFAULT_SFC_FACE, SFC_FACE_STORAGE_KEY, mergeSfcFaceData, normalizeSfcFaceData } from '../avatar/sfcFace.js';
 
 const KOLOR_PLAYERS_TABLE = 'KolorPlayers';
 
@@ -12,6 +12,25 @@ function cloneJsonValue(value) {
 
 function isKolorPlayersWritePolicyError(error) {
   return error?.code === '42501';
+}
+
+function areJsonValuesEqual(leftValue, rightValue) {
+  return JSON.stringify(leftValue) === JSON.stringify(rightValue);
+}
+
+function resolveAuthoritativeFaceData(localFaceData, remoteFaceData) {
+  const normalizedLocalFaceData = normalizeSfcFaceData(localFaceData, DEFAULT_SFC_FACE);
+  const normalizedRemoteFaceData = normalizeSfcFaceData(remoteFaceData, DEFAULT_SFC_FACE);
+  const localUpdatedAt = Date.parse(normalizedLocalFaceData.updatedAt || '');
+  const remoteUpdatedAt = Date.parse(normalizedRemoteFaceData.updatedAt || '');
+
+  /* Newer saves should lead, but older timestamp-less payloads still need a
+  merge pass so editor-only selections do not disappear during auth bootstrap. */
+  if (Number.isFinite(localUpdatedAt) && (!Number.isFinite(remoteUpdatedAt) || localUpdatedAt > remoteUpdatedAt)) {
+    return mergeSfcFaceData(normalizedLocalFaceData, normalizedRemoteFaceData);
+  }
+
+  return mergeSfcFaceData(normalizedRemoteFaceData, normalizedLocalFaceData);
 }
 
 export function readLocalPlayerFaceData() {
@@ -150,12 +169,36 @@ export async function loadPlayerFaceData() {
     const remoteFaceData = ensuredPlayer.row?.avatar_face
       ? normalizeSfcFaceData(ensuredPlayer.row.avatar_face, DEFAULT_SFC_FACE)
       : localFaceData;
+    const resolvedFaceData = resolveAuthoritativeFaceData(localFaceData, remoteFaceData);
+    const remoteNeedsHealing = !areJsonValuesEqual(remoteFaceData, resolvedFaceData);
 
-    writeLocalPlayerFaceData(remoteFaceData);
+    if (remoteNeedsHealing && ensuredPlayer.row?.id) {
+      const database = getDatabaseClient();
+      const { data: healedRows, error: healedUpdateError } = await database
+        .from(KOLOR_PLAYERS_TABLE)
+        .update({
+          avatar_face: cloneJsonValue(resolvedFaceData),
+        })
+        .eq('id', ensuredPlayer.row.id)
+        .select()
+        .single();
+
+      if (healedUpdateError && !isKolorPlayersWritePolicyError(healedUpdateError)) {
+        throw healedUpdateError;
+      }
+
+      if (!healedUpdateError && healedRows) {
+        ensuredPlayer.row = healedRows;
+      }
+    }
+
+    writeLocalPlayerFaceData(resolvedFaceData);
 
     return {
-      faceData: remoteFaceData,
-      source: ensuredPlayer.created ? 'remote-created' : 'remote',
+      faceData: resolvedFaceData,
+      source: remoteNeedsHealing
+        ? (ensuredPlayer.created ? 'remote-created-healed' : 'remote-healed')
+        : (ensuredPlayer.created ? 'remote-created' : 'remote'),
       playerRow: ensuredPlayer.row,
     };
   } catch (error) {

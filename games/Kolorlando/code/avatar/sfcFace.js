@@ -4,6 +4,7 @@ export const SFC_FACE_STORAGE_KEY = 'kolorlando.playerFaceData';
 
 export const DEFAULT_SFC_FACE = {
   version: SFC_SUPPORTED_VERSION,
+  updatedAt: '',
   background: '#f0c9a5',
   currentCategory: 'eyes',
   items: {
@@ -247,6 +248,37 @@ function clampSfcItemIndex(categoryName, rawValue) {
   return normalizedIndex;
 }
 
+function normalizeSfcFaceUpdatedAt(rawValue) {
+  if (typeof rawValue !== 'string') {
+    return '';
+  }
+
+  const trimmedValue = rawValue.trim();
+  if (!trimmedValue) {
+    return '';
+  }
+
+  const parsedTime = Date.parse(trimmedValue);
+  return Number.isFinite(parsedTime)
+    ? new Date(parsedTime).toISOString()
+    : '';
+}
+
+function resolveSfcRuntimeSelectionUrl(faceData, categoryName) {
+  const runtimeCategoryEntries = SFC_CATEGORY_ITEMS[categoryName] || [];
+  const runtimeItem = runtimeCategoryEntries[faceData?.items?.[categoryName]] || null;
+  return resolveSfcImageUrlAlias(runtimeItem?.imgUrl || '');
+}
+
+function resolveSfcFaceSelectionUrl(faceData, categoryName) {
+  const editorSelectionUrl = resolveSfcImageUrlAlias(faceData?.editorSelectionUrls?.[categoryName] || '');
+  if (editorSelectionUrl) {
+    return editorSelectionUrl;
+  }
+
+  return resolveSfcRuntimeSelectionUrl(faceData, categoryName);
+}
+
 export function normalizeSfcFaceData(faceData, fallback = DEFAULT_SFC_FACE) {
   const fallbackFace = deepCloneSfcFaceData(fallback);
 
@@ -259,6 +291,7 @@ export function normalizeSfcFaceData(faceData, fallback = DEFAULT_SFC_FACE) {
 
   const normalizedFace = {
     version: SFC_SUPPORTED_VERSION,
+    updatedAt: normalizeSfcFaceUpdatedAt(faceData.updatedAt),
     background: SFC_HEX_COLOR_PATTERN.test(faceData.background || '')
       ? faceData.background
       : fallbackFace.background,
@@ -280,6 +313,47 @@ export function normalizeSfcFaceData(faceData, fallback = DEFAULT_SFC_FACE) {
   }
 
   return normalizedFace;
+}
+
+export function mergeSfcFaceData(primaryFaceData, secondaryFaceData) {
+  const normalizedPrimaryFace = normalizeSfcFaceData(primaryFaceData, DEFAULT_SFC_FACE);
+  const normalizedSecondaryFace = normalizeSfcFaceData(secondaryFaceData, DEFAULT_SFC_FACE);
+  const mergedFace = normalizeSfcFaceData(normalizedPrimaryFace, DEFAULT_SFC_FACE);
+  const primaryUpdatedAt = Date.parse(normalizedPrimaryFace.updatedAt || '');
+  const secondaryUpdatedAt = Date.parse(normalizedSecondaryFace.updatedAt || '');
+
+  /* When two storage layers disagree, newer data should usually win. Older
+  payloads without timestamps still get healed category-by-category below. */
+  if (Number.isFinite(secondaryUpdatedAt) && (!Number.isFinite(primaryUpdatedAt) || secondaryUpdatedAt > primaryUpdatedAt)) {
+    mergedFace.updatedAt = normalizedSecondaryFace.updatedAt;
+    mergedFace.background = normalizedSecondaryFace.background;
+    mergedFace.currentCategory = normalizedSecondaryFace.currentCategory;
+  }
+
+  for (let i = 0; i < SFC_CATEGORY_NAMES.length; i += 1) {
+    const categoryName = SFC_CATEGORY_NAMES[i];
+    const primarySelectionUrl = resolveSfcFaceSelectionUrl(normalizedPrimaryFace, categoryName);
+    const secondarySelectionUrl = resolveSfcFaceSelectionUrl(normalizedSecondaryFace, categoryName);
+    const selectedSelectionUrl = primarySelectionUrl || secondarySelectionUrl;
+    const selectedColor = normalizedPrimaryFace.colors?.[categoryName] || normalizedSecondaryFace.colors?.[categoryName] || '';
+
+    mergedFace.colors[categoryName] = selectedColor;
+    mergedFace.editorSelectionUrls[categoryName] = selectedSelectionUrl;
+
+    if (selectedSelectionUrl) {
+      const runtimeItemIndex = (SFC_CATEGORY_ITEMS[categoryName] || []).findIndex(item => (
+        resolveSfcImageUrlAlias(item?.imgUrl || '') === selectedSelectionUrl
+      ));
+      mergedFace.items[categoryName] = runtimeItemIndex;
+      continue;
+    }
+
+    if (normalizedPrimaryFace.items?.[categoryName] === -1 || normalizedSecondaryFace.items?.[categoryName] === -1) {
+      mergedFace.items[categoryName] = -1;
+    }
+  }
+
+  return mergedFace;
 }
 
 function createImageLoadPromise(imgUrl) {

@@ -30,6 +30,7 @@ let canvasBackgroundColor = DEFAULT_SFC_FACE.background;
 const saveCodeVersion = DEFAULT_SFC_FACE.version;
 const desktopPointerMediaQuery = window.matchMedia("(hover: hover) and (pointer: fine)");
 let faceSaveTimeoutId = 0;
+let faceStateUpdatedAt = DEFAULT_SFC_FACE.updatedAt || "";
 
 function createResolvedCategoryItems(rawCategoryItems) {
     return Object.fromEntries(
@@ -537,12 +538,19 @@ function buildSaveDataPayload() {
 
     return {
         version: saveCodeVersion,
+        updatedAt: faceStateUpdatedAt,
         background: canvasBackgroundColor,
         currentCategory,
         items,
         colors,
         editorSelectionUrls
     };
+}
+
+function markFaceStateDirty() {
+    // One shared revision timestamp lets local and remote storage agree on
+    // which face snapshot is newer without guessing from page flow order.
+    faceStateUpdatedAt = new Date().toISOString();
 }
 
 function generateSaveCode() {
@@ -565,6 +573,10 @@ function updateSaveDataPre() {
 }
 
 function applySaveDataPayload(saveData) {
+    faceStateUpdatedAt = typeof saveData?.updatedAt === "string"
+        ? saveData.updatedAt
+        : "";
+
     const savedItems = saveData?.items || {};
     const savedColors = saveData?.colors || {};
     const categoryNames = Object.keys(categoryItems);
@@ -1066,6 +1078,7 @@ categoryElements.forEach(categoryElement => {
         // Reading the category from HTML keeps the mapping simple and
         // makes future category switching work without hardcoded indexes.
         currentCategory = categoryElement.dataset.category || "eyes";
+        markFaceStateDirty();
 
         // Rebuilding the grid here ensures the visible item list always
         // matches the currently selected category before the next click.
@@ -1090,6 +1103,7 @@ faceItems.forEach(faceItem => {
         // so the user can toggle individual parts on and off easily.
         if (selectedCategoryImages[currentCategory] === clickedImgUrl) {
             delete selectedCategoryImages[currentCategory];
+            markFaceStateDirty();
             updateSelectedFaceItemStyles();
             updateSaveDataPre();
             redrawCanvas();
@@ -1102,6 +1116,7 @@ faceItems.forEach(faceItem => {
             // Saving the URL instead of the DOM node keeps the selected
             // layer stable even when the grid is rebuilt for categories.
             selectedCategoryImages[currentCategory] = clickedImgUrl;
+            markFaceStateDirty();
             updateSelectedFaceItemStyles();
             updateSaveDataPre();
             redrawCanvas();
@@ -1112,6 +1127,7 @@ faceItems.forEach(faceItem => {
             // Delayed loads still commit the selected image URL before
             // the combined canvas is repainted with all layers.
             selectedCategoryImages[currentCategory] = clickedImgUrl;
+            markFaceStateDirty();
             updateSelectedFaceItemStyles();
             updateSaveDataPre();
             redrawCanvas();
@@ -1123,6 +1139,7 @@ backgroundColorInput.addEventListener("input", () => {
     // Keeping the selected color in a variable makes future redraws
     // reuse the same background without reading the DOM each time.
     canvasBackgroundColor = backgroundColorInput.value;
+    markFaceStateDirty();
     updateSaveDataPre();
     redrawCanvas();
 });
@@ -1131,6 +1148,7 @@ secondaryColorInput.addEventListener("input", () => {
     // The tint belongs to the currently active category so the user can pick
     // a part, choose a color, and immediately see that specific layer change.
     selectedCategoryColors[currentCategory] = secondaryColorInput.value;
+    markFaceStateDirty();
     updateSaveDataPre();
     redrawCanvas();
 });
@@ -1151,6 +1169,7 @@ if (storedPlayerFaceData?.version === saveCodeVersion) {
     applySaveDataPayload(storedPlayerFaceData);
 } else {
     loadDefaultSelections();
+    markFaceStateDirty();
     renderCategoryItems(currentCategory);
     updateSelectedCategoryStyles();
     syncSecondaryColorInput();
