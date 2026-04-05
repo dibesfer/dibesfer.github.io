@@ -156,7 +156,32 @@ const SFC_CATEGORY_NAMES = Object.keys(SFC_CATEGORY_ITEMS);
 const SFC_HEX_COLOR_PATTERN = /^#[0-9a-f]{6}$/i;
 const imagePromiseCache = new Map();
 const recoloredCanvasCache = new Map();
-const SFC_SITE_ROOT_URL = new URL('../../', import.meta.url);
+const SFC_SITE_ROOT_URL = new URL('../../../../', import.meta.url);
+
+function tryRepairMalformedSfcUrl(imgUrl) {
+  if (!/^(?:[a-z]+:)?\/\//i.test(imgUrl)) {
+    return '';
+  }
+
+  try {
+    const parsedUrl = new URL(imgUrl);
+    if (parsedUrl.origin !== window.location.origin) {
+      return '';
+    }
+
+    if (parsedUrl.pathname.startsWith('/games/Kolorlando/web/')) {
+      return new URL(parsedUrl.pathname.replace('/games/Kolorlando/web/', '/web/'), parsedUrl.origin).href;
+    }
+
+    if (parsedUrl.pathname.startsWith('/games/Kolorlando/games/')) {
+      return new URL(parsedUrl.pathname.replace('/games/Kolorlando/games/', '/games/'), parsedUrl.origin).href;
+    }
+  } catch (error) {
+    return '';
+  }
+
+  return '';
+}
 
 export function resolveSfcImageUrlAlias(imgUrl, baseUrl = import.meta.url) {
   if (typeof imgUrl !== 'string') {
@@ -178,11 +203,22 @@ export function resolveSfcImageUrlAlias(imgUrl, baseUrl = import.meta.url) {
   data working on localhost, GitHub Pages, and subpath deployments like the
   Codeberg mirror without hardcoding a single domain root. */
   if (/^(?:[a-z]+:)?\/\//i.test(aliasedImgUrl) || /^(?:data|blob):/i.test(aliasedImgUrl)) {
+    const repairedUrl = tryRepairMalformedSfcUrl(aliasedImgUrl);
+    if (repairedUrl) {
+      return repairedUrl;
+    }
     return aliasedImgUrl;
   }
 
   if (aliasedImgUrl.startsWith('/')) {
     return new URL(aliasedImgUrl.slice(1), SFC_SITE_ROOT_URL).href;
+  }
+
+  /* Some older SFC catalog entries were stored as paths like ../../web/... from
+  inside feature folders. Re-anchoring them at the real site root keeps both
+  Kolorlando and SquareFaceCreator resolving the same shared assets. */
+  if (/^(?:\.\.\/)+(?:web|games)\//.test(aliasedImgUrl)) {
+    return new URL(aliasedImgUrl.replace(/^(?:\.\.\/)+/, ''), SFC_SITE_ROOT_URL).href;
   }
 
   return new URL(aliasedImgUrl, baseUrl).href;

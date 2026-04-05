@@ -39,6 +39,7 @@ const DEFAULT_ITEM_PLACEMENT_HEIGHT = 1;
 const GOXEL_MODEL_SCALE = 0.1;
 const boxelSelectionToolTextureLoader = new THREE.TextureLoader();
 const coinIconTextureLoader = new THREE.TextureLoader();
+const tabardTextureLoader = new THREE.TextureLoader();
 
 function createDefaultItemModel({
   color = 0xffcf4a,
@@ -265,6 +266,268 @@ function createBoxelSelectionToolItemModel({
   };
 }
 
+function createColorChestItemModel({
+  color = 0xffffff,
+  castShadow = true,
+  receiveShadow = false,
+} = {}) {
+  const root = new THREE.Group();
+  const armorMaterial = new THREE.MeshStandardMaterial({
+    color,
+    roughness: 0.6,
+    metalness: 0.12,
+    emissive: new THREE.Color(color).multiplyScalar(0.035),
+  });
+
+  // This wearable pickup mirrors the authored player upper-body silhouette so
+  // the world item reads like a detached chest equipment piece instead of a
+  // generic crate or crystal.
+  const hips = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.24, 0.28), armorMaterial);
+  hips.position.set(0, 0.12, 0);
+  setShadow(hips, castShadow, receiveShadow);
+  root.add(hips);
+
+  const chest = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.42, 0.3), armorMaterial);
+  chest.position.set(0, 0.48, 0);
+  setShadow(chest, castShadow, receiveShadow);
+  root.add(chest);
+
+  const leftUpperArm = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.33, 0.18), armorMaterial);
+  // Mirror the humanoid rig offsets directly so the wearable pickup stays
+  // vertically aligned with the authored chest and shoulder proportions.
+  leftUpperArm.position.set(-0.36, 0.525, 0);
+  setShadow(leftUpperArm, castShadow, receiveShadow);
+  root.add(leftUpperArm);
+
+  const rightUpperArm = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.33, 0.18), armorMaterial);
+  rightUpperArm.position.set(0.36, 0.525, 0);
+  setShadow(rightUpperArm, castShadow, receiveShadow);
+  root.add(rightUpperArm);
+
+  const leftForearm = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.3, 0.16), armorMaterial);
+  leftForearm.position.set(-0.36, 0.17, 0);
+  setShadow(leftForearm, castShadow, receiveShadow);
+  root.add(leftForearm);
+
+  const rightForearm = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.3, 0.16), armorMaterial);
+  rightForearm.position.set(0.36, 0.17, 0);
+  setShadow(rightForearm, castShadow, receiveShadow);
+  root.add(rightForearm);
+
+  return {
+    root,
+    height: measureModelHeight(root),
+  };
+}
+
+function createColorPantsItemModel({
+  color = 0xffffff,
+  castShadow = true,
+  receiveShadow = false,
+} = {}) {
+  const root = new THREE.Group();
+  const armorMaterial = new THREE.MeshStandardMaterial({
+    color,
+    roughness: 0.6,
+    metalness: 0.12,
+    emissive: new THREE.Color(color).multiplyScalar(0.035),
+  });
+
+  // This pickup mirrors the authored lower-body silhouette so the wearable
+  // reads like actual pants equipment instead of a generic white block.
+  const leftThigh = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.34, 0.2), armorMaterial);
+  leftThigh.position.set(-0.12, 0.17, 0);
+  setShadow(leftThigh, castShadow, receiveShadow);
+  root.add(leftThigh);
+
+  const rightThigh = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.34, 0.2), armorMaterial);
+  rightThigh.position.set(0.12, 0.17, 0);
+  setShadow(rightThigh, castShadow, receiveShadow);
+  root.add(rightThigh);
+
+  const leftShin = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.28, 0.18), armorMaterial);
+  leftShin.position.set(-0.12, -0.18, 0);
+  setShadow(leftShin, castShadow, receiveShadow);
+  root.add(leftShin);
+
+  const rightShin = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.28, 0.18), armorMaterial);
+  rightShin.position.set(0.12, -0.18, 0);
+  setShadow(rightShin, castShadow, receiveShadow);
+  root.add(rightShin);
+
+  return {
+    root,
+    height: measureModelHeight(root),
+  };
+}
+
+function createColorBootsItemModel({
+  color = 0xffffff,
+  castShadow = true,
+  receiveShadow = false,
+} = {}) {
+  const root = new THREE.Group();
+  const armorMaterial = new THREE.MeshStandardMaterial({
+    color,
+    roughness: 0.6,
+    metalness: 0.12,
+    emissive: new THREE.Color(color).multiplyScalar(0.035),
+  });
+
+  // This pickup mirrors the authored foot silhouette so the wearable reads as
+  // actual boots equipment and visually matches the humanoid shoe parts.
+  const leftBoot = new THREE.Mesh(new THREE.BoxGeometry(0.21, 0.1, 0.29), armorMaterial);
+  leftBoot.position.set(-0.14, 0, 0.06);
+  setShadow(leftBoot, castShadow, receiveShadow);
+  root.add(leftBoot);
+
+  const rightBoot = new THREE.Mesh(new THREE.BoxGeometry(0.21, 0.1, 0.29), armorMaterial);
+  rightBoot.position.set(0.14, 0, 0.06);
+  setShadow(rightBoot, castShadow, receiveShadow);
+  root.add(rightBoot);
+
+  return {
+    root,
+    height: measureModelHeight(root),
+  };
+}
+
+function createColorGlovesItemModel({
+  color = 0xffffff,
+  castShadow = true,
+  receiveShadow = false,
+} = {}) {
+  const root = new THREE.Group();
+  const armorMaterial = new THREE.MeshStandardMaterial({
+    color,
+    roughness: 0.6,
+    metalness: 0.12,
+    emissive: new THREE.Color(color).multiplyScalar(0.035),
+  });
+
+  // This pickup mirrors the authored hand silhouette so the item reads as a
+  // pair of gloves instead of a single abstract hand prop.
+  const rightGlove = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.12, 0.17), armorMaterial);
+  rightGlove.position.set(-0.12, 0, 0.015);
+  setShadow(rightGlove, castShadow, receiveShadow);
+  root.add(rightGlove);
+
+  const leftGlove = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.12, 0.17), armorMaterial);
+  leftGlove.position.set(0.12, 0, 0.015);
+  setShadow(leftGlove, castShadow, receiveShadow);
+  root.add(leftGlove);
+
+  return {
+    root,
+    height: measureModelHeight(root),
+  };
+}
+
+function createColorShouldersItemModel({
+  color = 0xffffff,
+  castShadow = true,
+  receiveShadow = false,
+} = {}) {
+  const root = new THREE.Group();
+  const armorMaterial = new THREE.MeshStandardMaterial({
+    color,
+    roughness: 0.6,
+    metalness: 0.12,
+    emissive: new THREE.Color(color).multiplyScalar(0.035),
+  });
+
+  const rightShoulder = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.22, 0.22), armorMaterial);
+  rightShoulder.position.set(-0.16, 0, 0);
+  setShadow(rightShoulder, castShadow, receiveShadow);
+  root.add(rightShoulder);
+
+  const leftShoulder = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.22, 0.22), armorMaterial);
+  leftShoulder.position.set(0.16, 0, 0);
+  setShadow(leftShoulder, castShadow, receiveShadow);
+  root.add(leftShoulder);
+
+  return {
+    root,
+    height: measureModelHeight(root),
+  };
+}
+
+function createColorHelmetItemModel({
+  color = 0xffffff,
+  castShadow = true,
+  receiveShadow = false,
+} = {}) {
+  const root = new THREE.Group();
+  const armorMaterial = new THREE.MeshStandardMaterial({
+    color,
+    roughness: 0.6,
+    metalness: 0.12,
+    emissive: new THREE.Color(color).multiplyScalar(0.035),
+  });
+
+  const helmet = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), armorMaterial);
+  setShadow(helmet, castShadow, receiveShadow);
+  root.add(helmet);
+
+  return {
+    root,
+    height: measureModelHeight(root),
+  };
+}
+
+function createColorCapeItemModel({
+  color = 0xffffff,
+  castShadow = true,
+  receiveShadow = false,
+} = {}) {
+  const root = new THREE.Group();
+  const capeMaterial = new THREE.MeshStandardMaterial({
+    color,
+    roughness: 0.62,
+    metalness: 0.08,
+    side: THREE.DoubleSide,
+    emissive: new THREE.Color(color).multiplyScalar(0.03),
+  });
+
+  const cape = new THREE.Mesh(new THREE.PlaneGeometry(0.48, 1.18), capeMaterial);
+  cape.position.set(0, -0.1, -0.03);
+  setShadow(cape, castShadow, receiveShadow);
+  root.add(cape);
+
+  return {
+    root,
+    height: measureModelHeight(root),
+  };
+}
+
+function createColorTabardItemModel({
+  imageUrl = 'games/Kolorlando/assets/icons/Asymmetrical_symbol_of_Chaos.png',
+  castShadow = true,
+  receiveShadow = false,
+} = {}) {
+  const root = new THREE.Group();
+  const texture = tabardTextureLoader.load(imageUrl);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  const tabardMaterial = new THREE.MeshStandardMaterial({
+    map: texture,
+    transparent: true,
+    alphaTest: 0.05,
+    roughness: 0.72,
+    metalness: 0.02,
+    side: THREE.DoubleSide,
+    depthWrite: false,
+  });
+
+  const tabard = new THREE.Mesh(new THREE.PlaneGeometry(0.48, 0.42), tabardMaterial);
+  setShadow(tabard, castShadow, receiveShadow);
+  root.add(tabard);
+
+  return {
+    root,
+    height: measureModelHeight(root),
+  };
+}
+
 export class ItemAppearance {
   constructor({
     scene,
@@ -434,6 +697,142 @@ export class BoxelSelectionToolItemAppearance extends ItemAppearance {
       placementHeight: options?.placementHeight ?? 0.9,
       floatHeight: options?.floatHeight ?? 0.5,
       rotationSpeed: options?.rotationSpeed ?? 1.15,
+    });
+  }
+}
+
+export class ColorChestItemAppearance extends ItemAppearance {
+  constructor(options) {
+    super({
+      ...options,
+      model: createColorChestItemModel({
+        color: options?.color,
+        castShadow: options?.castShadow,
+        receiveShadow: options?.receiveShadow,
+      }),
+      raycastSphereRadius: options?.raycastSphereRadius ?? 0.8,
+      placementHeight: options?.placementHeight ?? 1.05,
+      floatHeight: options?.floatHeight ?? 0.42,
+      rotationSpeed: options?.rotationSpeed ?? 0.9,
+    });
+  }
+}
+
+export class ColorPantsItemAppearance extends ItemAppearance {
+  constructor(options) {
+    super({
+      ...options,
+      model: createColorPantsItemModel({
+        color: options?.color,
+        castShadow: options?.castShadow,
+        receiveShadow: options?.receiveShadow,
+      }),
+      raycastSphereRadius: options?.raycastSphereRadius ?? 0.74,
+      placementHeight: options?.placementHeight ?? 0.86,
+      floatHeight: options?.floatHeight ?? 0.42,
+      rotationSpeed: options?.rotationSpeed ?? 0.9,
+    });
+  }
+}
+
+export class ColorBootsItemAppearance extends ItemAppearance {
+  constructor(options) {
+    super({
+      ...options,
+      model: createColorBootsItemModel({
+        color: options?.color,
+        castShadow: options?.castShadow,
+        receiveShadow: options?.receiveShadow,
+      }),
+      raycastSphereRadius: options?.raycastSphereRadius ?? 0.72,
+      placementHeight: options?.placementHeight ?? 0.34,
+      floatHeight: options?.floatHeight ?? 0.46,
+      rotationSpeed: options?.rotationSpeed ?? 0.9,
+    });
+  }
+}
+
+export class ColorGlovesItemAppearance extends ItemAppearance {
+  constructor(options) {
+    super({
+      ...options,
+      model: createColorGlovesItemModel({
+        color: options?.color,
+        castShadow: options?.castShadow,
+        receiveShadow: options?.receiveShadow,
+      }),
+      raycastSphereRadius: options?.raycastSphereRadius ?? 0.68,
+      placementHeight: options?.placementHeight ?? 0.22,
+      floatHeight: options?.floatHeight ?? 0.5,
+      rotationSpeed: options?.rotationSpeed ?? 0.9,
+    });
+  }
+}
+
+export class ColorShouldersItemAppearance extends ItemAppearance {
+  constructor(options) {
+    super({
+      ...options,
+      model: createColorShouldersItemModel({
+        color: options?.color,
+        castShadow: options?.castShadow,
+        receiveShadow: options?.receiveShadow,
+      }),
+      raycastSphereRadius: options?.raycastSphereRadius ?? 0.72,
+      placementHeight: options?.placementHeight ?? 0.3,
+      floatHeight: options?.floatHeight ?? 0.5,
+      rotationSpeed: options?.rotationSpeed ?? 0.9,
+    });
+  }
+}
+
+export class ColorHelmetItemAppearance extends ItemAppearance {
+  constructor(options) {
+    super({
+      ...options,
+      model: createColorHelmetItemModel({
+        color: options?.color,
+        castShadow: options?.castShadow,
+        receiveShadow: options?.receiveShadow,
+      }),
+      raycastSphereRadius: options?.raycastSphereRadius ?? 0.72,
+      placementHeight: options?.placementHeight ?? 0.5,
+      floatHeight: options?.floatHeight ?? 0.48,
+      rotationSpeed: options?.rotationSpeed ?? 0.9,
+    });
+  }
+}
+
+export class ColorCapeItemAppearance extends ItemAppearance {
+  constructor(options) {
+    super({
+      ...options,
+      model: createColorCapeItemModel({
+        color: options?.color,
+        castShadow: options?.castShadow,
+        receiveShadow: options?.receiveShadow,
+      }),
+      raycastSphereRadius: options?.raycastSphereRadius ?? 0.78,
+      placementHeight: options?.placementHeight ?? 1.18,
+      floatHeight: options?.floatHeight ?? 0.44,
+      rotationSpeed: options?.rotationSpeed ?? 0.9,
+    });
+  }
+}
+
+export class ColorTabardItemAppearance extends ItemAppearance {
+  constructor(options) {
+    super({
+      ...options,
+      model: createColorTabardItemModel({
+        imageUrl: options?.imageUrl,
+        castShadow: options?.castShadow,
+        receiveShadow: options?.receiveShadow,
+      }),
+      raycastSphereRadius: options?.raycastSphereRadius ?? 0.72,
+      placementHeight: options?.placementHeight ?? 0.42,
+      floatHeight: options?.floatHeight ?? 0.5,
+      rotationSpeed: options?.rotationSpeed ?? 0.9,
     });
   }
 }

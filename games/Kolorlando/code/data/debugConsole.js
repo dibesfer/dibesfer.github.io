@@ -1,4 +1,6 @@
 const KOLORLANDO_PLAYER_NAME_STORAGE_KEY = 'kolorlando.playerName';
+const KOLORLANDO_FACE_STORAGE_KEY = 'kolorlando.playerFaceData';
+const KOLORLANDO_WORLD_SAVE_PREFIX = 'kolorlando.worldSave.';
 const MODE_DESKTOP_LABEL = 'Desktop';
 const MODE_MOBILE_PORTRAIT_LABEL = 'Mobile/Portrait';
 const MODE_MOBILE_LANDSCAPE_LABEL = 'Mobile-Landscape';
@@ -31,6 +33,28 @@ function resolveStoredUsername() {
   return trimmedStoredName || 'Anonymous';
 }
 
+function resolveStoredLocalDataLabels() {
+  const labels = [];
+
+  try {
+    const storedFaceData = window.localStorage.getItem(KOLORLANDO_FACE_STORAGE_KEY);
+    if (typeof storedFaceData === 'string' && storedFaceData.trim()) {
+      labels.push('Face config');
+    }
+
+    for (let index = 0; index < window.localStorage.length; index += 1) {
+      const storageKey = window.localStorage.key(index);
+      if (!storageKey || !storageKey.startsWith(KOLORLANDO_WORLD_SAVE_PREFIX)) continue;
+      labels.push('World save');
+      break;
+    }
+  } catch (error) {
+    console.warn('Failed to inspect Kolorlando local data.', error);
+  }
+
+  return labels;
+}
+
 export function createDebugConsole() {
   function log(message, ...rest) {
     console.log(`Ariadna: ${message}`, ...rest);
@@ -45,8 +69,13 @@ export function createDebugConsole() {
   function logBootSummary() {
     /* One boot summary keeps the first page-level debug signal readable across
     the landing page and both runtime entry points. */
+    const localDataLabels = resolveStoredLocalDataLabels();
+    const localDataBlock = localDataLabels.length
+      ? `\nLocal data:\n-${localDataLabels.join('\n-')}`
+      : '';
+
     console.log(
-      `Ariadna:\n\nScreen mode: ${resolveViewportModeLabel()}\nusername: ${resolveStoredUsername()}`
+      `Ariadna:\n\nScreen mode: ${resolveViewportModeLabel()}\nusername: ${resolveStoredUsername()}${localDataBlock}`
     );
   }
 
@@ -56,6 +85,7 @@ export function createDebugConsole() {
     logBootSummary,
     resolveScreenModeLabel: resolveViewportModeLabel,
     resolveUsername: resolveStoredUsername,
+    resolveStoredLocalDataLabels,
   };
 }
 
@@ -81,4 +111,8 @@ export function resolveKolorlandoDebugScreenMode() {
 
 export function resolveKolorlandoDebugUsername() {
   return globalDebugConsole.resolveUsername();
+}
+
+export function resolveKolorlandoDebugLocalDataLabels() {
+  return globalDebugConsole.resolveStoredLocalDataLabels();
 }

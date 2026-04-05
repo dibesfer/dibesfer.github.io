@@ -218,6 +218,201 @@ export const BOXEL_SELECTION_TOOL_ITEM = new Holdable({
   stackLimit: 1,
 });
 
+export const COLOR_CHEST_ITEM = new Wearable({
+  id: 'color-chest',
+  label: 'Color Chest',
+  description: 'A white wearable chest piece built from the player torso and arm silhouette.',
+  icon: {
+    kind: 'image',
+    src: 'assets/armor/chest-armor.png',
+    alt: 'Color Chest',
+  },
+  itemAppearance: {
+    kind: 'color-chest',
+    color: 0xffffff,
+  },
+  wearSlot: 'chest',
+  attachment: {
+    slotName: 'torso',
+  },
+  metadata: {
+    humanoidWearable: {
+      type: 'chest',
+      color: 0xffffff,
+    },
+  },
+  pickable: true,
+  stackLimit: 1,
+});
+
+export const COLOR_PANTS_ITEM = new Wearable({
+  id: 'color-pants',
+  label: 'Color Pants',
+  description: 'A white wearable pants piece built from the player leg silhouette.',
+  icon: {
+    kind: 'image',
+    src: 'assets/armor/armored-pants.png',
+    alt: 'Color Pants',
+  },
+  itemAppearance: {
+    kind: 'color-pants',
+    color: 0xffffff,
+  },
+  wearSlot: 'pants',
+  metadata: {
+    humanoidWearable: {
+      type: 'pants',
+      color: 0xffffff,
+    },
+  },
+  pickable: true,
+  stackLimit: 1,
+});
+
+export const COLOR_BOOTS_ITEM = new Wearable({
+  id: 'color-boots',
+  label: 'Color Boots',
+  description: 'A white wearable boots piece built from the player foot silhouette.',
+  icon: {
+    kind: 'image',
+    src: 'assets/armor/steeltoe-boots.png',
+    alt: 'Color Boots',
+  },
+  itemAppearance: {
+    kind: 'color-boots',
+    color: 0xffffff,
+  },
+  wearSlot: 'boots',
+  metadata: {
+    humanoidWearable: {
+      type: 'boots',
+      color: 0xffffff,
+    },
+  },
+  pickable: true,
+  stackLimit: 1,
+});
+
+export const COLOR_GLOVES_ITEM = new Wearable({
+  id: 'color-gloves',
+  label: 'Color Gloves',
+  description: 'White wearable gloves that replace both player hands together.',
+  icon: {
+    kind: 'image',
+    src: 'assets/armor/gauntlet.png',
+    alt: 'Color Gloves',
+  },
+  itemAppearance: {
+    kind: 'color-gloves',
+    color: 0xffffff,
+  },
+  wearSlot: 'gloves',
+  metadata: {
+    humanoidWearable: {
+      type: 'gloves',
+      color: 0xffffff,
+    },
+  },
+  pickable: true,
+  stackLimit: 1,
+});
+
+export const COLOR_SHOULDERS_ITEM = new Wearable({
+  id: 'color-shoulders',
+  label: 'Color Shoulders',
+  description: 'White shoulder cubes that equip symmetrically on both shoulders.',
+  icon: {
+    kind: 'image',
+    src: 'assets/armor/spiked-shoulder-armor.png',
+    alt: 'Color Shoulders',
+  },
+  itemAppearance: {
+    kind: 'color-shoulders',
+    color: 0xffffff,
+  },
+  wearSlot: 'shoulders',
+  metadata: {
+    humanoidWearable: {
+      type: 'shoulders',
+      color: 0xffffff,
+    },
+  },
+  pickable: true,
+  stackLimit: 1,
+});
+
+export const COLOR_HELMET_ITEM = new Wearable({
+  id: 'color-helmet',
+  label: 'Color Helmet',
+  description: 'A white helmet that replaces the full head, face, and hair silhouette.',
+  icon: {
+    kind: 'image',
+    src: 'assets/armor/crested-helmet.png',
+    alt: 'Color Helmet',
+  },
+  itemAppearance: {
+    kind: 'color-helmet',
+    color: 0xffffff,
+  },
+  wearSlot: 'helmet',
+  metadata: {
+    humanoidWearable: {
+      type: 'helmet',
+      color: 0xffffff,
+    },
+  },
+  pickable: true,
+  stackLimit: 1,
+});
+
+export const COLOR_CAPE_ITEM = new Wearable({
+  id: 'color-cape',
+  label: 'Color Cape',
+  description: 'A white cape mounted from the upper middle back and falling to the floor.',
+  icon: {
+    kind: 'image',
+    src: 'assets/armor/cape.png',
+    alt: 'Color Cape',
+  },
+  itemAppearance: {
+    kind: 'color-cape',
+    color: 0xffffff,
+  },
+  wearSlot: 'cape',
+  metadata: {
+    humanoidWearable: {
+      type: 'cape',
+      color: 0xffffff,
+    },
+  },
+  pickable: true,
+  stackLimit: 1,
+});
+
+export const COLOR_TABARD_ITEM = new Wearable({
+  id: 'color-tabard',
+  label: 'Color Tabard',
+  description: 'A front-chest emblem tabard that renders the chaos symbol on the torso.',
+  icon: {
+    kind: 'image',
+    src: 'assets/armor/eagle-emblem.png',
+    alt: 'Color Tabard',
+  },
+  itemAppearance: {
+    kind: 'color-tabard',
+    imageUrl: 'assets/icons/Asymmetrical_symbol_of_Chaos.png',
+  },
+  wearSlot: 'tabard',
+  metadata: {
+    humanoidWearable: {
+      type: 'tabard',
+      imageUrl: 'assets/icons/Asymmetrical_symbol_of_Chaos.png',
+    },
+  },
+  pickable: true,
+  stackLimit: 1,
+});
+
 /* A tiny registry makes the first item definition reusable from UI and world
 code without committing the whole project to a larger item-database design yet. */
 export const ITEM_DEFINITIONS = {
@@ -226,4 +421,12 @@ export const ITEM_DEFINITIONS = {
   [SWORD_ITEM.id]: SWORD_ITEM,
   [GUN_ITEM.id]: GUN_ITEM,
   [BOXEL_SELECTION_TOOL_ITEM.id]: BOXEL_SELECTION_TOOL_ITEM,
+  [COLOR_CHEST_ITEM.id]: COLOR_CHEST_ITEM,
+  [COLOR_PANTS_ITEM.id]: COLOR_PANTS_ITEM,
+  [COLOR_BOOTS_ITEM.id]: COLOR_BOOTS_ITEM,
+  [COLOR_GLOVES_ITEM.id]: COLOR_GLOVES_ITEM,
+  [COLOR_SHOULDERS_ITEM.id]: COLOR_SHOULDERS_ITEM,
+  [COLOR_HELMET_ITEM.id]: COLOR_HELMET_ITEM,
+  [COLOR_CAPE_ITEM.id]: COLOR_CAPE_ITEM,
+  [COLOR_TABARD_ITEM.id]: COLOR_TABARD_ITEM,
 };

@@ -60,50 +60,59 @@ export function renderKolorlandoMenuPanel(container) {
             <div id="kolorlandiaCharacterMenu">
                 <div id="kolorlandiaCharacterMenu_player"></div>
 
-                <div id="kolorlandiaCharacterMenu_slots">
-                    <div></div>
-                    <div></div>
-                    <div></div>
-                    <div></div>
-                    <div title="Cape">
-                        <img src="assets/armor/cape.png" alt="">
+                <div id="kolorlandiaCharacterEquipmentStage">
+                    <div id="kolorlandiaCharacterMenu_slots">
+                        <div class="character-equipment-slot" data-equipment-slot="tabard" title="Tabard">
+                        <img src="assets/armor/eagle-emblem.png" alt="tabard">                    
+                        </div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div class="character-equipment-slot" data-equipment-slot="cape" title="Cape">
+                            <img src="assets/armor/cape.png" alt="">
+                        </div>
+                        <div></div>
+                        <div></div>
+                        <div class="character-equipment-slot" data-equipment-slot="helmet" title="Helmet">
+                            <img src="assets/armor/crested-helmet.png" alt="">
+                        </div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div class="character-equipment-slot" data-equipment-slot="shoulderRight" title="Shoulder Right">
+                            <img src="assets/armor/spiked-shoulder-armor.png" alt="">
+                        </div>
+                        <div class="character-equipment-slot" data-equipment-slot="chest" title="Chest">
+                            <img src="assets/armor/chest-armor.png" alt="">
+                        </div>
+                        <div class="character-equipment-slot" data-equipment-slot="shoulderLeft" title="Shoulder Left">
+                            <img class="inverted" src="assets/armor/spiked-shoulder-armor.png" alt="">
+                        </div>
+                        <div></div>
+                        <div></div>
+                        <div class="character-equipment-slot" data-equipment-slot="gloveRight" title="Right Glove">
+                            <img class="inverted" src="assets/armor/gauntlet.png" alt="">
+                        </div>
+                        <div class="character-equipment-slot" data-equipment-slot="pants" title="Pants">
+                            <img src="assets/armor/armored-pants.png" alt="">
+                        </div>
+                        <div class="character-equipment-slot" data-equipment-slot="gloveLeft" title="Left Glove">
+                            <img src="assets/armor/gauntlet.png" alt="">
+                        </div>
+                        <div></div>
+                        <div class="character-equipment-slot" data-equipment-slot="handRight" title="Right Hand">✋</div>
+                        <div></div>
+                        <div class="character-equipment-slot" data-equipment-slot="boots" title="Boots">
+                            <img src="assets/armor/steeltoe-boots.png" alt="">
+                        </div>
+                        <div></div>
+                        <div class="character-equipment-slot" data-equipment-slot="handLeft" title="Left Hand">🤚</div>
                     </div>
-                    <div></div>
-                    <div></div>
-                    <div title="Helmet">
-                        <img src="assets/armor/crested-helmet.png" alt="">
+
+                    <div id="kolorlandiaCharacterEquipmentPicker" hidden>
+                        <p id="kolorlandiaCharacterEquipmentPickerTitle">Chest inventory</p>
+                        <div id="kolorlandiaCharacterEquipmentPickerSlots"></div>
                     </div>
-                    <div></div>
-                    <div></div>
-                    <div></div>
-                    <div title="Shoulder Right">
-                        <img src="assets/armor/spiked-shoulder-armor.png" alt="">
-                    </div>
-                    <div title="Chest">
-                        <img src="assets/armor/chest-armor.png" alt="">
-                    </div>
-                    <div title="Shoulder Left">
-                        <img class="inverted" src="assets/armor/spiked-shoulder-armor.png" alt="">
-                    </div>
-                    <div></div>
-                    <div></div>
-                    <div title="Right Glove">
-                        <img class="inverted" src="assets/armor/gauntlet.png" alt="">
-                    </div>
-                    <div title="Pants">
-                        <img src="assets/armor/armored-pants.png" alt="">
-                    </div>
-                    <div title="Left Glove">
-                        <img src="assets/armor/gauntlet.png" alt="">
-                    </div>
-                    <div></div>
-                    <div title="Cape"Right Hand>✋</div>
-                    <div></div>
-                    <div title="Boots">
-                        <img src="assets/armor/steeltoe-boots.png" alt="">
-                    </div>
-                    <div></div>
-                    <div title="Left Hand">🤚</div>
                 </div>
 
                 <div id="kolorlandiaCharacterMenu_info">

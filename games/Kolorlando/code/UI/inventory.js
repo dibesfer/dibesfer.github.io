@@ -1,5 +1,6 @@
 import { createCoinSymbolIcon, createImageIcon, createVoxelIcon } from './icon.js';
-import { BOXEL_SELECTION_TOOL_ITEM, COIN_ITEM, GUN_ITEM, ITEM_DEFINITIONS, SPAWN_POINT_ITEM, SWORD_ITEM } from '../item.js';
+import { BOXEL_SELECTION_TOOL_ITEM, COLOR_BOOTS_ITEM, COLOR_CAPE_ITEM, COLOR_CHEST_ITEM, COLOR_GLOVES_ITEM, COLOR_HELMET_ITEM, COLOR_PANTS_ITEM, COLOR_SHOULDERS_ITEM, COLOR_TABARD_ITEM, COIN_ITEM, GUN_ITEM, ITEM_DEFINITIONS, SPAWN_POINT_ITEM, SWORD_ITEM } from '../item.js';
+import { EQUIPMENT_SLOT_LABELS, normalizeEquipmentSlot } from '../entities/equipment.js';
 
 export const GAME_MODE_CREATIVE = 'creative';
 export const GAME_MODE_SURVIVAL = 'survival';
@@ -11,6 +12,12 @@ export function createInventoryUI(options) {
   const itemEncyclopediaSlots = options.itemEncyclopediaSlots;
   const playerInventorySummary = options.playerInventorySummary;
   const playerInventorySelection = options.playerInventorySelection;
+  const characterEquipmentSlotEls = options.characterEquipmentSlotEls || [];
+  const characterEquipmentStage = options.characterEquipmentStage;
+  const characterEquipmentPicker = options.characterEquipmentPicker;
+  const characterEquipmentPickerTitle = options.characterEquipmentPickerTitle;
+  const characterEquipmentPickerSlots = options.characterEquipmentPickerSlots;
+  const equipment = options.equipment ?? null;
   const hotbarSlotEls = options.hotbarSlotEls;
   const gameModeReadout = options.gameModeReadout;
   const gameModeButtons = options.gameModeButtons;
@@ -39,47 +46,106 @@ export function createInventoryUI(options) {
   let inventorySlotEls = [];
   let inventoryDragState = null;
   let suppressInventorySlotClick = false;
+  let activeCharacterEquipmentSlot = null;
   const inventoryDragPreview = document.createElement('div');
   const INVENTORY_DRAG_START_DISTANCE = 6;
   let lastSelectedHotbarItemId = null;
 
-  const encyclopediaItems = [
+  const encyclopediaSections = [
     {
-      itemId: SPAWN_POINT_ITEM.id,
-      name: SPAWN_POINT_ITEM.label,
-      iconKind: SPAWN_POINT_ITEM.icon?.kind ?? null,
-      iconSrc: SPAWN_POINT_ITEM.icon?.src ?? null,
+      title: '✨ Special',
+      items: [
+        {
+          itemId: SPAWN_POINT_ITEM.id,
+          name: SPAWN_POINT_ITEM.label,
+          iconKind: SPAWN_POINT_ITEM.icon?.kind ?? null,
+          iconSrc: SPAWN_POINT_ITEM.icon?.src ?? null,
+        },
+        {
+          itemId: BOXEL_SELECTION_TOOL_ITEM.id,
+          name: BOXEL_SELECTION_TOOL_ITEM.label,
+          iconKind: BOXEL_SELECTION_TOOL_ITEM.icon?.kind ?? null,
+          iconSrc: BOXEL_SELECTION_TOOL_ITEM.icon?.src ?? null,
+        },
+        {
+          itemId: COIN_ITEM.id,
+          name: COIN_ITEM.label,
+          iconKind: COIN_ITEM.icon?.kind ?? null,
+          iconSrc: COIN_ITEM.icon?.src ?? null,
+        },
+      ],
     },
     {
-      itemId: GUN_ITEM.id,
-      name: GUN_ITEM.label,
-      iconKind: GUN_ITEM.icon?.kind ?? null,
-      iconSrc: GUN_ITEM.icon?.src ?? null,
+      title: '🗡️ Holdable',
+      items: [
+        {
+          itemId: GUN_ITEM.id,
+          name: GUN_ITEM.label,
+          iconKind: GUN_ITEM.icon?.kind ?? null,
+          iconSrc: GUN_ITEM.icon?.src ?? null,
+        },
+        {
+          itemId: SWORD_ITEM.id,
+          name: SWORD_ITEM.label,
+          iconKind: SWORD_ITEM.icon?.kind ?? null,
+          iconSrc: SWORD_ITEM.icon?.src ?? null,
+        },
+      ],
     },
     {
-      itemId: SWORD_ITEM.id,
-      name: SWORD_ITEM.label,
-      iconKind: SWORD_ITEM.icon?.kind ?? null,
-      iconSrc: SWORD_ITEM.icon?.src ?? null,
-    },
-    {
-      itemId: BOXEL_SELECTION_TOOL_ITEM.id,
-      name: BOXEL_SELECTION_TOOL_ITEM.label,
-      iconKind: BOXEL_SELECTION_TOOL_ITEM.icon?.kind ?? null,
-      iconSrc: BOXEL_SELECTION_TOOL_ITEM.icon?.src ?? null,
-    },
-    {
-      itemId: COIN_ITEM.id,
-      name: COIN_ITEM.label,
-      iconKind: COIN_ITEM.icon?.kind ?? null,
-      iconSrc: COIN_ITEM.icon?.src ?? null,
+      title: '🧥 Wearable',
+      items: [
+        {
+          itemId: COLOR_CHEST_ITEM.id,
+          name: COLOR_CHEST_ITEM.label,
+          iconKind: COLOR_CHEST_ITEM.icon?.kind ?? null,
+          iconSrc: COLOR_CHEST_ITEM.icon?.src ?? null,
+        },
+        {
+          itemId: COLOR_PANTS_ITEM.id,
+          name: COLOR_PANTS_ITEM.label,
+          iconKind: COLOR_PANTS_ITEM.icon?.kind ?? null,
+          iconSrc: COLOR_PANTS_ITEM.icon?.src ?? null,
+        },
+        {
+          itemId: COLOR_BOOTS_ITEM.id,
+          name: COLOR_BOOTS_ITEM.label,
+          iconKind: COLOR_BOOTS_ITEM.icon?.kind ?? null,
+          iconSrc: COLOR_BOOTS_ITEM.icon?.src ?? null,
+        },
+        {
+          itemId: COLOR_GLOVES_ITEM.id,
+          name: COLOR_GLOVES_ITEM.label,
+          iconKind: COLOR_GLOVES_ITEM.icon?.kind ?? null,
+          iconSrc: COLOR_GLOVES_ITEM.icon?.src ?? null,
+        },
+        {
+          itemId: COLOR_SHOULDERS_ITEM.id,
+          name: COLOR_SHOULDERS_ITEM.label,
+          iconKind: COLOR_SHOULDERS_ITEM.icon?.kind ?? null,
+          iconSrc: COLOR_SHOULDERS_ITEM.icon?.src ?? null,
+        },
+        {
+          itemId: COLOR_HELMET_ITEM.id,
+          name: COLOR_HELMET_ITEM.label,
+          iconKind: COLOR_HELMET_ITEM.icon?.kind ?? null,
+          iconSrc: COLOR_HELMET_ITEM.icon?.src ?? null,
+        },
+        {
+          itemId: COLOR_CAPE_ITEM.id,
+          name: COLOR_CAPE_ITEM.label,
+          iconKind: COLOR_CAPE_ITEM.icon?.kind ?? null,
+          iconSrc: COLOR_CAPE_ITEM.icon?.src ?? null,
+        },
+        {
+          itemId: COLOR_TABARD_ITEM.id,
+          name: COLOR_TABARD_ITEM.label,
+          iconKind: COLOR_TABARD_ITEM.icon?.kind ?? null,
+          iconSrc: COLOR_TABARD_ITEM.icon?.src ?? null,
+        },
+      ],
     },
   ];
-  const itemIconByName = encyclopediaItems.reduce(function (lookup, item) {
-    lookup[item.name] = item;
-    return lookup;
-  }, {});
-  const ENCYCLOPEDIA_ITEM_SLOT_COUNT = 16;
 
   inventoryDragPreview.className = 'inventory-drag-preview';
   inventoryDragPreview.hidden = true;
@@ -114,19 +180,20 @@ export function createInventoryUI(options) {
   }
 
   function createInventoryStackIcon(itemId) {
-    const itemLabel = getInventoryItemLabel(itemId);
-    const iconDefinition = itemIconByName[itemLabel];
-    if (iconDefinition?.iconKind === 'coin') {
+    const itemDefinition = getItemDefinition(itemId);
+    const itemLabel = itemDefinition?.label ?? getInventoryItemLabel(itemId);
+    const iconDefinition = itemDefinition?.icon ?? null;
+    if (iconDefinition?.kind === 'coin') {
       return createCoinSymbolIcon({
-        symbolSrc: iconDefinition.iconSrc,
+        symbolSrc: iconDefinition.src,
         symbolAlt: itemLabel,
         symbolOpacity: 0.75,
       });
     }
-    if (iconDefinition?.iconSrc) {
+    if (iconDefinition?.src) {
       // Item pickups like sword and gun should keep their authored icons in both
       // the inventory window and the hotbar instead of falling back to voxel cubes.
-      return createImageIcon(iconDefinition.iconSrc, itemLabel);
+      return createImageIcon(iconDefinition.src, itemLabel);
     }
     return createVoxelIcon(getVoxelTypeHexColor(itemId));
   }
@@ -147,6 +214,174 @@ export function createInventoryUI(options) {
       return createImageIcon(itemEntry.iconSrc, itemEntry.name);
     }
     return null;
+  }
+
+  function hideCharacterEquipmentPicker() {
+    activeCharacterEquipmentSlot = null;
+
+    for (let i = 0; i < characterEquipmentSlotEls.length; i += 1) {
+      characterEquipmentSlotEls[i].classList.remove('is-active');
+    }
+
+    if (characterEquipmentPicker) {
+      characterEquipmentPicker.hidden = true;
+    }
+    if (characterEquipmentPickerSlots) {
+      characterEquipmentPickerSlots.textContent = '';
+    }
+  }
+
+  function getCharacterEquipmentSlotElement(slotName) {
+    const resolvedSlot = normalizeEquipmentSlot(slotName);
+    if (!resolvedSlot) return null;
+
+    return characterEquipmentSlotEls.find(function (slotEl) {
+      return normalizeEquipmentSlot(slotEl.dataset.equipmentSlot) === resolvedSlot;
+    }) ?? null;
+  }
+
+  function getEquippedItemIdForSlot(slotName) {
+    if (!equipment?.getEquippedItemId) return null;
+    return equipment.getEquippedItemId(slotName);
+  }
+
+  function renderCharacterEquipmentSlotContent(slotEl) {
+    if (!slotEl) return;
+
+    const slotName = normalizeEquipmentSlot(slotEl.dataset.equipmentSlot);
+    const equippedItemId = slotName ? getEquippedItemIdForSlot(slotName) : null;
+    const defaultMarkup = slotEl.dataset.defaultMarkup ?? slotEl.innerHTML;
+    const defaultTitle = slotEl.dataset.defaultTitle ?? slotEl.title;
+
+    if (!slotEl.dataset.defaultMarkup) {
+      slotEl.dataset.defaultMarkup = slotEl.innerHTML;
+    }
+    if (!slotEl.dataset.defaultTitle) {
+      slotEl.dataset.defaultTitle = slotEl.title;
+    }
+
+    slotEl.textContent = '';
+
+    if (!equippedItemId) {
+      slotEl.innerHTML = defaultMarkup;
+      slotEl.title = defaultTitle;
+      return;
+    }
+
+    const itemDefinition = getItemDefinition(equippedItemId);
+    const icon = createInventoryStackIcon(equippedItemId);
+    if (icon) {
+      slotEl.appendChild(icon);
+    }
+
+    slotEl.title = itemDefinition?.label ?? slotEl.title;
+  }
+
+  function syncCharacterEquipmentSlotUI() {
+    for (let i = 0; i < characterEquipmentSlotEls.length; i += 1) {
+      const slotEl = characterEquipmentSlotEls[i];
+      const slotName = normalizeEquipmentSlot(slotEl.dataset.equipmentSlot);
+      const isEmpty = !slotName || !getEquippedItemIdForSlot(slotName);
+
+      renderCharacterEquipmentSlotContent(slotEl);
+      slotEl.classList.toggle('is-empty', isEmpty);
+      slotEl.classList.toggle('is-active', slotName != null && slotName === activeCharacterEquipmentSlot);
+    }
+  }
+
+  function getInventoryWearablesForSlot(slotName) {
+    const resolvedSlot = normalizeEquipmentSlot(slotName);
+    if (!resolvedSlot) return [];
+
+    return playerInventory.reduce(function (matches, stack, slotIndex) {
+      if (!stack?.itemId) return matches;
+
+      const itemDefinition = getItemDefinition(stack.itemId);
+      const wearSlot = normalizeEquipmentSlot(itemDefinition?.wearSlot);
+      if (!itemDefinition || wearSlot !== resolvedSlot) {
+        return matches;
+      }
+
+      matches.push({
+        slotIndex,
+        stack,
+        itemDefinition,
+      });
+
+      return matches;
+    }, []);
+  }
+
+  function renderCharacterEquipmentPicker(slotName) {
+    const resolvedSlot = normalizeEquipmentSlot(slotName);
+    if (!characterEquipmentPicker || !characterEquipmentPickerSlots || !resolvedSlot) {
+      hideCharacterEquipmentPicker();
+      return;
+    }
+
+    const matchingWearables = getInventoryWearablesForSlot(resolvedSlot);
+    if (!matchingWearables.length) {
+      hideCharacterEquipmentPicker();
+      return;
+    }
+
+    activeCharacterEquipmentSlot = resolvedSlot;
+    characterEquipmentPicker.hidden = false;
+    characterEquipmentPickerSlots.textContent = '';
+
+    if (characterEquipmentPickerTitle) {
+      const slotLabel = EQUIPMENT_SLOT_LABELS[resolvedSlot] ?? resolvedSlot;
+      characterEquipmentPickerTitle.textContent = slotLabel + ' inventory';
+    }
+
+    const MAX_VISIBLE_EQUIPMENT_CHOICES = 32;
+    const equippedItemId = getEquippedItemIdForSlot(resolvedSlot);
+    matchingWearables.slice(0, MAX_VISIBLE_EQUIPMENT_CHOICES).forEach(function (entry) {
+      const slotButton = document.createElement('button');
+      const label = document.createElement('span');
+      const count = document.createElement('span');
+      const isEquippedItem = equippedItemId != null && equippedItemId === entry.itemDefinition.id;
+
+      slotButton.type = 'button';
+      slotButton.className = 'hotbar-slot character-equipment-picker-slot';
+      if (isEquippedItem) slotButton.classList.add('is-selected');
+      slotButton.dataset.itemId = entry.itemDefinition.id;
+      slotButton.dataset.slotIndex = String(entry.slotIndex);
+      slotButton.appendChild(createInventoryStackIcon(entry.itemDefinition.id));
+
+      label.className = 'hotbar-slot-label';
+      label.textContent = entry.itemDefinition.label;
+      slotButton.appendChild(label);
+
+      count.className = 'hotbar-slot-count';
+      count.textContent = entry.stack.count > 1 ? String(entry.stack.count) : '';
+      slotButton.appendChild(count);
+
+      slotButton.addEventListener('click', function () {
+        if (isEquippedItem) {
+          equipment?.unequip?.(resolvedSlot);
+          hideCharacterEquipmentPicker();
+          syncCharacterEquipmentSlotUI();
+          return;
+        }
+
+        if (!equipment?.equip) return;
+        equipment.equip(entry.itemDefinition, resolvedSlot);
+        hideCharacterEquipmentPicker();
+        syncCharacterEquipmentSlotUI();
+      });
+
+      characterEquipmentPickerSlots.appendChild(slotButton);
+    });
+
+    syncCharacterEquipmentSlotUI();
+  }
+
+  function isEventInsideCharacterEquipmentUI(target) {
+    if (!target || !(target instanceof Element)) return false;
+    if (characterEquipmentPicker?.contains(target)) return true;
+    if (characterEquipmentStage?.contains(target)) return true;
+    return false;
   }
 
 
@@ -276,6 +511,12 @@ export function createInventoryUI(options) {
 
     if (playerInventorySelection) {
       playerInventorySelection.textContent = getSelectedInventoryLabel();
+    }
+
+    if (activeCharacterEquipmentSlot) {
+      renderCharacterEquipmentPicker(activeCharacterEquipmentSlot);
+    } else {
+      syncCharacterEquipmentSlotUI();
     }
   }
 
@@ -546,25 +787,30 @@ export function createInventoryUI(options) {
     if (!itemEncyclopediaSlots) return;
     itemEncyclopediaSlots.textContent = '';
 
-    for (let i = 0; i < ENCYCLOPEDIA_ITEM_SLOT_COUNT; i += 1) {
-      const itemEntry = encyclopediaItems[i] || null;
-      const slot = document.createElement('button');
-      const label = document.createElement('span');
+    encyclopediaSections.forEach(function (section) {
+      const sectionEl = document.createElement('section');
+      const titleEl = document.createElement('h3');
+      const gridEl = document.createElement('div');
 
-      slot.type = 'button';
-      slot.className = 'hotbar-slot encyclopedia-item-slot';
-      if (!itemEntry) slot.classList.add('is-empty');
+      sectionEl.className = 'encyclopedia-section';
+      titleEl.className = 'encyclopedia-section-title';
+      titleEl.textContent = section.title;
+      gridEl.className = 'encyclopedia-section-grid';
 
-      if (itemEntry) {
+      section.items.forEach(function (itemEntry) {
+        const slot = document.createElement('button');
+        const label = document.createElement('span');
+
+        slot.type = 'button';
+        slot.className = 'hotbar-slot encyclopedia-item-slot';
+
         const icon = createEncyclopediaItemIcon(itemEntry);
         if (icon) slot.appendChild(icon);
-      }
 
-      label.className = 'hotbar-slot-label';
-      label.textContent = itemEntry ? itemEntry.name : 'empty';
-      slot.appendChild(label);
+        label.className = 'hotbar-slot-label';
+        label.textContent = itemEntry.name;
+        slot.appendChild(label);
 
-      if (itemEntry) {
         slot.addEventListener('click', function () {
           /* Encyclopedia items should mirror the voxel encyclopedia behavior in
           creative mode so every listed item can be pulled straight into the
@@ -572,10 +818,14 @@ export function createInventoryUI(options) {
           if (gameMode !== GAME_MODE_CREATIVE) return;
           addCreativeInventoryItem(itemEntry.itemId ?? itemEntry.name);
         });
-      }
 
-      itemEncyclopediaSlots.appendChild(slot);
-    }
+        gridEl.appendChild(slot);
+      });
+
+      sectionEl.appendChild(titleEl);
+      sectionEl.appendChild(gridEl);
+      itemEncyclopediaSlots.appendChild(sectionEl);
+    });
   }
 
   function renderInventorySlots() {
@@ -660,6 +910,29 @@ export function createInventoryUI(options) {
     });
   }
 
+  for (let i = 0; i < characterEquipmentSlotEls.length; i += 1) {
+    const slotEl = characterEquipmentSlotEls[i];
+    slotEl.addEventListener('click', function () {
+      const resolvedSlot = normalizeEquipmentSlot(slotEl.dataset.equipmentSlot);
+      if (!resolvedSlot) return;
+
+      if (activeCharacterEquipmentSlot === resolvedSlot) {
+        hideCharacterEquipmentPicker();
+        syncCharacterEquipmentSlotUI();
+        return;
+      }
+
+      renderCharacterEquipmentPicker(resolvedSlot);
+    });
+  }
+
+  document.addEventListener('pointerdown', function (event) {
+    if (!activeCharacterEquipmentSlot) return;
+    if (isEventInsideCharacterEquipmentUI(event.target)) return;
+    hideCharacterEquipmentPicker();
+    syncCharacterEquipmentSlotUI();
+  });
+
   document.addEventListener('pointermove', handleInventoryDragMove, { passive: false });
   document.addEventListener('pointerup', handleInventoryDragEnd);
   document.addEventListener('pointercancel', handleInventoryDragEnd);
@@ -668,6 +941,7 @@ export function createInventoryUI(options) {
   renderItemEncyclopediaSlots();
   renderPlayerInventorySlots();
   updateGameModeUI();
+  syncCharacterEquipmentSlotUI();
 
   return {
     addCreativeInventoryItem: addCreativeInventoryItem,

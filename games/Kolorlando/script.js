@@ -3,6 +3,7 @@ import { PointerLockControls } from 'three/addons/controls/PointerLockControls.j
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { HunterEntity, TalkerEntity } from './code/entities/entity.js';
 import {
+  applyHumanoidEquipment,
   createHumanoidModel,
   applyHumanoidIdleAnimation,
   applyHumanoidWalkAnimation,
@@ -27,8 +28,9 @@ import {
 } from './code/UI/inventory.js';
 import { createChatUI } from './code/UI/chat.js';
 import { createPlayerHud } from './playerHud.js';
-import { BoxelSelectionToolItemAppearance, CoinItemAppearance, GoxelItemAppearance, ItemAppearance } from './code/entities/itemAppearance.js';
-import { BOXEL_SELECTION_TOOL_ITEM, COIN_ITEM, GUN_ITEM, SPAWN_POINT_ITEM, SWORD_ITEM } from './code/item.js';
+import { BoxelSelectionToolItemAppearance, CoinItemAppearance, ColorBootsItemAppearance, ColorCapeItemAppearance, ColorChestItemAppearance, ColorGlovesItemAppearance, ColorHelmetItemAppearance, ColorPantsItemAppearance, ColorShouldersItemAppearance, ColorTabardItemAppearance, GoxelItemAppearance, ItemAppearance } from './code/entities/itemAppearance.js';
+import { BOXEL_SELECTION_TOOL_ITEM, COLOR_BOOTS_ITEM, COLOR_CAPE_ITEM, COLOR_CHEST_ITEM, COLOR_GLOVES_ITEM, COLOR_HELMET_ITEM, COLOR_PANTS_ITEM, COLOR_SHOULDERS_ITEM, COLOR_TABARD_ITEM, COIN_ITEM, GUN_ITEM, ITEM_DEFINITIONS, SPAWN_POINT_ITEM, SWORD_ITEM } from './code/item.js';
+import { createEquipment } from './code/entities/equipment.js';
 import { buildSimpleMap } from './maps/simpleMap.js';
 import { buildCityMap } from './maps/cityMap.js';
 import { buildVoxelandiaMap } from './maps/voxelandiaMap.js';
@@ -199,6 +201,11 @@ const gameModeReadout = document.getElementById('gameModeReadout');
 const gameModeButtons = Array.from(document.querySelectorAll('[data-game-mode]'));
 const characterMenuPlayer = document.getElementById('kolorlandiaCharacterMenu_player');
 const characterMenuNameValue = document.getElementById('characterMenuNameValue');
+const characterEquipmentStage = document.getElementById('kolorlandiaCharacterEquipmentStage');
+const characterEquipmentSlotEls = Array.from(document.querySelectorAll('[data-equipment-slot]'));
+const characterEquipmentPicker = document.getElementById('kolorlandiaCharacterEquipmentPicker');
+const characterEquipmentPickerTitle = document.getElementById('kolorlandiaCharacterEquipmentPickerTitle');
+const characterEquipmentPickerSlots = document.getElementById('kolorlandiaCharacterEquipmentPickerSlots');
 const loadingScreen = document.getElementById('loadingScreen');
 const loadingBarFill = document.getElementById('loadingBarFill');
 const loadingText = document.getElementById('loadingText');
@@ -238,6 +245,16 @@ let mobileFlyDownPressed = false;
 let suppressRight3Click = false;
 let voxelRaycastDirty = true;
 let voxelRaycastRefreshAccumulator = 1 / 30;
+const playerEquipment = createEquipment({
+  resolveItemDefinition(itemOrDefinition) {
+    if (typeof itemOrDefinition === 'string') {
+      return ITEM_DEFINITIONS[itemOrDefinition] ?? null;
+    }
+    return itemOrDefinition && typeof itemOrDefinition === 'object'
+      ? itemOrDefinition
+      : null;
+  },
+});
 let lastRaycastModeKey = '';
 let lastWowCursorRaycastActive = false;
 let openingChatFromPointerLock = false;
@@ -600,6 +617,26 @@ let characterPreviewResizeObserver = null;
 let isCharacterPreviewSizeDirty = true;
 const CHARACTER_PREVIEW_LOOK_Y = 1.26;
 const CHARACTER_PREVIEW_DRAG_THRESHOLD = 10;
+let playerHumanoid = null;
+let firstPersonArmsRig = null;
+
+function resolveKolorlandoItemDefinition(itemId) {
+  return ITEM_DEFINITIONS[itemId] ?? null;
+}
+
+function syncPlayerEquipmentVisuals() {
+  if (playerHumanoid) {
+    applyHumanoidEquipment(playerHumanoid, playerEquipment, resolveKolorlandoItemDefinition);
+  }
+
+  if (characterPreviewModel) {
+    applyHumanoidEquipment(characterPreviewModel, playerEquipment, resolveKolorlandoItemDefinition);
+  }
+
+  if (firstPersonArmsRig) {
+    applyHumanoidEquipment(firstPersonArmsRig, playerEquipment, resolveKolorlandoItemDefinition);
+  }
+}
 
 function markCharacterPreviewSizeDirty() {
   // The preview panel size rarely changes compared with the animation rate, so
@@ -671,6 +708,7 @@ function initCharacterPreview() {
   characterPreviewModel.root.rotation.y = -0.42;
   characterPreviewModelRoot.add(characterPreviewModel.root);
   characterPreviewScene.add(characterPreviewModelRoot);
+  syncPlayerEquipmentVisuals();
   updateCharacterPreviewSize();
 
   characterMenuPlayer.addEventListener('pointerdown', event => {
@@ -1697,6 +1735,14 @@ const PICKUP_ITEM_TYPES = new Set([
   GUN_ITEM.id,
   COIN_ITEM.id,
   BOXEL_SELECTION_TOOL_ITEM.id,
+  COLOR_CHEST_ITEM.id,
+  COLOR_PANTS_ITEM.id,
+  COLOR_BOOTS_ITEM.id,
+  COLOR_GLOVES_ITEM.id,
+  COLOR_SHOULDERS_ITEM.id,
+  COLOR_HELMET_ITEM.id,
+  COLOR_CAPE_ITEM.id,
+  COLOR_TABARD_ITEM.id,
 ]);
 const PLAYER_PICKUP_RADIUS = 3;
 const PLAYER_PICKUP_RADIUS_SQ = PLAYER_PICKUP_RADIUS * PLAYER_PICKUP_RADIUS;
@@ -1768,6 +1814,94 @@ if (!MULTIPLAYER_ENABLED) {
     iconUrl: BOXEL_SELECTION_TOOL_ITEM.itemAppearance?.iconUrl ?? 'assets/icons/Asymmetrical_symbol_of_Chaos.png',
   }));
 
+  const colorChestSpawnPosition = playerSpawnPoint.clone().add(new THREE.Vector3(0, 0, -TEST_ITEM_BEHIND_DISTANCE + 3.1));
+  itemAppearances.push(new ColorChestItemAppearance({
+    scene,
+    position: colorChestSpawnPosition,
+    label: COLOR_CHEST_ITEM.label,
+    inventoryType: COLOR_CHEST_ITEM.id,
+    pickable: COLOR_CHEST_ITEM.pickable,
+    groundY: GROUND_Y,
+    color: COLOR_CHEST_ITEM.itemAppearance?.color ?? 0xffffff,
+  }));
+
+  const colorPantsSpawnPosition = playerSpawnPoint.clone().add(new THREE.Vector3(3.4, 0, -TEST_ITEM_BEHIND_DISTANCE + 3.1));
+  itemAppearances.push(new ColorPantsItemAppearance({
+    scene,
+    position: colorPantsSpawnPosition,
+    label: COLOR_PANTS_ITEM.label,
+    inventoryType: COLOR_PANTS_ITEM.id,
+    pickable: COLOR_PANTS_ITEM.pickable,
+    groundY: GROUND_Y,
+    color: COLOR_PANTS_ITEM.itemAppearance?.color ?? 0xffffff,
+  }));
+
+  const colorBootsSpawnPosition = playerSpawnPoint.clone().add(new THREE.Vector3(-3.4, 0, -TEST_ITEM_BEHIND_DISTANCE + 3.1));
+  itemAppearances.push(new ColorBootsItemAppearance({
+    scene,
+    position: colorBootsSpawnPosition,
+    label: COLOR_BOOTS_ITEM.label,
+    inventoryType: COLOR_BOOTS_ITEM.id,
+    pickable: COLOR_BOOTS_ITEM.pickable,
+    groundY: GROUND_Y,
+    color: COLOR_BOOTS_ITEM.itemAppearance?.color ?? 0xffffff,
+  }));
+
+  const colorGlovesSpawnPosition = playerSpawnPoint.clone().add(new THREE.Vector3(0, 0, -TEST_ITEM_BEHIND_DISTANCE + 5.7));
+  itemAppearances.push(new ColorGlovesItemAppearance({
+    scene,
+    position: colorGlovesSpawnPosition,
+    label: COLOR_GLOVES_ITEM.label,
+    inventoryType: COLOR_GLOVES_ITEM.id,
+    pickable: COLOR_GLOVES_ITEM.pickable,
+    groundY: GROUND_Y,
+    color: COLOR_GLOVES_ITEM.itemAppearance?.color ?? 0xffffff,
+  }));
+
+  const colorShouldersSpawnPosition = playerSpawnPoint.clone().add(new THREE.Vector3(0, 0, -TEST_ITEM_BEHIND_DISTANCE + 14.5));
+  itemAppearances.push(new ColorShouldersItemAppearance({
+    scene,
+    position: colorShouldersSpawnPosition,
+    label: COLOR_SHOULDERS_ITEM.label,
+    inventoryType: COLOR_SHOULDERS_ITEM.id,
+    pickable: COLOR_SHOULDERS_ITEM.pickable,
+    groundY: GROUND_Y,
+    color: COLOR_SHOULDERS_ITEM.itemAppearance?.color ?? 0xffffff,
+  }));
+
+  const colorHelmetSpawnPosition = playerSpawnPoint.clone().add(new THREE.Vector3(0, 0, -TEST_ITEM_BEHIND_DISTANCE + 17.9));
+  itemAppearances.push(new ColorHelmetItemAppearance({
+    scene,
+    position: colorHelmetSpawnPosition,
+    label: COLOR_HELMET_ITEM.label,
+    inventoryType: COLOR_HELMET_ITEM.id,
+    pickable: COLOR_HELMET_ITEM.pickable,
+    groundY: GROUND_Y,
+    color: COLOR_HELMET_ITEM.itemAppearance?.color ?? 0xffffff,
+  }));
+
+  const colorCapeSpawnPosition = playerSpawnPoint.clone().add(new THREE.Vector3(0, 0, -TEST_ITEM_BEHIND_DISTANCE + 21.3));
+  itemAppearances.push(new ColorCapeItemAppearance({
+    scene,
+    position: colorCapeSpawnPosition,
+    label: COLOR_CAPE_ITEM.label,
+    inventoryType: COLOR_CAPE_ITEM.id,
+    pickable: COLOR_CAPE_ITEM.pickable,
+    groundY: GROUND_Y,
+    color: COLOR_CAPE_ITEM.itemAppearance?.color ?? 0xffffff,
+  }));
+
+  const colorTabardSpawnPosition = playerSpawnPoint.clone().add(new THREE.Vector3(0, 0, -TEST_ITEM_BEHIND_DISTANCE + 24.7));
+  itemAppearances.push(new ColorTabardItemAppearance({
+    scene,
+    position: colorTabardSpawnPosition,
+    label: COLOR_TABARD_ITEM.label,
+    inventoryType: COLOR_TABARD_ITEM.id,
+    pickable: COLOR_TABARD_ITEM.pickable,
+    groundY: GROUND_Y,
+    imageUrl: COLOR_TABARD_ITEM.itemAppearance?.imageUrl ?? 'games/Kolorlando/assets/icons/Asymmetrical_symbol_of_Chaos.png',
+  }));
+
   const coinSpawnOffsets = [
     new THREE.Vector3(0, 0, -10),
     new THREE.Vector3(3.2, 0, -9.4),
@@ -1804,6 +1938,12 @@ const inventoryUI = createInventoryUI({
   itemEncyclopediaSlots,
   playerInventorySummary,
   playerInventorySelection,
+  characterEquipmentStage,
+  characterEquipmentSlotEls,
+  characterEquipmentPicker,
+  characterEquipmentPickerTitle,
+  characterEquipmentPickerSlots,
+  equipment: playerEquipment,
   hotbarSlotEls,
   gameModeReadout,
   gameModeButtons,
@@ -2013,10 +2153,6 @@ const DEBUG_COLLISION_COLOR_INTERSECTING = 0xff4d4d;
 const playerBody = new THREE.Group();
 const PLAYER_OUTFIT = {
   skin: 0xf0c9a5,
-  shirt: 0x4f86f7,
-  sleeves: 0x4f86f7,
-  pants: 0x2d3a50,
-  shoes: 0x161616,
   hair: 0x221710,
   faceEmoji: '😎',
   /* The shared player save module resolves remote-vs-local ownership before
@@ -2024,13 +2160,17 @@ const PLAYER_OUTFIT = {
   faceData: playerFaceDataResult.faceData,
 };
 initCharacterPreview();
-const playerHumanoid = createHumanoidModel({
+playerHumanoid = createHumanoidModel({
   outfit: PLAYER_OUTFIT,
   castShadow: true,
   receiveShadow: false,
 });
 playerBody.add(playerHumanoid.root);
 playerBody.scale.set(1, PLAYER_HEIGHT / playerHumanoid.baseHeight, 1);
+syncPlayerEquipmentVisuals();
+playerEquipment.subscribe(function () {
+  syncPlayerEquipmentVisuals();
+});
 
 const playerNameSprite = createPlayerNameSprite(resolveLocalPlayerDisplayName());
 if (playerNameSprite) {
@@ -2112,7 +2252,6 @@ let activeHeldItemRoot = null;
 let firstPersonHeldItemRoot = null;
 let pendingHeldItemType = null;
 let heldItemLoadRequestId = 0;
-let firstPersonArmsRig = null;
 
 function applyHeldItemShadows(root, castShadow, receiveShadow) {
   root.traverse(part => {
@@ -2415,13 +2554,12 @@ function createFirstPersonArmsRig() {
   fpModel.joints.leftElbow.rotation.set(-0.52, 0.08, -0.1);
   fpModel.joints.rightElbow.rotation.set(-0.52, -0.08, 0.1);
 
-  const leftHand = fpModel.root.getObjectByName('leftHand');
-  const rightHand = fpModel.root.getObjectByName('rightHand');
-  if (leftHand) {
-    leftHand.rotation.set(-0.18, 0.2, -0.12);
+  // Hand anchors carry both the visible hand and the held-item slot.
+  if (fpModel.joints.leftHand) {
+    fpModel.joints.leftHand.rotation.set(-0.18, 0.2, -0.12);
   }
-  if (rightHand) {
-    rightHand.rotation.set(-0.18, -0.2, 0.12);
+  if (fpModel.joints.rightHand) {
+    fpModel.joints.rightHand.rotation.set(-0.18, -0.2, 0.12);
   }
 
   fpModel.root.scale.setScalar(1.28);
@@ -2430,6 +2568,10 @@ function createFirstPersonArmsRig() {
   return {
     root: fpModel.root,
     joints: fpModel.joints,
+    parts: fpModel.parts,
+    equipmentRoots: fpModel.equipmentRoots,
+    castShadow: false,
+    receiveShadow: false,
   };
 }
 
@@ -2499,6 +2641,7 @@ function createAxisLabelSprite(text, color, position) {
 
 firstPersonArmsRig = createFirstPersonArmsRig();
 camera.add(firstPersonArmsRig.root);
+syncPlayerEquipmentVisuals();
 updateHeldItemSelection();
 
 const firstPersonRightHandAxisHelper = createFirstPersonHandAxisHelper();
