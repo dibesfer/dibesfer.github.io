@@ -1,0 +1,52 @@
+<style>
+    img {
+        max-width: 100%;
+    }
+
+    .userProfile {
+        background-color: rgb(100, 18, 100);
+        max-width: 400px;
+        display: flex;
+        overflow: auto;
+        border-radius: 15px;
+        height: 100px;
+        color: white;
+        font-family: sans-serif;
+        line-height: 0;
+    }
+
+    .userProfile > div > img {
+        height: 100%;
+        aspect-ratio: 1;
+        width: 100px;
+    }
+    .userProfile>div {
+        border-radius: 15px;
+        
+        background-color: blue;
+        border: solid 6px rgb(84, 5, 5);
+    }
+
+    .userProfile_text {
+        padding: 5px;
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        justify-content: space-evenly;
+        background-color: rgb(170, 58, 58) !important;
+    }
+</style>
+<div class="userProfile">
+    <div>
+        <img style=" filter: invert(1);" src="https://upload.wikimedia.org/wikipedia/commons/9/99/Sample_User_Icon.png" alt="">
+    </div>
+    <div class="userProfile_text">
+        <div>
+            <p>Anonymous</p>
+        </div>
+        <div style="text-align: center;">
+            <p>1 | 2 | 3</p>
+        </div>
+    </div>
+
+</div>
