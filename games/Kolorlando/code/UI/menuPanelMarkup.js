@@ -185,11 +185,13 @@ export function renderKolorlandoMenuPanel(container) {
             <label for="volume">Volume</label>
             <input type="range">
             <br>
-            <input type="checkbox" name="bgMusic" id="">
+            <input type="checkbox" name="bgMusic" id="settingsBackgroundMusic">
 
-            <label for="bgMusic">Background music</label>
+            <label for="settingsBackgroundMusic">Background music</label>
 
             <br>
+            <button id="settingsRestoreDefaultsButton" type="button">Restore default settings</button>
+            <br><br>
 
             <h3>Controls</h3>
             <hr>

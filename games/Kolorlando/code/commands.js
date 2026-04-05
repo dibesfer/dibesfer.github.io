@@ -17,24 +17,26 @@ export function createCommandHandler({
   onToggleFlyMode,
   onSpawn,
 } = {}) {
-  return function handleCommand(message) {
-    const normalizedMessage = message.trim().toLowerCase();
+  return async function handleCommand(message) {
+    const trimmedMessage = typeof message === 'string' ? message.trim() : '';
+    const [commandName = '', ...args] = trimmedMessage.split(/\s+/);
+    const normalizedCommand = commandName.toLowerCase();
 
     /* Each known command delegates to a single action owned by script.js.
     Returning true tells the chat UI that the message was consumed as a
     command and should not be treated like normal chat text. */
-    if (normalizedMessage === KOLORLANDO_COMMANDS.debugmode) {
+    if (normalizedCommand === KOLORLANDO_COMMANDS.debugmode) {
       onToggleDebugMode?.();
       return true;
     }
 
-    if (normalizedMessage === KOLORLANDO_COMMANDS.flymode) {
+    if (normalizedCommand === KOLORLANDO_COMMANDS.flymode) {
       onToggleFlyMode?.();
       return true;
     }
 
-    if (normalizedMessage === KOLORLANDO_COMMANDS.spawn) {
-      onSpawn?.();
+    if (normalizedCommand === KOLORLANDO_COMMANDS.spawn) {
+      await onSpawn?.(args);
       return true;
     }
 

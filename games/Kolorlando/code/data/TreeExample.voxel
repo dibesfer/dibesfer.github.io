@@ -1,0 +1,93 @@
+{
+  "format": "kolorlando.voxel",
+  "version": 1,
+  "assetType": "structure",
+  "assetId": "tree-oak-small",
+  "bounds": {
+    "size": { "width": 5, "height": 5, "depth": 5 }
+  },
+  "placement": {
+    "anchor": { "x": 0, "y": 0, "z": 0 },
+    "rotationY": 0
+  },
+  "voxels": [
+    {
+      "position": { "x": 0, "y": 0, "z": 0 },
+      "voxelTypeId": "brown",
+      "semanticType": "log",
+      "color": "#7b4f28"
+    },
+    {
+      "position": { "x": 0, "y": 1, "z": 0 },
+      "voxelTypeId": "brown",
+      "semanticType": "log",
+      "color": "#7b4f28"
+    },
+    {
+      "position": { "x": 0, "y": 2, "z": 0 },
+      "voxelTypeId": "brown",
+      "semanticType": "log",
+      "color": "#7b4f28"
+    },
+    {
+      "position": { "x": 0, "y": 3, "z": 0 },
+      "voxelTypeId": "brown",
+      "semanticType": "log",
+      "color": "#7b4f28"
+    },
+    {
+      "position": { "x": 0, "y": 4, "z": 0 },
+      "voxelTypeId": "green",
+      "semanticType": "leaves",
+      "color": "#2e8b57"
+    },
+    {
+      "position": { "x": 1, "y": 3, "z": 0 },
+      "voxelTypeId": "green",
+      "semanticType": "leaves",
+      "color": "#2e8b57"
+    },
+    {
+      "position": { "x": -1, "y": 3, "z": 0 },
+      "voxelTypeId": "green",
+      "semanticType": "leaves",
+      "color": "#2e8b57"
+    },
+    {
+      "position": { "x": 0, "y": 3, "z": 1 },
+      "voxelTypeId": "green",
+      "semanticType": "leaves",
+      "color": "#2e8b57"
+    },
+    {
+      "position": { "x": 0, "y": 3, "z": -1 },
+      "voxelTypeId": "green",
+      "semanticType": "leaves",
+      "color": "#2e8b57"
+    },
+    {
+      "position": { "x": 1, "y": 4, "z": 0 },
+      "voxelTypeId": "green",
+      "semanticType": "leaves",
+      "color": "#2e8b57"
+    },
+    {
+      "position": { "x": -1, "y": 4, "z": 0 },
+      "voxelTypeId": "green",
+      "semanticType": "leaves",
+      "color": "#2e8b57"
+    },
+    {
+      "position": { "x": 0, "y": 4, "z": 1 },
+      "voxelTypeId": "green",
+      "semanticType": "leaves",
+      "color": "#2e8b57"
+    },
+    {
+      "position": { "x": 0, "y": 4, "z": -1 },
+      "voxelTypeId": "green",
+      "semanticType": "leaves",
+      "color": "#2e8b57"
+    }
+  ]
+}

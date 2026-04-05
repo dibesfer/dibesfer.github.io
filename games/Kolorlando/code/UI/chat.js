@@ -44,12 +44,12 @@ export function createChatUI(options) {
     onHide?.();
   }
 
-  function submitInput() {
+  async function submitInput() {
     if (!chatBoxInput || !chatBoxOutput) return false;
     const message = chatBoxInput.value.trim();
     if (!message) return false;
 
-    if (onCommand?.(message)) {
+    if (await onCommand?.(message)) {
       chatBoxInput.value = '';
       hideInput();
       scrollToBottom();
@@ -65,7 +65,7 @@ export function createChatUI(options) {
     return true;
   }
 
-  function handleAction() {
+  async function handleAction() {
     if (!chatBoxInput) return false;
     if (chatBoxInput.hidden) {
       showInput();
@@ -75,7 +75,7 @@ export function createChatUI(options) {
     return submitInput();
   }
 
-  function handleToggleAction() {
+  async function handleToggleAction() {
     if (!chatBoxInput) return false;
     if (chatBoxInput.hidden) {
       showInput();
@@ -95,7 +95,9 @@ export function createChatUI(options) {
       if (event.key !== 'Enter') return;
       event.preventDefault();
       event.stopPropagation();
-      handleAction();
+      handleAction().catch(error => {
+        console.error('Failed to submit the Kolorlando chat input.', error);
+      });
     });
   }
 

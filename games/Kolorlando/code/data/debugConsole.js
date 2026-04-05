@@ -1,9 +1,21 @@
 const KOLORLANDO_PLAYER_NAME_STORAGE_KEY = 'kolorlando.playerName';
 const KOLORLANDO_FACE_STORAGE_KEY = 'kolorlando.playerFaceData';
 const KOLORLANDO_WORLD_SAVE_PREFIX = 'kolorlando.worldSave.';
+const KOLORLANDO_LOCAL_SETTINGS_KEYS = [
+  'kolorlando.cameraMode',
+  'kolorlando.renderScale',
+  'kolorlando.shadowsEnabled',
+  'kolorlando.shadowPreset',
+];
 const MODE_DESKTOP_LABEL = 'Desktop';
 const MODE_MOBILE_PORTRAIT_LABEL = 'Mobile/Portrait';
 const MODE_MOBILE_LANDSCAPE_LABEL = 'Mobile-Landscape';
+const CAMERA_MODE_STORAGE_KEY = 'kolorlando.cameraMode';
+const CAMERA_MODE_LABELS = {
+  skyrim: 'Skyrim',
+  wow: 'WoW',
+  legoLol: 'Lego Lol',
+};
 
 function resolveViewportModeLabel() {
   /* The debug console should describe the same device posture the runtime uses,
@@ -33,6 +45,17 @@ function resolveStoredUsername() {
   return trimmedStoredName || 'Anonymous';
 }
 
+function resolveStoredCameraModeLabel() {
+  /* The debug summary should mirror the player's persisted camera preference
+  while still falling back to the same default mode the runtime uses. */
+  try {
+    const storedCameraMode = window.localStorage.getItem(CAMERA_MODE_STORAGE_KEY);
+    return CAMERA_MODE_LABELS[storedCameraMode] || CAMERA_MODE_LABELS.skyrim;
+  } catch (error) {
+    return CAMERA_MODE_LABELS.skyrim;
+  }
+}
+
 function resolveStoredLocalDataLabels() {
   const labels = [];
 
@@ -47,6 +70,15 @@ function resolveStoredLocalDataLabels() {
       if (!storageKey || !storageKey.startsWith(KOLORLANDO_WORLD_SAVE_PREFIX)) continue;
       labels.push('World save');
       break;
+    }
+
+    const hasStoredLocalSettings = KOLORLANDO_LOCAL_SETTINGS_KEYS.some(storageKey => {
+      const storedValue = window.localStorage.getItem(storageKey);
+      return typeof storedValue === 'string' && storedValue.trim();
+    });
+
+    if (hasStoredLocalSettings) {
+      labels.push('Local settings');
     }
   } catch (error) {
     console.warn('Failed to inspect Kolorlando local data.', error);
@@ -75,7 +107,7 @@ export function createDebugConsole() {
       : '';
 
     console.log(
-      `Ariadna:\n\nScreen mode: ${resolveViewportModeLabel()}\nusername: ${resolveStoredUsername()}${localDataBlock}`
+      `Ariadna:\n\nScreen mode: ${resolveViewportModeLabel()}\nCamera mode: ${resolveStoredCameraModeLabel()}\nusername: ${resolveStoredUsername()}${localDataBlock}`
     );
   }
 
@@ -83,6 +115,7 @@ export function createDebugConsole() {
     log,
     logState,
     logBootSummary,
+    resolveCameraModeLabel: resolveStoredCameraModeLabel,
     resolveScreenModeLabel: resolveViewportModeLabel,
     resolveUsername: resolveStoredUsername,
     resolveStoredLocalDataLabels,
@@ -107,6 +140,10 @@ export function logKolorlandoDebugState(label, state = {}) {
 
 export function resolveKolorlandoDebugScreenMode() {
   return globalDebugConsole.resolveScreenModeLabel();
+}
+
+export function resolveKolorlandoDebugCameraMode() {
+  return globalDebugConsole.resolveCameraModeLabel();
 }
 
 export function resolveKolorlandoDebugUsername() {

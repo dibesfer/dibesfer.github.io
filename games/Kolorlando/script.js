@@ -220,6 +220,8 @@ const settingsMenuThemeDark = document.getElementById('settingsMenuThemeDark');
 const settingsShadows = document.getElementById('settingsShadows');
 const settingsShadowPreset = document.getElementById('settingsShadowPreset');
 const settingsUndersampling = document.getElementById('settingsUndersampling');
+const settingsBackgroundMusic = document.getElementById('settingsBackgroundMusic');
+const settingsRestoreDefaultsButton = document.getElementById('settingsRestoreDefaultsButton');
 const settingsReloadWorldButton = document.getElementById('settingsReloadWorldButton');
 const playerHealthFill = document.getElementById('playerHealthFill');
 const playerHealthText = document.getElementById('playerHealthText');
@@ -270,6 +272,9 @@ let wowCameraDragState = null;
 let wowCursorRaycastActive = false;
 let cameraModeController = null;
 let screenController = null;
+const STRUCTURE_ASSET_URLS = {
+  treeexample: new URL('./code/data/TreeExample.voxel', import.meta.url).href,
+};
 
 function updateCharacterMenuIdentity(name) {
   /* The Character tab should mirror the same resolved identity the rest of the
@@ -287,6 +292,7 @@ let isMiniMapDockedInMenu = false;
 const SHADOWS_STORAGE_KEY = 'kolorlando.settings.shadows';
 const SHADOW_PRESET_STORAGE_KEY = 'kolorlando.settings.shadowPreset';
 const RENDER_SCALE_STORAGE_KEY = 'kolorlando.settings.renderScale';
+const CAMERA_MODE_STORAGE_KEY = 'kolorlando.cameraMode';
 const DEFAULT_RENDER_SCALE = 1;
 const VALID_RENDER_SCALE_VALUES = new Set(['1', '0.75', '0.5']);
 const POINTER_LOCK_RETRY_COOLDOWN_MS = 350;
@@ -387,6 +393,34 @@ function setCurrentCameraMode(nextCameraMode) {
 function syncCameraModeAvailability() {
   if (!cameraModeController) return;
   cameraModeController.syncCameraModeAvailability();
+}
+
+function clearPersistedSetting(storageKey) {
+  try {
+    window.localStorage.removeItem(storageKey);
+  } catch (error) {
+    console.warn(`Failed to clear the Kolorlando setting "${storageKey}".`, error);
+  }
+}
+
+async function restoreDefaultSettings() {
+  /* Restoring settings starts from the shared defaults used during boot so the
+  menu and runtime converge on one canonical configuration again. */
+  if (settingsBackgroundMusic) {
+    settingsBackgroundMusic.checked = false;
+  }
+
+  menuUI.setThemePreference('system');
+  await menuUI.setFullScreenEnabled(false);
+  setCurrentCameraMode('skyrim');
+  setShadowsEnabled(true, { persist: false });
+  setShadowPreset(DEFAULT_SHADOW_PRESET, { persist: false });
+  setRenderScale(DEFAULT_RENDER_SCALE, { persist: false });
+
+  clearPersistedSetting(CAMERA_MODE_STORAGE_KEY);
+  clearPersistedSetting(SHADOWS_STORAGE_KEY);
+  clearPersistedSetting(SHADOW_PRESET_STORAGE_KEY);
+  clearPersistedSetting(RENDER_SCALE_STORAGE_KEY);
 }
 
 function shouldWantGameplayPointerLock() {
@@ -550,6 +584,148 @@ function setElementHidden(element, hidden) {
   element.hidden = hidden;
 }
 
+async function loadStructureAssetByName(assetName) {
+  const normalizedAssetName = typeof assetName === 'string' ? assetName.trim().toLowerCase() : '';
+  const assetUrl = STRUCTURE_ASSET_URLS[normalizedAssetName];
+
+  if (!assetUrl) {
+    throw new Error(`Unknown structure "${assetName}".`);
+  }
+
+  const response = await fetch(assetUrl);
+  if (!response.ok) {
+    throw new Error(`Failed to load structure "${assetName}".`);
+  }
+
+  return JSON.parse(await response.text());
+}
+
+function normalizeQuarterTurnRotation(rotationY) {
+  const normalizedRotation = Number.isFinite(rotationY) ? rotationY : 0;
+  return ((Math.round(normalizedRotation / 90) % 4) + 4) % 4;
+}
+
+function rotateLocalVoxelOffset(x, z, quarterTurns) {
+  switch (quarterTurns) {
+    case 1:
+      return { x: -z, z: x };
+    case 2:
+      return { x: -x, z: -z };
+    case 3:
+      return { x: z, z: -x };
+    default:
+      return { x, z };
+  }
+}
+
+function computeBoxIntersectionVolume(a, b) {
+  if (!a || !b || !a.intersectsBox(b)) return 0;
+
+  const overlapX = Math.max(0, Math.min(a.max.x, b.max.x) - Math.max(a.min.x, b.min.x));
+  const overlapY = Math.max(0, Math.min(a.max.y, b.max.y) - Math.max(a.min.y, b.min.y));
+  const overlapZ = Math.max(0, Math.min(a.max.z, b.max.z) - Math.max(a.min.z, b.min.z));
+  return overlapX * overlapY * overlapZ;
+}
+
+function isEscapeMoveFromBlockingHit(currentBox, nextBox, blockingHit) {
+  if (!currentBox || !nextBox || !blockingHit) return false;
+
+  /* If the player is already intersecting fresh geometry, movement should be
+  allowed when it clearly reduces the overlap so they can walk back out. */
+  const currentOverlap = computeBoxIntersectionVolume(currentBox, blockingHit);
+  const nextOverlap = computeBoxIntersectionVolume(nextBox, blockingHit);
+  return currentOverlap > 0 && nextOverlap > 0 && nextOverlap < currentOverlap;
+}
+
+function isKnownVoxelTypeId(voxelTypeId) {
+  return voxelTypes.some(voxelType => voxelType?.name === voxelTypeId);
+}
+
+function persistPlacedVoxel(cellX, cellY, cellZ, voxelTypeId) {
+  if (localWorldSaveStore) {
+    localWorldSaveStore.recordVoxelAdded(cellX, cellY, cellZ, voxelTypeId);
+  }
+
+  if (multiplayerWorldStore) {
+    multiplayerWorldStore.recordVoxelAdded(
+      cellX,
+      cellY,
+      cellZ,
+      voxelTypeId
+    ).catch(error => {
+      console.error('Failed to persist the Kolorlando multiplayer voxel addition.', error);
+    });
+  }
+}
+
+function placeStructureAssetAtPlayer(structureAsset) {
+  if (!canEditCurrentVoxelWorld()) {
+    throw new Error('Voxel editing is not available in this world.');
+  }
+
+  const voxels = Array.isArray(structureAsset?.voxels) ? structureAsset.voxels : [];
+  if (voxels.length === 0) {
+    throw new Error('This structure has no voxels to place.');
+  }
+
+  const placementAnchor = structureAsset?.placement?.anchor ?? { x: 0, y: 0, z: 0 };
+  const quarterTurns = normalizeQuarterTurnRotation(structureAsset?.placement?.rotationY);
+  const baseCellX = Math.floor(playerFoot.x) - Math.floor(Number(placementAnchor.x) || 0);
+  const baseCellY = Math.floor(playerFoot.y) - Math.floor(Number(placementAnchor.y) || 0);
+  const baseCellZ = Math.floor(playerFoot.z) - Math.floor(Number(placementAnchor.z) || 0);
+  let placedCount = 0;
+  let skippedCount = 0;
+
+  for (let i = 0; i < voxels.length; i += 1) {
+    const voxel = voxels[i];
+    const voxelTypeId = typeof voxel?.voxelTypeId === 'string' ? voxel.voxelTypeId.trim() : '';
+    const localX = Math.round(Number(voxel?.position?.x) || 0);
+    const localY = Math.round(Number(voxel?.position?.y) || 0);
+    const localZ = Math.round(Number(voxel?.position?.z) || 0);
+
+    if (!voxelTypeId || !isKnownVoxelTypeId(voxelTypeId)) {
+      skippedCount += 1;
+      continue;
+    }
+
+    const rotatedOffset = rotateLocalVoxelOffset(localX, localZ, quarterTurns);
+    const targetCellX = baseCellX + rotatedOffset.x;
+    const targetCellY = baseCellY + localY;
+    const targetCellZ = baseCellZ + rotatedOffset.z;
+    const added = addVoxelAtCell(targetCellX, targetCellY, targetCellZ, {
+      voxelType: voxelTypeId,
+    });
+
+    if (!added) {
+      skippedCount += 1;
+      continue;
+    }
+
+    persistPlacedVoxel(targetCellX, targetCellY, targetCellZ, voxelTypeId);
+    placedCount += 1;
+  }
+
+  invalidateVoxelRaycast();
+  return { placedCount, skippedCount };
+}
+
+async function handleSpawnCommand(args = []) {
+  const assetName = typeof args[0] === 'string' ? args[0].trim() : '';
+
+  if (!assetName) {
+    /* Reusing the existing spawn helper keeps manual respawns identical to
+    death/fall respawns, including velocity cleanup and collider reset. */
+    respawnPlayerAtSpawn();
+    syncPlayerBody();
+    return;
+  }
+
+  const structureAsset = await loadStructureAssetByName(assetName);
+  const { placedCount, skippedCount } = placeStructureAssetAtPlayer(structureAsset);
+  chatUI.appendLine(
+    `Spawned ${assetName}: ${placedCount} placed${skippedCount ? `, ${skippedCount} skipped` : ''}.`
+  );
+}
 
 const handleChatCommand = createCommandHandler({
   /* The command module owns the text commands themselves, while script.js
@@ -560,11 +736,12 @@ const handleChatCommand = createCommandHandler({
   onToggleFlyMode: () => {
     setFlyMode(!flyMode);
   },
-  onSpawn: () => {
-    /* Reusing the existing spawn helper keeps manual respawns identical to
-    death/fall respawns, including velocity cleanup and collider reset. */
-    respawnPlayerAtSpawn();
-    syncPlayerBody();
+  onSpawn: async (args = []) => {
+    try {
+      await handleSpawnCommand(args);
+    } catch (error) {
+      chatUI.appendLine(String(error?.message || 'Failed to run /spawn.'));
+    }
   },
 });
 
@@ -1135,7 +1312,7 @@ const gravity = 30;
 const jumpSpeed = 11;
 const maxJumps = 2;
 const PLAYER_MAX_HEALTH = 100;
-const PLAYER_RESPAWN_DELAY = 1.2;
+const PLAYER_RESPAWN_DELAY = 0;
 let flyMode = false;
 
 function updatePlayerHealthUI() {
@@ -1181,6 +1358,13 @@ function applyPlayerDamage(amount) {
     console.error('Failed to sync Kolorlando player death.', error);
   });
   persistMultiplayerPlayerState(true);
+
+  /* Instant-respawn remains a first-class path instead of a special-case hack,
+  so future delayed respawns can still reuse the same timer-driven lifecycle. */
+  if (playerState.respawnTimer <= 0) {
+    respawnPlayerAfterDeath();
+  }
+
   return true;
 }
 
@@ -1375,6 +1559,14 @@ setRenderScale(resolveRenderScalePreference(savedRenderScalePreference), {
 if (settingsUndersampling) {
   settingsUndersampling.addEventListener('change', function () {
     setRenderScale(settingsUndersampling.value);
+  });
+}
+
+if (settingsRestoreDefaultsButton) {
+  settingsRestoreDefaultsButton.addEventListener('click', () => {
+    restoreDefaultSettings().catch(error => {
+      console.error('Failed to restore the Kolorlando default settings.', error);
+    });
   });
 }
 
@@ -4176,12 +4368,19 @@ function tryMoveAxis(axis, delta) {
   axisTestPos.copy(playerEye);
   axisTestPos[axis] += delta;
 
+  const currentColliderBox = playerCollider.clone();
   updatePlayerCollider(axisTestPos);
   testBox.copy(playerCollider);
 
   const blockingHit = collidesWithBuildings(testBox);
 
   if (!blockingHit) {
+    playerEye[axis] += delta;
+    updatePlayerCollider(playerEye);
+    return;
+  }
+
+  if (isEscapeMoveFromBlockingHit(currentColliderBox, testBox, blockingHit)) {
     playerEye[axis] += delta;
     updatePlayerCollider(playerEye);
     return;
