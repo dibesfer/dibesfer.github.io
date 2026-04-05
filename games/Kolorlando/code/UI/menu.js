@@ -5,6 +5,8 @@ export function createMenuUI(options) {
   const settingsFullScreen = options.settingsFullScreen;
   const settingsMenuThemeDark = options.settingsMenuThemeDark;
   const systemMenuThemeQuery = options.systemMenuThemeQuery;
+  const onTabChange = typeof options.onTabChange === 'function' ? options.onTabChange : null;
+  const onVisibilityChange = typeof options.onVisibilityChange === 'function' ? options.onVisibilityChange : null;
   let activeTab = options.initialTab || 'settings';
   let themePreference = options.initialThemePreference || 'system';
 
@@ -55,17 +57,21 @@ export function createMenuUI(options) {
       const isActive = menuPanels[i].dataset.menuPanel === activeTab;
       menuPanels[i].classList.toggle('is-active', isActive);
     }
+
+    onTabChange?.(activeTab);
   }
 
   function show(tabName) {
     setTab(tabName || activeTab);
     setElementHidden(menuCentral, false);
     document.body.classList.add('menu-central-open');
+    onVisibilityChange?.(true, activeTab);
   }
 
   function hide() {
     setElementHidden(menuCentral, true);
     document.body.classList.remove('menu-central-open');
+    onVisibilityChange?.(false, activeTab);
   }
 
   function syncFullScreenSetting() {

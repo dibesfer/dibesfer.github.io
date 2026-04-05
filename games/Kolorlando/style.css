@@ -188,8 +188,19 @@ img {
     border: var(--commonBorder);
 
     overflow: hidden;
-    pointer-events: none;
+    pointer-events: auto;
     z-index: 45;
+    cursor: pointer;
+}
+
+#miniMap.is-docked-in-menu {
+    position: relative;
+    top: auto;
+    right: auto;
+    width: 100%;
+    height: 100%;
+    z-index: auto;
+    cursor: default;
 }
 
 #miniMap canvas {
@@ -420,6 +431,20 @@ img {
 
 .settings-toggle label {
     color: var(--menu-text);
+}
+
+#menuMapPanelMiniMapHost {
+    position: relative;
+    width: 100%;
+    max-width: min(100%, 960px);
+    aspect-ratio: 16 / 9;
+    margin-top: 10px;
+    margin-left: auto;
+    margin-right: auto;
+    border: 2px solid var(--menu-border);
+    border-radius: 8px;
+    overflow: hidden;
+    background: linear-gradient(180deg, rgba(10, 22, 32, 0.86), rgba(7, 14, 22, 0.94));
 }
 
 #kolorlandiaCharacterMenu {
@@ -1049,6 +1074,11 @@ body[data-mode="mobile-portrait"] #miniMap {
     height: 100px;
 }
 
+body[data-mode="mobile-portrait"] #miniMap.is-docked-in-menu {
+    width: 100%;
+    height: 100%;
+}
+
 body[data-mode="mobile-portrait"] #menuInferior {
     position: fixed;
     left: 0;
@@ -1120,6 +1150,12 @@ body[data-mode="mobile-landscape"] #miniMap {
     width: 100px;
     height: 100px;
     right: 12px;
+}
+
+body[data-mode="mobile-landscape"] #miniMap.is-docked-in-menu {
+    width: 100%;
+    height: 100%;
+    right: auto;
 }
 
 body[data-mode="mobile-landscape"] #playerHud {

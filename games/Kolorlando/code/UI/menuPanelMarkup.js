@@ -13,13 +13,14 @@ export function renderKolorlandoMenuPanel(container) {
         <div class="menu-tabs" role="tablist" aria-label="Main menu sections">
             <button class="menu-tab" type="button" data-menu-tab="creative">📖 ENCYCLOPEDIA</button>
             <button class="menu-tab" type="button" data-menu-tab="inventory">🎒 INVENTORY</button>
+            <button class="menu-tab" type="button" data-menu-tab="map">🗺️ MAP</button>
             <button class="menu-tab" type="button" data-menu-tab="character">👤 CHARACTER</button>
             <button class="menu-tab is-active" type="button" data-menu-tab="settings">⚙️ SETTINGS</button>
             <button class="menu-tab" type="button" data-menu-tab="about">🪶 ABOUT</button>
         </div>
 
         <section class="menu-panel" data-menu-panel="creative">
-            <h2>Encyclopedia</h2>
+            
             <h3>Voxels</h3>
             <div id="inventorySlots"></div>
 
@@ -39,7 +40,7 @@ export function renderKolorlandoMenuPanel(container) {
         </section>
 
         <section class="menu-panel" data-menu-panel="inventory">
-            <h2>Inventory</h2>
+            
             <div id="playerInventorySlots"></div>
             <p id="playerInventorySummary">0 / 3168 items</p>
             <p id="playerInventorySelection">Selected slot: 1</p>
@@ -47,8 +48,15 @@ export function renderKolorlandoMenuPanel(container) {
             <p class="inventory-help">Press <code>I</code> to open this tab quickly.</p>
         </section>
 
+        <section class="menu-panel" data-menu-panel="map">
+           
+            
+            <div id="menuMapPanelMiniMapHost"></div>
+            <p class="inventory-help">Press <code>M</code> to open this tab quickly on desktop.</p>
+        </section>
+
         <section class="menu-panel" data-menu-panel="character">
-            <h2>Character</h2>
+            
             <div id="kolorlandiaCharacterMenu">
                 <div id="kolorlandiaCharacterMenu_player"></div>
 
@@ -111,7 +119,7 @@ export function renderKolorlandoMenuPanel(container) {
         </section>
 
         <section class="menu-panel is-active" data-menu-panel="settings">
-            <h2>Settings</h2>
+            
 
             <div class="game-mode-picker" aria-label="Game mode">
                 <span>Game mode</span>
@@ -146,6 +154,13 @@ export function renderKolorlandoMenuPanel(container) {
             <div class="settings-toggle">
                 <input type="checkbox" name="shadows" id="settingsShadows" checked>
                 <label for="settingsShadows">Shadows</label>
+            </div>
+            <div class="settings-toggle">
+                <label for="settingsShadowPreset">Shadow Preset</label>
+                <select id="settingsShadowPreset">
+                    <option value="default">Default</option>
+                    <option value="crisp">Crisp</option>
+                </select>
             </div>
             <div class="settings-toggle">
                 <label for="settingsUndersampling">Undersampling</label>
@@ -183,7 +198,7 @@ export function renderKolorlandoMenuPanel(container) {
         </section>
 
         <section class="menu-panel" data-menu-panel="about">
-            <h2>About</h2>
+            
             <h3>Links</h3>
             <ul>
                 <li><a href="/games/Kolorlando/">Landing Page</a></li>

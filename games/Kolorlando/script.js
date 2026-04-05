@@ -17,6 +17,11 @@ import { createMenuUI } from './code/UI/menu.js';
 import { createCameraModeController } from './code/graphics/camera.js';
 import { createScreenController } from './code/graphics/screen.js';
 import {
+  applyShadowPreset,
+  DEFAULT_SHADOW_PRESET,
+  resolveShadowPresetName,
+} from './code/graphics/shadowConfig.js';
+import {
   createInventoryUI,
   GAME_MODE_SURVIVAL,
 } from './code/UI/inventory.js';
@@ -180,6 +185,7 @@ const menuCentral = document.getElementById('menuCentral');
 const menuCloseButton = document.getElementById('menuCloseButton');
 const menuTabButtons = Array.from(document.querySelectorAll('#menuCentral .menu-tab'));
 const menuPanels = Array.from(document.querySelectorAll('#menuCentral .menu-panel'));
+const menuMapPanelMiniMapHost = document.getElementById('menuMapPanelMiniMapHost');
 const playButton = document.getElementById('playButton');
 const menuInferior = document.getElementById('menuInferior');
 const inventorySlots = document.getElementById('inventorySlots');
@@ -205,6 +211,7 @@ const buttonRight3 = document.getElementById('Right3');
 const settingsFullScreen = document.getElementById('settingsFullScreen');
 const settingsMenuThemeDark = document.getElementById('settingsMenuThemeDark');
 const settingsShadows = document.getElementById('settingsShadows');
+const settingsShadowPreset = document.getElementById('settingsShadowPreset');
 const settingsUndersampling = document.getElementById('settingsUndersampling');
 const settingsReloadWorldButton = document.getElementById('settingsReloadWorldButton');
 const playerHealthFill = document.getElementById('playerHealthFill');
@@ -258,13 +265,17 @@ function updateCharacterMenuIdentity(name) {
 
 updateCharacterMenuIdentity(resolveLocalPlayerDisplayName());
 let miniMapUI = null;
+const miniMapHomeAnchor = document.createComment('miniMap-home-anchor');
+let isMiniMapDockedInMenu = false;
 const SHADOWS_STORAGE_KEY = 'kolorlando.settings.shadows';
+const SHADOW_PRESET_STORAGE_KEY = 'kolorlando.settings.shadowPreset';
 const RENDER_SCALE_STORAGE_KEY = 'kolorlando.settings.renderScale';
 const DEFAULT_RENDER_SCALE = 1;
 const VALID_RENDER_SCALE_VALUES = new Set(['1', '0.75', '0.5']);
 const POINTER_LOCK_RETRY_COOLDOWN_MS = 350;
 let rendererPixelRatioBase = Math.min(window.devicePixelRatio, 2);
 let renderScaleMultiplier = DEFAULT_RENDER_SCALE;
+let shadowPresetName = DEFAULT_SHADOW_PRESET;
 const VOXEL_RAYCAST_REFRESH_INTERVAL = 1 / 30;
 const WOW_CURSOR_RAYCAST_NDC_EPSILON_SQ = 0.000004;
 const cameraForwardDirection = new THREE.Vector3();
@@ -574,6 +585,8 @@ const menuUI = createMenuUI({
   settingsMenuThemeDark,
   systemMenuThemeQuery,
   initialTab: 'settings',
+  onTabChange: syncMiniMapDock,
+  onVisibilityChange: syncMiniMapDock,
 });
 let characterPreviewRenderer = null;
 let characterPreviewScene = null;
@@ -741,6 +754,53 @@ function isMenuCentralVisible() {
   return menuUI.isVisible();
 }
 
+function dockMiniMapToCurrentHost(activeTab, visible) {
+  if (!miniMap || !menuMapPanelMiniMapHost) return;
+
+  const resolvedTab = typeof activeTab === 'string'
+    ? activeTab
+    : document.querySelector('#menuCentral .menu-panel.is-active')?.dataset.menuPanel || 'settings';
+  const isVisibleNow = typeof visible === 'boolean'
+    ? visible
+    : Boolean(menuCentral && !menuCentral.hidden);
+  const shouldDockInMenu = isVisibleNow && resolvedTab === 'map';
+
+  if (shouldDockInMenu === isMiniMapDockedInMenu) return;
+
+  if (shouldDockInMenu) {
+    menuMapPanelMiniMapHost.appendChild(miniMap);
+    miniMap.classList.add('is-docked-in-menu');
+    isMiniMapDockedInMenu = true;
+  } else {
+    miniMap.classList.remove('is-docked-in-menu');
+    miniMapHomeAnchor.parentNode?.insertBefore(miniMap, miniMapHomeAnchor.nextSibling);
+    isMiniMapDockedInMenu = false;
+  }
+
+  miniMapUI?.updateMiniMapSize();
+  miniMapUI?.updateMiniMap(0, true);
+}
+
+function syncMiniMapDock(arg1, arg2) {
+  const visible = typeof arg1 === 'boolean' ? arg1 : undefined;
+  const activeTab = typeof arg1 === 'string' ? arg1 : arg2;
+  dockMiniMapToCurrentHost(activeTab, visible);
+}
+
+function handleMiniMapOpenMapPanel(event) {
+  if (!miniMap || isMiniMapDockedInMenu) return;
+
+  event.preventDefault();
+  event.stopPropagation();
+
+  if (mobileMode) {
+    showMenuCentral('map', { force: true });
+    return;
+  }
+
+  deactivateDesktopScreenActivity('map');
+}
+
 function setMenuCentralTab(tabName) {
   menuUI.setTab(tabName);
 }
@@ -755,11 +815,17 @@ function showMenuCentral(tabName = getActiveMenuCentralTab(), { force = false } 
     setWowCameraScreenActive(false);
   }
   menuUI.show(tabName);
+  syncMiniMapDock();
 }
 
 function hideMenuCentral() {
   setMobileInventoryToggleState(false);
   menuUI.hide();
+  syncMiniMapDock();
+}
+
+if (miniMap) {
+  miniMap.addEventListener('pointerdown', handleMiniMapOpenMapPanel);
 }
 
 if (menuCloseButton) {
@@ -782,7 +848,6 @@ undersampling setting can reduce GPU load immediately without changing layout. *
 renderer.setPixelRatio(getEffectiveRenderPixelRatio());
 renderer.setClearColor(0x5EC9FF);
 renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
 sceneView.appendChild(renderer.domElement);
 
@@ -1107,10 +1172,6 @@ const dir = new THREE.DirectionalLight(0xffffff, 1.2);
 dir.position.set(100, 200, 100);
 dir.target.position.set(0, 0, 0);
 dir.castShadow = true;
-// Slightly lower shadow map resolution for a softer edge filter with PCFSoftShadowMap.
-dir.shadow.mapSize.set(1024, 1024);
-dir.shadow.bias = -0.0002;
-dir.shadow.normalBias = 0.02;
 scene.add(dir);
 scene.add(dir.target);
 
@@ -1125,6 +1186,30 @@ function persistShadowsPreference(nextEnabled) {
 function readSavedShadowsPreference() {
   try {
     return window.localStorage.getItem(SHADOWS_STORAGE_KEY);
+  } catch (error) {
+    return null;
+  }
+}
+
+function syncShadowPresetSetting() {
+  if (!settingsShadowPreset) return;
+  settingsShadowPreset.value = shadowPresetName;
+}
+
+function persistShadowPresetPreference(nextPresetName) {
+  try {
+    window.localStorage.setItem(
+      SHADOW_PRESET_STORAGE_KEY,
+      resolveShadowPresetName(nextPresetName),
+    );
+  } catch (error) {
+    // Ignore persistence failures so the setting still works for the session.
+  }
+}
+
+function readSavedShadowPresetPreference() {
+  try {
+    return window.localStorage.getItem(SHADOW_PRESET_STORAGE_KEY);
   } catch (error) {
     return null;
   }
@@ -1195,6 +1280,35 @@ function setShadowsEnabled(nextEnabled, options = {}) {
   }
 }
 
+function setShadowPreset(nextPresetName, options = {}) {
+  const shouldPersist = options.persist !== false;
+  shadowPresetName = applyShadowPreset({
+    renderer,
+    directionalLight: dir,
+    presetName: nextPresetName,
+  });
+
+  syncShadowPresetSetting();
+
+  /* Shadow shader variants and map allocations can stay cached after preset
+  swaps, so scene materials get nudged to rebuild against the fresh setup. */
+  scene.traverse(part => {
+    if (!part?.isMesh) return;
+    if (part.material) {
+      part.material.needsUpdate = true;
+    }
+  });
+
+  if (shouldPersist) {
+    persistShadowPresetPreference(shadowPresetName);
+  }
+}
+
+const savedShadowPresetPreference = readSavedShadowPresetPreference();
+setShadowPreset(resolveShadowPresetName(savedShadowPresetPreference), {
+  persist: false,
+});
+
 const savedShadowsPreference = readSavedShadowsPreference();
 if (savedShadowsPreference === 'true' || savedShadowsPreference === 'false') {
   setShadowsEnabled(savedShadowsPreference === 'true', { persist: false });
@@ -1205,6 +1319,12 @@ if (savedShadowsPreference === 'true' || savedShadowsPreference === 'false') {
 if (settingsShadows) {
   settingsShadows.addEventListener('change', function () {
     setShadowsEnabled(settingsShadows.checked);
+  });
+}
+
+if (settingsShadowPreset) {
+  settingsShadowPreset.addEventListener('change', function () {
+    setShadowPreset(settingsShadowPreset.value);
   });
 }
 
@@ -1552,7 +1672,9 @@ miniMapUI = createMiniMapUI({
   miniMapViewSize: MINI_MAP_VIEW_SIZE,
   miniMapHeight: MINI_MAP_HEIGHT,
 });
+miniMap.parentNode?.insertBefore(miniMapHomeAnchor, miniMap);
 miniMapUI.setPixelRatio(getEffectiveRenderPixelRatio());
+syncMiniMapDock();
 const FALL_RESPAWN_Y = -100;
 const playerSpawnPoint = mapData.spawnPoint.clone();
 playerSpawnPoint.y += 1;
@@ -4840,6 +4962,13 @@ document.addEventListener('keydown', e => {
     e.preventDefault();
     if (e.repeat) return;
     toggleMenuCentralTab('inventory');
+    return;
+  }
+
+  if (e.code === 'KeyM' && !mobileMode) {
+    e.preventDefault();
+    if (e.repeat) return;
+    toggleMenuCentralTab('map');
     return;
   }
 
