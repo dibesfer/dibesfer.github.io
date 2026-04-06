@@ -18,6 +18,22 @@ function areJsonValuesEqual(leftValue, rightValue) {
   return JSON.stringify(leftValue) === JSON.stringify(rightValue);
 }
 
+function pickAuthoritativeKolorPlayerRow(rows) {
+  /* Duplicate profile rows can happen while auth flow is still evolving. The
+  newest row that actually has face data is the safest table authority. */
+  if (!Array.isArray(rows) || rows.length === 0) {
+    return null;
+  }
+
+  for (let index = rows.length - 1; index >= 0; index -= 1) {
+    if (rows[index]?.avatar_face) {
+      return rows[index];
+    }
+  }
+
+  return rows[rows.length - 1] ?? null;
+}
+
 export function readLocalPlayerFaceData() {
   /* The local cache stays as the anonymous fallback and also gives logged-in
   users something to bootstrap from before their cloud profile exists. */
@@ -78,7 +94,6 @@ export async function getAuthenticatedKolorPlayer() {
     .select('*')
     .eq('user_id', user.id)
     .order('id', { ascending: true })
-    .limit(1);
 
   if (rowError) {
     throw rowError;
@@ -86,7 +101,7 @@ export async function getAuthenticatedKolorPlayer() {
 
   return {
     user,
-    row: rows?.[0] ?? null,
+    row: pickAuthoritativeKolorPlayerRow(rows),
   };
 }
 
@@ -165,16 +180,15 @@ export async function loadPlayerFaceData() {
         .update({
           avatar_face: cloneJsonValue(resolvedFaceData),
         })
-        .eq('id', ensuredPlayer.row.id)
-        .select()
-        .single();
+        .eq('user_id', ensuredPlayer.user.id)
+        .select();
 
       if (healedUpdateError && !isKolorPlayersWritePolicyError(healedUpdateError)) {
         throw healedUpdateError;
       }
 
       if (!healedUpdateError && healedRows) {
-        ensuredPlayer.row = healedRows;
+        ensuredPlayer.row = pickAuthoritativeKolorPlayerRow(healedRows) ?? ensuredPlayer.row;
       }
     }
 
@@ -226,9 +240,8 @@ export async function savePlayerFaceData(faceData) {
       .update({
         avatar_face: cloneJsonValue(normalizedFaceData),
       })
-      .eq('id', ensuredPlayer.row.id)
-      .select()
-      .single();
+      .eq('user_id', ensuredPlayer.user.id)
+      .select();
 
     if (updateError) {
       throw updateError;
@@ -237,7 +250,7 @@ export async function savePlayerFaceData(faceData) {
     return {
       faceData: normalizedFaceData,
       savedRemotely: true,
-      playerRow: updatedRows ?? ensuredPlayer.row,
+      playerRow: pickAuthoritativeKolorPlayerRow(updatedRows) ?? ensuredPlayer.row,
     };
   } catch (error) {
     if (isKolorPlayersWritePolicyError(error)) {

@@ -606,7 +606,7 @@ function generateSaveCode() {
     return JSON.stringify(buildSaveDataPayload());
 }
 
-function updateSaveDataPre() {
+function updateSaveDataPre({ persist = true } = {}) {
     // The save-code preview should always reflect the live face state so
     // users do not need a separate save click before copying the code.
     const savePayload = buildSaveDataPayload();
@@ -616,10 +616,12 @@ function updateSaveDataPre() {
         saveDataPre.textContent = saveCode;
     }
 
-    scheduleFacePersistence(savePayload);
+    if (persist) {
+        scheduleFacePersistence(savePayload);
+    }
 }
 
-function applySaveDataPayload(saveData) {
+function applySaveDataPayload(saveData, { persist = true } = {}) {
     faceStateUpdatedAt = typeof saveData?.updatedAt === "string"
         ? saveData.updatedAt
         : "";
@@ -670,7 +672,7 @@ function applySaveDataPayload(saveData) {
     updateSelectedCategoryStyles();
     updateSelectedFaceItemStyles();
     syncSecondaryColorInput();
-    updateSaveDataPre();
+    updateSaveDataPre({ persist });
     redrawCanvas();
 }
 
@@ -1218,14 +1220,14 @@ const storedPlayerFaceData = storedPlayerFaceDataResult?.faceData;
 await logSfcDebugStorageState(storedPlayerFaceDataResult);
 
 if (storedPlayerFaceData?.version === saveCodeVersion) {
-    applySaveDataPayload(storedPlayerFaceData);
+    applySaveDataPayload(storedPlayerFaceData, { persist: false });
 } else {
     loadDefaultSelections();
     markFaceStateDirty();
     renderCategoryItems(currentCategory);
     updateSelectedCategoryStyles();
     syncSecondaryColorInput();
-    updateSaveDataPre();
+    updateSaveDataPre({ persist: false });
     resizeCanvasToWrapper();
 }
 
