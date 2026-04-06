@@ -1,6 +1,7 @@
 import {
     DEFAULT_SFC_FACE,
     SFC_CATEGORY_ITEMS,
+    SFC_FACE_STORAGE_KEY,
     resolveSfcImageUrlAlias
 } from "../../games/Kolorlando/sfcFace.js";
 import {
@@ -31,6 +32,52 @@ const saveCodeVersion = DEFAULT_SFC_FACE.version;
 const desktopPointerMediaQuery = window.matchMedia("(hover: hover) and (pointer: fine)");
 let faceSaveTimeoutId = 0;
 let faceStateUpdatedAt = DEFAULT_SFC_FACE.updatedAt || "";
+
+function readSfcDebugLocalDataState() {
+    try {
+        const rawFaceData = window.localStorage.getItem(SFC_FACE_STORAGE_KEY);
+        return {
+            hasLocalFaceData: Boolean(rawFaceData),
+            localFaceDataValid: Boolean(rawFaceData && JSON.parse(rawFaceData)?.version === saveCodeVersion)
+        };
+    } catch {
+        return {
+            hasLocalFaceData: true,
+            localFaceDataValid: false
+        };
+    }
+}
+
+async function logSfcDebugStorageState(loadResult) {
+    const localDataState = readSfcDebugLocalDataState();
+    let user = null;
+
+    try {
+        const { data, error } = await window.database?.auth?.getUser?.() ?? {};
+        const isMissingSession =
+            error?.name === "AuthSessionMissingError"
+            || /auth session missing/i.test(String(error?.message || ""));
+
+        if (error && !isMissingSession) {
+            throw error;
+        }
+
+        user = data?.user ?? null;
+    } catch (error) {
+        console.warn("[SFC debug] Could not resolve auth state.", error);
+    }
+
+    const loggedIn = Boolean(user?.id);
+    const hasOnlineFaceData = Boolean(loadResult?.playerRow?.avatar_face);
+
+    console.log(
+        `[SFC debug]\n`
+        + `${loggedIn ? "Logged in" : "Anonymous"}\n`
+        + `- local data: ${localDataState.hasLocalFaceData ? "yes" : "no"}\n`
+        + `- table data: ${hasOnlineFaceData ? "yes" : "no"}\n`
+        + `- load source: ${loadResult?.source ?? "unknown"}`
+    );
+}
 
 function createResolvedCategoryItems(rawCategoryItems) {
     return Object.fromEntries(
@@ -662,7 +709,11 @@ function scheduleFacePersistence(saveData) {
 
     faceSaveTimeoutId = window.setTimeout(() => {
         faceSaveTimeoutId = 0;
-        savePlayerFaceData(saveData);
+        savePlayerFaceData(saveData).then(saveResult => {
+            if (saveResult?.savedRemotely) {
+                console.log("[SFC debug]\nLogged in\n- saved to online table: yes");
+            }
+        });
     }, 250);
 }
 
@@ -1164,6 +1215,7 @@ readDataButton?.addEventListener("click", () => {
 updatePossibleCombinationsTitle();
 const storedPlayerFaceDataResult = await loadPlayerFaceData();
 const storedPlayerFaceData = storedPlayerFaceDataResult?.faceData;
+await logSfcDebugStorageState(storedPlayerFaceDataResult);
 
 if (storedPlayerFaceData?.version === saveCodeVersion) {
     applySaveDataPayload(storedPlayerFaceData);

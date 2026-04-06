@@ -34,20 +34,22 @@
 
       <style>
         .displayflexy {
-          width: 400px;
+          width: 100%;
+          max-width: 400px;
           margin: auto;
-          max-width: 100%;
-          overflow: auto;
           display: flex;
-          height:100px;
+          align-items: center;
           justify-content: center;
           
         }
+
+        .displayflexy img {
+          height: clamp(48px, 20vw, 100px);
+          width: auto;
+          object-fit: contain;
+        }
         
       </style>
-
-      <div class="shadowIcon">
-      </div>
 
       <div class="displayflexy shadowIcon">
         <img src="/assets/branding/fergames-logo.png" alt="">
