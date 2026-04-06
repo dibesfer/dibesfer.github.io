@@ -33,32 +33,47 @@ export const SFC_CATEGORY_ITEMS = {
   eyes: [
     { imgUrl: '../../web/SquareFaceCreator/assets/categories/eyes/SFC_eyes1.png' },
     { imgUrl: '../../web/SquareFaceCreator/assets/categories/eyes/SFC_eyes2.png' },
+    { imgUrl: '../../web/SquareFaceCreator/assets/categories/downloaded/eyes-cartoon.png' },
+    { imgUrl: '../../web/SquareFaceCreator/assets/categories/downloaded/eyes-single.png' },
+    { imgUrl: '../../web/SquareFaceCreator/assets/categories/downloaded/eyes-icon.png' },
+    { imgUrl: '../../web/SquareFaceCreator/assets/categories/downloaded/eyes-simple.svg' },
   ],
   eyebrows: [
     { imgUrl: '../../web/SquareFaceCreator/assets/categories/eyebrows/SFC_eyebrows1.png' },
+    { imgUrl: '../../web/SquareFaceCreator/assets/categories/downloaded/eyebrows-arched.png' },
+    { imgUrl: '../../web/SquareFaceCreator/assets/categories/downloaded/eyebrows-black.png' },
+    { imgUrl: '../../web/SquareFaceCreator/assets/categories/downloaded/eyebrows-brown.png' },
   ],
   nose: [
     { imgUrl: '../../web/SquareFaceCreator/assets/categories/nose/SFC_nose1.png' },
     { imgUrl: '../../web/SquareFaceCreator/assets/categories/nose/SFC_nose2.svg' },
+    { imgUrl: '../../web/SquareFaceCreator/assets/categories/downloaded/nose-anime.png' },
+    { imgUrl: '../../web/SquareFaceCreator/assets/categories/downloaded/nose-profile.png' },
+    { imgUrl: '../../web/SquareFaceCreator/assets/categories/downloaded/nose-front.png' },
   ],
   mouth: [
     { imgUrl: '../../web/SquareFaceCreator/assets/categories/mouth/SFC_mouth1.png' },
-    { imgUrl: '' },
+    { imgUrl: '../../web/SquareFaceCreator/assets/categories/downloaded/mouth-open.png' },
+    { imgUrl: '../../web/SquareFaceCreator/assets/categories/downloaded/mouth-happy.png' },
+    { imgUrl: '../../web/SquareFaceCreator/assets/categories/downloaded/mouth-anime.png' },
+    { imgUrl: '../../web/SquareFaceCreator/assets/categories/downloaded/mouth-smile.png' },
+    { imgUrl: '../../web/SquareFaceCreator/assets/categories/downloaded/mouth-stroke.png' },
   ],
   ears: [
     { imgUrl: '../../web/SquareFaceCreator/assets/categories/ears/SFC_ear2.svg' },
+    { imgUrl: '../../web/SquareFaceCreator/assets/categories/downloaded/ears-clipart.png' },
+    { imgUrl: '../../web/SquareFaceCreator/assets/categories/downloaded/ears-vector.png' },
+    { imgUrl: '../../web/SquareFaceCreator/assets/categories/downloaded/ears-basic.png' },
+    { imgUrl: '../../web/SquareFaceCreator/assets/categories/downloaded/ears-outline.png' },
   ],
   hair: [
     { imgUrl: '../../web/SquareFaceCreator/assets/categories/hair/SFC_hair1.png' },
-    { imgUrl: '' },
   ],
   glasses: [
     { imgUrl: '../../web/SquareFaceCreator/assets/categories/glasses/SFC_glasses1.png' },
-    { imgUrl: '' },
   ],
   beard: [
     { imgUrl: '../../web/SquareFaceCreator/assets/categories/beard/SFC_beard1.png' },
-    { imgUrl: '' },
   ],
 };
 

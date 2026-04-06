@@ -94,157 +94,29 @@ function createResolvedCategoryItems(rawCategoryItems) {
     );
 }
 
+function createEditorCategoryItems(categoryName, slotCount = 16) {
+    const sharedItems = SFC_CATEGORY_ITEMS[categoryName] || [];
+    const nextItems = sharedItems.map(item => ({ ...item }));
+
+    while (nextItems.length < slotCount) {
+        const slotLabel = String(nextItems.length + 1).padStart(2, "0");
+        nextItems.push({
+            imgUrl: `REPLACE_WITH_${categoryName.toUpperCase()}_${slotLabel}_URL`
+        });
+    }
+
+    return nextItems;
+}
+
 const categoryItems = createResolvedCategoryItems({
-    // Each category keeps a fixed list of 16 item slots.
-    // Replace the example imgUrl values with your real image URLs.
-    eyes: [
-        { imgUrl: "assets/categories/eyes/SFC_eyes1.png" },
-        { imgUrl: "assets/categories/eyes/SFC_eyes2.png" },
-        { imgUrl: "assets/categories/downloaded/eyes-cartoon.png" },
-        { imgUrl: "assets/categories/downloaded/eyes-single.png" },
-        { imgUrl: "assets/categories/downloaded/eyes-icon.png" },
-        { imgUrl: "assets/categories/downloaded/eyes-simple.svg" },
-        { imgUrl: "REPLACE_WITH_EYES_07_URL" },
-        { imgUrl: "REPLACE_WITH_EYES_08_URL" },
-        { imgUrl: "REPLACE_WITH_EYES_09_URL" },
-        { imgUrl: "REPLACE_WITH_EYES_10_URL" },
-        { imgUrl: "REPLACE_WITH_EYES_11_URL" },
-        { imgUrl: "REPLACE_WITH_EYES_12_URL" },
-        { imgUrl: "REPLACE_WITH_EYES_13_URL" },
-        { imgUrl: "REPLACE_WITH_EYES_14_URL" },
-        { imgUrl: "REPLACE_WITH_EYES_15_URL" },
-        { imgUrl: "REPLACE_WITH_EYES_16_URL" }
-    ],
-    eyebrows: [
-        { imgUrl: "assets/categories/eyebrows/SFC_eyebrows1.png" },
-        { imgUrl: "assets/categories/downloaded/eyebrows-arched.png" },
-        { imgUrl: "assets/categories/downloaded/eyebrows-black.png" },
-        { imgUrl: "assets/categories/downloaded/eyebrows-brown.png" },
-        { imgUrl: "REPLACE_WITH_EYEBROWS_05_URL" },
-        { imgUrl: "REPLACE_WITH_EYEBROWS_06_URL" },
-        { imgUrl: "REPLACE_WITH_EYEBROWS_07_URL" },
-        { imgUrl: "REPLACE_WITH_EYEBROWS_08_URL" },
-        { imgUrl: "REPLACE_WITH_EYEBROWS_09_URL" },
-        { imgUrl: "REPLACE_WITH_EYEBROWS_10_URL" },
-        { imgUrl: "REPLACE_WITH_EYEBROWS_11_URL" },
-        { imgUrl: "REPLACE_WITH_EYEBROWS_12_URL" },
-        { imgUrl: "REPLACE_WITH_EYEBROWS_13_URL" },
-        { imgUrl: "REPLACE_WITH_EYEBROWS_14_URL" },
-        { imgUrl: "REPLACE_WITH_EYEBROWS_15_URL" },
-        { imgUrl: "REPLACE_WITH_EYEBROWS_16_URL" }
-    ],
-    nose: [
-        { imgUrl: "assets/categories/nose/SFC_nose1.png" },
-        { imgUrl: "assets/categories/nose/SFC_nose2.svg" },
-        { imgUrl: "assets/categories/downloaded/nose-anime.png" },
-        { imgUrl: "assets/categories/downloaded/nose-profile.png" },
-        { imgUrl: "assets/categories/downloaded/nose-front.png" },
-        { imgUrl: "REPLACE_WITH_NOSE_05_URL" },
-        { imgUrl: "REPLACE_WITH_NOSE_06_URL" },
-        { imgUrl: "REPLACE_WITH_NOSE_07_URL" },
-        { imgUrl: "REPLACE_WITH_NOSE_08_URL" },
-        { imgUrl: "REPLACE_WITH_NOSE_09_URL" },
-        { imgUrl: "REPLACE_WITH_NOSE_10_URL" },
-        { imgUrl: "REPLACE_WITH_NOSE_11_URL" },
-        { imgUrl: "REPLACE_WITH_NOSE_12_URL" },
-        { imgUrl: "REPLACE_WITH_NOSE_13_URL" },
-        { imgUrl: "REPLACE_WITH_NOSE_14_URL" },
-        { imgUrl: "REPLACE_WITH_NOSE_15_URL" },
-        { imgUrl: "REPLACE_WITH_NOSE_16_URL" }
-    ],
-    mouth: [
-        { imgUrl: "assets/categories/mouth/SFC_mouth1.png" },
-        
-        { imgUrl: "assets/categories/downloaded/mouth-open.png" },
-        { imgUrl: "assets/categories/downloaded/mouth-happy.png" },
-        { imgUrl: "assets/categories/downloaded/mouth-anime.png" },
-        { imgUrl: "assets/categories/downloaded/mouth-smile.png" },
-        { imgUrl: "assets/categories/downloaded/mouth-stroke.png" },
-        { imgUrl: "" },
-        { imgUrl: "REPLACE_WITH_MOUTH_07_URL" },
-        { imgUrl: "REPLACE_WITH_MOUTH_08_URL" },
-        { imgUrl: "REPLACE_WITH_MOUTH_09_URL" },
-        { imgUrl: "REPLACE_WITH_MOUTH_10_URL" },
-        { imgUrl: "REPLACE_WITH_MOUTH_11_URL" },
-        { imgUrl: "REPLACE_WITH_MOUTH_12_URL" },
-        { imgUrl: "REPLACE_WITH_MOUTH_13_URL" },
-        { imgUrl: "REPLACE_WITH_MOUTH_14_URL" },
-        { imgUrl: "REPLACE_WITH_MOUTH_15_URL" },
-        { imgUrl: "REPLACE_WITH_MOUTH_16_URL" }
-    ],
-    ears: [
-        { imgUrl: "assets/categories/ears/SFC_ear2.svg" },
-        { imgUrl: "assets/categories/downloaded/ears-clipart.png" },
-        { imgUrl: "assets/categories/downloaded/ears-vector.png" },
-        { imgUrl: "assets/categories/downloaded/ears-basic.png" },
-        { imgUrl: "assets/categories/downloaded/ears-outline.png" },
-        { imgUrl: "REPLACE_WITH_EARS_05_URL" },
-        { imgUrl: "REPLACE_WITH_EARS_06_URL" },
-        { imgUrl: "REPLACE_WITH_EARS_07_URL" },
-        { imgUrl: "REPLACE_WITH_EARS_08_URL" },
-        { imgUrl: "REPLACE_WITH_EARS_09_URL" },
-        { imgUrl: "REPLACE_WITH_EARS_10_URL" },
-        { imgUrl: "REPLACE_WITH_EARS_11_URL" },
-        { imgUrl: "REPLACE_WITH_EARS_12_URL" },
-        { imgUrl: "REPLACE_WITH_EARS_13_URL" },
-        { imgUrl: "REPLACE_WITH_EARS_14_URL" },
-        { imgUrl: "REPLACE_WITH_EARS_15_URL" },
-        { imgUrl: "REPLACE_WITH_EARS_16_URL" }
-    ],
-    hair: [
-        { imgUrl: "assets/categories/hair/SFC_hair1.png" },
-        { imgUrl: "" },
-        { imgUrl: "" },
-        { imgUrl: "" },
-        { imgUrl: "REPLACE_WITH_HAIR_05_URL" },
-        { imgUrl: "REPLACE_WITH_HAIR_06_URL" },
-        { imgUrl: "REPLACE_WITH_HAIR_07_URL" },
-        { imgUrl: "REPLACE_WITH_HAIR_08_URL" },
-        { imgUrl: "REPLACE_WITH_HAIR_09_URL" },
-        { imgUrl: "REPLACE_WITH_HAIR_10_URL" },
-        { imgUrl: "REPLACE_WITH_HAIR_11_URL" },
-        { imgUrl: "REPLACE_WITH_HAIR_12_URL" },
-        { imgUrl: "REPLACE_WITH_HAIR_13_URL" },
-        { imgUrl: "REPLACE_WITH_HAIR_14_URL" },
-        { imgUrl: "REPLACE_WITH_HAIR_15_URL" },
-        { imgUrl: "REPLACE_WITH_HAIR_16_URL" }
-    ],
-    glasses: [
-        { imgUrl: "assets/categories/glasses/SFC_glasses1.png" },
-        { imgUrl: "" },
-        { imgUrl: "" },
-        { imgUrl: "" },
-        { imgUrl: "" },
-        { imgUrl: "" },
-        { imgUrl: "" },
-        { imgUrl: "" },
-        { imgUrl: "" },
-        { imgUrl: "" },
-        { imgUrl: "" },
-        { imgUrl: "" },
-        { imgUrl: "" },
-        { imgUrl: "" },
-        { imgUrl: "" },
-        { imgUrl: "" }
-    ],
-    beard: [
-        { imgUrl: "assets/categories/beard/SFC_beard1.png" },
-        { imgUrl: "" },
-        { imgUrl: "" },
-        { imgUrl: "" },
-        { imgUrl: "" },
-        { imgUrl: "" },
-        { imgUrl: "" },
-        { imgUrl: "" },
-        { imgUrl: "" },
-        { imgUrl: "" },
-        { imgUrl: "" },
-        { imgUrl: "" },
-        { imgUrl: "" },
-        { imgUrl: "" },
-        { imgUrl: "" },
-        { imgUrl: "" }
-    ]
+    eyes: createEditorCategoryItems("eyes"),
+    eyebrows: createEditorCategoryItems("eyebrows"),
+    nose: createEditorCategoryItems("nose"),
+    mouth: createEditorCategoryItems("mouth"),
+    ears: createEditorCategoryItems("ears"),
+    hair: createEditorCategoryItems("hair"),
+    glasses: createEditorCategoryItems("glasses"),
+    beard: createEditorCategoryItems("beard")
 });
 
 // Keeping the visible background picker aligned with the shared default face
