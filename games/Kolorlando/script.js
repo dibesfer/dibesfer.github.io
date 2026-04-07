@@ -36,6 +36,7 @@ import { buildCityMap } from './maps/cityMap.js';
 import { buildVoxelandiaMap } from './maps/voxelandiaMap.js';
 import { createMultiplayerController } from './code/multiplayer/multiplayer.js';
 import { createCommandHandler } from './code/commands.js';
+import { createBoxelId, readLocalBoxels, writeLocalBoxel } from './code/data/boxelStorage.js';
 import { createLocalWorldSaveStore } from './code/data/worldSaving.js';
 import { loadPlayerFaceData } from './code/data/playerSaving.js';
 import { SpaceShipVehicle } from './code/entities/vehicle.js';
@@ -169,7 +170,7 @@ scene.fog = new THREE.FogExp2(0x5EC9FF, 0.002);
 // CAMERA
 // --------------------
 const camera = new THREE.PerspectiveCamera(
-  75,
+  90,
   window.innerWidth / window.innerHeight,
   0.03,
   3000
@@ -273,7 +274,7 @@ let wowCursorRaycastActive = false;
 let cameraModeController = null;
 let screenController = null;
 const STRUCTURE_ASSET_URLS = {
-  treeexample: new URL('./code/data/TreeExample.voxel', import.meta.url).href,
+  treeexample: new URL('./code/data/TreeExample.boxel', import.meta.url).href,
 };
 
 function updateCharacterMenuIdentity(name) {
@@ -588,16 +589,27 @@ async function loadStructureAssetByName(assetName) {
   const normalizedAssetName = typeof assetName === 'string' ? assetName.trim().toLowerCase() : '';
   const assetUrl = STRUCTURE_ASSET_URLS[normalizedAssetName];
 
-  if (!assetUrl) {
-    throw new Error(`Unknown structure "${assetName}".`);
+  if (assetUrl) {
+    const response = await fetch(assetUrl);
+    if (!response.ok) {
+      throw new Error(`Failed to load structure "${assetName}".`);
+    }
+
+    return JSON.parse(await response.text());
   }
 
-  const response = await fetch(assetUrl);
-  if (!response.ok) {
-    throw new Error(`Failed to load structure "${assetName}".`);
+  const normalizedBoxelId = createBoxelId(assetName);
+  const localBoxel = readLocalBoxels().find(boxel => (
+    createBoxelId(boxel?.assetId) === normalizedBoxelId
+    || createBoxelId(boxel?.displayName) === normalizedBoxelId
+  ));
+
+  if (localBoxel) {
+    console.log(`[Boxel Save] spawn local Boxel: ${localBoxel.displayName || localBoxel.assetId}`);
+    return localBoxel;
   }
 
-  return JSON.parse(await response.text());
+  throw new Error(`Unknown structure "${assetName}".`);
 }
 
 function normalizeQuarterTurnRotation(rotationY) {
@@ -727,6 +739,96 @@ async function handleSpawnCommand(args = []) {
   );
 }
 
+function getCurrentBoxelSelectionCellBounds() {
+  const sourceBox = boxelSelectionCombinedBox.isEmpty()
+    ? boxelSelectionAnchorBox
+    : boxelSelectionCombinedBox;
+
+  if (!sourceBox || sourceBox.isEmpty()) {
+    return null;
+  }
+
+  return {
+    minCellX: Math.floor(sourceBox.min.x + 0.001),
+    minCellY: Math.floor(sourceBox.min.y + 0.001),
+    minCellZ: Math.floor(sourceBox.min.z + 0.001),
+    maxCellX: Math.ceil(sourceBox.max.x - 0.001) - 1,
+    maxCellY: Math.ceil(sourceBox.max.y - 0.001) - 1,
+    maxCellZ: Math.ceil(sourceBox.max.z - 0.001) - 1,
+  };
+}
+
+function createBoxelFromSelection(displayName) {
+  const cellBounds = getCurrentBoxelSelectionCellBounds();
+  if (!cellBounds) {
+    throw new Error('Select voxels with the Boxel Tool first.');
+  }
+
+  console.log('[Boxel Save] exporting selection bounds:', cellBounds);
+
+  const assetId = createBoxelId(displayName);
+  const voxels = [];
+
+  for (let cellY = cellBounds.minCellY; cellY <= cellBounds.maxCellY; cellY += 1) {
+    for (let cellX = cellBounds.minCellX; cellX <= cellBounds.maxCellX; cellX += 1) {
+      for (let cellZ = cellBounds.minCellZ; cellZ <= cellBounds.maxCellZ; cellZ += 1) {
+        const voxel = getVoxelAtCell(cellX, cellY, cellZ);
+        if (!voxel) continue;
+
+        voxels.push({
+          position: {
+            x: cellX - cellBounds.minCellX,
+            y: cellY - cellBounds.minCellY,
+            z: cellZ - cellBounds.minCellZ,
+          },
+          voxelTypeId: voxel.voxelTypeId,
+          color: voxel.color,
+        });
+      }
+    }
+  }
+
+  if (voxels.length === 0) {
+    throw new Error('The selected Boxel area has no voxels to save.');
+  }
+
+  return {
+    format: 'kolorlando.boxel',
+    version: 1,
+    assetType: 'structure',
+    assetId,
+    displayName,
+    bounds: {
+      size: {
+        width: cellBounds.maxCellX - cellBounds.minCellX + 1,
+        height: cellBounds.maxCellY - cellBounds.minCellY + 1,
+        depth: cellBounds.maxCellZ - cellBounds.minCellZ + 1,
+      },
+    },
+    placement: {
+      /* Saved Boxels spawn centered on the player footprint by default. */
+      anchor: {
+        x: Math.floor((cellBounds.maxCellX - cellBounds.minCellX) / 2),
+        y: 0,
+        z: Math.floor((cellBounds.maxCellZ - cellBounds.minCellZ) / 2),
+      },
+      rotationY: 0,
+    },
+    voxels,
+  };
+}
+
+function handleSaveBoxelCommand(args = []) {
+  const displayName = args.join(' ').trim();
+  if (!displayName) {
+    throw new Error('Use /saveBoxel nameoftheboxel.');
+  }
+
+  console.log(`[Boxel Save] command: /saveBoxel ${displayName}`);
+  const savedBoxel = writeLocalBoxel(createBoxelFromSelection(displayName));
+  chatUI.appendLine(`Saved Boxel ${savedBoxel.displayName}: ${savedBoxel.voxels.length} voxels.`);
+}
+
 const handleChatCommand = createCommandHandler({
   /* The command module owns the text commands themselves, while script.js
   keeps ownership of the actual gameplay state changes triggered by them. */
@@ -735,6 +837,13 @@ const handleChatCommand = createCommandHandler({
   },
   onToggleFlyMode: () => {
     setFlyMode(!flyMode);
+  },
+  onSaveBoxel: async (args = []) => {
+    try {
+      handleSaveBoxelCommand(args);
+    } catch (error) {
+      chatUI.appendLine(String(error?.message || 'Failed to run /saveBoxel.'));
+    }
   },
   onSpawn: async (args = []) => {
     try {
@@ -1619,6 +1728,9 @@ const removeVoxelAtCell = typeof mapData.removeVoxelAtCell === 'function'
   : () => false;
 const getVoxelBoxFromRaycastHit = typeof mapData.getVoxelBoxFromRaycastHit === 'function'
   ? mapData.getVoxelBoxFromRaycastHit
+  : () => null;
+const getVoxelAtCell = typeof mapData.getVoxelAtCell === 'function'
+  ? mapData.getVoxelAtCell
   : () => null;
 const voxelTypes = Array.isArray(mapData.voxelTypes) ? mapData.voxelTypes : [];
 const multiplayerWorldBootstrap = MULTIPLAYER_ENABLED && MAP_PRESET === 'voxelandia'

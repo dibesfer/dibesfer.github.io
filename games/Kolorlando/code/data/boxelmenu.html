@@ -12,6 +12,7 @@
 
         body {
             font-family: sans-serif;
+            background-color: rgba(165, 165, 165, 0.397);
         }
 
         img {
@@ -22,7 +23,7 @@
             display: flex;
             align-items: center;
             gap: 10px;
-            font-size: 5rem;
+            font-size: 3rem;
         }
 
         #logo {
@@ -35,16 +36,17 @@
 
         }
 
-        .boxel-gallery > div {
+        .boxel-gallery>div {
+            position: relative;
             flex: 33%;
             max-width: 33%;
             aspect-ratio: 1;
-            
+
             padding: 15px;
             transition: 0.2s;
         }
 
-        .boxel-gallery > div:has(.boxel-item:hover){
+        .boxel-gallery>div:has(.boxel-item:hover) {
             padding: 0px;
         }
 
@@ -59,12 +61,12 @@
             cursor: pointer;
         }
 
-         .boxel-gallery > div > div > div {
-           border: solid 1px black;
-           
-         }
+        .boxel-gallery>div>div>div {
+            border: solid 1px black;
 
-         .boxel-image{
+        }
+
+        .boxel-image {
             flex: 1;
             min-height: 0;
             display: flex;
@@ -72,16 +74,72 @@
             justify-content: center;
             overflow: hidden;
             padding: 5px;
-         }
-         .boxel-image > img {
+        }
+
+        .boxel-image>img {
             width: 100%;
             height: 100%;
             object-fit: contain;
             filter: drop-shadow(0 0 10px white);
-         }
-         .boxel-description {
+        }
+
+        .boxel-image>canvas {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            filter: drop-shadow(0 0 10px white);
+        }
+
+        .boxel-description {
             padding: 5px;
-         }
+        }
+
+        #localBoxelGallery:empty {
+            display: none;
+        }
+
+        .boxel-section-title {
+            margin: 25px 0 5px;
+        }
+
+        #boxelActionMenu {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            left: 15px;
+            display: flex;
+            gap: 5px;
+            padding: 5px;
+            background: white;
+            border: solid 1px black;
+            box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.35);
+            z-index: 10;
+        }
+
+        #boxelActionMenu[hidden] {
+            display: none;
+        }
+
+        #boxelActionMenu>button {
+            flex: 1;
+            min-width: 0;
+            padding: 8px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            cursor: pointer;
+        }
+
+        #title_title>span {
+            color: red;
+            font-weight: bold;
+        }
+
+        #title_title>p {
+            font-size: 1rem;
+            color: rgb(75, 75, 75);
+            font-style: italic;
+        }
     </style>
 </head>
 
@@ -90,11 +148,24 @@
         <div id="logo">
             <img src="../../assets/icons/boxel.png" alt="">
         </div>
-        <div>
-            Boxel Save
+        <div id="title_title">
+            <span>B</span>oxel Save<br>
+            <p>Boxel stands for "box of voxels"</p>
         </div>
     </div>
-    <div class="boxel-gallery">
+
+    <h2 class="boxel-section-title">Saved Boxels</h2>
+    <div id="localBoxelGallery" class="boxel-gallery"></div>
+    <h2 class="boxel-section-title">Example Boxels</h2>
+    <div id="exampleBoxelGallery" class="boxel-gallery">
+        <div>
+            <div class="boxel-item">
+                <div class="boxel-image">
+                    <canvas id="treeExampleBoxelCanvas"></canvas>
+                </div>
+                <div class="boxel-description">TreeExample</div>
+            </div>
+        </div>
         <div>
             <div class="boxel-item">
                 <div class="boxel-image">
@@ -110,22 +181,128 @@
                 </div>
                 <div class="boxel-description">Tree</div>
             </div>
-        </div><div>
+        </div>
+        <div>
             <div class="boxel-item">
                 <div class="boxel-image">
                     <img src="../../assets/icons/boxel-flower.png" alt="">
                 </div>
                 <div class="boxel-description">Flower</div>
             </div>
-        </div><div>
+        </div>
+        <div>
             <div class="boxel-item">
                 <div class="boxel-image">
                     <img src="/assets/branding/fergames-logo.png" alt="">
                 </div>
                 <div class="boxel-description">Car</div>
             </div>
-        
+
+        </div>
     </div>
+    <script type="module">
+        import { drawBoxelIsometric, loadBoxel } from './boxelPainter.js';
+        import { KOLORLANDO_LOCAL_BOXELS_STORAGE_KEY, deleteLocalBoxel, findLocalBoxel, readLocalBoxels } from './boxelStorage.js';
+
+        const localBoxelGallery = document.getElementById('localBoxelGallery');
+        const boxelActionMenu = document.createElement('div');
+        let selectedLocalBoxelId = '';
+
+        boxelActionMenu.id = 'boxelActionMenu';
+        boxelActionMenu.hidden = true;
+        boxelActionMenu.innerHTML = `
+            <button type="button" data-boxel-action="x-left">X</button>
+            <button type="button" data-boxel-action="download">⬇️</button>
+            <button type="button" data-boxel-action="delete">🗑️</button>
+        `;
+
+        function hideBoxelActionMenu() {
+            selectedLocalBoxelId = '';
+            boxelActionMenu.hidden = true;
+        }
+
+        function showBoxelActionMenu(parent, boxelData) {
+            selectedLocalBoxelId = boxelData?.assetId || '';
+            parent.appendChild(boxelActionMenu);
+            boxelActionMenu.hidden = false;
+        }
+
+        function downloadLocalBoxel(assetId) {
+            const boxelData = findLocalBoxel(assetId);
+            if (!boxelData) return;
+
+            const blob = new Blob([JSON.stringify(boxelData, null, 2)], { type: 'application/json' });
+            const downloadUrl = URL.createObjectURL(blob);
+            const downloadLink = document.createElement('a');
+
+            downloadLink.href = downloadUrl;
+            downloadLink.download = `${boxelData.assetId || 'boxel'}.boxel`;
+            downloadLink.click();
+            URL.revokeObjectURL(downloadUrl);
+            console.log(`[Boxel Save] downloaded: ${downloadLink.download}`);
+        }
+
+        function createBoxelGalleryItem(boxelData) {
+            const outer = document.createElement('div');
+            const item = document.createElement('div');
+            const image = document.createElement('div');
+            const canvas = document.createElement('canvas');
+            const description = document.createElement('div');
+
+            item.className = 'boxel-item';
+            image.className = 'boxel-image';
+            description.className = 'boxel-description';
+            description.textContent = boxelData?.displayName || boxelData?.assetId || 'Boxel';
+
+            item.addEventListener('click', event => {
+                event.stopPropagation();
+                showBoxelActionMenu(outer, boxelData);
+            });
+
+            image.appendChild(canvas);
+            item.append(image, description);
+            outer.appendChild(item);
+            drawBoxelIsometric(canvas, boxelData);
+            return outer;
+        }
+
+        function renderLocalBoxels() {
+            console.log('[Boxel Save] iframe render: refreshing local Boxel gallery.');
+            localBoxelGallery.replaceChildren(
+                ...readLocalBoxels().map(createBoxelGalleryItem)
+            );
+            hideBoxelActionMenu();
+        }
+
+        const treeExampleCanvas = document.getElementById('treeExampleBoxelCanvas');
+        const treeExampleBoxel = await loadBoxel('./TreeExample.boxel');
+        drawBoxelIsometric(treeExampleCanvas, treeExampleBoxel);
+        renderLocalBoxels();
+
+        window.addEventListener('storage', event => {
+            if (event.key === KOLORLANDO_LOCAL_BOXELS_STORAGE_KEY) {
+                console.log('[Boxel Save] iframe storage event received.');
+                renderLocalBoxels();
+            }
+        });
+
+        boxelActionMenu.addEventListener('click', event => {
+            event.stopPropagation();
+            if (!selectedLocalBoxelId) return;
+
+            if (event.target?.dataset?.boxelAction === 'download') {
+                downloadLocalBoxel(selectedLocalBoxelId);
+                return;
+            }
+
+            if (event.target?.dataset?.boxelAction !== 'delete') return;
+
+            deleteLocalBoxel(selectedLocalBoxelId);
+            renderLocalBoxels();
+        });
+
+        document.addEventListener('click', hideBoxelActionMenu);
+    </script>
 </body>
 
 </html>

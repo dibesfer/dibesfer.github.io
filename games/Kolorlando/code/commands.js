@@ -6,6 +6,7 @@ actions each command should trigger. */
 export const KOLORLANDO_COMMANDS = {
   debugmode: '/debugmode',
   flymode: '/flymode',
+  saveboxel: '/saveboxel',
   spawn: '/spawn',
 };
 
@@ -15,6 +16,7 @@ chat, debug consoles, or future admin tools without importing the full game. */
 export function createCommandHandler({
   onToggleDebugMode,
   onToggleFlyMode,
+  onSaveBoxel,
   onSpawn,
 } = {}) {
   return async function handleCommand(message) {
@@ -32,6 +34,11 @@ export function createCommandHandler({
 
     if (normalizedCommand === KOLORLANDO_COMMANDS.flymode) {
       onToggleFlyMode?.();
+      return true;
+    }
+
+    if (normalizedCommand === KOLORLANDO_COMMANDS.saveboxel) {
+      await onSaveBoxel?.(args);
       return true;
     }
 

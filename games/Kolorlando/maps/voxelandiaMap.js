@@ -262,6 +262,18 @@ export function buildVoxelandiaMap({
     return true;
   }
 
+  function getVoxelAtCell(cellX, cellY, cellZ) {
+    const voxelId = occupiedVoxels.get(keyFromCell(cellX, cellY, cellZ));
+    if (!Number.isInteger(voxelId)) return null;
+
+    const voxelTypeName = voxelIdToTypeName.get(voxelId);
+    const voxelType = resolveVoxelType(voxelTypeName);
+    return {
+      voxelTypeId: voxelType.name,
+      color: `#${voxelType.color.toString(16).padStart(6, '0')}`,
+    };
+  }
+
   function intersectColliderBox(box) {
     const overlapEpsilon = 0.001;
     const minCellX = Math.floor(box.min.x / voxelSize);
@@ -500,6 +512,7 @@ export function buildVoxelandiaMap({
     },
     getVoxelCellFromRaycastHit,
     getAdjacentVoxelCellFromRaycastHit,
+    getVoxelAtCell,
     addVoxelAtCell,
     removeVoxelAtCell,
     shadowRange: 90,

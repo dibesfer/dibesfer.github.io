@@ -388,6 +388,14 @@ img {
     overflow: auto;
 }
 
+#boxelSaveFrame {
+    width: 100%;
+    min-height: 70vh;
+    border: 0;
+    border-radius: 8px;
+    background: white;
+}
+
 .menu-panel h2,
 .menu-panel h3 {
 

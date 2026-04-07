@@ -15,6 +15,7 @@ export function renderKolorlandoMenuPanel(container) {
             <button class="menu-tab" type="button" data-menu-tab="inventory">🎒 INVENTORY</button>
             <button class="menu-tab" type="button" data-menu-tab="map">🗺️ MAP</button>
             <button class="menu-tab" type="button" data-menu-tab="character">👤 CHARACTER</button>
+            <button class="menu-tab" type="button" data-menu-tab="boxel">🧊 BOXEL SAVE</button>
             <button class="menu-tab is-active" type="button" data-menu-tab="settings">⚙️ SETTINGS</button>
             <button class="menu-tab" type="button" data-menu-tab="about">🪶 ABOUT</button>
         </div>
@@ -46,6 +47,15 @@ export function renderKolorlandoMenuPanel(container) {
             <p id="playerInventorySelection">Selected slot: 1</p>
             <p class="inventory-help">Click any slot to select its stack for Survival mode.</p>
             <p class="inventory-help">Press <code>I</code> to open this tab quickly.</p>
+        </section>
+
+        <section class="menu-panel" data-menu-panel="boxel">
+            <!-- Boxel Save stays editable as its own document. -->
+            <iframe
+                id="boxelSaveFrame"
+                title="Boxel Save"
+                src="code/data/boxelmenu.html"
+                loading="lazy"></iframe>
         </section>
 
         <section class="menu-panel" data-menu-panel="map">

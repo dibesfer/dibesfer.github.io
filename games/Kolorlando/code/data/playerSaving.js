@@ -1,6 +1,7 @@
 import { DEFAULT_SFC_FACE, SFC_FACE_STORAGE_KEY, normalizeSfcFaceData } from '../avatar/sfcFace.js';
 
 const KOLOR_PLAYERS_TABLE = 'KolorPlayers';
+const AUTHENTICATED_FACE_STORAGE_KEY_PREFIX = `${SFC_FACE_STORAGE_KEY}.user.`;
 
 function getDatabaseClient() {
   return window.database ?? null;
@@ -16,6 +17,44 @@ function isKolorPlayersWritePolicyError(error) {
 
 function areJsonValuesEqual(leftValue, rightValue) {
   return JSON.stringify(leftValue) === JSON.stringify(rightValue);
+}
+
+function getAuthenticatedPlayerFaceStorageKey(userId) {
+  return `${AUTHENTICATED_FACE_STORAGE_KEY_PREFIX}${encodeURIComponent(String(userId || 'unknown'))}`;
+}
+
+function readStoredPlayerFaceData(storageKey) {
+  try {
+    const storedFaceData = window.localStorage.getItem(storageKey);
+    if (!storedFaceData) {
+      return null;
+    }
+
+    return normalizeSfcFaceData(JSON.parse(storedFaceData), DEFAULT_SFC_FACE);
+  } catch (error) {
+    console.warn('Failed to read Kolorlando player face data.', error);
+    return null;
+  }
+}
+
+function writeStoredPlayerFaceData(storageKey, faceData) {
+  const normalizedFaceData = normalizeSfcFaceData(faceData, DEFAULT_SFC_FACE);
+
+  try {
+    window.localStorage.setItem(storageKey, JSON.stringify(normalizedFaceData));
+  } catch (error) {
+    console.warn('Failed to write Kolorlando player face data.', error);
+  }
+
+  return normalizedFaceData;
+}
+
+function readAuthenticatedPlayerFaceData(userId) {
+  return readStoredPlayerFaceData(getAuthenticatedPlayerFaceStorageKey(userId));
+}
+
+function writeAuthenticatedPlayerFaceData(userId, faceData) {
+  return writeStoredPlayerFaceData(getAuthenticatedPlayerFaceStorageKey(userId), faceData);
 }
 
 function pickAuthoritativeKolorPlayerRow(rows) {
@@ -35,33 +74,13 @@ function pickAuthoritativeKolorPlayerRow(rows) {
 }
 
 export function readLocalPlayerFaceData() {
-  /* The local cache stays as the anonymous fallback and also gives logged-in
-  users something to bootstrap from before their cloud profile exists. */
-  try {
-    const storedFaceData = window.localStorage.getItem(SFC_FACE_STORAGE_KEY);
-    if (!storedFaceData) {
-      return normalizeSfcFaceData(DEFAULT_SFC_FACE);
-    }
-
-    return normalizeSfcFaceData(JSON.parse(storedFaceData), DEFAULT_SFC_FACE);
-  } catch (error) {
-    console.warn('Failed to read the local Kolorlando player face data.', error);
-    return normalizeSfcFaceData(DEFAULT_SFC_FACE);
-  }
+  /* This key is the anonymous avatar only; account faces use per-user storage. */
+  return readStoredPlayerFaceData(SFC_FACE_STORAGE_KEY) ?? normalizeSfcFaceData(DEFAULT_SFC_FACE);
 }
 
 export function writeLocalPlayerFaceData(faceData) {
-  /* Keeping the browser cache updated means both anonymous play and logged-in
-  pages can reuse one normalized face payload without branching everywhere. */
-  const normalizedFaceData = normalizeSfcFaceData(faceData, DEFAULT_SFC_FACE);
-
-  try {
-    window.localStorage.setItem(SFC_FACE_STORAGE_KEY, JSON.stringify(normalizedFaceData));
-  } catch (error) {
-    console.warn('Failed to write the local Kolorlando player face data.', error);
-  }
-
-  return normalizedFaceData;
+  /* This intentionally preserves the anonymous face across login/logout. */
+  return writeStoredPlayerFaceData(SFC_FACE_STORAGE_KEY, faceData);
 }
 
 export async function getAuthenticatedKolorPlayer() {
@@ -149,13 +168,28 @@ export async function ensureAuthenticatedKolorPlayer({ fallbackFaceData } = {}) 
 }
 
 export async function loadPlayerFaceData() {
-  /* Logged-in users should read their cloud face first, but anonymous mode and
-  first-login bootstrap still fall back to the same normalized local cache. */
+  /* Anonymous and account avatars are separate sources, so login never
+  overwrites the anonymous local face. */
   const localFaceData = readLocalPlayerFaceData();
+  let authenticatedUser = null;
+  let accountBootstrapFaceData = null;
 
   try {
+    const authenticatedPlayer = await getAuthenticatedKolorPlayer();
+    authenticatedUser = authenticatedPlayer.user;
+
+    if (!authenticatedPlayer.user) {
+      return {
+        faceData: localFaceData,
+        source: 'local',
+        playerRow: null,
+      };
+    }
+
+    const authenticatedLocalFaceData = readAuthenticatedPlayerFaceData(authenticatedPlayer.user.id);
+    accountBootstrapFaceData = authenticatedLocalFaceData ?? normalizeSfcFaceData(DEFAULT_SFC_FACE);
     const ensuredPlayer = await ensureAuthenticatedKolorPlayer({
-      fallbackFaceData: localFaceData,
+      fallbackFaceData: accountBootstrapFaceData,
     });
 
     if (!ensuredPlayer.user) {
@@ -168,7 +202,7 @@ export async function loadPlayerFaceData() {
 
     const remoteFaceData = ensuredPlayer.row?.avatar_face
       ? normalizeSfcFaceData(ensuredPlayer.row.avatar_face, DEFAULT_SFC_FACE)
-      : localFaceData;
+      : accountBootstrapFaceData;
     const resolvedFaceData = remoteFaceData;
     const remoteNeedsHealing = Boolean(ensuredPlayer.row?.avatar_face)
       && !areJsonValuesEqual(ensuredPlayer.row.avatar_face, remoteFaceData);
@@ -192,7 +226,7 @@ export async function loadPlayerFaceData() {
       }
     }
 
-    writeLocalPlayerFaceData(resolvedFaceData);
+    writeAuthenticatedPlayerFaceData(ensuredPlayer.user.id, resolvedFaceData);
 
     return {
       faceData: resolvedFaceData,
@@ -203,9 +237,17 @@ export async function loadPlayerFaceData() {
     };
   } catch (error) {
     if (isKolorPlayersWritePolicyError(error)) {
-      console.warn('KolorPlayers insert is blocked by Supabase RLS. Using local face data.');
+      console.warn('KolorPlayers insert is blocked by Supabase RLS. Using browser face data.');
     } else {
       console.error('Failed to load the Kolorlando player face data.', error);
+    }
+
+    if (authenticatedUser?.id && accountBootstrapFaceData) {
+      return {
+        faceData: accountBootstrapFaceData,
+        source: 'account-local-error',
+        playerRow: null,
+      };
     }
 
     return {
@@ -217,22 +259,37 @@ export async function loadPlayerFaceData() {
 }
 
 export async function savePlayerFaceData(faceData) {
-  /* Saves always refresh the local cache first so the latest face remains
-  usable immediately even if the authenticated write fails later on. */
-  const normalizedFaceData = writeLocalPlayerFaceData(faceData);
+  /* Save to either anonymous local storage or the active account, never both. */
+  const normalizedFaceData = normalizeSfcFaceData(faceData, DEFAULT_SFC_FACE);
+  let authenticatedUser = null;
 
   try {
-    const ensuredPlayer = await ensureAuthenticatedKolorPlayer({
-      fallbackFaceData: normalizedFaceData,
-    });
+    const existingPlayer = await getAuthenticatedKolorPlayer();
+    authenticatedUser = existingPlayer.user;
 
-    if (!ensuredPlayer.user || !ensuredPlayer.row?.id) {
+    if (!existingPlayer.user) {
+      writeLocalPlayerFaceData(normalizedFaceData);
+      return {
+        faceData: normalizedFaceData,
+        savedRemotely: false,
+        playerRow: null,
+      };
+    }
+
+    const ensuredPlayer = existingPlayer.row
+      ? { ...existingPlayer, created: false }
+      : await ensureAuthenticatedKolorPlayer({ fallbackFaceData: normalizedFaceData });
+
+    if (!ensuredPlayer.row?.id) {
+      writeAuthenticatedPlayerFaceData(existingPlayer.user.id, normalizedFaceData);
       return {
         faceData: normalizedFaceData,
         savedRemotely: false,
         playerRow: ensuredPlayer.row ?? null,
       };
     }
+
+    writeAuthenticatedPlayerFaceData(ensuredPlayer.user.id, normalizedFaceData);
 
     const database = getDatabaseClient();
     const { data: updatedRows, error: updateError } = await database
@@ -254,9 +311,15 @@ export async function savePlayerFaceData(faceData) {
     };
   } catch (error) {
     if (isKolorPlayersWritePolicyError(error)) {
-      console.warn('KolorPlayers write is blocked by Supabase RLS. Saved face locally only.');
+      console.warn('KolorPlayers write is blocked by Supabase RLS. Saved face in browser cache only.');
     } else {
       console.error('Failed to save the Kolorlando player face data.', error);
+    }
+
+    if (authenticatedUser?.id) {
+      writeAuthenticatedPlayerFaceData(authenticatedUser.id, normalizedFaceData);
+    } else if (error?.name === 'AuthSessionMissingError' || /auth session missing/i.test(String(error?.message || ''))) {
+      writeLocalPlayerFaceData(normalizedFaceData);
     }
 
     return {
