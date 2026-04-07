@@ -121,16 +121,21 @@ function serializeFaceData(faceData) {
 function buildRemoteOutfit(faceData = null) {
   const normalizedFaceData = normalizePresenceFaceData(faceData);
 
-  return {
+  const outfit = {
     skin: 0xf0c9a5,
-    shirt: 0x4f86f7,
-    sleeves: 0x4f86f7,
-    pants: 0x2d3a50,
-    shoes: 0x161616,
     hair: 0x221710,
     faceEmoji: '🙂',
     faceData: normalizedFaceData,
   };
+
+  if (!normalizedFaceData) {
+    outfit.shirt = 0x4f86f7;
+    outfit.sleeves = 0x4f86f7;
+    outfit.pants = 0x2d3a50;
+    outfit.shoes = 0x161616;
+  }
+
+  return outfit;
 }
 
 function createRemoteHumanoid(faceData) {
