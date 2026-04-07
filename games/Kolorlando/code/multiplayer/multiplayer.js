@@ -16,6 +16,7 @@ import {
   createDamageAttemptPayload,
   readDamageAttemptPayload,
 } from './multiplayerCombat.js';
+import { normalizeSfcFaceData } from '../avatar/sfcFace.js';
 
 const PRESENCE_CHANNEL_NAME = 'kolorlando-world';
 const PLAYER_TRANSFORM_BROADCAST_EVENT = 'player:transform';
@@ -102,7 +103,24 @@ function resolveLocalPresenceDisplayName() {
   return trimmedStoredName || 'Anonymous';
 }
 
-function buildRemoteOutfit() {
+function normalizePresenceFaceData(faceData) {
+  if (!faceData) return null;
+
+  try {
+    return normalizeSfcFaceData(faceData);
+  } catch (error) {
+    console.warn('Ignoring invalid remote SFC face data.', error);
+    return null;
+  }
+}
+
+function serializeFaceData(faceData) {
+  return JSON.stringify(faceData ?? null);
+}
+
+function buildRemoteOutfit(faceData = null) {
+  const normalizedFaceData = normalizePresenceFaceData(faceData);
+
   return {
     skin: 0xf0c9a5,
     shirt: 0x4f86f7,
@@ -111,16 +129,34 @@ function buildRemoteOutfit() {
     shoes: 0x161616,
     hair: 0x221710,
     faceEmoji: '🙂',
+    faceData: normalizedFaceData,
   };
 }
 
-function createRemoteAvatar() {
-  const root = new THREE.Group();
-  const humanoid = createHumanoidModel({
-    outfit: buildRemoteOutfit(),
+function createRemoteHumanoid(faceData) {
+  return createHumanoidModel({
+    outfit: buildRemoteOutfit(faceData),
     castShadow: true,
     receiveShadow: false,
   });
+}
+
+function markRemoteAvatarParts(root) {
+  /* Remote avatars are display-only. Disabling raycast participation now keeps
+  future gameplay interactions focused on the local world until multiplayer
+  rules for combat, chat, and targeting are designed deliberately. */
+  root.traverse(part => {
+    if (part.isObject3D) {
+      part.userData.isRemotePlayer = true;
+      part.raycast = () => null;
+    }
+  });
+}
+
+function createRemoteAvatar(faceData = null) {
+  const root = new THREE.Group();
+  const normalizedFaceData = normalizePresenceFaceData(faceData);
+  const humanoid = createRemoteHumanoid(normalizedFaceData);
 
   root.add(humanoid.root);
   root.scale.setScalar(REMOTE_PLAYER_HEIGHT / humanoid.baseHeight);
@@ -198,19 +234,12 @@ function createRemoteAvatar() {
   groundRing.renderOrder = 2998;
   debugVisuals.add(groundRing);
 
-  /* Remote avatars are display-only. Disabling raycast participation now keeps
-  future gameplay interactions focused on the local world until multiplayer
-  rules for combat, chat, and targeting are designed deliberately. */
-  root.traverse(part => {
-    if (part.isObject3D) {
-      part.userData.isRemotePlayer = true;
-      part.raycast = () => null;
-    }
-  });
+  markRemoteAvatarParts(root);
 
   return {
     root,
     humanoid,
+    faceDataSignature: serializeFaceData(normalizedFaceData),
     nameSprite,
     healthBarSprite,
     debugVisuals,
@@ -227,6 +256,26 @@ function createRemoteAvatar() {
     maxHealth: REMOTE_PLAYER_MAX_HEALTH,
     isDead: false,
   };
+}
+
+function syncRemotePlayerFace(remotePlayer, faceData) {
+  if (!remotePlayer) return;
+
+  const normalizedFaceData = normalizePresenceFaceData(faceData);
+  const nextSignature = serializeFaceData(normalizedFaceData);
+  if (remotePlayer.faceDataSignature === nextSignature) return;
+
+  const previousHumanoid = remotePlayer.humanoid;
+  const nextHumanoid = createRemoteHumanoid(normalizedFaceData);
+  if (previousHumanoid?.root?.parent === remotePlayer.root) {
+    remotePlayer.root.remove(previousHumanoid.root);
+  }
+
+  remotePlayer.humanoid = nextHumanoid;
+  remotePlayer.faceDataSignature = nextSignature;
+  remotePlayer.root.add(nextHumanoid.root);
+  markRemoteAvatarParts(nextHumanoid.root);
+  remotePlayer.root.scale.setScalar(REMOTE_PLAYER_HEIGHT / nextHumanoid.baseHeight);
 }
 
 function findPresenceSessionBySessionId(state, targetSessionId) {
@@ -277,7 +326,7 @@ function syncRemotePlayerCollider(remotePlayer) {
 }
 
 function snapshotPresencePayload(state) {
-  return {
+  const payload = {
     /* Keep Presence minimal while still exposing a human-readable player name
     in the online list and debug console. The shared lobby roster also needs
     the current page url so it can label where each live session currently is. */
@@ -285,6 +334,13 @@ function snapshotPresencePayload(state) {
     displayName: resolveLocalPresenceDisplayName(),
     url: resolvePresenceUrl(),
   };
+
+  const faceData = normalizePresenceFaceData(state.faceData);
+  if (faceData) {
+    payload.faceData = faceData;
+  }
+
+  return payload;
 }
 
 function snapshotBroadcastPayload(state, localSessionId) {
@@ -337,6 +393,7 @@ function resolvePresenceUrl() {
 export function createMultiplayerController({
   scene,
   getLocalPlayerState,
+  getLocalPresenceFaceData,
   getSharedWorldPlayerStates,
   onApplyLocalDamage,
   presenceOnly = false,
@@ -419,11 +476,14 @@ export function createMultiplayerController({
     remotePlayers.delete(sessionId);
   }
 
-  function getOrCreateRemotePlayer(sessionId) {
+  function getOrCreateRemotePlayer(sessionId, faceData = null) {
     const existingRemotePlayer = remotePlayers.get(sessionId);
-    if (existingRemotePlayer) return existingRemotePlayer;
+    if (existingRemotePlayer) {
+      syncRemotePlayerFace(existingRemotePlayer, faceData);
+      return existingRemotePlayer;
+    }
 
-    const remotePlayer = createRemoteAvatar();
+    const remotePlayer = createRemoteAvatar(faceData);
     const latestPlayerState = latestPlayerStateBySessionId.get(sessionId);
     if (latestPlayerState) {
       remotePlayer.health = latestPlayerState.health;
@@ -438,8 +498,8 @@ export function createMultiplayerController({
   }
 
   function applyRemoteBroadcast(sessionId, payload) {
-    const remotePlayer = getOrCreateRemotePlayer(sessionId);
     const latestPresenceSession = findPresenceSessionBySessionId(lastPresenceState, sessionId);
+    const remotePlayer = getOrCreateRemotePlayer(sessionId, latestPresenceSession?.faceData);
     syncRemotePlayerDisplayName(remotePlayer, latestPresenceSession?.displayName);
 
     /* Cache the most recent network transform so the "People online" panel can
@@ -503,7 +563,8 @@ export function createMultiplayerController({
     const bootstrapTransform = readSharedWorldPlayerTransform(playerRecord);
     if (!bootstrapTransform) return;
 
-    const remotePlayer = getOrCreateRemotePlayer(sessionId);
+    const latestPresenceSession = findPresenceSessionBySessionId(lastPresenceState, sessionId);
+    const remotePlayer = getOrCreateRemotePlayer(sessionId, latestPresenceSession?.faceData);
     remotePlayer.targetPosition.set(
       bootstrapTransform.x,
       bootstrapTransform.y,
@@ -577,6 +638,7 @@ export function createMultiplayerController({
     syncRemotePlayersFromState(state);
     remotePlayers.forEach((remotePlayer, sessionId) => {
       const latestPresenceSession = findPresenceSessionBySessionId(state, sessionId);
+      syncRemotePlayerFace(remotePlayer, latestPresenceSession?.faceData);
       syncRemotePlayerDisplayName(remotePlayer, latestPresenceSession?.displayName);
     });
   }
@@ -593,6 +655,9 @@ export function createMultiplayerController({
 
     await channel.track(snapshotPresencePayload({
       sessionId: localSessionId,
+      faceData: typeof getLocalPresenceFaceData === 'function'
+        ? getLocalPresenceFaceData()
+        : null,
     }));
   }
 

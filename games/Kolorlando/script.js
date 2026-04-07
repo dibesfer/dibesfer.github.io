@@ -2875,6 +2875,9 @@ const multiplayerController = createMultiplayerController({
       isDead: playerState.isDead || playerState.health <= 0,
     })
     : null,
+  getLocalPresenceFaceData: MULTIPLAYER_ENABLED
+    ? () => (canEditCurrentVoxelWorld() ? playerFaceDataResult.faceData : null)
+    : null,
   getSharedWorldPlayerStates: MULTIPLAYER_ENABLED
     ? () => currentMultiplayerWorldState?.players ?? null
     : null,
