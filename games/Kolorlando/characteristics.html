@@ -97,7 +97,7 @@
 
         .myPre {
             padding: 5px;
-            border: solid 3px white;
+            border: solid 1px white;
             height: 400px;
             overflow: auto;
         }
@@ -105,18 +105,10 @@
         .characteristicChart {
             margin-top: 20px;
             padding: 14px;
-            border: solid 2px white;
+            border: solid 1px white;
             border-radius: 18px;
             background: #0f0f0f;
             box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
-        }
-
-        .characteristicChartTitle {
-            margin-bottom: 10px;
-            color: #d4af37;
-            font-size: 0.95rem;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
         }
 
         .chartHost {
@@ -161,9 +153,9 @@
         }
 
         .google-visualization-orgchart-node {
-            border: 3px solid #f5f5f5 !important;
-            border-radius: 18px !important;
-            padding: 6px 8px !important;
+            border: 2px solid #f5f5f5 !important;
+            border-radius: 10px !important;
+            padding: 10px !important;
             background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 100%) !important;
             color: #f5f5f5 !important;
             box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.45) !important;
@@ -176,21 +168,34 @@
             box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.55) !important;
         }
 
+        .google-visualization-orgchart-node:has(.is-expandable-chart-node) {
+            border-color: #d4af37 !important;
+            cursor: pointer;
+        }
+
         .google-visualization-orgchart-lineleft,
         .google-visualization-orgchart-lineright,
         .google-visualization-orgchart-linebottom {
             border-color: #d4af37 !important;
-            border-width: 4px !important;
+            border-width: 2px !important;
         }
     </style>
     <script>
         google.charts.load('current', { packages: ['orgchart'] });
         google.charts.setOnLoadCallback(drawCharacteristicsCharts);
 
-        function createChartRows(entries) {
+        function createChartLabel(entry, childMap) {
+            var hasChildren = (childMap.get(entry.id) || []).length > 0;
+            var className = hasChildren ? 'chart-node-label is-expandable-chart-node' : 'chart-node-label';
+
+            // Branch labels carry a hook so their node border matches connector lines.
+            return '<div class="' + className + '">' + entry.label + '</div>';
+        }
+
+        function createChartRows(entries, childMap) {
             return entries.map(function (entry) {
                 return [
-                    { v: entry.id, f: entry.label },
+                    { v: entry.id, f: createChartLabel(entry, childMap) },
                     entry.parent || '',
                     entry.tooltip || ''
                 ];
@@ -364,7 +369,7 @@
                 data.addColumn('string', 'Name');
                 data.addColumn('string', 'Manager');
                 data.addColumn('string', 'ToolTip');
-                data.addRows(createChartRows(visibleEntries));
+                data.addRows(createChartRows(visibleEntries, childMap));
 
                 var chart = new google.visualization.OrgChart(host);
 
@@ -404,44 +409,68 @@
         }
 
         function drawCharacteristicsCharts() {
+            // The Game chart is the global runtime map for the feature notes below.
+            drawSingleChart('chart_game', [
+                { id: 'game-root', parent: '', label: 'Game<div class="implemented-in">singleplayer.html + script.js</div>', tooltip: 'Singleplayer runtime root' },
+                { id: 'game-graphics', parent: 'game-root', label: 'Graphics<div class="implemented-in">camera.js + screen.js</div>', tooltip: 'Camera modes and screen behavior' },
+                { id: 'game-ui', parent: 'game-root', label: 'UI<div class="implemented-in">code/UI</div>', tooltip: 'HUD, menu, inventory, minimap and chat' },
+                { id: 'game-world', parent: 'game-root', label: 'World<div class="implemented-in">maps + worldSaving.js</div>', tooltip: 'Voxel maps and local persistence' },
+                { id: 'game-entities', parent: 'game-root', label: 'Entities<div class="implemented-in">entity.js family</div>', tooltip: 'NPCs, model logic, items and vehicles' },
+                { id: 'game-commands', parent: 'game-root', label: 'Commands<div class="implemented-in">code/commands.js</div>', tooltip: 'Debug and command controls' },
+                { id: 'game-audio', parent: 'game-root', label: 'Audio<div class="implemented-in">audio.js</div>', tooltip: 'Synthesized gameplay audio' },
+                { id: 'game-camera', parent: 'game-graphics', label: 'Camera Modes<div class="implemented-in">Skyrim / WoW / Lego LoL</div>', tooltip: '3 camera styles' },
+                { id: 'game-screen', parent: 'game-graphics', label: 'Screen<div class="implemented-in">desktop / mobile</div>', tooltip: 'Resize and device modes' },
+                { id: 'game-menu', parent: 'game-ui', label: 'Menu<div class="implemented-in">menu.js</div>', tooltip: 'Central panel navigation' },
+                { id: 'game-inventory', parent: 'game-ui', label: 'Inventory<div class="implemented-in">inventory.js</div>', tooltip: 'Hotbar, inventory and encyclopedia' },
+                { id: 'game-minimap', parent: 'game-ui', label: 'Minimap<div class="implemented-in">minimap.js</div>', tooltip: 'Map renderer and markers' },
+                { id: 'game-chat', parent: 'game-ui', label: 'Chat<div class="implemented-in">chat.js</div>', tooltip: 'Chat UI flow' },
+                { id: 'game-hud', parent: 'game-ui', label: 'Player HUD<div class="implemented-in">playerHud.js</div>', tooltip: 'Health and target readout' },
+                { id: 'game-icon', parent: 'game-ui', label: 'Icon<div class="implemented-in">icon.js</div>', tooltip: 'Shared UI icon helpers' },
+                { id: 'game-maps', parent: 'game-world', label: 'Maps<div class="implemented-in">city / simple / voxelandia</div>', tooltip: 'Base world templates' },
+                { id: 'game-saving', parent: 'game-world', label: 'World Saving<div class="implemented-in">worldSaving.js</div>', tooltip: 'Local voxel edit saves' },
+                { id: 'game-entity-core', parent: 'game-entities', label: 'Entity Core<div class="implemented-in">entity.js</div>', tooltip: 'NPC logic' },
+                { id: 'game-entity-model', parent: 'game-entities', label: 'Entity Model<div class="implemented-in">entityModel.js</div>', tooltip: 'Humanoid rigs and animation helpers' },
+                { id: 'game-items', parent: 'game-entities', label: 'Item Appearance<div class="implemented-in">itemAppearance.js</div>', tooltip: 'Item and pickup visuals' },
+                { id: 'game-vehicle', parent: 'game-entities', label: 'Vehicle<div class="implemented-in">vehicle.js</div>', tooltip: 'Vehicle support' }
+            ]);
+
             drawSingleChart('chart_web', [
-                { id: 'web-root', parent: '', label: 'Web<div style="color:#d4af37; font-style:italic">Landing experience</div>' },
-                { id: 'web-home', parent: 'web-root', label: 'Home<div style="color:#cfcfcf; font-style:italic">mainMenu</div>' },
-                { id: 'web-avatar', parent: 'web-root', label: 'Avatar Menu<div style="color:#cfcfcf; font-style:italic">avatarMenu</div>' },
-                { id: 'web-worlds', parent: 'web-root', label: 'Worlds Menu<div style="color:#cfcfcf; font-style:italic">yourWorldsMenu</div>' },
-                { id: 'web-auth', parent: 'web-root', label: 'Auth<div style="color:#cfcfcf; font-style:italic">authModal + Kusers.js</div>' },
-                { id: 'web-script', parent: 'web-root', label: 'Web Logic<div style="color:#cfcfcf; font-style:italic">webscript.js</div>' },
-                { id: 'web-style', parent: 'web-root', label: 'Web Style<div style="color:#cfcfcf; font-style:italic">webstyle.css</div>' },
-                { id: 'web-singleplayer', parent: 'web-worlds', label: 'Singleplayer<div style="color:#cfcfcf; font-style:italic">singleplayer.html</div>' },
-                { id: 'web-multiplayer', parent: 'web-worlds', label: 'Multiplayer<div style="color:#cfcfcf; font-style:italic">multiplayer.html</div>' },
-                { id: 'web-characteristics', parent: 'web-home', label: 'Karakteristiks<div style="color:#cfcfcf; font-style:italic">characteristics.html</div>' }
+                { id: 'web-root', parent: '', label: 'Web<div class="implemented-in">Landing experience</div>' },
+                { id: 'web-home', parent: 'web-root', label: 'Home<div class="implemented-in">mainMenu</div>' },
+                { id: 'web-avatar', parent: 'web-root', label: 'Avatar Menu<div class="implemented-in">avatarMenu</div>' },
+                { id: 'web-worlds', parent: 'web-root', label: 'Worlds Menu<div class="implemented-in">yourWorldsMenu</div>' },
+                { id: 'web-auth', parent: 'web-root', label: 'Auth<div class="implemented-in">authModal + Kusers.js</div>' },
+                { id: 'web-script', parent: 'web-root', label: 'Web Logic<div class="implemented-in">webscript.js</div>' },
+                { id: 'web-style', parent: 'web-root', label: 'Web Style<div class="implemented-in">webstyle.css</div>' },
+                { id: 'web-singleplayer', parent: 'web-worlds', label: 'Singleplayer<div class="implemented-in">singleplayer.html</div>' },
+                { id: 'web-multiplayer', parent: 'web-worlds', label: 'Multiplayer<div class="implemented-in">multiplayer.html</div>' },
+                { id: 'web-characteristics', parent: 'web-home', label: 'Karakteristiks<div class="implemented-in">characteristics.html</div>' }
             ]);
 
             drawSingleChart('chart_player', [
-                { id: 'player-root', parent: '', label: 'Player<div style="color:#d4af37; font-style:italic">Avatar and gameplay body</div>' },
-                { id: 'player-avatar', parent: 'player-root', label: 'Avatar<div style="color:#cfcfcf; font-style:italic">Face system</div>' },
-                { id: 'player-avatar-shared', parent: 'player-avatar', label: 'Shared Face Data<div style="color:#cfcfcf; font-style:italic">sfcFace.js</div>' },
-                { id: 'player-avatar-editor', parent: 'player-avatar', label: 'SquareFaceCreator<div style="color:#cfcfcf; font-style:italic">/web/SquareFaceCreator</div>' },
-                { id: 'player-avatar-index', parent: 'player-avatar-editor', label: 'Editor Page<div style="color:#cfcfcf; font-style:italic">index.html</div>' },
-                { id: 'player-avatar-script', parent: 'player-avatar-editor', label: 'Editor Logic<div style="color:#cfcfcf; font-style:italic">script.js</div>' },
-                { id: 'player-avatar-style', parent: 'player-avatar-editor', label: 'Editor Style<div style="color:#cfcfcf; font-style:italic">style.css</div>' },
-                { id: 'player-avatar-assets', parent: 'player-avatar-editor', label: 'Face Assets<div style="color:#cfcfcf; font-style:italic">assets/categories</div>' }
+                { id: 'player-root', parent: '', label: 'Player<div class="implemented-in">Avatar and gameplay body</div>' },
+                { id: 'player-avatar-shared', parent: 'player-root', label: 'Shared Face Data<div class="implemented-in">sfcFace.js</div>' },
+                { id: 'player-avatar-editor', parent: 'player-root', label: 'SquareFaceCreator<div class="implemented-in">/web/SquareFaceCreator</div>' },
+                { id: 'player-avatar-index', parent: 'player-avatar-editor', label: 'Editor Page<div class="implemented-in">index.html</div>' },
+                { id: 'player-avatar-script', parent: 'player-avatar-editor', label: 'Editor Logic<div class="implemented-in">script.js</div>' },
+                { id: 'player-avatar-style', parent: 'player-avatar-editor', label: 'Editor Style<div class="implemented-in">style.css</div>' },
+                { id: 'player-avatar-assets', parent: 'player-avatar-editor', label: 'Face Assets<div class="implemented-in">assets/categories</div>' }
             ]);
 
             drawSingleChart('chart_item', [
-                { id: 'item-root', parent: '', label: 'Item<div style="color:#d4af37; font-style:italic">Shared item model</div>' },
-                { id: 'item-base', parent: 'item-root', label: 'Definitions<div style="color:#cfcfcf; font-style:italic">code/item.js</div>' },
-                { id: 'item-holdable', parent: 'item-root', label: 'Holdables<div style="color:#cfcfcf; font-style:italic">attachment + action type</div>' },
-                { id: 'item-wearable', parent: 'item-root', label: 'Wearables<div style="color:#cfcfcf; font-style:italic">equipment flow pending</div>' },
-                { id: 'item-id', parent: 'item-root', label: 'Stable itemId<div style="color:#cfcfcf; font-style:italic">inventory identity</div>' }
+                { id: 'item-root', parent: '', label: 'Item<div class="implemented-in">Shared item model</div>' },
+                { id: 'item-base', parent: 'item-root', label: 'Definitions<div class="implemented-in">code/item.js</div>' },
+                { id: 'item-holdable', parent: 'item-root', label: 'Holdables<div class="implemented-in">attachment + action type</div>' },
+                { id: 'item-wearable', parent: 'item-root', label: 'Wearables<div class="implemented-in">equipment flow pending</div>' },
+                { id: 'item-id', parent: 'item-root', label: 'Stable itemId<div class="implemented-in">inventory identity</div>' }
             ]);
 
             drawSingleChart('chart_multiplayer', [
-                { id: 'multi-root', parent: '', label: 'Multiplayer<div style="color:#d4af37; font-style:italic">Online runtime</div>' },
-                { id: 'multi-presence', parent: 'multi-root', label: 'Presence<div style="color:#cfcfcf; font-style:italic">session roster</div>' },
-                { id: 'multi-broadcast', parent: 'multi-root', label: 'Broadcasting<div style="color:#cfcfcf; font-style:italic">transform sync</div>' },
-                { id: 'multi-auth', parent: 'multi-root', label: 'Authentication<div style="color:#cfcfcf; font-style:italic">landing auth bridge</div>' },
-                { id: 'multi-chat', parent: 'multi-root', label: 'Chat<div style="color:#cfcfcf; font-style:italic">shared UI path</div>' }
+                { id: 'multi-root', parent: '', label: 'Multiplayer<div class="implemented-in">Online runtime</div>' },
+                { id: 'multi-presence', parent: 'multi-root', label: 'Presence<div class="implemented-in">session roster</div>' },
+                { id: 'multi-broadcast', parent: 'multi-root', label: 'Broadcasting<div class="implemented-in">transform sync</div>' },
+                { id: 'multi-auth', parent: 'multi-root', label: 'Authentication<div class="implemented-in">landing auth bridge</div>' },
+                { id: 'multi-chat', parent: 'multi-root', label: 'Chat<div class="implemented-in">shared UI path</div>' }
             ]);
 
             enableDesktopDragScroll();
@@ -453,7 +482,7 @@
 
 <body>
     <header>
-        <h1>📄 Karakteristiks</h1>
+        <h1><a href="">📄 Karakteristiks</a></h1>
 
         <br>
         <hr>
@@ -464,6 +493,8 @@
 
     <br>
 
+    
+
     <details id="legendDetails">
         <summary>Legend</summary>
         <div id="legend">
@@ -473,6 +504,21 @@
                 (done but not implemented)</p>
             <p class="to-improve">to-improve</p>
             <p class="implemented-in">implemented-in</p>
+        </div>
+    </details>
+
+    <details open>
+        <summary>🎮 Game</summary>
+        <p>Runtime and main local systems.</p>
+        <p>Game Flow:</p>
+        <ol>
+            <li>Load page</li>
+            <li>Check screen mode</li>
+            <li>Detect anonymous / log in user</li>
+            
+        </ol>
+        <div class="characteristicChart">
+            <div id="chart_game" class="chartHost"></div>
         </div>
     </details>
 
@@ -524,6 +570,10 @@
             <p>Shows Encyclopedia, Inventory, Character, Settings and About <span
                     class="implemented-in">code/UI/menu.js, code/UI/menuPanelMarkup.js,
                     singleplayer.html, multiplayer.html, style.css</span></p>
+            <li class="done">Icon</li>
+            <p>Inventory, hotbar, encyclopedia and equipment icons <span class="implemented-in">code/UI/icon.js</span>
+            </p>
+            <img src="assets/imagenesPortada/icon.png" alt="">
         </ol>
     </details>
 
@@ -531,7 +581,6 @@
         <summary>🕸️ Web</summary>
         <p>Landing page, account entry, world access and page navigation.</p>
         <div class="characteristicChart">
-            <p class="characteristicChartTitle">Chart</p>
             <div id="chart_web" class="chartHost"></div>
         </div>
     </details>
@@ -561,12 +610,14 @@
                     /web/SquareFaceCreator/index.html, /web/SquareFaceCreator/script.js</span></p>
             <li class="done">Equipment/wearables</li>
             <p><span class="implemented-in">singleplayer.html, style.css</span></p>
+            <img src="assets/imagenesPortada/equipmentGrid.png" alt="">
             <li class="to-improve">Tools</li>
             <p>weapons/goxels (gltf models scaled 0.1 and centered on X Y Z) <span class="implemented-in">script.js,
                     code/entities/itemAppearance.js</span></p>
-            <li class="done">HUD </li>
-            <p>with health bar, selected voxel and game mode <span class="implemented-in">playerHud.js,
+            <li class="done">HUD</li>
+            <p>with health bar, selected voxel <span class="implemented-in">playerHud.js,
                     code/UI/inventory.js, singleplayer.html, style.css</span></p>
+            <img src="assets/imagenesPortada/playerHUD.png" alt="">
 
             <li class="done">Left and right punch</li>
             <p><span class="implemented-in">script.js, code/entities/entityModel.js</span></p>
@@ -574,9 +625,10 @@
             <p><span class="implemented-in">script.js</span></p>
             <li class="not-done">Telekinesis</li>
             <p>Moving, pulling or pushing objects around from a distance</p>
+            <li class="not-used">user profile chart</li>
+            <p>Little user info panel userprofile.html</p>
         </ol>
         <div class="characteristicChart">
-            <p class="characteristicChartTitle">Chart</p>
             <div id="chart_player" class="chartHost"></div>
         </div>
     </details>
@@ -598,7 +650,6 @@
                     class="implemented-in">code/item.js, code/UI/inventory.js, script.js</span></p>
         </ol>
         <div class="characteristicChart">
-            <p class="characteristicChartTitle">Chart</p>
             <div id="chart_item" class="chartHost"></div>
         </div>
     </details>
@@ -610,7 +661,7 @@
             <p>world, player,</p>
             <li class="not-done">Logged in online database</li>
             <p>world, player,</p>
-            <li class="not-done">Multiplayer World Persistence</li>
+            <li class="done">Multiplayer World Persistence</li>
         </ol>
     </details>
 
@@ -687,6 +738,9 @@
             <p>(enables flying) <span class="implemented-in">code/commands.js, script.js</span></p>
             <li class="done">/spawn </li>
             <p>(respawns player) <span class="implemented-in">code/commands.js, script.js</span></p>
+            <li class="done">/spawn TreeExample</li>
+            <p>Spawns a Boxel, boxelmenu.html</p>
+
         </ol>
     </details>
 
@@ -701,13 +755,12 @@
             <p>Low-latency updates on position, rotation and animation. <span
                     class="implemented-in">code/multiplayer/multiplayer.js</span>
             </p>
-            <li class="not-used">Authentication</li>
+            <li class="done">Authentication</li>
             <p><span class="implemented-in">index.html, code/auth/Kusers.js, webscript.js, webstyle.css</span></p>
             <li class="not-used">Chat</li>
             <p><span class="implemented-in">code/UI/chat.js, singleplayer.html, multiplayer.html, style.css</span></p>
         </ol>
         <div class="characteristicChart">
-            <p class="characteristicChartTitle">Chart</p>
             <div id="chart_multiplayer" class="chartHost"></div>
         </div>
 
@@ -854,7 +907,6 @@ later, if needed, back it with a DB active_session
             <li><a href="/games/Kolorlando/multiplayer.html">Multiplayer</a></li>
             <li><a href="/web/SquareFaceCreator/">Square Face Creator</a></li>
             <li><a href="/games/Kolorlando/characteristics.html">Characteristics</a></li>
-            <li><a href="orgchart.html">Modules Chart</a></li>
         </ul>
     </details>
     <footer>
