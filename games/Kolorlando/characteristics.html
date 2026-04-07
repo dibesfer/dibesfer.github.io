@@ -493,7 +493,7 @@
 
     <br>
 
-    
+
 
     <details id="legendDetails">
         <summary>Legend</summary>
@@ -515,7 +515,7 @@
             <li>Load page</li>
             <li>Check screen mode</li>
             <li>Detect anonymous / log in user</li>
-            
+
         </ol>
         <div class="characteristicChart">
             <div id="chart_game" class="chartHost"></div>
@@ -532,6 +532,20 @@
             <p><span class="implemented-in">code/graphics/screen.js, style.css, script.js</span></p>
 
         </ol>
+
+        <details>
+        <summary>📱 Mobile mode</summary>
+        <ol>
+            <li class="done">Left joystick for movement and right joystick for camera</li>
+            <p><span class="implemented-in">script.js, singleplayer.html, style.css</span></p>
+            <li class="done">Pinch to zoom and switch camera mode.</li>
+            <p><span class="implemented-in">script.js, code/graphics/screen.js</span></p>
+
+        </ol>
+        <img height="400px" src="assets/mobile-portrait.png" alt="">
+        <img height="400px" src="assets/mobile-landscape.png" alt="">
+    </details>
+
     </details>
 
     <details>
@@ -684,18 +698,7 @@
             </ol>
         </ol>
     </details>
-    <details>
-        <summary>📱 Mobile mode</summary>
-        <ol>
-            <li class="done">Left joystick for movement and right joystick for camera</li>
-            <p><span class="implemented-in">script.js, singleplayer.html, style.css</span></p>
-            <li class="done">Pinch to zoom and switch camera mode.</li>
-            <p><span class="implemented-in">script.js, code/graphics/screen.js</span></p>
-
-        </ol>
-        <img height="400px" src="assets/mobile-portrait.png" alt="">
-        <img height="400px" src="assets/mobile-landscape.png" alt="">
-    </details>
+    
     <details>
         <summary>🧱 Voxel Edition</summary>
         <ol>
@@ -895,6 +898,96 @@ later, if needed, back it with a DB active_session
             <li class="not-done">Background music</li>
             <p><span class="implemented-in">code/UI/menuPanelMarkup.js, singleplayer.html, multiplayer.html</span></p>
             <p>UI only for now.</p>
+            <h2>Performance plan</h2>
+            <pre class="myPre">
+
+Voxel generation -> chunk -> voxel face culling and greedy meshing
+
+2. Prioridad crítica: reemplazar claves string "x,y,z" por datos compactos
+El guardado usa buildVoxelEditKey(cellX, cellY, cellZ) y almacena todo en voxelEdits con claves tipo string. Eso mete sobrecoste de objetos, strings y hashing.
+Pasa el runtime a typed arrays o índices numéricos por chunk.
+Deja las strings solo para exportación, debug o compatibilidad.
+Impacto: muy alto en RAM.
+
+3. Prioridad crítica: separar el mundo en chunks
+El sistema actual de voxelEdits es global por mundo, no chunkificado.
+Divide el mapa en chunks de 16³ o 32³.
+Carga, genera y guarda solo chunks cercanos al jugador.
+Descarga chunks lejanos de RAM.
+Impacto: muy alto en RAM y escalabilidad.
+
+4. Prioridad muy alta: regenerar solo el chunk tocado
+Si cambias un vóxel, no debes reconstruir más geometría de la necesaria.
+Cada edición debería marcar como “dirty” solo ese chunk y quizá chunks vecinos si toca borde.
+Impacto: muy alto en CPU y fluidez.
+
+5. Prioridad muy alta: face culling de vóxeles ocultos
+Si todavía estás creando caras internas entre bloques pegados, estás quemando RAM GPU y draw cost para nada.
+Renderiza solo las caras expuestas.
+Impacto: brutal si el mundo tiene masa sólida.
+
+6. Prioridad muy alta: greedy meshing
+Después del culling, une caras contiguas del mismo material en quads grandes.
+Es de las mejores mejoras en voxel engines.
+Impacto: brutal en vértices, buffers y GPU.
+
+7. Prioridad alta: revisar el renderer extra de preview
+script.js importa mucho sistema y además ya te vi con una estructura bastante cargada; si mantienes una segunda escena/renderer para preview del personaje, eso suma memoria GPU y lógica paralela.
+Mejor:
+pausar el preview cuando no esté visible
+bajar resolución del canvas preview
+reutilizar recursos si puedes
+Impacto: alto si el menú está vivo mucho tiempo.
+
+8. Prioridad alta: reducir la cantidad de recursos residentes
+script.js centraliza muchísimas importaciones: audio, minimapa, menú, inventario, chat, entidades, vehículos, loaders, multijugador, mapas... todo eso junto puede dejar demasiadas cosas vivas a la vez.
+Carga módulos pesados bajo demanda.
+No inicialices sistemas que no se usan en la pantalla actual.
+Impacto: alto en RAM inicial y tiempo de arranque.
+
+9. Prioridad alta: reutilizar materiales y geometrías
+En voxel games, crear materiales o geometrías repetidas te destroza memoria y GC.
+Usa atlas de texturas y un conjunto pequeño de materiales compartidos.
+Libera con dispose() lo que ya no uses.
+Impacto: alto en GPU RAM y fugas.
+
+10. Prioridad media-alta: separar datos por tipo
+No mezcles en la misma estructura:
+vóxeles
+entidades
+jugador
+iluminación
+metadata
+Ahora el save ya separa player y voxelEdits, lo cual va bien como base.
+Llévalo más lejos dentro del runtime.
+Impacto: medio-alto en orden y mantenimiento.
+
+11. Prioridad media: lazy loading de mapas y assets
+En script.js importas varios mapas (simpleMap, cityMap, voxelandiaMap) desde el arranque.
+Carga solo el mapa seleccionado.
+Lo mismo para modelos GLTF y sistemas visuales opcionales.
+Impacto: medio en memoria inicial.
+
+12. Prioridad media: instrumentación real
+Mide:
+chunks activos
+vóxeles editados
+vértices por chunk
+tiempo de rebuild
+tamaño serializado del save
+Sin eso, vas un poco a ciegas.
+Impacto: medio, pero te dice dónde está el puto cuello real 😈
+
+Orden recomendado de ejecución
+1) debounce del guardado
+2) chunking
+3) typed arrays / índices numéricos
+4) rebuild solo de chunk afectado
+5) face culling
+6) greedy meshing
+7) recorte de sistemas/renderers extra
+8) lazy loading y limpieza de recursos
+            </pre>
         </ol>
     </details>
 

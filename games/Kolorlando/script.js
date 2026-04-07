@@ -1819,6 +1819,17 @@ if (settingsReloadWorldButton) {
   }
 }
 
+function flushLocalWorldSaveStore() {
+  localWorldSaveStore?.flushPendingSave?.();
+}
+
+window.addEventListener('pagehide', flushLocalWorldSaveStore);
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') {
+    flushLocalWorldSaveStore();
+  }
+});
+
 function getEntityRaycastHit(origin, direction, maxDistance) {
   let closestHit = null;
   let closestDistance = maxDistance;

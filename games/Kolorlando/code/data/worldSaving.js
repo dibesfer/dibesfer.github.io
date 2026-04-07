@@ -1,5 +1,6 @@
 const WORLD_SAVE_SCHEMA_VERSION = 1;
 const DEFAULT_STORAGE_PREFIX = 'kolorlando.worldSave';
+const DEFAULT_SAVE_DEBOUNCE_MS = 750;
 
 function isFiniteInteger(value) {
   return Number.isInteger(value) && Number.isFinite(value);
@@ -149,10 +150,13 @@ export function createLocalWorldSaveStore({
   worldId = 'default',
   storage = window.localStorage,
   storagePrefix = DEFAULT_STORAGE_PREFIX,
+  saveDebounceMs = DEFAULT_SAVE_DEBOUNCE_MS,
 } = {}) {
   const normalizedWorldId = sanitizeWorldId(worldId);
   const storageKey = buildStorageKey(normalizedWorldId, storagePrefix);
   let currentSave = null;
+  let saveTimer = 0;
+  let saveIsDirty = false;
 
   function ensureLoadedSave() {
     if (currentSave) return currentSave;
@@ -174,10 +178,36 @@ export function createLocalWorldSaveStore({
   }
 
   function persistCurrentSave() {
+    saveIsDirty = false;
+    if (saveTimer) {
+      window.clearTimeout(saveTimer);
+      saveTimer = 0;
+    }
+
     const saveToPersist = ensureLoadedSave();
     saveToPersist.savedAt = new Date().toISOString();
     writeStorage(storage, storageKey, JSON.stringify(saveToPersist));
     return cloneWorldSave(saveToPersist);
+  }
+
+  function schedulePersistCurrentSave() {
+    // Voxel edits are already applied in-scene; disk persistence can breathe.
+    saveIsDirty = true;
+    if (saveTimer) return cloneWorldSave(ensureLoadedSave());
+
+    saveTimer = window.setTimeout(() => {
+      saveTimer = 0;
+      if (saveIsDirty) {
+        persistCurrentSave();
+      }
+    }, saveDebounceMs);
+
+    return cloneWorldSave(ensureLoadedSave());
+  }
+
+  function flushPendingSave() {
+    if (!saveIsDirty) return cloneWorldSave(ensureLoadedSave());
+    return persistCurrentSave();
   }
 
   function loadWorldSave() {
@@ -190,6 +220,12 @@ export function createLocalWorldSaveStore({
   }
 
   function clearWorldSave() {
+    saveIsDirty = false;
+    if (saveTimer) {
+      window.clearTimeout(saveTimer);
+      saveTimer = 0;
+    }
+
     currentSave = createEmptyWorldSave(normalizedWorldId);
     removeStorage(storage, storageKey);
     return cloneWorldSave(currentSave);
@@ -219,7 +255,7 @@ export function createLocalWorldSaveStore({
       action: 'add',
       voxelType: normalizedVoxelType,
     };
-    return persistCurrentSave();
+    return schedulePersistCurrentSave();
   }
 
   function recordVoxelRemoved(cellX, cellY, cellZ) {
@@ -231,7 +267,7 @@ export function createLocalWorldSaveStore({
     saveData.voxelEdits[buildVoxelEditKey(cellX, cellY, cellZ)] = {
       action: 'remove',
     };
-    return persistCurrentSave();
+    return schedulePersistCurrentSave();
   }
 
   function getVoxelEditsList() {
@@ -258,6 +294,7 @@ export function createLocalWorldSaveStore({
     setPlayerState,
     recordVoxelAdded,
     recordVoxelRemoved,
+    flushPendingSave,
     getVoxelEditsList,
   };
 }
@@ -265,6 +302,7 @@ export function createLocalWorldSaveStore({
 export {
   WORLD_SAVE_SCHEMA_VERSION,
   DEFAULT_STORAGE_PREFIX,
+  DEFAULT_SAVE_DEBOUNCE_MS,
   buildStorageKey,
   buildVoxelEditKey,
   createEmptyWorldSave,
