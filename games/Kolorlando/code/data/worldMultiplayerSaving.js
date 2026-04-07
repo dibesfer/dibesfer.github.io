@@ -213,11 +213,89 @@ export async function createMultiplayerWorldStore({
     return currentState;
   }
 
-  function mergePartialStateIntoCurrentState(partialState) {
+  function mergeQueuedPartialState(basePartialState, nextPartialState) {
+    const mergedPartialState = { ...(basePartialState ?? {}) };
+
+    if (nextPartialState?.playerPatches) {
+      mergedPartialState.playerPatches = {
+        ...(mergedPartialState.playerPatches ?? {}),
+        ...nextPartialState.playerPatches,
+      };
+    }
+
+    if (nextPartialState?.voxelEditPatches) {
+      mergedPartialState.voxelEditPatches = {
+        ...(mergedPartialState.voxelEditPatches ?? {}),
+        ...nextPartialState.voxelEditPatches,
+      };
+    }
+
+    return mergedPartialState;
+  }
+
+  function mergePartialStateIntoWorldState(baseState, partialState) {
     return {
-      players: partialState?.players ?? currentState.players,
-      voxel_edits: partialState?.voxel_edits ?? currentState.voxelEdits,
+      ...baseState,
+      players: partialState?.playerPatches
+        ? { ...baseState.players, ...partialState.playerPatches }
+        : baseState.players,
+      voxelEdits: partialState?.voxelEditPatches
+        ? { ...baseState.voxelEdits, ...partialState.voxelEditPatches }
+        : baseState.voxelEdits,
+      updatedAt: new Date().toISOString(),
     };
+  }
+
+  function buildDatabaseUpdate(partialState, baseState) {
+    const mergedState = mergePartialStateIntoWorldState(baseState, partialState);
+    const updatePayload = {
+      updated_at: new Date().toISOString(),
+    };
+
+    if (partialState?.playerPatches) {
+      updatePayload.players = mergedState.players;
+    }
+
+    if (partialState?.voxelEditPatches) {
+      updatePayload.voxel_edits = mergedState.voxelEdits;
+    }
+
+    return updatePayload;
+  }
+
+  async function updateRowWithConflictRetry(partialState, baseState) {
+    let writeBaseState = baseState;
+
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      let updateQuery = database
+        .from(tableName)
+        .update(buildDatabaseUpdate(partialState, writeBaseState))
+        .eq('world_id', normalizedWorldId);
+
+      if (writeBaseState.updatedAt) {
+        updateQuery = updateQuery.eq('updated_at', writeBaseState.updatedAt);
+      }
+
+      const { data: updatedRow, error } = await updateQuery
+        .select('id, world_id, players, voxel_edits, updated_at')
+        .maybeSingle();
+
+      if (error) {
+        throw error;
+      }
+
+      if (updatedRow) {
+        return updatedRow;
+      }
+
+      // Another client wrote first. Rebase this tiny patch onto the latest row.
+      writeBaseState = await fetchMultiplayerWorldRow({
+        worldId: normalizedWorldId,
+        tableName,
+      });
+    }
+
+    throw new Error('Kolorlando multiplayer world write conflict did not settle.');
   }
 
   async function flushQueuedWrite() {
@@ -235,30 +313,25 @@ export async function createMultiplayerWorldStore({
       return currentState;
     }
 
+    const previousState = currentState;
+    currentState = mergePartialStateIntoWorldState(currentState, partialState);
+    notifyListeners(currentState, previousState, 'local-pending-write');
+
     if (writeInFlight) {
-      queuedPartialState = mergePartialStateIntoCurrentState(partialState);
+      queuedPartialState = mergeQueuedPartialState(queuedPartialState, partialState);
       return currentState;
     }
 
-    const previousState = currentState;
-    const mergedPartialState = mergePartialStateIntoCurrentState(partialState);
     writeInFlight = true;
-    const { data: updatedRow, error } = await database
-      .from(tableName)
-      .update({
-        ...mergedPartialState,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('world_id', normalizedWorldId)
-      .select('id, world_id, players, voxel_edits, updated_at')
-      .single();
-
-    writeInFlight = false;
-
-    if (error) {
+    let updatedRow = null;
+    try {
+      updatedRow = await updateRowWithConflictRetry(partialState, previousState);
+    } catch (error) {
+      writeInFlight = false;
       queuedPartialState = null;
       throw error;
     }
+    writeInFlight = false;
 
     currentState = normalizeMultiplayerWorldRow(updatedRow ?? null, normalizedWorldId);
     notifyListeners(currentState, previousState, 'local-write');
@@ -273,14 +346,12 @@ export async function createMultiplayerWorldStore({
     const normalizedPlayerState = normalizePlayerState(playerState);
     if (!normalizedPlayerState) return currentState;
 
-    const nextPlayers = {
-      ...currentState.players,
+    const playerPatches = {
       [normalizedPlayerKey]: normalizedPlayerState,
     };
 
     return persistPartialState({
-      players: nextPlayers,
-      voxel_edits: currentState.voxelEdits,
+      playerPatches,
     });
   }
 
@@ -294,8 +365,7 @@ export async function createMultiplayerWorldStore({
       return currentState;
     }
 
-    const nextVoxelEdits = {
-      ...currentState.voxelEdits,
+    const voxelEditPatches = {
       [buildVoxelEditKey(cellX, cellY, cellZ)]: {
         action: 'add',
         voxelType: normalizedVoxelType,
@@ -303,8 +373,7 @@ export async function createMultiplayerWorldStore({
     };
 
     return persistPartialState({
-      players: currentState.players,
-      voxel_edits: nextVoxelEdits,
+      voxelEditPatches,
     });
   }
 
@@ -313,16 +382,14 @@ export async function createMultiplayerWorldStore({
       return currentState;
     }
 
-    const nextVoxelEdits = {
-      ...currentState.voxelEdits,
+    const voxelEditPatches = {
       [buildVoxelEditKey(cellX, cellY, cellZ)]: {
         action: 'remove',
       },
     };
 
     return persistPartialState({
-      players: currentState.players,
-      voxel_edits: nextVoxelEdits,
+      voxelEditPatches,
     });
   }
 
