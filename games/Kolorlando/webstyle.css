@@ -33,6 +33,7 @@ header {
     background-position: center;
     filter: hue-rotate(200deg); */
     text-align: left;
+    
 }
 
 header>h1 {
@@ -47,7 +48,7 @@ header a {
 
 header,
 footer {
-    padding: 20px;
+    padding: 40px;
     background-color: rgb(21, 64, 98);
     color: rgb(255, 255, 255);
 }
