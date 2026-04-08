@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>binaryScreen</title>
+    <script src="/ferscript.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+        }
+        body {
+            background-color: black;
+            color: lime;
+            font-family: monospace;
+            font-size: 2rem;
+            
+        }
+
+        #screen {
+            padding: 15px;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="screen">
+        
+    </div>
+    <script>
+        let screen = getid("screen")
+        let counter = 0
+        let counterlines = 0
+
+        let interval = setInterval(write, 1)
+
+        function write() {
+            let random = randomInt(0, 1)
+            screen.textContent += random
+            counter++
+            if (counter == 4){
+                screen.textContent += " "
+                counter = 0
+                counterlines++
+                if (counterlines == 250){
+                    screen.textContent = ""
+                    counterlines = 0
+                }
+            }
+        }
+    </script>
+</body>
+
+</html>
