@@ -61,7 +61,12 @@
         </div>
     </div>
     <header>
-        <h1><a href="index.html">Kolorlando</a></h1>
+
+        <div class="KolorTitolo">
+            <a href="index.html"><img src="assets/brand/KolorTitolo.png" alt="Kolorlando"></a>
+        </div>
+
+        <!-- <h1><a href="index.html">Kolorlando</a></h1> -->
         <div class="gradient-text">
             A 3D world to build, explore, create, combat, settle, conquer, chat, befriend, share
         </div>
@@ -101,8 +106,15 @@
 
         </div>
 
-        <div id="avatarMenu" class="kLevelsDisplay invisible">
-            <div class="kLevels" onclick="window.location = '/web/SquareFaceCreator/' ">
+        <div id="avatarMenu" class=" invisible">
+
+            <div id="AvatarIntroBox" class="box">
+               <h2 style="text-align: center;">Avatar</h2>
+               
+            </div>
+            
+            <div class="kLevelsDisplay">
+<div class="kLevels" onclick="window.location = '/web/SquareFaceCreator/' ">
                 <h2>Face</h2>
                 <div>
                     <img style="object-fit: contain;" src="assets/icons/SFC.png" alt="">
@@ -110,14 +122,7 @@
                 <p>Smile or grunge</p>
             </div>
 
-            <div class="kLevels">
-                <h2>Body</h2>
-                <div>
-
-                    <img src="assets/imagenesPortada/Captura desde 2026-03-10 13-01-58.png" alt="">
-                </div>
-                <p>You better shape up!</p>
-            </div>
+            
 
             <div class="kLevels">
                 <h2>Inventory</h2>
@@ -126,18 +131,32 @@
                 </div>
                 <p>Belongings, items, pets, mounts...</p>
             </div>
+
+
+            <div class="kLevels">
+                <h2>Equipment</h2>
+                <div>
+
+                    <img src="assets/imagenesPortada/equipment.png" alt="">
+                </div>
+                <p>You better shape up!</p>
+            </div>
+            </div>
+            
+
         </div>
 
         <div id="yourWorldsMenu" class=" invisible">
 
             <div id="yourWorldsIntroBox" class="box">
-                <p>Create your singleplayer world</p>
+                <h2 style="text-align: center;">Worlds</h2>
+                <!-- <p>Create your singleplayer world</p>
                 <p>Choose a template</p>
                 <ol>
                     <li>City</li>
                     <li>Voxelaar (100x100x3 voxels)</li>
                     <li>other</li>
-                </ol>
+                </ol> -->
             </div>
             <div class="kLevelsDisplay">
                 <div id="yourWorldsSingleplayerCard" class="kLevels"

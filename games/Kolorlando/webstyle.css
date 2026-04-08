@@ -52,6 +52,11 @@ footer {
     color: rgb(255, 255, 255);
 }
 
+.KolorTitolo {
+    max-width: 250px;
+    
+}
+
 #info {
     padding: 40px;
     background-image: linear-gradient(90deg, rgb(114, 35, 114), rgb(24, 0, 49));
@@ -266,11 +271,11 @@ footer {
 }
 
 .box {
-    max-width: 400px;
+    max-width: 300px;
     margin: auto;
     text-align: left;
     padding: 5px;
-    border: solid 1px white;
+    border-bottom: solid 1px white;
 }
 
 #idDiv {

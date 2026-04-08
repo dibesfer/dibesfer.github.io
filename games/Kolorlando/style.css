@@ -267,7 +267,7 @@ img {
 }
 
 #menuCentral {
-    --menu-surface: rgba(255, 255, 255, 0.9);
+    --menu-surface: rgba(255, 255, 255, 0.75);
     --menu-surface-strong: rgba(255, 255, 255, 0.72);
     --menu-border: rgba(0, 0, 0, 0.92);
     --menu-text: #181818;
@@ -298,10 +298,11 @@ img {
     flex-direction: column;
     color: var(--menu-text);
     box-shadow: 0 18px 50px rgba(0, 0, 0, 0.22);
+    backdrop-filter: blur(4px);
 }
 
 #menuCentral[data-theme="dark"] {
-    --menu-surface: rgba(18, 24, 32, 0.94);
+    --menu-surface: rgba(18, 24, 32, 0.75);
     --menu-surface-strong: rgba(29, 38, 48, 0.9);
     --menu-border: rgba(214, 224, 234, 0.28);
     --menu-text: #edf3f8;
@@ -767,7 +768,7 @@ img {
 .encyclopedia-section-title {
     margin: 0;
     font-size: 0.95rem;
-    color: #f7f0d2;
+    color: #9b8629;
     letter-spacing: 0.04em;
 }
 

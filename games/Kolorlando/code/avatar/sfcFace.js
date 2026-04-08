@@ -173,6 +173,35 @@ const SFC_HEX_COLOR_PATTERN = /^#[0-9a-f]{6}$/i;
 const imagePromiseCache = new Map();
 const recoloredCanvasCache = new Map();
 const SFC_SITE_ROOT_URL = new URL('../../../../', import.meta.url);
+const SFC_LOCAL_DEV_HOSTS = new Set(['localhost', '127.0.0.1', '0.0.0.0']);
+
+function resolveSfcSiteRootUrl(pathname) {
+  return new URL(pathname.replace(/^\//, ''), SFC_SITE_ROOT_URL).href;
+}
+
+function createPortableSfcImageUrl(imgUrl) {
+  if (!/^(?:[a-z]+:)?\/\//i.test(imgUrl)) {
+    return imgUrl;
+  }
+
+  try {
+    const parsedUrl = new URL(imgUrl);
+    const siteRootUrl = new URL(SFC_SITE_ROOT_URL);
+
+    if (parsedUrl.origin !== siteRootUrl.origin) {
+      return imgUrl;
+    }
+
+    if (!parsedUrl.pathname.startsWith(siteRootUrl.pathname)) {
+      return imgUrl;
+    }
+
+    // Persist site-root paths so saved faces do not keep local dev origins.
+    return parsedUrl.pathname.slice(siteRootUrl.pathname.length - 1);
+  } catch (error) {
+    return imgUrl;
+  }
+}
 
 function tryRepairMalformedSfcUrl(imgUrl) {
   if (!/^(?:[a-z]+:)?\/\//i.test(imgUrl)) {
@@ -181,8 +210,16 @@ function tryRepairMalformedSfcUrl(imgUrl) {
 
   try {
     const parsedUrl = new URL(imgUrl);
-    if (parsedUrl.origin !== window.location.origin) {
+    const isCurrentOrigin = parsedUrl.origin === window.location.origin;
+    const isLocalDevOrigin = SFC_LOCAL_DEV_HOSTS.has(parsedUrl.hostname);
+
+    if (!isCurrentOrigin && !isLocalDevOrigin) {
       return '';
+    }
+
+    // Local development URLs saved in player data must follow the active site.
+    if (isLocalDevOrigin && /^\/(?:web|games)\//.test(parsedUrl.pathname)) {
+      return resolveSfcSiteRootUrl(parsedUrl.pathname);
     }
 
     if (parsedUrl.pathname.startsWith('/games/Kolorlando/web/')) {
@@ -324,7 +361,9 @@ export function normalizeSfcFaceData(faceData, fallback = DEFAULT_SFC_FACE) {
     normalizedFace.colors[categoryName] = SFC_HEX_COLOR_PATTERN.test(faceData.colors?.[categoryName] || '')
       ? faceData.colors[categoryName]
       : fallbackFace.colors?.[categoryName] || '';
-    normalizedFace.editorSelectionUrls[categoryName] = resolveSfcImageUrlAlias(faceData.editorSelectionUrls?.[categoryName]);
+    normalizedFace.editorSelectionUrls[categoryName] = createPortableSfcImageUrl(
+      resolveSfcImageUrlAlias(faceData.editorSelectionUrls?.[categoryName])
+    );
   }
 
   return normalizedFace;
@@ -353,7 +392,7 @@ export function mergeSfcFaceData(primaryFaceData, secondaryFaceData) {
     const selectedColor = normalizedPrimaryFace.colors?.[categoryName] || normalizedSecondaryFace.colors?.[categoryName] || '';
 
     mergedFace.colors[categoryName] = selectedColor;
-    mergedFace.editorSelectionUrls[categoryName] = selectedSelectionUrl;
+    mergedFace.editorSelectionUrls[categoryName] = createPortableSfcImageUrl(selectedSelectionUrl);
 
     if (selectedSelectionUrl) {
       const runtimeItemIndex = (SFC_CATEGORY_ITEMS[categoryName] || []).findIndex(item => (
@@ -591,7 +630,7 @@ function resolveFacePartImageUrl(faceData, categoryName) {
   runtime index table, so we prefer the explicit editor URL when present and
   only fall back to the built-in runtime catalog otherwise. */
   if (editorSelectionUrl) {
-    return editorSelectionUrl;
+    return resolveSfcImageUrlAlias(editorSelectionUrl);
   }
 
   const itemIndex = faceData.items?.[categoryName];
