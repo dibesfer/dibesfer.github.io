@@ -285,10 +285,10 @@ img {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    max-width: 760px;
-    height: 550px;
+    max-width: 900px;
+    height: 675px;
     max-height: 90%;
-    width: min(760px, calc(100vw - 28px));
+    width: min(900px, calc(100vw - 28px));
     background-color: var(--menu-surface);
     border-radius: 10px;
     border: solid 2px var(--menu-border);
@@ -390,7 +390,7 @@ img {
 
 #boxelSaveFrame {
     width: 100%;
-    min-height: 70vh;
+    height: 420px;
     border: 0;
     border-radius: 8px;
     background: white;

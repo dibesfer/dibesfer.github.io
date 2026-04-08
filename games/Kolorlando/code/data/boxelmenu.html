@@ -12,7 +12,7 @@
 
         body {
             font-family: sans-serif;
-            background-color: rgba(165, 165, 165, 0.397);
+
         }
 
         img {
@@ -102,6 +102,74 @@
             margin: 25px 0 5px;
         }
 
+        #boxelImportButton {
+            border: solid 1px black;
+            padding: 10px 14px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        #boxelImportInput {
+            display: none;
+        }
+
+        #boxelImportModal[hidden] {
+            display: none;
+        }
+
+        #boxelImportModal {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.55);
+            z-index: 20;
+        }
+
+        #boxelImportDialog {
+            width: min(700px, 100%);
+            max-height: 90vh;
+            overflow: auto;
+            border: solid 2px black;
+            padding: 15px;
+            background: white;
+            color: black;
+        }
+
+        #boxelImportActions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 10px 0;
+        }
+
+        #boxelImportActions>button,
+        #boxelImportSaveText {
+            border: solid 1px black;
+            padding: 10px 14px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        #boxelImportText {
+            min-height: 220px;
+            max-height: 45vh;
+            overflow: auto;
+            border: solid 1px black;
+            padding: 10px;
+            white-space: pre-wrap;
+            background: rgb(245, 245, 245);
+        }
+
+        #boxelImportError {
+            min-height: 1.5em;
+            color: red;
+            font-weight: bold;
+        }
+
         #boxelActionMenu {
             position: absolute;
             top: 15px;
@@ -110,7 +178,7 @@
             display: flex;
             gap: 5px;
             padding: 5px;
-            background: white;
+
             border: solid 1px black;
             box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.35);
             z-index: 10;
@@ -151,6 +219,24 @@
         <div id="title_title">
             <span>B</span>oxel Save<br>
             <p>Boxel stands for "box of voxels"</p>
+        </div>
+    </div>
+
+    <button id="boxelImportButton" type="button">+ Import</button>
+    <input id="boxelImportInput" type="file" accept=".boxel,application/json">
+    <div id="boxelImportModal" hidden>
+        <div id="boxelImportDialog" role="dialog" aria-modal="true" aria-labelledby="boxelImportTitle">
+            <h2 id="boxelImportTitle">Import Boxel</h2>
+            <div id="boxelImportActions">
+                <button id="boxelImportLocalButton" type="button">Local File</button>
+                <button id="boxelImportTextButton" type="button">Text</button>
+                <button id="boxelImportCloseButton" type="button">Close</button>
+            </div>
+            <div id="boxelImportTextPanel" hidden>
+                <pre id="boxelImportText" contenteditable="true"></pre>
+                <button id="boxelImportSaveText" type="button">Save</button>
+            </div>
+            <p id="boxelImportError" aria-live="polite"></p>
         </div>
     </div>
 
@@ -202,8 +288,18 @@
     </div>
     <script type="module">
         import { drawBoxelIsometric, loadBoxel } from './boxelPainter.js';
-        import { KOLORLANDO_LOCAL_BOXELS_STORAGE_KEY, deleteLocalBoxel, findLocalBoxel, readLocalBoxels } from './boxelStorage.js';
+        import { KOLORLANDO_LOCAL_BOXELS_STORAGE_KEY, deleteLocalBoxel, findLocalBoxel, readLocalBoxels, writeLocalBoxel } from './boxelStorage.js';
 
+        const boxelImportButton = document.getElementById('boxelImportButton');
+        const boxelImportInput = document.getElementById('boxelImportInput');
+        const boxelImportModal = document.getElementById('boxelImportModal');
+        const boxelImportLocalButton = document.getElementById('boxelImportLocalButton');
+        const boxelImportTextButton = document.getElementById('boxelImportTextButton');
+        const boxelImportCloseButton = document.getElementById('boxelImportCloseButton');
+        const boxelImportTextPanel = document.getElementById('boxelImportTextPanel');
+        const boxelImportText = document.getElementById('boxelImportText');
+        const boxelImportSaveText = document.getElementById('boxelImportSaveText');
+        const boxelImportError = document.getElementById('boxelImportError');
         const localBoxelGallery = document.getElementById('localBoxelGallery');
         const boxelActionMenu = document.createElement('div');
         let selectedLocalBoxelId = '';
@@ -274,6 +370,53 @@
             hideBoxelActionMenu();
         }
 
+        function showImportError() {
+            boxelImportError.textContent = 'hey, this is not proper .boxel format';
+        }
+
+        function closeImportModal() {
+            boxelImportModal.hidden = true;
+            boxelImportTextPanel.hidden = true;
+            boxelImportText.textContent = '';
+            boxelImportError.textContent = '';
+        }
+
+        function openImportModal() {
+            boxelImportModal.hidden = false;
+            boxelImportError.textContent = '';
+        }
+
+        function importBoxelText(rawBoxelText, sourceLabel) {
+            try {
+                const boxelData = JSON.parse(rawBoxelText);
+                if (boxelData?.format !== 'kolorlando.boxel' || !Array.isArray(boxelData?.voxels)) {
+                    throw new Error('Invalid Boxel file.');
+                }
+
+                // Reuse local save flow so imported Boxels keep normalized ids.
+                writeLocalBoxel(boxelData);
+                renderLocalBoxels();
+                closeImportModal();
+                console.log(`[Boxel Save] imported: ${sourceLabel}`);
+                return true;
+            } catch (error) {
+                showImportError();
+                console.warn('Could not import Boxel file.', error);
+                return false;
+            }
+        }
+
+        async function importBoxelFile(file) {
+            if (!file) return;
+
+            try {
+                importBoxelText(await file.text(), file.name);
+            } catch (error) {
+                showImportError();
+                console.warn('Could not read Boxel file.', error);
+            }
+        }
+
         const treeExampleCanvas = document.getElementById('treeExampleBoxelCanvas');
         const treeExampleBoxel = await loadBoxel('./TreeExample.boxel');
         drawBoxelIsometric(treeExampleCanvas, treeExampleBoxel);
@@ -284,6 +427,37 @@
                 console.log('[Boxel Save] iframe storage event received.');
                 renderLocalBoxels();
             }
+        });
+
+        boxelImportButton.addEventListener('click', () => {
+            openImportModal();
+        });
+
+        boxelImportLocalButton.addEventListener('click', () => {
+            boxelImportInput.click();
+        });
+
+        boxelImportTextButton.addEventListener('click', () => {
+            boxelImportError.textContent = '';
+            boxelImportTextPanel.hidden = false;
+            boxelImportText.focus();
+        });
+
+        boxelImportSaveText.addEventListener('click', () => {
+            importBoxelText(boxelImportText.textContent, 'pasted text');
+        });
+
+        boxelImportCloseButton.addEventListener('click', closeImportModal);
+
+        boxelImportModal.addEventListener('click', event => {
+            if (event.target === boxelImportModal) {
+                closeImportModal();
+            }
+        });
+
+        boxelImportInput.addEventListener('change', event => {
+            importBoxelFile(event.target.files?.[0]);
+            event.target.value = '';
         });
 
         boxelActionMenu.addEventListener('click', event => {
