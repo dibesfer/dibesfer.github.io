@@ -1,7 +1,7 @@
 const SFC_SUPPORTED_VERSION = 'SFC1';
 
 export const SFC_FACE_STORAGE_KEY = 'kolorlando.playerFaceData';
-export const SFC_FACE_FEATURE_SCALE = 1.25;
+export const SFC_FACE_FEATURE_SCALE = 1.1;
 
 export const DEFAULT_SFC_FACE = {
   version: SFC_SUPPORTED_VERSION,

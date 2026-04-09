@@ -614,7 +614,7 @@ function updateSaveDataPre({ persist = true } = {}) {
     // The save-code preview should always reflect the live face state so
     // users do not need a separate save click before copying the code.
     const savePayload = buildSaveDataPayload();
-    const saveCode = JSON.stringify(savePayload);
+    const saveCode = JSON.stringify(savePayload,null,2);
 
     if (saveDataPre) {
         saveDataPre.textContent = saveCode;

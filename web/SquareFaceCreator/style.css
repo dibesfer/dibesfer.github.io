@@ -180,6 +180,8 @@ main {
 
 #saveData>pre {
     min-height: 96px;
+    height: 200px;
+    overflow: auto;
     margin: 0 0 12px;
     padding: 12px;
     border: solid 3px white;
