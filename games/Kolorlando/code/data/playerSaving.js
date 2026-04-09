@@ -2,9 +2,16 @@ import { DEFAULT_SFC_FACE, SFC_FACE_STORAGE_KEY, normalizeSfcFaceData } from '..
 
 const KOLOR_PLAYERS_TABLE = 'KolorPlayers';
 const AUTHENTICATED_FACE_STORAGE_KEY_PREFIX = `${SFC_FACE_STORAGE_KEY}.user.`;
+const KOLORLANDO_ACCOUNT_CLAIMED_STORAGE_KEY = 'kolorlando.accountClaimed';
 
 function getDatabaseClient() {
   return window.database ?? null;
+}
+
+function hasActiveKolorlandoAccountSession() {
+  /* Face persistence should follow the same claimed-session contract as the
+  rest of Kolorlando so companion tools like SFC never look logged in alone. */
+  return window.sessionStorage.getItem(KOLORLANDO_ACCOUNT_CLAIMED_STORAGE_KEY) === '1';
 }
 
 function cloneJsonValue(value) {
@@ -86,7 +93,7 @@ export function writeLocalPlayerFaceData(faceData) {
 export async function getAuthenticatedKolorPlayer() {
   const database = getDatabaseClient();
 
-  if (!database) {
+  if (!database || !hasActiveKolorlandoAccountSession()) {
     return { user: null, row: null };
   }
 

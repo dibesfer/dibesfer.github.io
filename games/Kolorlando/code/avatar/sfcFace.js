@@ -1,6 +1,7 @@
 const SFC_SUPPORTED_VERSION = 'SFC1';
 
 export const SFC_FACE_STORAGE_KEY = 'kolorlando.playerFaceData';
+export const SFC_FACE_FEATURE_SCALE = 1.25;
 
 export const DEFAULT_SFC_FACE = {
   version: SFC_SUPPORTED_VERSION,
@@ -46,7 +47,6 @@ export const SFC_CATEGORY_ITEMS = {
   ],
   nose: [
     { imgUrl: '../../web/SquareFaceCreator/assets/categories/nose/SFC_nose1.png' },
-    { imgUrl: '../../web/SquareFaceCreator/assets/categories/nose/SFC_nose2.svg' },
     { imgUrl: '../../web/SquareFaceCreator/assets/categories/downloaded/nose-anime.png' },
     { imgUrl: '../../web/SquareFaceCreator/assets/categories/downloaded/nose-profile.png' },
     { imgUrl: '../../web/SquareFaceCreator/assets/categories/downloaded/nose-front.png' },
@@ -577,19 +577,24 @@ function recolorImageWithTint(image, tintColor) {
 }
 
 function drawFacePart(context, canvasSize, categoryName, image) {
+  const canvasCenter = canvasSize / 2;
   const currentSettings = SFC_CATEGORY_DRAW_SETTINGS[categoryName] || SFC_CATEGORY_DRAW_SETTINGS.eyes;
   const sourceWidth = image.naturalWidth || image.width;
   const sourceHeight = image.naturalHeight || image.height;
+  const featureScale = categoryName === 'hair' ? 1 : SFC_FACE_FEATURE_SCALE;
   const maxDrawWidth = canvasSize * currentSettings.widthRatio;
   const maxDrawHeight = canvasSize * currentSettings.heightRatio;
   const imageRatio = sourceWidth / sourceHeight;
-  let drawWidth = maxDrawWidth;
-  let drawHeight = drawWidth / imageRatio;
+  let baseDrawWidth = maxDrawWidth;
+  let baseDrawHeight = baseDrawWidth / imageRatio;
 
-  if (drawHeight > maxDrawHeight) {
-    drawHeight = maxDrawHeight;
-    drawWidth = drawHeight * imageRatio;
+  if (baseDrawHeight > maxDrawHeight) {
+    baseDrawHeight = maxDrawHeight;
+    baseDrawWidth = baseDrawHeight * imageRatio;
   }
+
+  let drawWidth = baseDrawWidth * featureScale;
+  let drawHeight = baseDrawHeight * featureScale;
 
   drawWidth = Math.max(1, Math.round(drawWidth));
   drawHeight = Math.max(1, Math.round(drawHeight));
@@ -597,12 +602,14 @@ function drawFacePart(context, canvasSize, categoryName, image) {
   if (Array.isArray(currentSettings.placements) && currentSettings.placements.length > 0) {
     for (let i = 0; i < currentSettings.placements.length; i += 1) {
       const placement = currentSettings.placements[i];
-      const drawX = typeof placement.centerXRatio === 'number'
-        ? canvasSize * placement.centerXRatio - drawWidth / 2
-        : canvasSize * placement.anchorXRatio - (placement.flipX ? 0 : drawWidth);
-      const drawY = canvasSize * placement.centerYRatio - drawHeight / 2;
-      const finalDrawX = Math.round(drawX);
-      const finalDrawY = Math.round(drawY);
+      const baseCenterX = typeof placement.centerXRatio === 'number'
+        ? canvasSize * placement.centerXRatio
+        : canvasSize * placement.anchorXRatio + (placement.flipX ? baseDrawWidth / 2 : -baseDrawWidth / 2);
+      const baseCenterY = canvasSize * placement.centerYRatio;
+      const scaledCenterX = canvasCenter + (baseCenterX - canvasCenter) * featureScale;
+      const scaledCenterY = canvasCenter + (baseCenterY - canvasCenter) * featureScale;
+      const finalDrawX = Math.round(scaledCenterX - drawWidth / 2);
+      const finalDrawY = Math.round(scaledCenterY - drawHeight / 2);
 
       if (placement.flipX) {
         context.save();
@@ -618,9 +625,17 @@ function drawFacePart(context, canvasSize, categoryName, image) {
     return;
   }
 
-  const drawX = canvasSize * currentSettings.centerXRatio - drawWidth / 2;
-  const drawY = canvasSize * currentSettings.centerYRatio - drawHeight / 2;
-  context.drawImage(image, Math.round(drawX), Math.round(drawY), drawWidth, drawHeight);
+  const baseCenterX = canvasSize * currentSettings.centerXRatio;
+  const baseCenterY = canvasSize * currentSettings.centerYRatio;
+  const scaledCenterX = canvasCenter + (baseCenterX - canvasCenter) * featureScale;
+  const scaledCenterY = canvasCenter + (baseCenterY - canvasCenter) * featureScale;
+  context.drawImage(
+    image,
+    Math.round(scaledCenterX - drawWidth / 2),
+    Math.round(scaledCenterY - drawHeight / 2),
+    drawWidth,
+    drawHeight
+  );
 }
 
 function resolveFacePartImageUrl(faceData, categoryName) {

@@ -1,5 +1,6 @@
 import {
     DEFAULT_SFC_FACE,
+    SFC_FACE_FEATURE_SCALE,
     SFC_CATEGORY_ITEMS,
     SFC_FACE_STORAGE_KEY,
     resolveSfcImageUrlAlias
@@ -16,6 +17,7 @@ const faceItems = document.querySelectorAll(".faceItem");
 const categoryPicker = document.querySelector(".categoryPicker");
 const categoryWrapper = document.querySelector(".category-wrapper");
 const categoryElements = document.querySelectorAll(".category");
+const presetElements = document.querySelectorAll(".preset");
 const backgroundColorInput = document.querySelector(".canvas-background-picker");
 const secondaryColorInput = document.querySelector(".canvas-secondary-picker");
 const combinationsTitle = document.querySelector(".combinations-title");
@@ -51,6 +53,7 @@ function readSfcDebugLocalDataState() {
 async function logSfcDebugStorageState(loadResult) {
     const localDataState = readSfcDebugLocalDataState();
     let user = null;
+    let username = "";
 
     try {
         const { data, error } = await window.database?.auth?.getUser?.() ?? {};
@@ -63,6 +66,25 @@ async function logSfcDebugStorageState(loadResult) {
         }
 
         user = data?.user ?? null;
+
+        // Debug should print the same visible identity source Kolorlando uses
+        // so auth checks across both pages can be compared directly.
+        if (user?.email) {
+            const { data: profileRows, error: profileError } = await window.database
+                .from("users")
+                .select("username")
+                .eq("email", user.email.toLowerCase())
+                .limit(1);
+
+            if (profileError) {
+                throw profileError;
+            }
+
+            const profileUsername = profileRows?.[0]?.username;
+            username = typeof profileUsername === "string" && profileUsername.trim()
+                ? profileUsername.trim()
+                : user.email.split("@")[0];
+        }
     } catch (error) {
         console.warn("[SFC debug] Could not resolve auth state.", error);
     }
@@ -73,6 +95,7 @@ async function logSfcDebugStorageState(loadResult) {
     console.log(
         `[SFC debug]\n`
         + `${loggedIn ? "Logged in" : "Anonymous"}\n`
+        + `${loggedIn ? `- username: ${username || "unknown"}\n` : ""}`
         + `- local data: ${localDataState.hasLocalFaceData ? "yes" : "no"}\n`
         + `- table data: ${hasOnlineFaceData ? "yes" : "no"}\n`
         + `- load source: ${loadResult?.source ?? "unknown"}`
@@ -393,6 +416,115 @@ function loadDefaultSelections() {
 
         selectedCategoryImages[categoryName] = defaultImgUrl;
     });
+}
+
+function getFirstRealCategoryItemUrl(categoryName) {
+    const firstRealItem = (categoryItems[categoryName] || []).find(item => isRealImageUrl(item?.imgUrl || ""));
+    return firstRealItem?.imgUrl || "";
+}
+
+function createRandomHexColor() {
+    const randomChannel = () => Math.floor(Math.random() * 256).toString(16).padStart(2, "0");
+    return `#${randomChannel()}${randomChannel()}${randomChannel()}`;
+}
+
+function createDefaultPresetSaveData() {
+    const defaultCategoryNames = Object.keys(categoryItems);
+    const editorSelectionUrls = {};
+
+    defaultCategoryNames.forEach(categoryName => {
+        const savedIndex = Number.parseInt(DEFAULT_SFC_FACE.items?.[categoryName], 10);
+        const runtimeEntries = SFC_CATEGORY_ITEMS[categoryName] || [];
+        const defaultRuntimeUrl = Number.isInteger(savedIndex) && savedIndex >= 0
+            ? resolveSfcImageUrlAlias(runtimeEntries[savedIndex]?.imgUrl || "", import.meta.url)
+            : "";
+
+        if (isRealImageUrl(defaultRuntimeUrl)) {
+            editorSelectionUrls[categoryName] = defaultRuntimeUrl;
+        }
+    });
+
+    return {
+        version: saveCodeVersion,
+        updatedAt: new Date().toISOString(),
+        background: DEFAULT_SFC_FACE.background,
+        currentCategory: DEFAULT_SFC_FACE.currentCategory,
+        items: { ...DEFAULT_SFC_FACE.items },
+        colors: { ...DEFAULT_SFC_FACE.colors },
+        editorSelectionUrls
+    };
+}
+
+function createRandomPresetSaveData() {
+    const categoryNames = Object.keys(categoryItems);
+    const items = {};
+    const colors = {};
+    const editorSelectionUrls = {};
+
+    categoryNames.forEach(categoryName => {
+        const availableItems = (categoryItems[categoryName] || []).filter(item => isRealImageUrl(item?.imgUrl || ""));
+        const shouldIncludeItem = availableItems.length > 0 && Math.random() >= 0.35;
+        const randomItem = shouldIncludeItem
+            ? availableItems[Math.floor(Math.random() * availableItems.length)] || null
+            : null;
+        const randomImgUrl = randomItem?.imgUrl || "";
+        const runtimeEntries = SFC_CATEGORY_ITEMS[categoryName] || [];
+
+        editorSelectionUrls[categoryName] = randomImgUrl;
+        items[categoryName] = runtimeEntries.findIndex(item => resolveSfcImageUrlAlias(item?.imgUrl || "", import.meta.url) === randomImgUrl);
+        colors[categoryName] = createRandomHexColor();
+    });
+
+    return {
+        version: saveCodeVersion,
+        updatedAt: new Date().toISOString(),
+        background: createRandomHexColor(),
+        currentCategory,
+        items,
+        colors,
+        editorSelectionUrls
+    };
+}
+
+function createEmptyPresetSaveData() {
+    const categoryNames = Object.keys(categoryItems);
+    const items = {};
+    const colors = {};
+    const editorSelectionUrls = {};
+
+    categoryNames.forEach(categoryName => {
+        editorSelectionUrls[categoryName] = "";
+        items[categoryName] = -1;
+        colors[categoryName] = "#000000";
+    });
+
+    return {
+        version: saveCodeVersion,
+        updatedAt: new Date().toISOString(),
+        background: "#ffffff",
+        currentCategory,
+        items,
+        colors,
+        editorSelectionUrls
+    };
+}
+
+function applyPresetSelection(presetName) {
+    // Presets rebuild the whole face payload so preview, storage, and pasted
+    // save codes all stay aligned after one click.
+    if (presetName === "default") {
+        applySaveDataPayload(createDefaultPresetSaveData());
+        return;
+    }
+
+    if (presetName === "random") {
+        applySaveDataPayload(createRandomPresetSaveData());
+        return;
+    }
+
+    if (presetName === "empty") {
+        applySaveDataPayload(createEmptyPresetSaveData());
+    }
 }
 
 function getRuntimeItemIndexForCategory(categoryName) {
@@ -827,10 +959,13 @@ function recolorImageWithTint(image, tintColor) {
 function drawFacePart(categoryName, image) {
     const canvasWidth = canvasWrapper.clientWidth;
     const canvasHeight = canvasWrapper.clientHeight;
+    const canvasCenterX = canvasWidth / 2;
+    const canvasCenterY = canvasHeight / 2;
     const currentSettings =
         categoryDrawSettings[categoryName] || categoryDrawSettings.eyes;
     const sourceWidth = image.naturalWidth || image.videoWidth || image.width;
     const sourceHeight = image.naturalHeight || image.videoHeight || image.height;
+    const featureScale = categoryName === "hair" ? 1 : SFC_FACE_FEATURE_SCALE;
 
     // Limit the drawn image so it fits comfortably inside the square
     // preview while keeping the original image proportions. These
@@ -839,13 +974,18 @@ function drawFacePart(categoryName, image) {
     const maxDrawHeight = canvasHeight * currentSettings.heightRatio;
     const imageRatio = sourceWidth / sourceHeight;
 
-    let drawWidth = maxDrawWidth;
-    let drawHeight = drawWidth / imageRatio;
+    let baseDrawWidth = maxDrawWidth;
+    let baseDrawHeight = baseDrawWidth / imageRatio;
 
-    if (drawHeight > maxDrawHeight) {
-        drawHeight = maxDrawHeight;
-        drawWidth = drawHeight * imageRatio;
+    if (baseDrawHeight > maxDrawHeight) {
+        baseDrawHeight = maxDrawHeight;
+        baseDrawWidth = baseDrawHeight * imageRatio;
     }
+
+    // Scaling from base dimensions keeps each category's configured center as
+    // the source of truth before the shared face-wide expansion is applied.
+    let drawWidth = baseDrawWidth * featureScale;
+    let drawHeight = baseDrawHeight * featureScale;
 
     // Unifying all categories under the same integer-snapped rendering path
     // removes special cases and avoids subpixel blur across the whole canvas.
@@ -856,12 +996,14 @@ function drawFacePart(categoryName, image) {
         currentSettings.placements.forEach(placement => {
             // Placements can either pin artwork to an edge or center it on a
             // ratio, which keeps ears and eyes sharing one flexible system.
-            const drawX = typeof placement.centerXRatio === "number"
-                ? canvasWidth * placement.centerXRatio - drawWidth / 2
-                : canvasWidth * placement.anchorXRatio - (placement.flipX ? 0 : drawWidth);
-            const drawY = canvasHeight * placement.centerYRatio - drawHeight / 2;
-            const finalDrawX = Math.round(drawX);
-            const finalDrawY = Math.round(drawY);
+            const baseCenterX = typeof placement.centerXRatio === "number"
+                ? canvasWidth * placement.centerXRatio
+                : canvasWidth * placement.anchorXRatio + (placement.flipX ? baseDrawWidth / 2 : -baseDrawWidth / 2);
+            const baseCenterY = canvasHeight * placement.centerYRatio;
+            const scaledCenterX = canvasCenterX + (baseCenterX - canvasCenterX) * featureScale;
+            const scaledCenterY = canvasCenterY + (baseCenterY - canvasCenterY) * featureScale;
+            const finalDrawX = Math.round(scaledCenterX - drawWidth / 2);
+            const finalDrawY = Math.round(scaledCenterY - drawHeight / 2);
 
             // Flipping the left ear in canvas space keeps the source
             // art reusable while still placing it exactly at the target slot.
@@ -881,10 +1023,12 @@ function drawFacePart(categoryName, image) {
 
     // Position the image from category-specific center ratios so each
     // face part can be moved independently with a couple of numbers.
-    const drawX = canvasWidth * currentSettings.centerXRatio - drawWidth / 2;
-    const drawY = canvasHeight * currentSettings.centerYRatio - drawHeight / 2;
-    const finalDrawX = Math.round(drawX);
-    const finalDrawY = Math.round(drawY);
+    const baseCenterX = canvasWidth * currentSettings.centerXRatio;
+    const baseCenterY = canvasHeight * currentSettings.centerYRatio;
+    const scaledCenterX = canvasCenterX + (baseCenterX - canvasCenterX) * featureScale;
+    const scaledCenterY = canvasCenterY + (baseCenterY - canvasCenterY) * featureScale;
+    const finalDrawX = Math.round(scaledCenterX - drawWidth / 2);
+    const finalDrawY = Math.round(scaledCenterY - drawHeight / 2);
 
     context.drawImage(image, finalDrawX, finalDrawY, drawWidth, drawHeight);
 }
@@ -1057,6 +1201,12 @@ faceItems.forEach(faceItem => {
             updateSaveDataPre();
             redrawCanvas();
         }, { once: true });
+    });
+});
+
+presetElements.forEach(presetElement => {
+    presetElement.addEventListener("click", () => {
+        applyPresetSelection(presetElement.dataset.preset || "");
     });
 });
 

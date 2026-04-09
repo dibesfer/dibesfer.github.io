@@ -16,107 +16,117 @@
         <h3 class="combinations-title"></h3>
     </header>
     <main>
-        <div class="canvas-wrapper">
-            <canvas></canvas>
-            <input class="canvas-background-picker" type="color" value="#d4af37" aria-label="Canvas background color">
-            <input class="canvas-secondary-picker" type="color" value="#d4af37" aria-label="Secondary color">
-        </div>
-        <div class="categoryPicker">
-            <div class="category-wrapper">
-                <div class="category" data-category="eyes">
-                    <div class="emojicon">
-                        👁️
-                    </div>
-                    Eyes
-                </div>
-                <div class="category" data-category="eyebrows">
-                    <div class="emojicon">
-                        🤨
-                    </div>
-                    Eyebrows
-                </div>
-                <div class="category" data-category="nose">
-                    <div class="emojicon">
-                        👃
-                    </div>
-                    Nose
-                </div>
-                <div class="category" data-category="mouth">
-                    <div class="emojicon">
-                        👄
-                    </div>
-                    Mouth
-                </div>
-                <div class="category" data-category="ears">
-                    <div class="emojicon">
-                        👂
-                    </div>
-                    Ears
-                </div>
-                <div class="category" data-category="hair">
-                    <div class="emojicon">
-                        🪮
-                    </div>
-                    Hair
-                </div>
-                <div class="category" data-category="glasses">
-                    <div class="emojicon">
-                        👓
-                    </div>
-                    Glasses
-                </div>
-                <div class="category" data-category="beard">
-                    <div class="emojicon">
-                        🧔‍♂️
-                    </div>
-                    Beard
+
+        <div id="SFC_flexo">
+            <div id="SFC_face">
+                <div class="canvas-wrapper">
+                    <canvas></canvas>
+                    <input class="canvas-background-picker" type="color" value="#d4af37"
+                        aria-label="Canvas background color">
+                    <input class="canvas-secondary-picker" type="color" value="#d4af37" aria-label="Secondary color">
                 </div>
             </div>
-        </div>
-        <div class="faceItemGrid">
-            <!-- The grid starts empty on purpose so production never depends on
+
+            <div id="SFC_options">
+                <div class="categoryPicker">
+                    <div class="category-wrapper">
+                        <div class="category" data-category="eyes">
+                            <div class="emojicon">
+                                👁️
+                            </div>
+                            Eyes
+                        </div>
+                        <div class="category" data-category="eyebrows">
+                            <div class="emojicon">
+                                🤨
+                            </div>
+                            Eyebrows
+                        </div>
+                        <div class="category" data-category="nose">
+                            <div class="emojicon">
+                                👃
+                            </div>
+                            Nose
+                        </div>
+                        <div class="category" data-category="mouth">
+                            <div class="emojicon">
+                                👄
+                            </div>
+                            Mouth
+                        </div>
+                        <div class="category" data-category="ears">
+                            <div class="emojicon">
+                                👂
+                            </div>
+                            Ears
+                        </div>
+                        <div class="category" data-category="hair">
+                            <div class="emojicon">
+                                🪮
+                            </div>
+                            Hair
+                        </div>
+                        <div class="category" data-category="glasses">
+                            <div class="emojicon">
+                                👓
+                            </div>
+                            Glasses
+                        </div>
+                        <div class="category" data-category="beard">
+                            <div class="emojicon">
+                                🧔‍♂️
+                            </div>
+                            Beard
+                        </div>
+                    </div>
+                </div>
+                <div class="faceItemGrid">
+                    <!-- The grid starts empty on purpose so production never depends on
             third-party hotlinked thumbnails that may be blocked by referrer or
             anti-embed rules. The module script fills these slots with the local
             mirrored catalog immediately after boot. -->
-            <div class="faceItem"></div>
-            <div class="faceItem"></div>
-            <div class="faceItem"></div>
-            <div class="faceItem"></div>
-            <div class="faceItem"></div>
-            <div class="faceItem"></div>
-            <div class="faceItem"></div>
-            <div class="faceItem"></div>
-            <div class="faceItem"></div>
-            <div class="faceItem"></div>
-            <div class="faceItem"></div>
-            <div class="faceItem"></div>
-            
-        </div>
+                    <div class="faceItem"></div>
+                    <div class="faceItem"></div>
+                    <div class="faceItem"></div>
+                    <div class="faceItem"></div>
+                    <div class="faceItem"></div>
+                    <div class="faceItem"></div>
+                    <div class="faceItem"></div>
+                    <div class="faceItem"></div>
+                    <div class="faceItem"></div>
+                    <div class="faceItem"></div>
+                    <div class="faceItem"></div>
+                    <div class="faceItem"></div>
 
-        <div class="presetPicker">
-            <div class="preset-wrapper">
-                <div class="preset" data-preset="eyes">
-                    <div class="emojicon">
-                        😃
-                    </div>
-                    Default
                 </div>
-                <div class="preset" data-preset="eyebrows">
-                    <div class="emojicon">
-                        🎲
+
+                <div class="presetPicker">
+                    <div class="preset-wrapper">
+                        <div class="preset" data-preset="default">
+                            <div class="emojicon">
+                                😃
+                            </div>
+                            Default
+                        </div>
+                        <div class="preset" data-preset="random">
+                            <div class="emojicon">
+                                🎲
+                            </div>
+                            Random
+                        </div>
+                        <div class="preset" data-preset="empty">
+                            <div class="emojicon">
+                                😶
+                            </div>
+                            Empty
+                        </div>
+
+
                     </div>
-                    Random
                 </div>
-                <div class="preset" data-preset="nose">
-                    <div class="emojicon">
-                        😶
-                    </div>
-                    Empty
-                </div>
-                
-                
             </div>
         </div>
+
 
         <div id="saveData">
             <h3>Your data</h3>

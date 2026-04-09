@@ -941,6 +941,9 @@ async function handleAuthLogout() {
             throw error
         }
 
+        /* The shared Supabase auth cache can survive a nominal sign-out in the
+        browser, so we explicitly clear the local persisted tokens here too. */
+        clearSupabaseLocalAuthStorage()
         setAuthModalState?.(false)
     } catch (error) {
         setAuthMessage(error.message || "Could not log out", true)

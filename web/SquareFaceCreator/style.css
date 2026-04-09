@@ -18,9 +18,9 @@ footer {
 }
 
 main {
-    max-width: 500px;
+    max-width: 800px;
     margin: auto;
-    
+
 }
 
 .canvas-wrapper {
@@ -30,19 +30,21 @@ main {
     aspect-ratio: 1;
 }
 
-.canvas-wrapper > canvas {
+.canvas-wrapper>canvas {
     width: 100%;
     height: 100%;
     display: block;
 }
 
-.categoryPicker , .presetPicker {
+.categoryPicker,
+.presetPicker {
     overflow: auto;
     background-color: rgb(52, 52, 52);
     border: solid 3px white;
 }
 
-.category-wrapper , .preset-wrapper {
+.category-wrapper,
+.preset-wrapper {
     display: flex;
     width: 100%;
     user-select: none;
@@ -57,7 +59,8 @@ main {
     border: solid 3px white;
 }
 
-.category , .preset {
+.category,
+.preset {
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -68,15 +71,16 @@ main {
     font-size: 3rem;
 }
 
-.category.selected , 
+.category.selected,
 .faceItem.selected {
     background-color: rgba(255, 217, 0, 0.318);
     border: solid 6px black;
-    
+
 }
 
 .category,
-.faceItem , .preset{
+.faceItem,
+.preset {
     border: solid 3px white;
     width: 25%;
     flex: 0 0 25%;
@@ -92,7 +96,8 @@ main {
     padding: 15px;
     overflow: hidden;
 }
-.faceItem > img {
+
+.faceItem>img {
     height: 100%;
     width: 100%;
     object-fit: contain;
@@ -173,7 +178,7 @@ main {
     margin-top: 20px;
 }
 
-#saveData > pre {
+#saveData>pre {
     min-height: 96px;
     margin: 0 0 12px;
     padding: 12px;
@@ -183,11 +188,37 @@ main {
     word-break: break-word;
 }
 
-#saveData > button {
+#saveData>button {
     margin-right: 10px;
     padding: 8px 14px;
     border: solid 2px white;
     background-color: transparent;
     color: white;
     cursor: pointer;
+}
+
+#SFC_flexo {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+#SFC_face,
+#SFC_options {
+    flex: 1;
+    width: 50%;
+}
+
+@media only screen and (max-width: 800px) {
+
+    #SFC_flexo {
+        display: unset;
+    }
+
+#SFC_face,
+#SFC_options {
+    
+    width: 100%;
+}
+
 }
