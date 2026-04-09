@@ -245,8 +245,8 @@ footer {
     }
 }
 
-/* mobile */
-@media screen ax-wiand (mdth: 800px) {
+/* Mobile layout stacks cards full width on narrow screens. */
+@media screen and (max-width: 800px) {
     #kImages {
         padding: 0;
     }
