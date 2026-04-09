@@ -36,14 +36,13 @@ main {
     display: block;
 }
 
-.categoryPicker {
+.categoryPicker , .presetPicker {
     overflow: auto;
     background-color: rgb(52, 52, 52);
     border: solid 3px white;
-
 }
 
-.category-wrapper {
+.category-wrapper , .preset-wrapper {
     display: flex;
     width: 100%;
     user-select: none;
@@ -58,7 +57,7 @@ main {
     border: solid 3px white;
 }
 
-.category {
+.category , .preset {
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -77,7 +76,7 @@ main {
 }
 
 .category,
-.faceItem {
+.faceItem , .preset{
     border: solid 3px white;
     width: 25%;
     flex: 0 0 25%;
