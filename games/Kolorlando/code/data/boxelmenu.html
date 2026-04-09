@@ -11,7 +11,9 @@
         }
 
         body {
-            font-family: sans-serif;
+            font-family: monospace;
+            background-color: rgb(210, 210, 210);
+            font-size: 1rem;
 
         }
 
@@ -289,7 +291,7 @@
 
     <h2 id="learnMore">.boxel</h2>
     <p>.boxel is a file format in JSON to store voxel structures.</p>
-
+    <p>You can select an area with <b>Boxel Selection Tool</b> and write <code>/saveBoxel myBoxelName</code> in the chat to store your boxel locally and access it from this panel.</p>
     <script type="module">
         import { drawBoxelIsometric, loadBoxel } from './boxelPainter.js';
         import { KOLORLANDO_LOCAL_BOXELS_STORAGE_KEY, deleteLocalBoxel, findLocalBoxel, readLocalBoxels, writeLocalBoxel } from './boxelStorage.js';
