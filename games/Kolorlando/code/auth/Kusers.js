@@ -881,7 +881,10 @@ async function signUpWithEmail(email, password) {
     create the profile row with the email prefix as username. */
     const { data, error } = await database.auth.signUp({
         email: email,
-        password: password
+        password: password,
+        options: {
+            emailRedirectTo: "https://dibesfer.com/games/Kolorlando"
+        }
     })
 
     if (error) {

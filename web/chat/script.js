@@ -252,6 +252,7 @@ async function signUp() {
     let { data, error } = await database.auth.signUp({
         email: userEmail.value,
         password: userPass.value,
+        
         // options: { redirectTo: "https://dibesfer.com/web/javascript/chat"  },
     })
     console.log("---SIGNUP---")
