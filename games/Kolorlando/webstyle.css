@@ -463,3 +463,8 @@ footer {
     color: transparent;
     -webkit-text-fill-color: transparent;
 }
+
+#exampleUserProfile {
+    width: max-content;
+    margin: auto;
+}

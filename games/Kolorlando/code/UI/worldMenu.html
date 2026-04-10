@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        body {
+            font-family: monospace;
+            font-size: 1rem;
+        }
+
+        .panoramic {
+            aspect-ratio: 16/9;
+            width: 200px;
+
+        }
+
+        .worldPanel {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .worldCard {
+            display: flex;
+            background-color: blue;
+            line-height: 0;
+            color: white;
+            padding: 10px;
+            gap: 10px;
+            border-radius: 15px;
+            position: relative;
+        }
+
+        .worldCard_Number {
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            background-color: darkblue;
+            border: solid 2px white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .worldCard_text {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .worldCard_Actions {
+            text-align: right;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>World Menu</h1>
+    <h2>Offline Worlds</h2>
+    <div class="worldPanel">
+        <div class="worldCard">
+            <div class="worldCard_Number">1</div>
+            <div>
+                <img class="panoramic"
+                    src="https://t3.ftcdn.net/jpg/01/06/69/80/360_F_106698026_tU7ScIE2KMyb9bDRWpVgkqjTR6wSp8VZ.jpg"
+                    alt="">
+            </div>
+            <div class="worldCard_text">
+                <div>
+                    <h2>La Tierra</h2>
+                </div>
+                <div>
+                    <p>Blue water dot</p>
+                </div>
+                <div>
+                    <h2 class="worldCard_Actions"> Play Download Delete</h2>
+                </div>
+            </div>
+        </div>
+        <div class="worldCard">
+            <div class="worldCard_Number">2</div>
+
+            <div>
+                <img class="panoramic"
+                    src="https://news.mit.edu/sites/default/files/images/202409/MIT-MissMars-01-press.jpg" alt="">
+            </div>
+            <div class="worldCard_text">
+                <div>
+                    <h2>Marte</h2>
+                </div>
+                <div>
+                    <p>Arid desert</p>
+                </div>
+                <div>
+                    <h2 class="worldCard_Actions"> Play Download Delete</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="worldCard">
+            <div class="worldCard_Number">3</div>
+
+            <div>
+                <img class="panoramic"
+                    src="https://lumiere-a.akamaihd.net/v1/images/coruscant-main_d2fad5f2.jpeg?region=156%2C0%2C1608%2C804"
+                    alt="">
+            </div>
+            <div class="worldCard_text">
+                <div>
+                    <h2>Coruscant</h2>
+                </div>
+                <div>
+                    <p>Star Wars</p>
+                </div>
+                <div>
+                    <h2 class="worldCard_Actions">▶️Play ⬇️Download ❌Delete</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div>
+        <h2>Actions</h2>
+        <p>Create world (3/12)</p>
+        <p>Import a .world file, paste the text or pick a world from the gallery.</p>
+        <p>Do you want to use a template?</p>
+        <ul>
+            <li>Empty</li>
+            <li>Skybox: 1 voxel</li>
+            <li>La City</li>
+            <li>Voxelandia: 100x3x100 voxels</li>
+        </ul>
+    </div>
+    <div>
+        <h2>Online Worlds</h2>
+        <div class="worldPanel">
+            <div class="worldCard">
+                <div class="worldCard_Number">1</div>
+                <div>
+                    <img class="panoramic"
+                        src="https://wow.zamimg.com/uploads/screenshots/normal/997920-dalaran-dalaran-at-night-with-the-legions-power-tainting-the-background.jpg"
+                        alt="">
+                </div>
+                <div class="worldCard_text">
+                    <div>
+                        <h2>Dalaran</h2>
+                    </div>
+                    <div>
+                        <p>Magic mages city floating in the sky</p>
+                    </div>
+                    <div>
+                        <h2 class="worldCard_Actions">⬅️Join</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="worldCard">
+                <div class="worldCard_Number">2</div>
+
+                <div>
+                    <img class="panoramic"
+                        src="https://wow.zamimg.com/uploads/screenshots/normal/1018410-stormwind-city.jpg" alt="">
+                </div>
+                <div class="worldCard_text">
+                    <div>
+                        <h2>StormWind</h2>
+                    </div>
+                    <div>
+                        <p>Capital Stone Brick city of the Alliance of Humans</p>
+                    </div>
+                    <div>
+                        <h2 class="worldCard_Actions">⬅️Join</h2>
+                    </div>
+                </div>
+            </div>
+
+            <div class="worldCard">
+                <div class="worldCard_Number">3</div>
+
+                <div>
+                    <img class="panoramic"
+                        src="https://lumiere-a.akamaihd.net/v1/images/coruscant-main_d2fad5f2.jpeg?region=156%2C0%2C1608%2C804"
+                        alt="">
+                </div>
+                <div class="worldCard_text">
+                    <div>
+                        <h2>Coruscant</h2>
+                    </div>
+                    <div>
+                        <p>Star Wars</p>
+                    </div>
+                    <div>
+                        <h2 class="worldCard_Actions">⬅️Join</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <ol>
+            <li>Dalaran 10 people online: JOIN</li>
+            <li>Stormwind 7 people online: JOIN</li>
+            <li>Carrera Blanca 5 people online: JOIN</li>
+            <li>BlockCity 5 people online: JOIN</li>
+            <li>Traverse Town 3 people online: JOIN</li>
+
+        </ol>
+        <p>You can set your offline world into online in menu > world panel > turn on online. Also turn on public if you
+            want to appear in this list</p>
+    </div>
+
+</body>
+
+</html>

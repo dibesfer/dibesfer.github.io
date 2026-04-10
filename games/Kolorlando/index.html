@@ -266,6 +266,10 @@
             <img src="assets/brand/KoloraSimbolo.png" alt="Kolorlando symbol">
         </div>
 
+        <div id="exampleUserProfile">
+
+        </div>
+
         <p>Contact <a href="mailto:dibesfer@gmail.com">dibesfer@gmail.com</a></p>
         <p>ThreeJS + <a href="https://dibesfer.github.io">dibesfer</a> + Codex</p>
 
@@ -438,6 +442,18 @@
                 console.error('Could not refresh claimed Kolorlando Presence.', error)
             })
         })
+
+
+        // userProfileExample
+
+        let exampleUserProfile = document.getElementById("exampleUserProfile")
+
+        fetch("/games/Kolorlando/code/UI/userProfile.html")
+        .then(x => x.text())
+        .then(y => {
+            exampleUserProfile.innerHTML = y
+        })
+
     </script>
 </body>
 
