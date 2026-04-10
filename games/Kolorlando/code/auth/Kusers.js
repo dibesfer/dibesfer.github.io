@@ -46,6 +46,12 @@ let kolorlandoAccountHeartbeatIntervalId = 0
 let kolorlandoAccountHeartbeatInFlight = false
 let kolorlandoClaimProbeRequested = false
 const kolorlandoRedirectedBlockedHint = new URLSearchParams(window.location.search).get("session_blocked") === "1"
+const kolorlandoAuthUrl = new URL(window.location.href)
+const kolorlandoAuthCallbackDetected =
+    kolorlandoAuthUrl.searchParams.has("code")
+    || kolorlandoAuthUrl.searchParams.has("token_hash")
+    || kolorlandoAuthUrl.searchParams.has("type")
+    || /access_token=|refresh_token=|type=signup|type=magiclink/i.test(window.location.hash)
 
 function logKolorlandoAuthDebug(label, extra = {}) {
     /* Keep a tiny symbolic trace for auth/session flow so future debugging can
@@ -174,6 +180,25 @@ function requestKolorlandoClaimProbe() {
     /* Landing should stay anonymous on passive load, but explicit account
     actions like opening auth or entering Worlds should verify ownership now. */
     kolorlandoClaimProbeRequested = true
+}
+
+function consumeKolorlandoAuthCallbackParams() {
+    /* Auth redirects should become a real owner session once, then the URL
+    returns to the clean landing route instead of keeping auth tokens around. */
+    if (!kolorlandoAuthCallbackDetected) {
+        return
+    }
+
+    const cleanedUrl = new URL(window.location.href)
+    cleanedUrl.searchParams.delete("code")
+    cleanedUrl.searchParams.delete("token_hash")
+    cleanedUrl.searchParams.delete("type")
+
+    if (window.location.hash.includes("access_token=") || window.location.hash.includes("refresh_token=")) {
+        cleanedUrl.hash = ""
+    }
+
+    window.history.replaceState({}, document.title, cleanedUrl.toString())
 }
 
 function openAuthModalIfAvailable() {
@@ -412,6 +437,7 @@ async function hasKolorlandoSessionConflict(user) {
         .from(AUTH_ACCOUNT_SESSIONS_TABLE)
         .select("session_id, status, last_seen_at, released_at")
         .eq("user_id", user.id)
+        .order("last_seen_at", { ascending: false })
         .limit(1)
 
     if (sessionError) {
@@ -455,6 +481,7 @@ async function hasKolorlandoSessionConflictForUserId(userId) {
         .from(AUTH_ACCOUNT_SESSIONS_TABLE)
         .select("session_id, status, last_seen_at, released_at")
         .eq("user_id", userId)
+        .order("last_seen_at", { ascending: false })
         .limit(1)
 
     if (sessionError) {
@@ -642,6 +669,7 @@ async function findUserByIdentity(identity) {
             .from("users")
             .select("*")
             .eq("email", trimmedIdentity)
+            .order("email", { ascending: true })
             .limit(1)
 
         if (error) {
@@ -655,6 +683,7 @@ async function findUserByIdentity(identity) {
         .from("users")
         .select("*")
         .eq("username", trimmedIdentity)
+        .order("username", { ascending: true })
         .limit(1)
 
     if (error) {
@@ -664,21 +693,25 @@ async function findUserByIdentity(identity) {
     return data[0] || null
 }
 
-async function ensureConfirmedProfile(user) {
-    /* Monochat stores an extra `confirmed` flag in the public `users` table.
-    We preserve that convention here so Kolorlando and Monochat read the same
-    profile shape and status rules. */
+async function ensureKolorlandoUserProfile(user) {
+    /* Kolorlando should not depend on which page first completed auth setup:
+    once Supabase knows the user, this helper guarantees the shared profile. */
     const { data, error } = await database
         .from("users")
         .select("*")
         .eq("email", user.email)
+        .order("email", { ascending: true })
         .limit(1)
 
     if (error) {
         throw error
     }
 
-    const userProfile = data[0] || null
+    let userProfile = data[0] || null
+
+    if (!userProfile) {
+        userProfile = await createUserProfile(user)
+    }
 
     if (userProfile && !userProfile.confirmed) {
         const { data: updatedData, error: updateError } = await database
@@ -686,7 +719,6 @@ async function ensureConfirmedProfile(user) {
             .update({ confirmed: true })
             .eq("email", user.email)
             .select()
-            .limit(1)
 
         if (updateError) {
             throw updateError
@@ -715,7 +747,6 @@ async function createUserProfile(newUser) {
             }
         ])
         .select()
-        .limit(1)
 
     if (error) {
         throw error
@@ -775,12 +806,13 @@ async function refreshAuthState() {
     const shouldAttemptLocalClaim =
         kolorlandoLoginReloadPending ||
         hasKolorlandoClaimedState() ||
-        kolorlandoClaimProbeRequested
+        kolorlandoClaimProbeRequested ||
+        kolorlandoAuthCallbackDetected
 
     if (!shouldAttemptLocalClaim) {
         stopKolorlandoAccountHeartbeat()
         if (await hasKolorlandoSessionConflict(user)) {
-            const passiveProfile = await ensureConfirmedProfile(user)
+            const passiveProfile = await ensureKolorlandoUserProfile(user)
             const blockedReason = hasLocalKolorlandoAccountOwnershipHistory(user.id)
                 ? "shared-session"
                 : "restore-conflict"
@@ -836,7 +868,7 @@ async function refreshAuthState() {
         return user
     }
 
-    const confirmedProfile = await ensureConfirmedProfile(user)
+    const confirmedProfile = await ensureKolorlandoUserProfile(user)
     const username = confirmedProfile?.username || user.email.split("@")[0]
 
     kolorlandoAuthUser = user
@@ -868,6 +900,7 @@ async function refreshAuthState() {
     }
 
     setAuthMessage(`You are logged as ${username}`, false)
+    consumeKolorlandoAuthCallbackParams()
     logKolorlandoAuthDebug("Auth: owner", {
         username,
     })
@@ -1105,7 +1138,9 @@ authMainMenuWorldsCard?.addEventListener("click", (event) => {
 
 /* This listener keeps the landing page identity widget synced when another
 tab signs in or out using the same Supabase session storage. */
-database.auth.onAuthStateChange(() => {
+database.auth.onAuthStateChange((event) => {
+    /* Callback redirects already flow through the first page refresh. Keeping
+    a single claim path avoids racing two identical lock creations. */
     refreshAuthState().catch((error) => {
         setAuthMessage(error.message || "Could not refresh auth", true)
     })

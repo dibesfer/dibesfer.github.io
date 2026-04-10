@@ -126,7 +126,7 @@ async function getUser() {
                     .select()
 
                 if (!error) {
-                    alert("Your account is now confirmed")
+                    alert("1. Your account is now confirmed")
                 }
             }
         }
@@ -202,7 +202,6 @@ async function getUsersTable(myEmail) {
     }
     else {
         //ELSE, SIGN IN
-
         signUp()
 
     }
@@ -252,6 +251,9 @@ async function signUp() {
     let { data, error } = await database.auth.signUp({
         email: userEmail.value,
         password: userPass.value,
+        options: {
+            emailRedirectTo: "https://dibesfer.com/web/chat"
+        }
         
         // options: { redirectTo: "https://dibesfer.com/web/javascript/chat"  },
     })
@@ -323,7 +325,7 @@ async function logIn() {
                     .select()
 
                 if (!error) {
-                    alert("Your account is now confirmed")
+                    alert("2. Your account is now confirmed")
                     location.reload()
                 }
             }
