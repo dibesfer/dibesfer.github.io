@@ -490,13 +490,14 @@
     </header>
 
     <p>Definition: Kolorlando is a 3D game. A voxel world in which you play a voxel character.</p>
+    <p>About: This file contains extensive ordered lists, google orgcharts and reference images.</p>
 
     <br>
 
 
 
     <details id="legendDetails">
-        <summary>Legend</summary>
+        <summary>📜 Legend</summary>
         <div id="legend">
             <p class="done">done</p>
             <p class="not-done">not done</p>
@@ -568,7 +569,7 @@
     </details>
 
     <details>
-        <summary>🎛️ User Interface (UI)</summary>
+        <summary>🎛️ UI - User Interface </summary>
         <ol>
             <li class="done">Hotbar</li>
             <p>8 item slots <span class="implemented-in">code/UI/inventory.js, singleplayer.html, style.css</span></p>
@@ -593,14 +594,6 @@
             </p>
             <img src="assets/imagenesPortada/icon.png" alt="">
         </ol>
-    </details>
-
-    <details>
-        <summary>🕸️ Web</summary>
-        <p>Landing page, account entry, world access and page navigation.</p>
-        <div class="characteristicChart">
-            <div id="chart_web" class="chartHost"></div>
-        </div>
     </details>
 
     <details>
@@ -677,7 +670,7 @@
         <ol>
             <li class="done">Anonymous Localhost</li>
             <p>world, player,</p>
-            <li class="not-done">Logged in online database</li>
+            <li class="to-improve">Logged in online database</li>
             <p>world, player,</p>
             <li class="done">Multiplayer World Persistence</li>
         </ol>
@@ -727,15 +720,22 @@
     </details>
 
     <details>
-        <summary>🎮 Controls</summary>
+        <summary>🎮 Input / Controls</summary>
 
         <h4>Desktop</h4>
         <ol>
             <li>WASD for movement</li>
             <p><span class="implemented-in">script.js, singleplayer.html</span></p>
+            <li>Space for jump</li>
+            <li>Cursor for aiming the camera through rotation.</li>
+        </ol>
 
+        <h4>Mobile</h4>
+        <ol>
+            <li>Joysticks</li>
         </ol>
     </details>
+
 
     <details>
         <summary>⌨️ Commands</summary>
@@ -747,8 +747,13 @@
             <p>(enables flying) <span class="implemented-in">code/commands.js, script.js</span></p>
             <li class="done">/spawn </li>
             <p>(respawns player) <span class="implemented-in">code/commands.js, script.js</span></p>
+            <li class="done">/saveBoxel TreeExample</li>
+            <p>Saves a Boxel locally using Boxel Selection Tool's selection as reference</p>
+
             <li class="done">/spawn TreeExample</li>
             <p>Spawns a Boxel, boxelmenu.html</p>
+            <li class="not-done">/noclip </li>
+            <p>Avoid colliding with colliders like a Ghost</p>
 
         </ol>
     </details>
@@ -998,6 +1003,15 @@ Orden recomendado de ejecución
     </details>
 
     <hr>
+
+    <details>
+        <summary>🕸️ Web</summary>
+        <p>Landing page, account entry, world access and page navigation.</p>
+        <div class="characteristicChart">
+            <div id="chart_web" class="chartHost"></div>
+        </div>
+    </details>
+
     <details open>
         <summary>🔗 Links</summary>
         <ul>
