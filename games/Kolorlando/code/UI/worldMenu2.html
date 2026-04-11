@@ -31,49 +31,51 @@
 
         .worldCard {
             display: flex;
-            background-color: blue;
+            background-color: rgb(89, 89, 89);
             height: 100px;
             color: white;
             padding: 10px;
             gap: 10px;
-            border-radius: 15px;
+            border-radius: 0 15px 0 15px;
             position: relative;
         }
 
         .worldCard_Number {
-            position: absolute;
-            top: 5px;
-            left: 5px;
-            width: 25px;
-            height: 25px;
-            border-radius: 50%;
-            background-color: darkblue;
-            border: solid 2px white;
             display: flex;
             justify-content: center;
             align-items: center;
-        }
-
-        .worldCard_img {
-            flex: 0;
+            height: 2rem;
             
         }
 
-        .worldCard_img > img {
+        .worldCard_Number_Number {
+            font-weight: bold;
+            color: white;
+            background-color: rgb(89, 89, 89);
+            padding: 10px;
+            border-radius: 15px 15px 0 0;
+        }
+
+
+        .worldCard_img {
+            flex: 0;
+        }
+
+        .worldCard_img>img {
             border-radius: 0 0 0 15px;
         }
+
         .worldCard_text {
-            padding: 10px;
+            padding: 7.5px;
             flex: 1;
             display: flex;
             flex-direction: column;
-            border-radius: 0 15px 0 0;
+            border-radius: 0 15px 15px 0;
             background-color: rgba(126, 126, 126, 0.549);
             line-height: 1;
             width: 100%;
             overflow: auto;
             justify-content: space-between;
-
         }
 
         .worldCard_text_title {
@@ -85,20 +87,24 @@
             background-color: rgba(130, 130, 130, 0.684);
             flex: 1;
             position: relative;
-            border-bottom-left-radius: 15px;
+            border-radius: 0 0 15px 15px;
         }
 
         .worldCard_Actions {
-            position: absolute;
-            right: 10px;
-            bottom: 10px;
-            text-align: right;
-            
-            background-color: blue;
-            border-radius: 15px 0 0 0;
-            padding: 10px;
+
+            color: white;
+            height: 2rem;
+            display: flex;
         }
 
+        .worldCard_Actions_Actions {
+            background-color: rgb(89, 89, 89);
+            border-radius: 0 0 15px 15px;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
 
         @media only screen and (max-width: 800px) {
             .not-for-mobile {
@@ -110,6 +116,40 @@
 
 <body>
     <h1>World Menu</h1>
+    <div class="worldCard_Wrapper">
+        <div class="worldCard_Number">
+            <div class="worldCard_Number_Number">1</div>
+            <div style="height: 100%; width: 100%;background-color: rgb(89, 89, 89);">
+                <div style="height: 100%;background-color: white; border-radius: 0 0 0 15px;">&ThinSpace;</div>
+            </div>
+        </div>
+        <div class="worldCard">
+            <div class="worldCard_img">
+                <img class="panoramic"
+                    src="https://t3.ftcdn.net/jpg/01/06/69/80/360_F_106698026_tU7ScIE2KMyb9bDRWpVgkqjTR6wSp8VZ.jpg"
+                    alt=" landscape photo">
+            </div>
+            <div class="worldCard_text">
+                <div class="worldCard_text_title">
+                    <h3>Title</h3>
+                </div>
+                <div class="worldCard_text_desc">
+                    <p>Description</p>
+                </div>
+
+            </div>
+        </div>
+        <div class="worldCard_Actions">
+             <div style="height: 100%; flex:1;background-color: rgb(89, 89, 89);">
+                <div style="height: 100%;background-color: white; border-radius: 0 15px 0 0 ;">&ThinSpace;</div>
+            </div>
+            <p class="worldCard_Actions_Actions">
+                ▶️<span class="not-for-mobile">Play</span>
+                ⬇️<span class="not-for-mobile">Download</span>
+                ❌<span class="not-for-mobile">Delete</span>
+            </p>
+        </div>
+    </div>
     <h2>Offline Worlds</h2>
     <div id="myWorldPanel" class="worldPanel">
     </div>
@@ -184,31 +224,31 @@
 
             let myWorld = document.createElement("div")
             myWorld.innerHTML += `
-            
-            <div class="worldCard">
-                <div class="worldCard_Number">${i + 1}</div>
-                <div class="worldCard_img">
-                    <img class="panoramic"
-                        src="${worlds[i].img}"
-                        alt="${worlds[i].name} landscape photo">
-                </div>
-                <div class="worldCard_text">
-                    <div class="worldCard_text_title">
-                        <h3>${worlds[i].name}</h3>
-                    </div>
-                    <div class="worldCard_text_desc">
-                        <p>${worlds[i].desc}</p>
+            <div class="worldCard_Wrapper">
+                    <div class="worldCard">
+                        <div class="worldCard_Number">${i + 1}</div>
+                        <div class="worldCard_img">
+                            <img class="panoramic"
+                                src="${worlds[i].img}"
+                                alt="${worlds[i].name} landscape photo">
+                        </div>
+                        <div class="worldCard_text">
+                            <div class="worldCard_text_title">
+                                <h3>${worlds[i].name}</h3>
+                            </div>
+                            <div class="worldCard_text_desc">
+                                <p>${worlds[i].desc}</p>
+                            </div>
+                        
+                        </div>
                     </div>
                     <div class="worldCard_Actions">
-                        <h3 >
+                        <p>
                             ▶️<span class="not-for-mobile">Play</span>
                             ⬇️<span class="not-for-mobile">Download</span>
                             ❌<span class="not-for-mobile">Delete</span>
-                            
-                            
-                        </h3>
+                        </p>
                     </div>
-                </div>
             </div>
 
             `
@@ -220,26 +260,29 @@
 
             let myWorld = document.createElement("div")
             myWorld.innerHTML += `
-            
-            <div class="worldCard">
-                <div class="worldCard_Number">${i + 1}</div>
-                <div class="worldCard_img">
-                    <img class="panoramic"
-                        src="${worlds_online[i].img}"
-                        alt="${worlds_online[i].name} landscape photo">
+            <div class="worldCard_Wrapper">
+                <div class="worldCard">
+                    <div class="worldCard_Number">${i + 1}</div>
+                    <div class="worldCard_img">
+                        <img class="panoramic"
+                            src="${worlds_online[i].img}"
+                            alt="${worlds_online[i].name} landscape photo">
+                    </div>
+                    <div class="worldCard_text">
+                        <div class="worldCard_text_title">
+                            <h3>${worlds_online[i].name}</h3>
+                        </div>
+                        <div class="worldCard_text_desc">
+                            <p>${worlds_online[i].desc}</p>
+                        </div>
+                        
+                    </div>
                 </div>
-                <div class="worldCard_text">
-                    <div class="worldCard_text_title">
-                        <h3>${worlds_online[i].name}</h3>
-                    </div>
-                    <div class="worldCard_text_desc">
-                        <p>${worlds_online[i].desc}</p>
-                    </div>
-                    <div class="worldCard_Actions">
-                        <h3>
-                            ⬅️Join
-                        </h3>
-                    </div>
+                <div class="worldCard_Actions">
+                            <h3>
+                                Players online 10/99
+                                ⬅️Join
+                            </h3>
                 </div>
             </div>
 
