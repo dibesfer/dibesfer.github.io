@@ -14,7 +14,10 @@
         body {
             font-family: monospace;
             font-size: 1rem;
-            margin: 10px;
+            
+            max-width: 800px;
+            margin: auto;
+            padding: 10px;
         }
 
         .panoramic {
@@ -35,9 +38,11 @@
             height: 100px;
             color: white;
             padding: 10px;
-            gap: 10px;
-            border-radius: 0 15px 0 15px;
+            gap: 0px;
+            border-radius: 0 15px 0 0;
             position: relative;
+            border-left: 12px black solid;
+            border-right: 12px black solid;
         }
 
         .worldCard_Number {
@@ -54,6 +59,9 @@
             background-color: rgb(89, 89, 89);
             padding: 10px;
             border-radius: 15px 15px 0 0;
+            height: 100%;
+            border-left: 12px black solid;
+            
         }
 
 
@@ -62,7 +70,7 @@
         }
 
         .worldCard_img>img {
-            border-radius: 0 0 0 15px;
+            border-radius: 15px 0 0 15px;
         }
 
         .worldCard_text {
@@ -71,7 +79,7 @@
             display: flex;
             flex-direction: column;
             border-radius: 0 15px 15px 0;
-            background-color: rgba(126, 126, 126, 0.549);
+            background-color: rgba(179, 179, 179, 0.7);
             line-height: 1;
             width: 100%;
             overflow: auto;
@@ -84,7 +92,7 @@
 
         .worldCard_text_desc {
             padding: 5px;
-            background-color: rgba(130, 130, 130, 0.684);
+            background-color: rgba(208, 208, 208, 0.684);
             flex: 1;
             position: relative;
             border-radius: 0 0 15px 15px;
@@ -97,13 +105,25 @@
             display: flex;
         }
 
-        .worldCard_Actions_Actions {
+        .worldCard_Actions_Info {
             background-color: rgb(89, 89, 89);
+            padding: 10px;
             border-radius: 0 0 15px 15px;
-            padding: 20px;
             display: flex;
             justify-content: center;
             align-items: center;
+            color: rgb(102, 255, 102);
+            border-left: 12px black solid;
+        }
+
+        .worldCard_Actions_Actions {
+            background-color: rgb(89, 89, 89);
+            border-radius: 0 0 15px 15px;
+            padding: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-right: 12px black solid;
         }
 
         @media only screen and (max-width: 800px) {
@@ -140,8 +160,87 @@
             </div>
         </div>
         <div class="worldCard_Actions">
-             <div style="height: 100%; flex:1;background-color: rgb(89, 89, 89);">
-                <div style="height: 100%;background-color: white; border-radius: 0 15px 0 0 ;">&ThinSpace;</div>
+            <div class="worldCard_Actions_Info">
+                🛜<span class="not-for-mobile"> Players Online</span> 10/99
+            </div>
+            <div style="height: 100%; flex:1;background-color: rgb(89, 89, 89);">
+                <div style="height: 100%;background-color: white; border-radius: 15px 15px 0 0 ;">&ThinSpace;</div>
+            </div>
+            <p class="worldCard_Actions_Actions">
+                ▶️<span class="not-for-mobile">Play</span>
+                ⬇️<span class="not-for-mobile">Download</span>
+                ❌<span class="not-for-mobile">Delete</span>
+            </p>
+        </div>
+    </div>
+    <br>
+    <div class="worldCard_Wrapper">
+        <div class="worldCard_Number">
+            <div class="worldCard_Number_Number">1</div>
+            <div style="height: 100%; width: 100%;background-color: rgb(89, 89, 89);">
+                <div style="height: 100%;background-color: white; border-radius: 0 0 0 15px;">&ThinSpace;</div>
+            </div>
+        </div>
+        <div class="worldCard">
+            <div class="worldCard_img">
+                <img class="panoramic"
+                    src="https://t3.ftcdn.net/jpg/01/06/69/80/360_F_106698026_tU7ScIE2KMyb9bDRWpVgkqjTR6wSp8VZ.jpg"
+                    alt=" landscape photo">
+            </div>
+            <div class="worldCard_text">
+                <div class="worldCard_text_title">
+                    <h3>Title</h3>
+                </div>
+                <div class="worldCard_text_desc">
+                    <p>Description</p>
+                </div>
+
+            </div>
+        </div>
+        <div class="worldCard_Actions">
+            <div class="worldCard_Actions_Info">
+                🛜<span class="not-for-mobile"> Players Online</span> 10/99
+            </div>
+            <div style="height: 100%; flex:1;background-color: rgb(89, 89, 89);">
+                <div style="height: 100%;background-color: white; border-radius: 15px 15px 0 0 ;">&ThinSpace;</div>
+            </div>
+            <p class="worldCard_Actions_Actions">
+                ▶️<span class="not-for-mobile">Play</span>
+                ⬇️<span class="not-for-mobile">Download</span>
+                ❌<span class="not-for-mobile">Delete</span>
+            </p>
+        </div>
+    </div>
+    <br>
+    <div class="worldCard_Wrapper">
+        <div class="worldCard_Number">
+            <div class="worldCard_Number_Number">1</div>
+            <div style="height: 100%; width: 100%;background-color: rgb(89, 89, 89);">
+                <div style="height: 100%;background-color: white; border-radius: 0 0 0 15px;">&ThinSpace;</div>
+            </div>
+        </div>
+        <div class="worldCard">
+            <div class="worldCard_img">
+                <img class="panoramic"
+                    src="https://t3.ftcdn.net/jpg/01/06/69/80/360_F_106698026_tU7ScIE2KMyb9bDRWpVgkqjTR6wSp8VZ.jpg"
+                    alt=" landscape photo">
+            </div>
+            <div class="worldCard_text">
+                <div class="worldCard_text_title">
+                    <h3>Title</h3>
+                </div>
+                <div class="worldCard_text_desc">
+                    <p>Description</p>
+                </div>
+
+            </div>
+        </div>
+        <div class="worldCard_Actions">
+            <div class="worldCard_Actions_Info">
+                🛜<span class="not-for-mobile"> Players Online</span> 10/99
+            </div>
+            <div style="height: 100%; flex:1;background-color: rgb(89, 89, 89);">
+                <div style="height: 100%;background-color: white; border-radius: 15px 15px 0 0 ;">&ThinSpace;</div>
             </div>
             <p class="worldCard_Actions_Actions">
                 ▶️<span class="not-for-mobile">Play</span>
