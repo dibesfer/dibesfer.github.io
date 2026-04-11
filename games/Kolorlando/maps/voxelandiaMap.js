@@ -14,6 +14,7 @@ const VOXEL_TYPES = [
   { name: 'white', color: 0xf5f5f5 },
   { name: 'gray', color: 0x8a8a8a },
   { name: 'black', color: 0x171717 },
+  { name: 'fer', color: 0x00000 },
 ];
 
 const ENTITY_MIN_SPAWN_DIST_SQ = 9;
@@ -115,6 +116,9 @@ export function buildVoxelandiaMap({
 
   const voxelGeo = new THREE.BoxGeometry(voxelSize, voxelSize, voxelSize);
   const voxelTexture = createBorderedVoxelTexture();
+  
+  
+  
   const voxelMat = new THREE.MeshStandardMaterial({
     map: voxelTexture,
     color: 0xffffff,

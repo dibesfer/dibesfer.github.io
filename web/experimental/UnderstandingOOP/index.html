@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UnderstandingOOP</title>
+    <style>
+        .dml_display {
+            display: flex;
+            gap: 10px;
+        }
+
+        .dml {
+            border: 2px solid;
+            border-radius: 15px;
+            max-width: 200px;
+            padding: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>UnderstandingOOP</h1>
+    </header>
+    <main>
+
+        <div id="dml_display_id" class="dml_display">
+            <div class="dml">
+                <h2>Person</h2>
+                <hr>
+                <p>name</p>
+                <p>birthDate</p>
+                <p>greet()</p>
+                <p>age()</p>
+            </div>
+        </div>
+
+        <br>
+
+        <div id="dml_display_address" class="dml_display">
+            <div class="dml">
+                <h2>Address</h2>
+                <hr>
+                <p>name</p>
+                <p>country</p>
+                <p>distance()</p>
+                
+            </div>
+        </div>
+
+        <div id="demo">
+            <br>
+        </div>
+
+    </main>
+    <footer>
+
+    </footer>
+
+    <script>
+
+        class Person {
+            constructor(name, birthDate) {
+                this.name = name
+                this.birthDate = birthDate
+            }
+
+            greet() {
+                return "Hi, my name is " + this.name + "."
+            }
+
+            age() {
+                if (!this.birthDate) return
+                let today = new Date()
+                let day = this.birthDate.getDate()
+                let month = this.birthDate.getMonth() + 1
+                let year = this.birthDate.getFullYear()
+                //let diff = (today - this.birthDate)
+                let formatted = this.birthDate.toISOString().slice(0, 10)
+                let daysOld = today.getDate() - day
+                if (daysOld < 0) {
+                    daysOld = today.getDate()
+                }
+                let monthsOld = (today.getMonth() + 1) - month
+                let yearsOld = today.getFullYear() - year
+                let dateFer = yearsOld + " years, " + monthsOld + " months and " + daysOld + " days old."
+                return dateFer
+            }
+        }
+
+        let Juan = new Person("Juan")
+        Juan.birthDate = new Date("01/01/2000")
+        
+        let Ferran = new Person("Ferrán")
+        Ferran.birthDate = new Date("1996-02-17")
+        //Juan.name = "Ferran"
+
+        demo.innerHTML += Juan.greet()
+
+
+        let people = [
+            Juan,
+            Ferran,
+            new Person("María")
+
+        ]
+
+
+        for (let i = 0; i < people.length; i++) {
+            const element = people[i];
+            dml_display_id.innerHTML += `
+        
+            <div class="dml">
+                <h2>Person</h2>
+                <hr>
+                <p>name ${element.name}</p>
+                <p>greet() ${element.greet()}</p>
+                <p>age() ${element.age()}</p>
+            </div>
+
+        `
+        }
+
+
+
+    </script>
+</body>
+
+</html>
