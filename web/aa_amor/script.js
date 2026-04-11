@@ -43,6 +43,7 @@ function app() {
     arrayFranjas = shuffle(arrayFranjas)
     for (let i = 0; i < imgFranjas.length; i++) {
         imgFranjas[i].src = arrayFranjas[i]
+        
     }
 
     let scrollBottom = getid("scrollBottom")
