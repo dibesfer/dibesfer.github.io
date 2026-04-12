@@ -14,14 +14,14 @@
         body {
             font-family: monospace;
             font-size: 1rem;
-            
+
             max-width: 800px;
             margin: auto;
             padding: 10px;
         }
 
         .panoramic {
-            aspect-ratio: 16/9;
+            aspect-ratio: 3/2;
             object-fit: cover;
             height: 100%;
         }
@@ -39,10 +39,27 @@
             color: white;
             padding: 10px;
             gap: 0px;
-            border-radius: 0 15px 0 0;
             position: relative;
-            border-left: 12px black solid;
-            border-right: 12px black solid;
+            border-left: 12px rgb(50, 50, 50) solid;
+            border-right: 12px rgb(50, 50, 50) solid;
+            position: relative;
+        }
+
+        .worldCard_prompt {
+            position: absolute;
+            left: 10px;
+            right: 10px;
+            height: 80px;
+            border-radius: 15px;
+            background-color: rgba(255, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+            z-index: 2;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            gap: 10px;
+            text-align: center;
         }
 
         .worldCard_Number {
@@ -50,7 +67,7 @@
             justify-content: center;
             align-items: center;
             height: 2rem;
-            
+
         }
 
         .worldCard_Number_Number {
@@ -60,8 +77,18 @@
             padding: 10px;
             border-radius: 15px 15px 0 0;
             height: 100%;
-            border-left: 12px black solid;
-            
+            border-left: 12px rgb(50, 50, 50) solid;
+
+        }
+
+        .worldCard_Number_Config {
+            font-weight: bold;
+            color: white;
+            background-color: rgb(89, 89, 89);
+            padding: 10px;
+            border-radius: 15px 15px 0 0;
+            height: 100%;
+            border-right: 12px rgb(50, 50, 50) solid;
         }
 
 
@@ -113,7 +140,8 @@
             justify-content: center;
             align-items: center;
             color: rgb(102, 255, 102);
-            border-left: 12px black solid;
+            border-left: 12px rgb(50, 50, 50) solid;
+            gap: 5px;
         }
 
         .worldCard_Actions_Actions {
@@ -123,7 +151,17 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            border-right: 12px black solid;
+            border-right: 12px rgb(50, 50, 50) solid;
+            gap: 5px;
+        }
+
+        .invisible {
+            display: none;
+        }
+
+        .emojicon {
+            filter:
+                grayscale(1) contrast(2) drop-shadow(2px 2px 0 black);
         }
 
         @media only screen and (max-width: 800px) {
@@ -140,10 +178,20 @@
         <div class="worldCard_Number">
             <div class="worldCard_Number_Number">1</div>
             <div style="height: 100%; width: 100%;background-color: rgb(89, 89, 89);">
-                <div style="height: 100%;background-color: white; border-radius: 0 0 0 15px;">&ThinSpace;</div>
+                <div style="height: 100%;background-color: white; border-radius: 0 0 15px 15px;">&ThinSpace;</div>
+            </div>
+            <div class="worldCard_Number_Config">
+                <div class="emojicon">⚙️</div>
             </div>
         </div>
         <div class="worldCard">
+            <div class="worldCard_prompt invisible">
+                Are you sure you want to delete "worldName"? This is irreversible
+                <div>
+                    <button>Yes</button>
+                    <button onclick="deletePrompt(this)">Cancel</button>
+                </div>
+            </div>
             <div class="worldCard_img">
                 <img class="panoramic"
                     src="https://t3.ftcdn.net/jpg/01/06/69/80/360_F_106698026_tU7ScIE2KMyb9bDRWpVgkqjTR6wSp8VZ.jpg"
@@ -151,10 +199,10 @@
             </div>
             <div class="worldCard_text">
                 <div class="worldCard_text_title">
-                    <h3>Title</h3>
+                    <h3 contenteditable>Title</h3>
                 </div>
                 <div class="worldCard_text_desc">
-                    <p>Description</p>
+                    <p contenteditable>Description</p>
                 </div>
 
             </div>
@@ -166,103 +214,29 @@
             <div style="height: 100%; flex:1;background-color: rgb(89, 89, 89);">
                 <div style="height: 100%;background-color: white; border-radius: 15px 15px 0 0 ;">&ThinSpace;</div>
             </div>
-            <p class="worldCard_Actions_Actions">
-                ▶️<span class="not-for-mobile">Play</span>
-                ⬇️<span class="not-for-mobile">Download</span>
-                ❌<span class="not-for-mobile">Delete</span>
-            </p>
+            <div class="worldCard_Actions_Actions">
+                <div>▶️<span class="not-for-mobile">Play</span></div>
+                <div>⬇️<span class="not-for-mobile">Download</span></div>
+                <div onclick="deletePrompt(this)">❌<span class="not-for-mobile">Delete</span></div>
+            </div>
         </div>
     </div>
     <br>
-    <div class="worldCard_Wrapper">
-        <div class="worldCard_Number">
-            <div class="worldCard_Number_Number">1</div>
-            <div style="height: 100%; width: 100%;background-color: rgb(89, 89, 89);">
-                <div style="height: 100%;background-color: white; border-radius: 0 0 0 15px;">&ThinSpace;</div>
-            </div>
-        </div>
-        <div class="worldCard">
-            <div class="worldCard_img">
-                <img class="panoramic"
-                    src="https://t3.ftcdn.net/jpg/01/06/69/80/360_F_106698026_tU7ScIE2KMyb9bDRWpVgkqjTR6wSp8VZ.jpg"
-                    alt=" landscape photo">
-            </div>
-            <div class="worldCard_text">
-                <div class="worldCard_text_title">
-                    <h3>Title</h3>
-                </div>
-                <div class="worldCard_text_desc">
-                    <p>Description</p>
-                </div>
 
-            </div>
-        </div>
-        <div class="worldCard_Actions">
-            <div class="worldCard_Actions_Info">
-                🛜<span class="not-for-mobile"> Players Online</span> 10/99
-            </div>
-            <div style="height: 100%; flex:1;background-color: rgb(89, 89, 89);">
-                <div style="height: 100%;background-color: white; border-radius: 15px 15px 0 0 ;">&ThinSpace;</div>
-            </div>
-            <p class="worldCard_Actions_Actions">
-                ▶️<span class="not-for-mobile">Play</span>
-                ⬇️<span class="not-for-mobile">Download</span>
-                ❌<span class="not-for-mobile">Delete</span>
-            </p>
-        </div>
-    </div>
-    <br>
-    <div class="worldCard_Wrapper">
-        <div class="worldCard_Number">
-            <div class="worldCard_Number_Number">1</div>
-            <div style="height: 100%; width: 100%;background-color: rgb(89, 89, 89);">
-                <div style="height: 100%;background-color: white; border-radius: 0 0 0 15px;">&ThinSpace;</div>
-            </div>
-        </div>
-        <div class="worldCard">
-            <div class="worldCard_img">
-                <img class="panoramic"
-                    src="https://t3.ftcdn.net/jpg/01/06/69/80/360_F_106698026_tU7ScIE2KMyb9bDRWpVgkqjTR6wSp8VZ.jpg"
-                    alt=" landscape photo">
-            </div>
-            <div class="worldCard_text">
-                <div class="worldCard_text_title">
-                    <h3>Title</h3>
-                </div>
-                <div class="worldCard_text_desc">
-                    <p>Description</p>
-                </div>
-
-            </div>
-        </div>
-        <div class="worldCard_Actions">
-            <div class="worldCard_Actions_Info">
-                🛜<span class="not-for-mobile"> Players Online</span> 10/99
-            </div>
-            <div style="height: 100%; flex:1;background-color: rgb(89, 89, 89);">
-                <div style="height: 100%;background-color: white; border-radius: 15px 15px 0 0 ;">&ThinSpace;</div>
-            </div>
-            <p class="worldCard_Actions_Actions">
-                ▶️<span class="not-for-mobile">Play</span>
-                ⬇️<span class="not-for-mobile">Download</span>
-                ❌<span class="not-for-mobile">Delete</span>
-            </p>
-        </div>
-    </div>
     <h2>Offline Worlds</h2>
     <div id="myWorldPanel" class="worldPanel">
     </div>
     <div>
         <h2>Actions</h2>
-        <p>Create world (3/12)</p>
-        <p>Import a .world file, paste the text or pick a world from the gallery.</p>
-        <p>Do you want to use a template?</p>
+        <p>+ Create world (3/12)</p>
+        <p>Import a .world file, paste the text or pick a world or a template from the gallery.</p>
+        <p>Templates</p>
         <ul>
-            <li>Empty</li>
+            <li>Empty (Developer only)</li>
             <li>Skybox: 1 voxel</li>
-            <li>La City</li>
             <li>Voxelandia: 100x3x100 voxels</li>
             <li>Metaverse: neon grid voxels</li>
+            <li>La City</li>
         </ul>
     </div>
     <div>
@@ -281,6 +255,13 @@
     </div>
 
     <script>
+
+        function deletePrompt(e) {
+            const wrapper = e.closest('.worldCard_Wrapper')
+            const prompt = wrapper.querySelector('.worldCard_prompt')
+            prompt.classList.toggle('invisible')
+        }
+
         let myWorldPanel = document.getElementById("myWorldPanel")
         let myWorldPanel_online = document.getElementById("myWorldPanel_online")
         let worlds = [
