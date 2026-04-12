@@ -6,7 +6,7 @@ const database = supabase.createClient(supabaseUrl, supabaseKey)
 // same Supabase connection instead of creating separate clients per page area.
 window.database = database
 
-var localVisits = localStorage.getItem("dibesferLocalVisits")
+let localVisits = localStorage.getItem("dibesferLocalVisits")
 if(localVisits == null || localVisits <= 0){
     localVisits = 1
 }

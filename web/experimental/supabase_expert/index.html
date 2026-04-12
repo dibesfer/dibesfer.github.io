@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supabase Expert</title>
+    <link rel="icon" type="image/x-icon" href="/assets/branding/favicon512.ico">
+
+    <style>
+        * {
+            margin: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: monospace;
+            font-size: 1rem;
+            line-height: 1.7;
+            padding: 10px;
+        }
+
+        a {
+            text-decoration: none;
+        }
+
+        #demo {
+            height: 200px;
+            overflow: auto;
+            border: solid 3px;
+            padding: 10px;
+        }
+
+        .invisible {
+            display: none;
+        }
+    </style>
+
+    <!-- SUPABASE cdn -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+
+
+</head>
+
+<body>
+    <h1>Supabase Expert</h1>
+
+
+    <div id="demo"></div>
+
+    <input id="myInput" type="text" name="">
+    <button id="writeTable()" onclick="writeTable()">send</button>
+    <br>
+
+    <br>
+    <hr>
+    <br>
+
+    <div>
+
+        <h3>Log in</h3>
+        <p>You are now <span id="displayUsername">Anonymous</span></p>
+
+        <div id="loginDiv">
+            <label for="">Username</label>
+            <input type="text" id="userEmail">
+
+            <br>
+            <label for="">Password</label>
+
+            <input type="password" id="userPass">
+
+            <p id="consola">Fill both fields</p>
+            <button onclick="login()">send</button>
+        </div>
+        <div id="logoutDiv" class="invisible">
+            <button onclick="logout()">Log out</button>
+        </div>
+
+    </div>
+
+    <footer>
+        <br>
+        <hr>
+        <br>
+        <h3>Technologies used:</h3>
+        <ol>
+            <li>Tables</li>
+            <ol>
+                <li>RLS Policies</li>
+                <li>Realtime</li>
+            </ol>
+            <li>Presence</li>
+            <li>Auth</li>
+        </ol>
+        <br>
+        <hr>
+        <br>
+        <p>Users online: <span id="displayUsersonline">1</span></p>
+        <p>Local visits: <span id="displayLocalvisits"></span></p>
+        <p>made by <a href="https://dibesfer.github.io">dibesfer</a></p>
+    </footer>
+    <script>
+        // Using supabase Webochi projectt
+        const supabaseUrl = 'https://kalidybwmoxhcwlfeftc.supabase.co'
+        const supabaseKey = 'sb_publishable__jr8YglR8G9zZQQfLPLzqw_GxL2RA-A'
+        const database = supabase.createClient(supabaseUrl, supabaseKey)
+
+        let tableRows = 1
+        //console.log(database)
+
+        //REALTIME 
+        // Create a function to handle inserts
+        const handleInserts = (payload) => {
+            //console.log('Change received!', payload)
+
+            getOnlyLastMessage(payload.new)
+            //getOnlyResources("chat", "dibesfer")
+        }
+
+        const handleDeletes = (payload) => {
+            //console.log('Change received!', payload)
+
+            readTable()
+            //getOnlyLastMessage(payload.new)
+            //getOnlyResources("chat", "dibesfer")
+        }
+
+        // Listen to inserts
+        database
+            .channel('supabase_expert')
+            // .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'supabase_expert' }, handleInserts)
+            // .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'supabase_expert' }, handleDeletes)
+            .on('postgres_changes',
+                { schema: 'public', table: 'supabase_expert', event: '*' },
+                (payload) => {
+                    if (payload.eventType === 'INSERT') handleInserts(payload)
+                    if (payload.eventType === 'DELETE') handleDeletes(payload)
+                }
+            )
+
+            .subscribe()
+
+
+
+        function formatMessage(time, message, timezone) {
+            const myDate = new Date(time).toISOString().slice(0, 10) + " " + new Date(time).toISOString().slice(11, 19)
+            return `
+                <p>(${tableRows}) ${myDate} (${timezone})<br><b>Anonymous</b>: ${message}</p>
+                `
+        }
+
+        async function readTable() {
+            const { data, error } = await database
+
+                .from('supabase_expert')
+
+                .select()
+            console.log(data.length)
+
+            let myHTML = ""
+            for (let i = 0; i < data.length; i++) {
+                const element = data[i];
+                myHTML += formatMessage(element.created_at, element.message, element.timezone)
+                tableRows++
+            }
+
+            demo.innerHTML = myHTML
+            demo.scrollTo(0, demo.scrollHeight)
+        }
+
+
+        readTable()
+
+        function getOnlyLastMessage(newInsert) {
+
+            const myTime = new Date(newInsert.created_at).toISOString().slice(0, 10) + " " + new Date(newInsert.created_at).toISOString().slice(11, 19)
+
+            demo.innerHTML += formatMessage(newInsert.created_at, newInsert.message, newInsert.timezone)
+            tableRows++
+            demo.scrollTo(0, demo.scrollHeight)
+
+        }
+
+        async function writeTable() {
+
+            const myMessage = myInput.value
+
+            if (myMessage != "") {
+                const { error } = await database
+                    .from('supabase_expert')
+                    .insert({
+                        message: myMessage,
+                        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+
+                    })
+
+                if (!error) {
+                    myInput.value = ""
+                }
+            }
+        }
+
+        //AUTH
+
+        async function getUser() {
+            const { data: { user } } = await database.auth.getUser()
+
+            if (user) {
+                displayUsername.textContent = user.email
+                consola.textContent = "Logged in"
+                loginDiv.classList.toggle("invisible")
+                logoutDiv.classList.toggle("invisible")
+            }
+        }
+
+        getUser()
+
+
+        async function login() {
+            let { data, error } = await database.auth.signInWithPassword({
+                email: userEmail.value,
+                password: userPass.value
+            })
+            if (error) {
+                consola.textContent = error.message
+            }
+            else {
+                getUser()
+            }
+        }
+
+        async function logout() {
+            let { error } = await database.auth.signOut()
+            if (!error) location.reload()
+        }
+
+        //PRESENCE
+
+        const channel = database.channel("online-users", {
+            config: {
+                presence: { key: 0 }
+            }
+        })
+
+        channel
+            .on("presence", { event: "sync" }, () => {
+                const state = channel.presenceState()
+                //console.log("Online users:", state)
+                const count = Object.keys(channel.presenceState()).length
+                displayUsersonline.textContent = count
+            })
+            .subscribe(async (status) => {
+                if (status === "SUBSCRIBED") {
+                    await channel.track({
+                        user_id: "Anonymous",
+                        username: "Anonymous"
+                    })
+                }
+            })
+
+        // LOCAL STORAGE
+        let localVisits = localStorage.getItem("sb_LocalVisits")
+        if (localVisits == null || localVisits <= 0) {
+            localVisits = 1
+        }
+        else {
+            localVisits++
+        }
+
+        displayLocalvisits.textContent = localVisits
+        localStorage.setItem("sb_LocalVisits", localVisits)
+
+
+    </script>
+
+</body>
+
+</html>
