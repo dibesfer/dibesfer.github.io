@@ -20,6 +20,11 @@
             padding: 10px;
         }
 
+        header,
+        footer {
+            text-align: center;
+        }
+
         a {
             text-decoration: none;
         }
@@ -27,7 +32,7 @@
         #demo {
             height: 200px;
             overflow: auto;
-            border: solid 3px;
+            background-image: linear-gradient(rgba(0, 0, 0, 0.2) ,rgba(0, 0, 0, 0));
             padding: 10px;
         }
 
@@ -43,11 +48,16 @@
 </head>
 
 <body>
-    <h1>Supabase Expert</h1>
+    <header>
+        <h1>Supabase Expert</h1>
+    </header>
 
+    <br>
+    <hr>
+    <br>
 
     <div id="demo"></div>
-
+    <br>
     <input id="myInput" type="text" name="">
     <button id="writeTable()" onclick="writeTable()">send</button>
     <br>
@@ -79,20 +89,21 @@
 
     </div>
 
-    <footer>
-        <br>
-        <hr>
-        <br>
-        <h3>Technologies used:</h3>
+    <br>
+    <hr>
+    <br>
+    <h3>Technologies used:</h3>
+    <ol>
+        <li>Tables</li>
         <ol>
-            <li>Tables</li>
-            <ol>
-                <li>RLS Policies</li>
-                <li>Realtime</li>
-            </ol>
-            <li>Presence</li>
-            <li>Auth</li>
+            <li>RLS Policies</li>
+            <li>Realtime</li>
         </ol>
+        <li>Presence</li>
+        <li>Auth</li>
+    </ol>
+    <footer>
+
         <br>
         <hr>
         <br>
