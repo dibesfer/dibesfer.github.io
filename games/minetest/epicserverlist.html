@@ -37,12 +37,9 @@
             list-style: none;
             cursor: pointer;
             text-align: center;
-
         }
 
         .serverName {
-
-
             border-radius: 15px;
             margin: 10px;
             font-size: larger;
@@ -56,13 +53,10 @@
             width: 100%;
             font-family: serif;
             font-size: x-large;
-
             text-shadow: 0 5px 5px black;
-
         }
 
         .separator {
-
             border: solid 4px white;
             margin: 15px 0;
         }
@@ -118,10 +112,8 @@
                                 throw new Error("HTTP error " + response.status);
                             }
                             return response.json();
-
                         })
                         .then(json => {
-
                             let list = json;
                             totalPlayers.textContent = json.total.clients
                             totalServers.textContent = json.total.servers
@@ -136,16 +128,10 @@
                                 if (counter == 11) {
                                     serverListNewHtml += "<hr class='separator'>"
                                 }
-
-
-
                                 serverListNewHtml +=
                                     "<li class='serverName'><details open><summary><span class='serverTitle'>" + counter + ". " + element.name +
                                     "</span> <br> Players: " + element.clients +
                                     " </summary>"
-
-
-
                                 if (element.name == "Your Land") {
                                     serverListNewHtml += `
                         
@@ -233,7 +219,7 @@
                         `
                                 }
 
-                                
+
 
                                 if (element.name == "Tunnelers' Abyss") {
                                     serverListNewHtml += `
@@ -258,7 +244,7 @@
 
                         `
                                 }
-                                
+
                                 serverListNewHtml += "<b>Description</b>: " + element.description +
                                     "<br><b>Game</b>: " + element.gameid + "</details></li>"
 
