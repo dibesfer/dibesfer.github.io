@@ -81,13 +81,19 @@ hr {
   flex: 33.33%;
   width: 33.33%;
   max-width: 400px;
+  height: 400px;
   overflow: hidden;
   padding: 5px;
 }
 
-.flexgriditem>div {
+.flexgriditem>a>div {
   border: solid 1px white;
   padding: 10px;
+  aspect-ratio: 1;
+  transition: 0.2s;
+}
+.flexgriditem>a>div:hover {
+  box-shadow: inset 0 0 10px white;
 }
 
 @media only screen and (min-width: 600px) {
