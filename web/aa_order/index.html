@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>findex</title>
+    <link rel="shortcut icon" href="ficon512.png" type="image/x-icon">
+    <style>
+      * {
+        margin: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family: sans-serif;
+        line-height: 2;
+        background-color: black;
+        color: white;
+        height: 100dvh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      a {
+        text-decoration: none;
+        color: gold;
+      }
+
+      img {
+        max-width: 100%;
+      }
+
+      header {
+        background-image: linear-gradient( rgb(63, 63, 63), rgba(0, 0, 0, 0))
+      }
+      footer {
+                background-image: linear-gradient(360deg, rgb(63, 63, 63), rgba(0, 0, 0, 0))
+
+      }
+      header,
+      footer {
+        text-align: center;
+        
+        padding: 20px;
+      }
+      main {
+        width: 600px;
+        margin: auto;
+        padding: 10px;
+        flex: 1;
+        
+      }
+
+      nav {
+        user-select: none;
+      }
+      .navItem {
+        cursor: pointer;
+        padding: 10px;
+        transition: 0.2s;
+      }
+
+      .navItem:hover {
+        box-shadow: 
+         0 0 1.5px white,
+         0 0 1.5px white,
+         0 0 1.5px white
+        ;
+        transition: 0s;
+      }
+      .navSelected {
+        background-color: rgb(43, 43, 43);
+        
+      }
+
+      #myTitle > a {
+        color: unset;
+      }
+
+      #myDesc {
+        font-style: italic;
+        color: rgb(159, 159, 159);
+      }
+
+      .cat {
+        font-weight: bold;
+        display: inline-block;
+        width: 175px;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1 id="myTitle"><a href="">Simple Site</a></h1>
+      <p id="myDesc">Let's make this life a wonderful adventure!</p>
+      <br>
+      <nav>
+        <p>
+          <span onclick="fetchy('first.html', this)" class="navItem">First</span> |
+          <span onclick="fetchy('second.html', this)" class="navItem">Second</span> |
+          <span onclick="fetchy('list.html', this)" class="navItem">List</span>
+        </p>
+      </nav>
+    </header>
+    <main>
+      
+    </main>
+    <footer>
+      <p>contact <a href="mailto:dibesfer@gmail.com">dibesfer@gmail.com</a></p>
+      <p>made by <a href="https://dibesfer.github.io">dibesfer</a></p>
+    </footer>
+
+   <script>
+const MAIN = document.getElementsByTagName("main")[0];
+const navButtons = document.querySelectorAll(".navItem");
+
+/* =========================
+   CORE
+========================= */
+async function fetchy(url, button, push = true) {
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error("HTTP " + res.status);
+
+    const html = await res.text();
+    MAIN.innerHTML = html;
+
+    // 👇 nav UI
+    navButtons.forEach(el => el.classList.remove("navSelected"));
+    if (button) button.classList.add("navSelected");
+
+    // 👇 historial
+    if (push) {
+      history.pushState(
+        { url: url, index: getButtonIndex(button) },
+        "",
+        "#" + url
+      );
+    }
+
+    window.scrollTo(0, 0);
+
+  } catch (err) {
+    console.error(err);
+    MAIN.innerHTML = "<h1>Error loading page</h1>";
+  }
+}
+
+/* =========================
+   HELPERS
+========================= */
+function getButtonIndex(button) {
+  return Array.from(navButtons).indexOf(button);
+}
+
+/* =========================
+   BACK / FORWARD
+========================= */
+window.addEventListener("popstate", (e) => {
+  if (e.state) {
+    const btn = navButtons[e.state.index];
+    fetchy(e.state.url, btn, false);
+  }
+});
+
+/* =========================
+   INIT
+========================= */
+window.addEventListener("DOMContentLoaded", () => {
+  let url = "first.html";
+  let index = 0;
+
+  // 👇 si vienes con hash (back/refresh)
+  if (location.hash) {
+    url = location.hash.slice(1);
+    index = ["first.html","second.html","third.html"].indexOf(url);
+    if (index === -1) index = 0;
+  }
+
+  history.replaceState(
+    { url: url, index: index },
+    "",
+    "#" + url
+  );
+
+  fetchy(url, navButtons[index], false);
+});
+</script>
+  </body>
+</html>
