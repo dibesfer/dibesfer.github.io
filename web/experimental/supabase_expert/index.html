@@ -20,6 +20,10 @@
             padding: 10px;
         }
 
+        img {
+            max-width: 100%;
+        }
+
         header,
         footer {
             text-align: center;
@@ -30,11 +34,37 @@
         }
 
         #demo {
-            height: 200px;
+            height: 300px;
             overflow: auto;
             background-image: linear-gradient(rgba(0, 0, 0, 0.2) ,rgba(0, 0, 0, 0));
-            padding: 10px;
+            
         }
+
+        .message {
+            border: solid 1px;
+            padding: 10px;
+            display: flex;
+            gap: 10px;
+            
+        }
+
+        .message_img {
+            
+            line-height: 0;
+        }
+
+        .message_img > img {
+            height: 4rem;
+            width: 4rem;
+            aspect-ratio: 1;
+            object-fit: cover;
+            filter: grayscale(1) brightness(2);
+        }
+
+        .message_text {
+            flex: 1;
+        }
+
 
         .invisible {
             display: none;
@@ -58,7 +88,7 @@
 
     <div id="demo"></div>
     <br>
-    <input id="myInput" type="text" name="">
+    <input id="myInput" type="text" name="" maxlength="500">
     <button id="writeTable()" onclick="writeTable()">send</button>
     <br>
 
@@ -81,7 +111,7 @@
             <input type="password" id="userPass">
 
             <p id="consola">Fill both fields</p>
-            <button onclick="login()">send</button>
+            <button onclick="login()">Log in</button>
         </div>
         <div id="logoutDiv" class="invisible">
             <button onclick="logout()">Log out</button>
@@ -154,10 +184,21 @@
 
 
 
-        function formatMessage(time, message, timezone) {
+        function formatMessage(time, message, timezone, username) {
+            if (!username){
+                username = "Anonymous"
+            }
+            else username = username.split("@")[0]
             const myDate = new Date(time).toISOString().slice(0, 10) + " " + new Date(time).toISOString().slice(11, 19)
             return `
-                <p>(${tableRows}) ${myDate} (${timezone})<br><b>Anonymous</b>: ${message}</p>
+            <div class="message">
+                <div class="message_img">
+                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRxJpQCWWBAh3ksKDVo-QPx2obmf8QlmSvUsg&s">
+                </div>
+                <div class="message_text">
+                    <p>(${tableRows}) ${myDate} (${timezone})<br><b>${username}</b>: ${message}</p>
+                </div>
+            </div>
                 `
         }
 
@@ -172,7 +213,7 @@
             let myHTML = ""
             for (let i = 0; i < data.length; i++) {
                 const element = data[i];
-                myHTML += formatMessage(element.created_at, element.message, element.timezone)
+                myHTML += formatMessage(element.created_at, element.message, element.timezone, element.username)
                 tableRows++
             }
 
@@ -187,14 +228,17 @@
 
             const myTime = new Date(newInsert.created_at).toISOString().slice(0, 10) + " " + new Date(newInsert.created_at).toISOString().slice(11, 19)
 
-            demo.innerHTML += formatMessage(newInsert.created_at, newInsert.message, newInsert.timezone)
+            demo.innerHTML += formatMessage(newInsert.created_at, newInsert.message, newInsert.timezone, newInsert.username)
             tableRows++
             demo.scrollTo(0, demo.scrollHeight)
 
         }
 
         async function writeTable() {
-
+            let myUsername = "Anonymous"
+            if(TheUser){
+                myUsername = TheUser.email
+            }
             const myMessage = myInput.value
 
             if (myMessage != "") {
@@ -202,10 +246,10 @@
                     .from('supabase_expert')
                     .insert({
                         message: myMessage,
-                        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
-
+                        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                        username: myUsername
                     })
-
+                    
                 if (!error) {
                     myInput.value = ""
                 }
@@ -222,11 +266,19 @@
                 consola.textContent = "Logged in"
                 loginDiv.classList.toggle("invisible")
                 logoutDiv.classList.toggle("invisible")
+                console.log(user)
+                return user
             }
         }
 
-        getUser()
-
+        // TOP PRIORITY
+        let TheUser
+        async function setUser(){
+            TheUser = await getUser()
+        }
+        setUser()
+        
+        
 
         async function login() {
             let { data, error } = await database.auth.signInWithPassword({
@@ -237,7 +289,7 @@
                 consola.textContent = error.message
             }
             else {
-                getUser()
+                setUser()
             }
         }
 
