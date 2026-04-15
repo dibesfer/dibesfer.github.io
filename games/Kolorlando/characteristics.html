@@ -98,7 +98,7 @@
         .myPre {
             padding: 5px;
             border: solid 1px white;
-            height: 400px;
+            height: 300px;
             overflow: auto;
         }
 
@@ -697,7 +697,7 @@
     </details>
 
     <details>
-        <summary>🧱 Voxel Edition</summary>
+        <summary>🧱 Voxel</summary>
         <ol>
             <li class="done">12 different voxels</li>
             <p><span class="implemented-in">maps/voxelandiaMap.js, code/UI/inventory.js</span></p>
@@ -713,6 +713,37 @@
             <p>Edit voxels on a 16³ microvoxel basis. Creating custom voxels.</p>
             <li class="not-done">Paint on voxels</li>
             <p>Self-explanatory</p>
+            <pre class="myPre">
+Voxel compatibility layer
+3 classes
+
+.microxel
+-Microxel 
+--position = { x:0, y:0, z:0}
+--color = "#ffffff"
+
+.voxel
+-Voxel
+--position = { x:0, y:0, z:0}
+--color = "#ffffff"
+Will draw a 6 face cube with color on it
+--texture = "grass.png"
+Will draw a 6 face cube with "grass.png" on each face
+--pixelTexture = []
+We will asign a custom texture painting pixels on each face
+--microxels = [];
+
+.boxel
+-Boxel 
+--position = { x:0, y:0, z:0}
+--size = 15^3
+--voxels = []
+
+.world
+-World
+--boxels = []
+
+</pre>
 
         </ol>
     </details>
@@ -1037,6 +1068,8 @@ Orden recomendado de ejecución
             <summary>
                 TODO
             </summary>
+            
+            <p>SquareFaceCreator load pre's workflow</p>
             <p>Menu > Boxel > isometric grid icon image maker la imagen está alargada a lo alto. Corregir</p>
             <p>Unificar bien ICONOS (hotbar,encyclopedia,inventory,equipment)</p>
             <p>Userprofile preview</p>
