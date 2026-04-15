@@ -8,11 +8,18 @@ class Banner {
         this.title = title;
         this.desc = desc;
         this.link = link;
+        this.category_title = false
     }
     render() {
         let iconContent = this.icon
             ? `<img src="${this.icon}" alt="${this.title}" />`
             : this.emoji;
+
+        if (this.category_title){
+          return `
+          <h2>${this.emoji} ${this.title}</h2>
+          `
+        }
 
         return `
       <div class="bannerApp"
@@ -41,6 +48,14 @@ class Banner {
 let banners = [];
 let banner = new Banner();
 
+banner.emoji = "📝";
+banner.title = "Blogger";
+banner.desc = "Where it all began -> https://dibesfer.blogspot.com";
+banner.link = "https://dibesfer.blogspot.com";
+
+banners.push(banner);
+banner = new Banner();
+
 banner.emoji = "☸️";
 banner.title = "Symbocracy";
 banner.desc = "The power and authority of Symbols over Reality";
@@ -56,8 +71,6 @@ banner.link = "/web/musicMaker/";
 
 banners.push(banner);
 banner = new Banner();
-
-
 
 banner.icon = "/assets/branding/monochat-logo150.png";
 banner.title = "Monochat";
@@ -107,8 +120,6 @@ banner.link = "https://dibesfer.com/web/horrorvacui/";
 banners.push(banner);
 banner = new Banner();
 
-
-
 banner.icon = "/web/javascript/calculator/assets/Calculator_Icon.png";
 banner.title = "Calculator";
 banner.desc = "Calculate anything";
@@ -129,6 +140,13 @@ banner.icon = "https://docs.google.com/drawings/d/e/2PACX-1vRH2XVniHMKxShk_RNqI1
 banner.title = "TryIt";
 banner.desc = "Realtime web coding";
 banner.link = "/web/tryit/";
+
+banners.push(banner);
+banner = new Banner();
+
+banner.emoji = "📸";
+banner.title = "Graphics";
+banner.category_title = true
 
 banners.push(banner);
 banner = new Banner();
