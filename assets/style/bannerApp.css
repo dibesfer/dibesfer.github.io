@@ -2,7 +2,7 @@
     border-radius: 10px;
     padding: 10px;
     display: flex;
-    height: 6rem;
+    height: 5rem;
     cursor: pointer;
     background-color: black;
     margin: 10px 0;
@@ -18,7 +18,7 @@
 .bannerApp_icon {
     flex: 0 0 auto;
     line-height: 0;
-    font-size: 4rem;
+    font-size: 3rem;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -49,14 +49,11 @@
 
 .bannerApp_title {
     padding: 5px;
-    flex: 1;
-    
-    font-size: 1.25rem;
-    border-bottom: 1px white solid;
+    font-size: 1rem;
     font-family: monospace;
     white-space: nowrap;
     overflow-x: auto;
-    line-height: 1;
+    line-height: 1
 }
 
 .bannerApp:hover>.bannerApp_text>.bannerApp_title {
@@ -69,7 +66,7 @@
     padding: 5px;
     font-size: 0.75rem;
 
-    background-color: rgba(255, 199, 95, 0.084);
+    background-color: rgba(255, 199, 95, 0.05);
     border-bottom-left-radius: 10px;
     border-bottom-right-radius: 10px;
     
