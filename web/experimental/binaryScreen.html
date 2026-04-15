@@ -35,7 +35,7 @@
         let counter = 0
         let counterlines = 0
 
-        let interval = setInterval(write, 1)
+        let interval = setInterval(write, 10)
 
         function write() {
             let random = randomInt(0, 1)
@@ -45,7 +45,7 @@
                 screen.textContent += " "
                 counter = 0
                 counterlines++
-                if (counterlines == 250){
+                if (counterlines == 75){
                     screen.textContent = ""
                     counterlines = 0
                 }

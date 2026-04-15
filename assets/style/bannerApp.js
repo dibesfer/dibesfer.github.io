@@ -123,6 +123,38 @@ banner.desc = "Leave your footprint!";
 banner.link = "https://dibesfer.com/web/guestbook";
 
 banners.push(banner);
+banner = new Banner();
+
+banner.icon = "https://docs.google.com/drawings/d/e/2PACX-1vRH2XVniHMKxShk_RNqI1Kne23uPAedXsMr_AsRP18TaMs2cDxnds7PHW2GJM28hHUR5hgr9ljXY3HE/pub?w=1000&amp;h=1000";
+banner.title = "TryIt";
+banner.desc = "Realtime web coding";
+banner.link = "/web/tryit/";
+
+banners.push(banner);
+banner = new Banner();
+
+banner.emoji = "🖌️";
+banner.title = "Paint";
+banner.desc = "16³ pixel art canvas";
+banner.link = "/web/paint";
+
+banners.push(banner);
+banner = new Banner();
+
+banner.emoji = "🧊";
+banner.title = "VoxelViewer";
+banner.desc = "15³ 3D voxel viewer-editor (WIP)";
+banner.link = "/web/VoxelViewer";
+
+banners.push(banner);
+banner = new Banner();
+
+banner.emoji = "🌳";
+banner.title = "BoxelViewer";
+banner.desc = "15³ 3D boxel viewer-editor (WIP)";
+banner.link = "";
+
+banners.push(banner);
 
 let bannersHTML = ""
 
