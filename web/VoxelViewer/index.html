@@ -1,11 +1,100 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <title>VoxelViewer</title>
   <style>
-    body { margin: 0; overflow: hidden; }
-    canvas { touch-action: none; }
+    * {
+      margin: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      overflow: hidden;
+      font-family: monospace;
+      font-size: 1rem;
+      user-select: none;
+    }
+
+    canvas {
+      touch-action: none;
+    }
+
+    #consola {
+      position: fixed;
+      top: 0;
+      background-color: white;
+      width: 100%;
+      padding: 10px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      overflow: auto;
+
+    }
+
+    #menu {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 600px;
+      max-width: 100%;
+      background-color: rgba(255, 255, 255, 0.504);
+      padding: 10px;
+      height: 400px;
+      backdrop-filter: blur(10px);
+      line-height: 2;
+    }
+
+    #options {
+      position: fixed;
+      bottom: 0;
+      background-color: white;
+      width: 100%;
+      padding: 10px;
+      
+      height: 60px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      overflow: auto;
+    }
+
+    #options>div,
+    #consola>div {
+      background-color: gray;
+      padding: 10px;
+      border-radius: 15px;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      white-space: nowrap;
+
+    }
+
+    #supertitle {
+      background-color: yellowgreen !important;
+      border: solid 3px;
+      position: sticky;
+      left: 0;
+    }
+
+    .barTitle {
+      background-color: yellow !important;
+      border: solid 3px;
+    }
+
+    .invisible {
+      display: none;
+    }
   </style>
 
   <script type="importmap">
@@ -20,239 +109,317 @@
 
 <body>
 
-<script type="module">
+  <div id="consola">
+    <div id="supertitle">VoxelViewer</div>
+    <div>FPS: 60</div>
+    <div>
+      Name:
+      <input style="width: 120px;font: unset;border: solid 3px;" type="text" name="" id="" placeholder="Table">
+    </div>
+    <div id="loadButton" onclick="showMenu()">Load</div>
+    <div>Save</div>
+    <div style="background-color: lightblue;">Log in</div>
+  </div>
 
-import * as THREE from 'three';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+  <div id="menu" class="invisible">
+    <h2>Load</h2>
+    <div>Import from a file</div>
+    <input type="file" name="" id="">
+    <div>Import from text</div>
+    <textarea style="resize: none;" name="" id="" cols="40" rows="6"></textarea>
+    <div>Use a template</div>
+    <input type="radio" name="" id="">
+    <label for="">Empty</label>
+    <input type="radio" name="" id="">
+    <label for="">Full</label>
+    <input type="radio" name="" id="">
+    <label for="">Random</label>
 
-// =========================
-// CLASSES
-// =========================
+  </div>
 
-class Microxel {
-  constructor(color = "#ffffff") {
-    this.color = color;
-    this.active = true;
-  }
+  <div id="options">
+    <div class="barTitle">Options</div>
+    <div>
+      Color
+      <input type="color" name="" id="">
+      Picker
+    </div>
 
-  destroy() {
-    this.active = false;
-  }
-}
+    <div>Eraser</div>
+    <div>Line</div>
+    <div>Extrude</div>
+    <div>Box Select</div>
+    <div>
+      Mirror
+      <input type="checkbox" name="" id="">X
+      <input type="checkbox" name="" id="">Y
+      <input type="checkbox" name="" id="">Z
 
-class Voxel {
-  constructor(size = 15) {
-    this.size = size;
-    this.microxels = [];
+    </div>
+  </div>
 
-    for (let x = 0; x < size; x++) {
-      this.microxels[x] = [];
-      for (let y = 0; y < size; y++) {
-        this.microxels[x][y] = [];
-        for (let z = 0; z < size; z++) {
+  <script>
+    // UI
+    let menu = document.getElementById("menu")
+    let menuActive = false
+    function showMenu(){
+      menu.classList.toggle("invisible")
+      document.addEventListener("click", clickDetect)
+      menuActive = !menuActive
+      console.log(menuActive)
+      
 
-          const isBorder =
-            x === 0 || y === 0 || z === 0 ||
-            x === size - 1 || y === size - 1 || z === size - 1;
+    }
 
-          const color = isBorder ? "#000000" : "#55cc99";
+    function clickDetect(e){
+      if (e.target.id =="loadButton"){
+        return
+      }
+      if (menuActive && !e.target.closest("#menu")){
+        menu.classList.add("invisible")
+        menuActive = !menuActive
+        document.removeEventListener("click", clickDetect)
+      }
+    }
+  </script>
 
-          this.microxels[x][y][z] = new Microxel(color);
+  <script type="module">
+
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+
+    
+
+    // =========================
+    // CLASSES
+    // =========================
+
+    class Microxel {
+      constructor(color = "#ffffff") {
+        this.color = color;
+        this.active = true;
+      }
+
+      destroy() {
+        this.active = false;
+      }
+    }
+
+    class Voxel {
+      constructor(size = 15) {
+        this.size = size;
+        this.microxels = [];
+
+        for (let x = 0; x < size; x++) {
+          this.microxels[x] = [];
+          for (let y = 0; y < size; y++) {
+            this.microxels[x][y] = [];
+            for (let z = 0; z < size; z++) {
+
+              const isBorder =
+                x === 0 || y === 0 || z === 0 ||
+                x === size - 1 || y === size - 1 || z === size - 1;
+
+              const color = isBorder ? "#000000" : "#55cc99";
+
+              this.microxels[x][y][z] = new Microxel(color);
+            }
+          }
+        }
+      }
+
+      get(x, y, z) {
+        return this.microxels[x]?.[y]?.[z];
+      }
+    }
+
+    // =========================
+    // WORLD
+    // =========================
+
+    const SIZE = 15;
+    const voxel = new Voxel(SIZE);
+
+    console.log("🔥 INITIAL VOXEL:", voxel);
+
+    // =========================
+    // THREE SETUP
+    // =========================
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x111111);
+
+    const camera = new THREE.PerspectiveCamera(75, innerWidth / innerHeight, 0.1, 1000);
+    camera.position.set(20, 20, 20);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(innerWidth, innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+
+    // =========================
+    // LIGHTS (FIXED SYNTAX)
+    // =========================
+
+    const dirLight = new THREE.DirectionalLight(0xffffff, 1.4);
+    dirLight.position.set(15, 25, 10);
+    scene.add(dirLight);
+
+    scene.add(new THREE.AmbientLight(0xffffff, 0.25));
+    scene.add(new THREE.HemisphereLight(0xaaaaaa, 0x444444, 0.7));
+
+    // =========================
+    // GRID (AT GROUND LEVEL)
+    // =========================
+
+    scene.add(new THREE.GridHelper(SIZE, SIZE, 0x555555, 0x333333));
+
+    // =========================
+    // INSTANCED MICROXELS
+    // =========================
+
+    const geometry = new THREE.BoxGeometry(1, 1, 1);
+
+    const material = new THREE.MeshStandardMaterial({
+      color: 0x55cc99,
+      roughness: 0.6,
+      metalness: 0.05,
+      emissive: new THREE.Color(0x0a0a0a)
+    });
+
+    const instanced = new THREE.InstancedMesh(
+      geometry,
+      material,
+      SIZE * SIZE * SIZE
+    );
+
+    const matrix = new THREE.Matrix4();
+    const idToCoord = [];
+
+    let i = 0;
+
+    for (let x = 0; x < SIZE; x++) {
+      for (let y = 0; y < SIZE; y++) {
+        for (let z = 0; z < SIZE; z++) {
+
+          matrix.setPosition(
+            x - SIZE / 2,
+            y,                // 👈 FIX: suelo en y = 0
+            z - SIZE / 2
+          );
+
+          instanced.setMatrixAt(i, matrix);
+          idToCoord[i] = { x, y, z };
+
+          i++;
         }
       }
     }
-  }
 
-  get(x, y, z) {
-    return this.microxels[x]?.[y]?.[z];
-  }
-}
+    instanced.instanceMatrix.needsUpdate = true;
+    scene.add(instanced);
 
-// =========================
-// WORLD
-// =========================
+    // =========================
+    // HIGHLIGHT
+    // =========================
 
-const SIZE = 15;
-const voxel = new Voxel(SIZE);
+    const highlight = new THREE.Mesh(
+      new THREE.BoxGeometry(1.02, 1.02, 1.02),
+      new THREE.MeshBasicMaterial({
+        color: 0xff0000,
+        transparent: true,
+        opacity: 0.5
+      })
+    );
 
-console.log("🔥 INITIAL VOXEL:", voxel);
+    scene.add(highlight);
 
-// =========================
-// THREE SETUP
-// =========================
+    // =========================
+    // RAYCAST (FIX: HOVER LIVES)
+    // =========================
 
-const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x111111);
+    const raycaster = new THREE.Raycaster();
+    const pointer = new THREE.Vector2();
 
-const camera = new THREE.PerspectiveCamera(75, innerWidth / innerHeight, 0.1, 1000);
-camera.position.set(20, 20, 20);
+    function updatePointer(e) {
+      pointer.x = (e.clientX / innerWidth) * 2 - 1;
+      pointer.y = -(e.clientY / innerHeight) * 2 + 1;
+    }
 
-const renderer = new THREE.WebGLRenderer({ antialias: true });
-renderer.setSize(innerWidth, innerHeight);
-document.body.appendChild(renderer.domElement);
+    window.addEventListener('mousemove', updatePointer);
 
-const controls = new OrbitControls(camera, renderer.domElement);
+    function getHit() {
+      raycaster.setFromCamera(pointer, camera);
+      return raycaster.intersectObject(instanced)[0] || null;
+    }
 
-// =========================
-// LIGHTS (FIXED SYNTAX)
-// =========================
+    // =========================
+    // CLICK → MODIFY MICROXEL
+    // =========================
 
-const dirLight = new THREE.DirectionalLight(0xffffff, 1.4);
-dirLight.position.set(15, 25, 10);
-scene.add(dirLight);
+    window.addEventListener('mousedown', () => {
 
-scene.add(new THREE.AmbientLight(0xffffff, 0.25));
-scene.add(new THREE.HemisphereLight(0xaaaaaa, 0x444444, 0.7));
+      const hit = getHit();
+      if (!hit) return;
 
-// =========================
-// GRID (AT GROUND LEVEL)
-// =========================
+      const { x, y, z } = idToCoord[hit.instanceId];
 
-scene.add(new THREE.GridHelper(SIZE, SIZE, 0x555555, 0x333333));
+      const cell = voxel.get(x, y, z);
 
-// =========================
-// INSTANCED MICROXELS
-// =========================
+      if (cell) {
+        cell.destroy();
+        console.log(`💥 destroyed microxel at ${x},${y},${z}`);
+      }
 
-const geometry = new THREE.BoxGeometry(1, 1, 1);
+      console.log("🧱 VOXEL STATE:", voxel);
+    });
 
-const material = new THREE.MeshStandardMaterial({
-  color: 0x55cc99,
-  roughness: 0.6,
-  metalness: 0.05,
-  emissive: new THREE.Color(0x0a0a0a)
-});
+    // =========================
+    // HIGHLIGHT UPDATE
+    // =========================
 
-const instanced = new THREE.InstancedMesh(
-  geometry,
-  material,
-  SIZE * SIZE * SIZE
-);
+    function updateHighlight() {
 
-const matrix = new THREE.Matrix4();
-const idToCoord = [];
+      const hit = getHit();
 
-let i = 0;
+      if (!hit) {
+        highlight.visible = false;
+        return;
+      }
 
-for (let x = 0; x < SIZE; x++) {
-  for (let y = 0; y < SIZE; y++) {
-    for (let z = 0; z < SIZE; z++) {
+      const { x, y, z } = idToCoord[hit.instanceId];
 
-      matrix.setPosition(
+      highlight.position.set(
         x - SIZE / 2,
-        y,                // 👈 FIX: suelo en y = 0
+        y,
         z - SIZE / 2
       );
 
-      instanced.setMatrixAt(i, matrix);
-      idToCoord[i] = { x, y, z };
-
-      i++;
+      highlight.visible = true;
     }
-  }
-}
 
-instanced.instanceMatrix.needsUpdate = true;
-scene.add(instanced);
+    // =========================
+    // LOOP
+    // =========================
 
-// =========================
-// HIGHLIGHT
-// =========================
+    function animate() {
+      requestAnimationFrame(animate);
+      updateHighlight();
+      controls.update();
+      renderer.render(scene, camera);
+    }
+    animate();
 
-const highlight = new THREE.Mesh(
-  new THREE.BoxGeometry(1.02, 1.02, 1.02),
-  new THREE.MeshBasicMaterial({
-    color: 0xff0000,
-    transparent: true,
-    opacity: 0.5
-  })
-);
+    addEventListener('resize', () => {
+      camera.aspect = innerWidth / innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(innerWidth, innerHeight);
+    });
 
-scene.add(highlight);
-
-// =========================
-// RAYCAST (FIX: HOVER LIVES)
-// =========================
-
-const raycaster = new THREE.Raycaster();
-const pointer = new THREE.Vector2();
-
-function updatePointer(e) {
-  pointer.x = (e.clientX / innerWidth) * 2 - 1;
-  pointer.y = -(e.clientY / innerHeight) * 2 + 1;
-}
-
-window.addEventListener('mousemove', updatePointer);
-
-function getHit() {
-  raycaster.setFromCamera(pointer, camera);
-  return raycaster.intersectObject(instanced)[0] || null;
-}
-
-// =========================
-// CLICK → MODIFY MICROXEL
-// =========================
-
-window.addEventListener('mousedown', () => {
-
-  const hit = getHit();
-  if (!hit) return;
-
-  const { x, y, z } = idToCoord[hit.instanceId];
-
-  const cell = voxel.get(x, y, z);
-
-  if (cell) {
-    cell.destroy();
-    console.log(`💥 destroyed microxel at ${x},${y},${z}`);
-  }
-
-  console.log("🧱 VOXEL STATE:", voxel);
-});
-
-// =========================
-// HIGHLIGHT UPDATE
-// =========================
-
-function updateHighlight() {
-
-  const hit = getHit();
-
-  if (!hit) {
-    highlight.visible = false;
-    return;
-  }
-
-  const { x, y, z } = idToCoord[hit.instanceId];
-
-  highlight.position.set(
-    x - SIZE / 2,
-    y,
-    z - SIZE / 2
-  );
-
-  highlight.visible = true;
-}
-
-// =========================
-// LOOP
-// =========================
-
-function animate() {
-  requestAnimationFrame(animate);
-  updateHighlight();
-  controls.update();
-  renderer.render(scene, camera);
-}
-animate();
-
-addEventListener('resize', () => {
-  camera.aspect = innerWidth / innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(innerWidth, innerHeight);
-});
-
-</script>
+  </script>
 
 </body>
+
 </html>
