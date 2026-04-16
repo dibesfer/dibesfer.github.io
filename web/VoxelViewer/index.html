@@ -6,99 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <title>VoxelViewer</title>
-  <style>
-    * {
-      margin: 0;
-      box-sizing: border-box;
-    }
-
-    body {
-      margin: 0;
-      overflow: hidden;
-      font-family: monospace;
-      font-size: 1rem;
-      user-select: none;
-    }
-
-    canvas {
-      touch-action: none;
-    }
-
-    #consola {
-      position: fixed;
-      top: 0;
-      
-      width: 100%;
-      padding: 10px;
-      height: 60px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      overflow: auto;
-
-    }
-
-    #menu {
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 600px;
-      max-width: 100%;
-      background-color: rgba(255, 255, 255, 0.504);
-      padding: 10px;
-      height: 400px;
-      backdrop-filter: blur(10px);
-      line-height: 2;
-    }
-
-    #options {
-      position: fixed;
-      bottom: 0;
-      width: 100%;
-      padding: 10px;
-      
-      height: 60px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      overflow: auto;
-    }
-
-    #options , #consola {
-      background-color: rgb(54, 54, 54);
-    }
-
-    #options>div,
-    #consola>div {
-      background-color: gray;
-      padding: 10px;
-      border-radius: 15px;
-      height: 100%;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      cursor: pointer;
-      white-space: nowrap;
-
-    }
-
-    #supertitle {
-      background-color: yellowgreen !important;
-      border: solid 3px;
-      position: sticky;
-      left: 0;
-    }
-
-    .barTitle {
-      background-color: yellow !important;
-      border: solid 3px;
-    }
-
-    .invisible {
-      display: none;
-    }
-  </style>
+  <link rel="stylesheet" href="style.css">
 
   <script type="importmap">
   {
@@ -114,30 +22,19 @@
 
   <div id="consola">
     <div id="supertitle">VoxelViewer</div>
-    <div>FPS: 60</div>
+    <div id="fpsCounter">FPS: 0</div>
     <div>
       Name:
-      <input style="width: 120px;font: unset;border: solid 3px;" type="text" name="" id="" placeholder="Table">
+      <input id="UIVoxelName" style="width: 120px;font: unset;border: solid 3px;" type="text" name="" placeholder="Table">
     </div>
-    <div id="loadButton" onclick="showMenu()">Load</div>
-    <div>Save</div>
+    <div id="loadButton">Load</div>
+    <div id="saveButton">Save</div>
     <div style="background-color: lightblue;">Log in</div>
   </div>
 
   <div id="menu" class="invisible">
-    <h2>Load</h2>
-    <div>Import from a file</div>
-    <input type="file" name="" id="">
-    <div>Import from text</div>
-    <textarea style="resize: none;" name="" id="" cols="40" rows="6"></textarea>
-    <div>Use a template</div>
-    <input type="radio" name="" id="">
-    <label for="">Empty</label>
-    <input type="radio" name="" id="">
-    <label for="">Full</label>
-    <input type="radio" name="" id="">
-    <label for="">Random</label>
-
+    <h2>test</h2>
+  
   </div>
 
   <div id="options">
@@ -147,8 +44,9 @@
       <input type="color" name="" id="">
       Picker
     </div>
+    <div>Brush</div>
 
-    <div>Eraser</div>
+    <div class="option_selected">Eraser</div>
     <div>Line</div>
     <div>Extrude</div>
     <div>Box Select</div>
@@ -163,27 +61,115 @@
 
   <script>
     // UI
-    let menu = document.getElementById("menu")
-    let menuActive = false
-    function showMenu(){
-      menu.classList.toggle("invisible")
-      document.addEventListener("click", clickDetect)
-      menuActive = !menuActive
-      console.log(menuActive)
-      
+    const menu = document.getElementById("menu");
+    const supertitle = document.getElementById("supertitle");
+    const loadButton = document.getElementById("loadButton");
+    const saveButton = document.getElementById("saveButton");
+    const menuState = {
+      active: false,
+      panel: null,
+      cache: {}
+    };
 
+    async function fetchMenuContent(panel) {
+      if (menuState.cache[panel]) {
+        return menuState.cache[panel];
+      }
+
+      const response = await fetch(`./UI/${panel}.html`);
+
+      if (!response.ok) {
+        throw new Error(`Menu "${panel}" could not be loaded.`);
+      }
+
+      const html = await response.text();
+      menuState.cache[panel] = html;
+      return html;
     }
 
-    function clickDetect(e){
-      if (e.target.id =="loadButton"){
-        return
-      }
-      if (menuActive && !e.target.closest("#menu")){
-        menu.classList.add("invisible")
-        menuActive = !menuActive
-        document.removeEventListener("click", clickDetect)
+    async function openMenu(panel) {
+      menu.innerHTML = "<p>Loading...</p>";
+      menu.classList.remove("invisible");
+      menuState.active = true;
+      menuState.panel = panel;
+      document.addEventListener("click", clickDetect);
+
+      try {
+        const html = await fetchMenuContent(panel);
+
+        // Keep the active panel explicit for menu-specific logic later.
+        menu.dataset.panel = panel;
+        menu.innerHTML = html;
+        hydrateMenu(panel);
+      } catch (error) {
+        menu.innerHTML = `<p>${error.message}</p>`;
       }
     }
+
+    function hydrateMenu(panel) {
+      if (panel === "save") {
+        const output = menu.querySelector("#saveJsonOutput");
+        const saveData = window.getVoxelSaveData?.();
+
+        if (!output || !saveData) return;
+
+        output.value = JSON.stringify(saveData, null, 2);
+        return;
+      }
+
+      if (panel === "load") {
+        const input = menu.querySelector("#loadJsonInput");
+        const button = menu.querySelector("#loadJsonButton");
+        const status = menu.querySelector("#loadStatus");
+        const templateInputs = menu.querySelectorAll('input[name="loadTemplate"]');
+
+        if (!input || !button || !status) return;
+
+        button.addEventListener("click", () => {
+          const selectedTemplate = Array.from(templateInputs).find((radio) => radio.checked)?.value;
+          const result = input.value.trim()
+            ? window.applyVoxelSaveData?.(input.value)
+            : window.applyVoxelPreset?.(selectedTemplate);
+
+          status.textContent = result?.message || "Load failed.";
+        });
+      }
+    }
+
+    function closeMenu() {
+      menu.classList.add("invisible");
+      menuState.active = false;
+      menuState.panel = null;
+      delete menu.dataset.panel;
+      document.removeEventListener("click", clickDetect);
+    }
+
+    async function toggleMenu(panel) {
+      if (menuState.active && menuState.panel === panel) {
+        closeMenu();
+        return;
+      }
+
+      await openMenu(panel);
+    }
+
+    function clickDetect(e) {
+      if (
+        e.target.closest("#supertitle") ||
+        e.target.closest("#loadButton") ||
+        e.target.closest("#saveButton")
+      ) {
+        return;
+      }
+
+      if (menuState.active && !e.target.closest("#menu")) {
+        closeMenu();
+      }
+    }
+
+    supertitle.addEventListener("click", () => toggleMenu("about"));
+    loadButton.addEventListener("click", () => toggleMenu("load"));
+    saveButton.addEventListener("click", () => toggleMenu("save"));
   </script>
 
   <script type="module">
@@ -192,7 +178,7 @@
     import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 
-    
+
 
     // =========================
     // CLASSES
@@ -209,31 +195,123 @@
       }
     }
 
+    const voxelPresets = {
+      empty_preset(size) {
+        return {
+          size,
+          microxels: Array.from({ length: size }, () =>
+            Array.from({ length: size }, () =>
+              Array.from({ length: size }, () => ({
+                color: "#ffffff",
+                active: false
+              }))
+            )
+          )
+        };
+      },
+
+      full_preset(size) {
+        return {
+          size,
+          microxels: Array.from({ length: size }, () =>
+            Array.from({ length: size }, () =>
+              Array.from({ length: size }, () => ({
+                color: "#ffffff",
+                active: true
+              }))
+            )
+          )
+        };
+      },
+
+      random_preset(size) {
+        return {
+          size,
+          microxels: Array.from({ length: size }, () =>
+            Array.from({ length: size }, () =>
+              Array.from({ length: size }, () => ({
+                color: "#ffffff",
+                active: Math.random() >= 0.5
+              }))
+            )
+          )
+        };
+      }
+    };
+
+    /*
+    okay, so we are generating a Voxel object during this process right?
+
+next step will be formatting into JSON 
+    */
     class Voxel {
-      constructor(size = 15) {
+      constructor(size = 7) {
         this.size = size;
-        this.microxels = [];
+        this.name = "";
+        this.microxels = Array.from({ length: size }, () =>
+          Array.from({ length: size }, () =>
+            Array.from({ length: size }, () => new Microxel())
+          )
+        );
 
-        for (let x = 0; x < size; x++) {
-          this.microxels[x] = [];
-          for (let y = 0; y < size; y++) {
-            this.microxels[x][y] = [];
-            for (let z = 0; z < size; z++) {
+        this.applyPreset("full");
+      }
 
-              const isBorder =
-                x === 0 || y === 0 || z === 0 ||
-                x === size - 1 || y === size - 1 || z === size - 1;
+      get(x, y, z) {
+        return this.microxels[x]?.[y]?.[z];
+      }
 
-              const color = isBorder ? "#000000" : "#55cc99";
+      setName(name = "") {
+        this.name = String(name).trim();
+      }
 
-              this.microxels[x][y][z] = new Microxel(color);
+      toJSON() {
+        return {
+          name: this.name,
+          size: this.size,
+          microxels: this.microxels.map((plane) =>
+            plane.map((row) =>
+              row.map((cell) => ({
+                color: cell.color,
+                active: cell.active
+              }))
+            )
+          )
+        };
+      }
+
+      loadFromData(data) {
+        if (!data || data.size !== this.size || !Array.isArray(data.microxels)) {
+          throw new Error("Loaded voxel size does not match the current editor.");
+        }
+
+        this.setName(data.name ?? "");
+
+        for (let x = 0; x < this.size; x++) {
+          for (let y = 0; y < this.size; y++) {
+            for (let z = 0; z < this.size; z++) {
+              const nextCell = data.microxels?.[x]?.[y]?.[z];
+
+              if (!nextCell) {
+                throw new Error(`Missing microxel at ${x},${y},${z}.`);
+              }
+
+              const cell = this.get(x, y, z);
+              cell.color = typeof nextCell.color === "string" ? nextCell.color : cell.color;
+              cell.active = Boolean(nextCell.active);
             }
           }
         }
       }
 
-      get(x, y, z) {
-        return this.microxels[x]?.[y]?.[z];
+      applyPreset(presetName) {
+        const presetBuilder = voxelPresets[`${presetName}_preset`];
+
+        if (!presetBuilder) {
+          throw new Error(`Unknown preset "${presetName}".`);
+        }
+
+        this.loadFromData(presetBuilder(this.size));
       }
     }
 
@@ -243,6 +321,19 @@
 
     const SIZE = 15;
     const voxel = new Voxel(SIZE);
+    const fpsCounter = document.getElementById("fpsCounter");
+    const uiVoxelName = document.getElementById("UIVoxelName");
+    window.getVoxelSaveData = () => voxel.toJSON();
+
+    function syncVoxelNameInput() {
+      uiVoxelName.value = voxel.name;
+    }
+
+    uiVoxelName.addEventListener("input", (e) => {
+      voxel.setName(e.target.value);
+    });
+
+    syncVoxelNameInput();
 
     console.log("🔥 INITIAL VOXEL:", voxel);
 
@@ -277,7 +368,7 @@
     // GRID (AT GROUND LEVEL)
     // =========================
 
-    scene.add(new THREE.GridHelper(SIZE, SIZE, 0x555555, 0x333333));
+    scene.add(new THREE.GridHelper(SIZE, SIZE, 0xffffff, 0xffffff));
 
     // =========================
     // INSTANCED MICROXELS
@@ -286,7 +377,7 @@
     const geometry = new THREE.BoxGeometry(1, 1, 1);
 
     const material = new THREE.MeshStandardMaterial({
-      color: 0x55cc99,
+      color: 0xffffff,
       roughness: 0.6,
       metalness: 0.05,
       emissive: new THREE.Color(0x0a0a0a)
@@ -299,6 +390,13 @@
     );
 
     const matrix = new THREE.Matrix4();
+    const quaternion = new THREE.Quaternion();
+    const activeScale = new THREE.Vector3(1, 1, 1);
+    const hiddenScale = new THREE.Vector3(0, 0, 0);
+    const tempPosition = new THREE.Vector3();
+    const tempColor = new THREE.Color();
+    const modelCenterOffset = (SIZE - 1) / 2;
+    const groundOffset = 0.5;
     const idToCoord = [];
 
     let i = 0;
@@ -308,13 +406,14 @@
         for (let z = 0; z < SIZE; z++) {
 
           matrix.setPosition(
-            x - SIZE / 2,
-            y,                // 👈 FIX: suelo en y = 0
-            z - SIZE / 2
+            x - modelCenterOffset,
+            y + groundOffset,
+            z - modelCenterOffset
           );
 
           instanced.setMatrixAt(i, matrix);
           idToCoord[i] = { x, y, z };
+          instanced.setColorAt(i, tempColor.set(voxel.get(x, y, z).color));
 
           i++;
         }
@@ -322,7 +421,77 @@
     }
 
     instanced.instanceMatrix.needsUpdate = true;
+    instanced.instanceColor.needsUpdate = true;
     scene.add(instanced);
+
+    function getMicroxelPosition(x, y, z) {
+      return tempPosition.set(
+        x - modelCenterOffset,
+        y + groundOffset,
+        z - modelCenterOffset
+      );
+    }
+
+    function syncMicroxelVisual(instanceId) {
+      const { x, y, z } = idToCoord[instanceId];
+      const cell = voxel.get(x, y, z);
+
+      if (!cell) return;
+
+      const position = getMicroxelPosition(x, y, z);
+
+      // Render state always comes from the microxel model.
+      matrix.compose(
+        position,
+        quaternion,
+        cell.active ? activeScale : hiddenScale
+      );
+
+      instanced.setMatrixAt(instanceId, matrix);
+      instanced.setColorAt(instanceId, tempColor.set(cell.color));
+      instanced.instanceMatrix.needsUpdate = true;
+      instanced.instanceColor.needsUpdate = true;
+    }
+
+    function syncAllMicroxels() {
+      for (let instanceId = 0; instanceId < idToCoord.length; instanceId++) {
+        syncMicroxelVisual(instanceId);
+      }
+    }
+
+    window.applyVoxelSaveData = (jsonText) => {
+      try {
+        const data = JSON.parse(jsonText);
+        voxel.loadFromData(data);
+        syncVoxelNameInput();
+        syncAllMicroxels();
+
+        return { ok: true, message: "Voxel loaded." };
+      } catch (error) {
+        return {
+          ok: false,
+          message: error instanceof Error ? error.message : "Invalid voxel JSON."
+        };
+      }
+    };
+
+    window.applyVoxelPreset = (presetName) => {
+      if (!presetName) {
+        return { ok: false, message: "Select a template first." };
+      }
+
+      try {
+        voxel.applyPreset(presetName);
+        syncAllMicroxels();
+
+        return { ok: true, message: `Preset "${presetName}" loaded.` };
+      } catch (error) {
+        return {
+          ok: false,
+          message: error instanceof Error ? error.message : "Preset could not be loaded."
+        };
+      }
+    };
 
     // =========================
     // HIGHLIGHT
@@ -373,6 +542,7 @@
 
       if (cell) {
         cell.destroy();
+        syncMicroxelVisual(hit.instanceId);
         console.log(`💥 destroyed microxel at ${x},${y},${z}`);
       }
 
@@ -395,9 +565,9 @@
       const { x, y, z } = idToCoord[hit.instanceId];
 
       highlight.position.set(
-        x - SIZE / 2,
-        y,
-        z - SIZE / 2
+        x - modelCenterOffset,
+        y + groundOffset,
+        z - modelCenterOffset
       );
 
       highlight.visible = true;
@@ -407,8 +577,26 @@
     // LOOP
     // =========================
 
-    function animate() {
+    let lastFpsTime = performance.now();
+    let frameCount = 0;
+
+    function updateFps(now) {
+      frameCount += 1;
+
+      const elapsed = now - lastFpsTime;
+
+      // Sample over a short window so the counter stays readable.
+      if (elapsed < 250) return;
+
+      const fps = Math.round((frameCount * 1000) / elapsed);
+      fpsCounter.textContent = `FPS: ${fps}`;
+      frameCount = 0;
+      lastFpsTime = now;
+    }
+
+    function animate(now = performance.now()) {
       requestAnimationFrame(animate);
+      updateFps(now);
       updateHighlight();
       controls.update();
       renderer.render(scene, camera);

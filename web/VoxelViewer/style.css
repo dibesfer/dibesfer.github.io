@@ -1,0 +1,99 @@
+* {
+    margin: 0;
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    overflow: hidden;
+    font-family: monospace;
+    font-size: 1rem;
+    user-select: none;
+}
+
+canvas {
+    touch-action: none;
+}
+
+#consola {
+    position: fixed;
+    top: 0;
+
+    width: 100%;
+    padding: 10px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    overflow: auto;
+
+}
+
+#menu {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 600px;
+    max-width: 100%;
+    background-color: rgba(255, 255, 255, 0.504);
+    padding: 10px;
+    height: 400px;
+    overflow: auto;
+    backdrop-filter: blur(10px);
+    line-height: 2;
+}
+
+#options {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    padding: 10px;
+
+    height: 60px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    overflow: auto;
+}
+
+
+#options,
+#consola {
+    background-color: rgb(54, 54, 54);
+}
+
+#options>div,
+#consola>div {
+    background-color: gray;
+    padding: 10px;
+    border-radius: 15px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    white-space: nowrap;
+
+}
+.option_selected {
+    border: solid 3px black;
+    background-color: rgb(114, 204, 192) !important;
+}
+
+
+#supertitle {
+    background-color: yellowgreen !important;
+    border: solid 3px;
+    position: sticky;
+    left: 0;
+}
+
+.barTitle {
+    background-color: yellow !important;
+    border: solid 3px;
+}
+
+.invisible {
+    display: none;
+}
