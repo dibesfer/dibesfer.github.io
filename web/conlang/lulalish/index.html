@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lulalish</title>
-    <link rel="icon" type="image/x-icon" href="assets/alphabet/16.png">
+    <link rel="icon" type="image/x-icon" href="assets/brand/logo.png">
 
     <script src="/ferscript.js"></script>
 
@@ -19,23 +19,62 @@
 
         .letter {
             image-rendering: pixelated;
-            width: 20px;
+            width: 16px;
             display: inline-block;
+        }
+
+        .space {
+            width: 16px;
+            display: inline-block;
+        }
+
+        .lula_logo {
+            width: 60px;
+        }
+
+        .flexy {
+            display: flex;
+
+            align-items: center;
         }
     </style>
 </head>
 
 <body>
     <header>
-        <h1>Lulalish</h1>
+        <div class="flexy">
+            <img class="lula_logo" src="assets/brand/logo.png" alt="Lula Logo">
+            <h1>Lulalish</h1>
+        </div>
         <p>Simple, easy stroke constructed alphabet</p>
         <hr>
     </header>
 
     <main>
-        <h2>The alphabet</h2>
+
+        <h2>Latin alphabet</h2>
 
         <p>ABCDEFGHIJKLMNOPQRSTUVWXYZ</p>
+        <div id="lulatin_alphabet"></div>
+
+        <p id="lulatin_alphabet_lower_title">ABCDEFGHIJKLMNOPQRSTUVWXYZ</p>
+        <div id="lulatin_alphabet_lower"></div>
+
+        <h2>Lorem Ipsum</h2>
+        <div>
+            <div class="conversable">Lorem ipsum dolor sit amet consectetur adipisicing elit. Corporis nam quas autem
+                esse libero ea fugit tempora facere cumque ipsa, commodi, quae molestias. Voluptatem amet, adipisci nam
+                consequuntur sunt possimus.</div>
+            <br>
+            <div class="conversable">Iusto repudiandae nesciunt excepturi illum! Nulla assumenda, explicabo natus illum
+                voluptate eligendi
+                quae hic iusto odit voluptates, rem quidem possimus, cumque vitae doloremque optio. Corrupti dolores
+                odio magnam ad omnis.</div>
+            <br>
+            <div class="conversable">256.24 unities is not the same as 2.025.265,125805</div>
+        </div>
+
+        <h2>The Lulabet</h2>
         <div id="showAlphabet">
 
         </div>
@@ -46,17 +85,23 @@
 
         </div>
 
-       
+
 
     </main>
 
     <footer>
         <p>27 letter conscript made by dibesfer</p>
-        <p>Contact: dibesfer@gmail.com</p>
+        <p>Contact <a href="mailto:dibesfer@gmail.com">dibesfer@gmail.com</a></p>
+        <p><a href="https://dibesfer.github.io">dibesfer</a></p>
     </footer>
 
     <script>
         let lulalish = []
+
+        let alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        let alphabet_lowerCase = alphabet.toLowerCase()
+
+        lulatin_alphabet_lower_title.textContent = alphabet_lowerCase
 
         for (let i = 0; i <= 26; i++) {
             lulalish.push(i.toString())
@@ -64,9 +109,23 @@
 
         for (let i = 0; i < lulalish.length; i++) {
             let img = document.createElement("img")
-            img.src = "assets/alphabet/" + lulalish[i] + ".png"
+            img.src = "assets/lulabet/" + lulalish[i] + ".png"
             img.classList.add("letter")
             showAlphabet.append(img)
+        }
+
+        for (let i = 0; i < alphabet.length; i++) {
+            let img = document.createElement("img")
+            img.src = "assets/latin/" + alphabet[i] + ".png"
+            img.classList.add("letter")
+            lulatin_alphabet.append(img)
+        }
+
+        for (let i = 0; i < alphabet.length; i++) {
+            let img = document.createElement("img")
+            img.src = "assets/latin/" + alphabet_lowerCase[i] + ".png"
+            img.classList.add("letter")
+            lulatin_alphabet_lower.append(img)
         }
 
         for (let i = 0; i < 512; i++) {
@@ -75,7 +134,7 @@
 
             if (rndNum < 26) {
                 let img = document.createElement("img")
-                img.src = "assets/alphabet/" + rndNum + ".png"
+                img.src = "assets/lulabet/" + rndNum + ".png"
                 img.classList.add("letter")
                 lorem.append(img)
             }
@@ -87,6 +146,51 @@
             }
 
 
+        }
+
+        let conversable = document.querySelectorAll(".conversable")
+
+        conversable.forEach(element => {
+            element.innerHTML = lulatin_script(element.textContent)
+
+        });
+
+
+        function lulatin_script(latin) {
+            let images = []
+            for (let i = 0; i < latin.length; i++) {
+                const element = latin[i];
+
+                if (element == "") {
+                    continue
+                }
+
+                if (element == " ") {
+                    images.push(" ")
+                }
+                else if (element == ".") {
+                    images.push('assets/latin/dot.png')
+                    console.log(images[i])
+                }
+                else {
+                    images.push("assets/latin/" + element + ".png")
+                }
+            }
+            let html = ""
+            for (let i = 0; i < images.length; i++) {
+                const element = images[i];
+                if (element == " ") {
+                    html += `
+                    <div class="space"></div>
+                    `
+                }
+                else {
+                    html += `
+                    <img class="letter" src="${element}" alt="letter">
+                `
+                }
+            }
+            return html
         }
 
     </script>

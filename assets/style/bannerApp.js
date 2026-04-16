@@ -175,6 +175,23 @@ banner.desc = "15³ 3D boxel viewer-editor (WIP)";
 banner.link = "";
 
 banners.push(banner);
+banner = new Banner();
+
+banner.icon = "/web/conlang/assets/brand/conlang.png";
+banner.title = "Conlang";
+banner.desc = "Constructed languages";
+banner.link = "";
+
+banners.push(banner);
+banner = new Banner();
+
+banner.icon = "/web/conlang/lulalish/assets/brand/logo.png";
+banner.title = "Lula";
+banner.desc = "Simple, easy stroke constructed alphabet";
+banner.link = "/web/conlang/lulalish/index.html";
+
+
+banners.push(banner);
 
 let bannersHTML = ""
 
