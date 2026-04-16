@@ -21,15 +21,17 @@
 <body>
 
   <div id="consola">
-    <div id="supertitle">VoxelViewer</div>
+    <div id="supertitle"><span class="only-mobile">VV</span><span class="only-desktop">VoxelViewer</span></div>
     <div id="fpsCounter">FPS:</div>
     <div>
       Name:
       <input id="UIVoxelName" style="width: 120px;font: unset;border: solid 3px;" type="text" name="" placeholder="Table">
     </div>
-    <div id="loadButton">⬇️Load</div>
-    <div id="saveButton">💾Save</div>
-    <div style="background-color: lightblue;">Log in</div>
+    <div id="loadButton">⬇️<span class="only-desktop">Load</span></div>
+    <div id="saveButton">💾<span class="only-desktop">Save</span></div>
+   
+    <div style="background-color: lightblue;">👤<span class="only-desktop">Log in</span></div>
+   
   </div>
 
   <div id="menu" class="invisible">
@@ -38,22 +40,22 @@
   </div>
 
   <div id="options">
-    <div class="barTitle">⚙️Options</div>
+    <div class="optionstitle">⚙️<span class="only-desktop">Options</span></div>
     <div>
-      🌈Color
+      🌈<span class="only-desktop">Color</span>
       <input type="color" name="" id="">
-      Picker
+      
     </div>
-    <div>🖌️Paint</div>
+    <div>🖌️<span class="only-desktop">Paint</span></div>
 
-    <div>👇Place</div>
+    <div>👇<span class="only-desktop">Place</span></div>
     
-    <div class="option_selected">✖️Eraser</div>
-    <div>↗️Line</div>
-    <div>🔝Extrude</div>
-    <div>📦Box Select</div>
+    <div class="option_selected">✖️<span class="only-desktop">Eraser</span></div>
+    <div>↗️<span class="only-desktop">Line</span></div>
+    <div>🔝<span class="only-desktop">Extrude</span></div>
+    <div>📦<span class="only-desktop">Box Select</span></div>
     <div>
-      🪞Mirror
+      🪞<span class="only-desktop">Mirror</span>
       <input type="checkbox" name="" id="">X
       <input type="checkbox" name="" id="">Y
       <input type="checkbox" name="" id="">Z
