@@ -287,6 +287,13 @@ function findPresenceSessionBySessionId(state, targetSessionId) {
   return Object.values(state).flat().find(session => String(session?.sessionId || '') === targetSessionId) || null;
 }
 
+function resolvePresencePlayerKey(session, fallbackSessionId = '') {
+  const playerKey = typeof session?.playerKey === 'string' ? session.playerKey.trim() : '';
+  if (playerKey) return playerKey;
+
+  return String(fallbackSessionId || session?.sessionId || '').trim();
+}
+
 function syncRemotePlayerDisplayName(remotePlayer, displayName) {
   if (!remotePlayer?.nameSprite) return;
   remotePlayer.displayName = resolveRemoteDisplayName(displayName);
@@ -336,6 +343,7 @@ function snapshotPresencePayload(state) {
     in the online list and debug console. The shared lobby roster also needs
     the current page url so it can label where each live session currently is. */
     sessionId: state.sessionId,
+    playerKey: typeof state.playerKey === 'string' ? state.playerKey.trim() : '',
     displayName: resolveLocalPresenceDisplayName(),
     url: resolvePresenceUrl(),
   };
@@ -399,6 +407,7 @@ export function createMultiplayerController({
   scene,
   getLocalPlayerState,
   getLocalPresenceFaceData,
+  getLocalPresencePlayerKey,
   getSharedWorldPlayerStates,
   onApplyLocalDamage,
   presenceOnly = false,
@@ -622,10 +631,14 @@ export function createMultiplayerController({
 
       seenRemoteSessionIds.add(sessionId);
 
+      /* Shared-world persistence is player-based, while live replication stays
+      session-based. Presence bridges those two identities for late joins. */
+      const sharedWorldPlayerKey = resolvePresencePlayerKey(latestPayload, sessionId);
+
       /* Presence tells us which sessions are alive; the shared world snapshot
       fills the initial transform gap for motionless players on late joins. */
       if (sharedWorldPlayerStates && typeof sharedWorldPlayerStates === 'object') {
-        applySharedWorldPlayerBootstrap(sessionId, sharedWorldPlayerStates[sessionId]);
+        applySharedWorldPlayerBootstrap(sessionId, sharedWorldPlayerStates[sharedWorldPlayerKey]);
       }
     });
 
@@ -660,6 +673,9 @@ export function createMultiplayerController({
 
     await channel.track(snapshotPresencePayload({
       sessionId: localSessionId,
+      playerKey: typeof getLocalPresencePlayerKey === 'function'
+        ? getLocalPresencePlayerKey()
+        : '',
       faceData: typeof getLocalPresenceFaceData === 'function'
         ? getLocalPresenceFaceData()
         : null,

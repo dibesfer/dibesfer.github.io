@@ -34,6 +34,15 @@ function isFiniteInteger(value) {
   return Number.isInteger(value) && Number.isFinite(value);
 }
 
+function floorDatabaseNumber(value, digits = 3) {
+  const numericValue = Number(value);
+  if (!Number.isFinite(numericValue)) return null;
+
+  const factor = 10 ** digits;
+  const flooredValue = Math.floor(numericValue * factor) / factor;
+  return Number(flooredValue.toFixed(digits));
+}
+
 function sanitizeWorldId(worldId) {
   /* Shared world rows should use the same compact predictable ids every page
   load so the multiplayer bootstrap always targets one stable Supabase row. */
@@ -85,10 +94,10 @@ function normalizePlayerState(record) {
   if (!record || typeof record !== 'object') return null;
 
   const normalized = {};
-  if (Number.isFinite(record.x)) normalized.x = Number(record.x);
-  if (Number.isFinite(record.y)) normalized.y = Number(record.y);
-  if (Number.isFinite(record.z)) normalized.z = Number(record.z);
-  if (Number.isFinite(record.rotationY)) normalized.rotationY = Number(record.rotationY);
+  if (Number.isFinite(record.x)) normalized.x = floorDatabaseNumber(record.x, 3);
+  if (Number.isFinite(record.y)) normalized.y = floorDatabaseNumber(record.y, 3);
+  if (Number.isFinite(record.z)) normalized.z = floorDatabaseNumber(record.z, 3);
+  if (Number.isFinite(record.rotationY)) normalized.rotationY = floorDatabaseNumber(record.rotationY, 3);
   if (Number.isFinite(record.health)) normalized.health = Number(record.health);
   if (Number.isFinite(record.maxHealth)) normalized.maxHealth = Number(record.maxHealth);
   if (typeof record.isDead === 'boolean') normalized.isDead = record.isDead;

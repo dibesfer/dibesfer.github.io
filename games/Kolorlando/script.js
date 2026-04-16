@@ -136,6 +136,37 @@ async function resolveAuthenticatedPlayerDisplayName() {
   }
 }
 
+async function resolveAuthenticatedPlayerKey() {
+  /* Shared-world persistence must use a stable account identity instead of the
+  ephemeral runtime session id so reconnects update one player record. */
+  if (!window.database?.auth?.getUser) {
+    return '';
+  }
+
+  try {
+    const { data, error } = await window.database.auth.getUser();
+
+    if (error) {
+      const isMissingSessionError =
+        error?.name === 'AuthSessionMissingError' ||
+        /auth session missing/i.test(String(error?.message || ''));
+
+      if (isMissingSessionError) {
+        return '';
+      }
+
+      throw error;
+    }
+
+    return typeof data?.user?.id === 'string' ? data.user.id : '';
+  } catch (error) {
+    console.error('Failed to resolve the authenticated Kolorlando player key.', error);
+    return '';
+  }
+}
+
+const authenticatedPlayerKey = await resolveAuthenticatedPlayerKey();
+
 async function syncLocalPlayerDisplayNameFromAuth(sprite) {
   /* We first render from the cached/local default value so the scene appears
   immediately, then asynchronously upgrade the label once auth confirms who
@@ -1749,6 +1780,7 @@ const MULTIPLAYER_WORLD_PLAYER_SAVE_INTERVAL = 2;
 let multiplayerWorldPlayerSaveAccumulator = MULTIPLAYER_WORLD_PLAYER_SAVE_INTERVAL;
 let lastSavedMultiplayerPlayerStateKey = '';
 let currentMultiplayerWorldState = multiplayerWorldBootstrap;
+let initialPlayerRotationY = 0;
 
 function applyLocalSavedWorld() {
   /* Replaying saved voxel diffs immediately after the map boots keeps local
@@ -1849,6 +1881,35 @@ function applyIncomingMultiplayerWorldState(nextState, previousState = currentMu
   window.KOLORLANDO_MULTIPLAYER_WORLD_STATE = nextState;
 }
 
+function readSavedMultiplayerPlayerTransform() {
+  /* A stable player key should recover the last persisted transform before the
+  first local save runs so reconnects continue from the existing state. */
+  if (!MULTIPLAYER_ENABLED || !authenticatedPlayerKey) {
+    return null;
+  }
+
+  const savedState = currentMultiplayerWorldState?.players?.[authenticatedPlayerKey];
+  if (!savedState || typeof savedState !== 'object') {
+    return null;
+  }
+
+  const x = Number(savedState.x);
+  const bodyY = Number(savedState.y);
+  const z = Number(savedState.z);
+  const rotationY = Number(savedState.rotationY);
+
+  if (!Number.isFinite(x) || !Number.isFinite(bodyY) || !Number.isFinite(z)) {
+    return null;
+  }
+
+  return {
+    x,
+    y: bodyY + EYE_HEIGHT,
+    z,
+    rotationY: Number.isFinite(rotationY) ? rotationY : 0,
+  };
+}
+
 if (multiplayerWorldStore?.subscribe) {
   multiplayerWorldStore.subscribe(({ currentState, previousState, source }) => {
     /* Realtime shared-world updates should only replay actual voxel edit
@@ -1861,12 +1922,12 @@ if (multiplayerWorldStore?.subscribe) {
 }
 
 function buildMultiplayerPlayerStatePayload() {
-  if (!MULTIPLAYER_ENABLED || !multiplayerWorldStore || !multiplayerController?.localSessionId) {
+  if (!MULTIPLAYER_ENABLED || !multiplayerWorldStore || !authenticatedPlayerKey) {
     return null;
   }
 
   return {
-    playerKey: multiplayerController.localSessionId,
+    playerKey: authenticatedPlayerKey,
     state: {
       x: playerBody.position.x,
       y: playerBody.position.y,
@@ -3001,6 +3062,9 @@ const multiplayerController = createMultiplayerController({
   getLocalPresenceFaceData: MULTIPLAYER_ENABLED
     ? () => (canEditCurrentVoxelWorld() ? playerFaceDataResult.faceData : null)
     : null,
+  getLocalPresencePlayerKey: MULTIPLAYER_ENABLED
+    ? () => authenticatedPlayerKey
+    : null,
   getSharedWorldPlayerStates: MULTIPLAYER_ENABLED
     ? () => currentMultiplayerWorldState?.players ?? null
     : null,
@@ -3010,8 +3074,6 @@ const multiplayerController = createMultiplayerController({
     }
     : null,
 });
-
-persistMultiplayerPlayerState(true);
 
 const playerFacingDir = new THREE.Vector3();
 let playerWalkCycle = 0;
@@ -3225,6 +3287,21 @@ function syncPlayerFacing(facingDirection) {
   if (playerFacingDir.lengthSq() <= 0.0001) return;
   playerFacingDir.normalize();
   playerBody.rotation.y = Math.atan2(playerFacingDir.x, playerFacingDir.z);
+}
+
+function applyInitialSavedMultiplayerPlayerTransform() {
+  const savedMultiplayerPlayerTransform = readSavedMultiplayerPlayerTransform();
+  if (!savedMultiplayerPlayerTransform) return;
+
+  playerEye.set(
+    savedMultiplayerPlayerTransform.x,
+    savedMultiplayerPlayerTransform.y,
+    savedMultiplayerPlayerTransform.z
+  );
+  initialPlayerRotationY = savedMultiplayerPlayerTransform.rotationY;
+  camera.rotation.order = 'YXZ';
+  camera.rotation.y = initialPlayerRotationY;
+  playerBody.rotation.y = initialPlayerRotationY;
 }
 
 function syncFirstPersonPlayerFacing() {
@@ -3453,9 +3530,11 @@ document.addEventListener('touchmove', handleMobilePinchMove, { passive: false }
 document.addEventListener('touchend', handleMobilePinchEnd, { passive: false });
 document.addEventListener('touchcancel', handleMobilePinchEnd, { passive: false });
 
+applyInitialSavedMultiplayerPlayerTransform();
 updatePlayerCollider(playerEye);
 syncPlayerBody();
 syncCameraToPlayerView();
+persistMultiplayerPlayerState(true);
 
 const PROJECTILE_RADIUS = 0.14;
 const PROJECTILE_SPEED = 42;
@@ -5563,7 +5642,7 @@ renderer.setAnimationLoop(() => {
   if (multiplayerController) {
     multiplayerController.update(delta);
   }
-  if (multiplayerWorldStore && multiplayerController?.localSessionId) {
+  if (multiplayerWorldStore && authenticatedPlayerKey) {
     multiplayerWorldPlayerSaveAccumulator += delta;
     if (multiplayerWorldPlayerSaveAccumulator >= MULTIPLAYER_WORLD_PLAYER_SAVE_INTERVAL) {
       multiplayerWorldPlayerSaveAccumulator = 0;

@@ -644,7 +644,9 @@ function applySaveDataPayload(saveData, { persist = true } = {}) {
     categoryNames.forEach(categoryName => {
         const savedEditorUrl = getSavedEditorSelectionUrl(categoryName, saveData);
         const savedRuntimeUrl = getSavedRuntimeSelectionUrl(categoryName, saveData);
-        const savedImgUrl = savedEditorUrl || savedRuntimeUrl;
+        /* Manual edits in the JSON should be able to drive the restored face,
+        so a valid runtime index takes priority over stale editor-only URLs. */
+        const savedImgUrl = savedRuntimeUrl || savedEditorUrl;
 
         // Only real URLs should become active layers so malformed codes or
         // placeholder catalog slots do not break the restored face.
