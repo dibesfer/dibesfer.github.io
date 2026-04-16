@@ -5,52 +5,108 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>binaryScreen</title>
-    <script src="/ferscript.js"></script>
     <style>
         * {
             box-sizing: border-box;
             margin: 0;
         }
+
         body {
             background-color: black;
             color: lime;
             font-family: monospace;
             font-size: 1rem;
-            
         }
 
         #screen {
             padding: 15px;
-            line-height: 1.5;
+            line-height: 1.5rem;
+            white-space: pre;
         }
     </style>
 </head>
 
 <body>
-    <div id="screen">
-        
-    </div>
-    <script>
-        let screen = getid("screen")
-        let counter = 0
-        let counterlines = 0
+    <div id="screen"></div>
 
-        let interval = setInterval(write, 10)
+    <script>
+        let screen = document.getElementById("screen")
+
+        let cols = 0
+        let rows = 0
+        let totalChars = 0
+
+        let currentChars = 0
+        let counter = 0
+
+        // 🔥 medir bloque REAL: "0000 "
+        function getBlockWidth() {
+            let span = document.createElement("span")
+            span.textContent = "0000 "
+            screen.appendChild(span)
+            let width = span.getBoundingClientRect().width
+            span.remove()
+            return width
+        }
+
+        function calculateCapacity() {
+            let style = getComputedStyle(screen)
+
+            let padding = parseFloat(style.padding)
+            let lineHeight = parseFloat(style.lineHeight)
+
+            let usableWidth = window.innerWidth - padding * 2
+            let usableHeight = window.innerHeight - padding * 2
+
+            let blockWidth = getBlockWidth()
+
+            let blocksPerRow = Math.floor(usableWidth / blockWidth)
+            cols = blocksPerRow * 5 // 4 bits + espacio
+
+            rows = Math.floor(usableHeight / lineHeight)
+
+            totalChars = cols * rows
+        }
 
         function write() {
-            let random = randomInt(0, 1)
+            if (currentChars >= totalChars) {
+                screen.textContent = ""
+                currentChars = 0
+                counter = 0
+            }
+
+            let random = Math.random() < 0.5 ? "0" : "1"
             screen.textContent += random
+
             counter++
-            if (counter == 4){
+            currentChars++
+
+            // espacio cada 4 bits
+            if (counter === 4) {
                 screen.textContent += " "
                 counter = 0
-                counterlines++
-                if (counterlines == 75){
-                    screen.textContent = ""
-                    counterlines = 0
-                }
+                currentChars++
+            }
+
+            // salto de línea exacto
+            if (currentChars % cols === 0) {
+                screen.textContent += "\n"
             }
         }
+
+        function init() {
+            calculateCapacity()
+        }
+
+        window.addEventListener("resize", () => {
+            calculateCapacity()
+            screen.textContent = ""
+            currentChars = 0
+            counter = 0
+        })
+
+        init()
+        setInterval(write, 10)
     </script>
 </body>
 
