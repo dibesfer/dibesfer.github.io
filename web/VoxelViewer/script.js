@@ -101,7 +101,7 @@ function buildVoxelFileName(name = "") {
 }
 
 function downloadVoxelFile(fileName, content) {
-    const blob = new Blob([content], { type: "application/json" });
+    const blob = new Blob([content], { type: "application/octet-stream" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
 
