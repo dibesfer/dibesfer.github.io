@@ -504,8 +504,9 @@ function updateFps(now) {
     lastFpsTime = now;
 }
 
+let animationId
 function animate(now = performance.now()) {
-    requestAnimationFrame(animate);
+    animationId = requestAnimationFrame(animate);
     updateFps(now);
     updateHighlight();
     controls.update();
@@ -513,8 +514,56 @@ function animate(now = performance.now()) {
 }
 animate();
 
-addEventListener('resize', () => {
+function onResize(){
     camera.aspect = innerWidth / innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(innerWidth, innerHeight);
-});
+}
+
+addEventListener('resize', onResize);
+
+
+/*
+// Restoring webglcontext when mobile tab is minimized 
+  document.addEventListener("visibilitychange", onVisibility)
+  renderer.domElement.addEventListener("webglcontextlost", onContextLost, false)
+  renderer.domElement.addEventListener("webglcontextrestored", onContextRestored, false)
+
+  // 🔴 when tab hidden (mobile minimize)
+function onVisibility() {
+  if (document.hidden) {
+    cancelAnimationFrame(animationId)
+  } else {
+    // resume clean
+    onResize()
+    animate()
+  }
+}
+
+// 🔴 context lost
+function onContextLost(event) {
+  event.preventDefault()
+  console.log("WebGL context lost 💀")
+  cancelAnimationFrame(animationId)
+}
+
+// 🟢 context restored
+function onContextRestored() {
+  console.log("WebGL context restored 🔥")
+
+  // FULL re-init (important)
+  document.body.removeChild(renderer.domElement)
+  init()
+  animate()
+}
+
+const gl = renderer.getContext()
+const ext = gl.getExtension('WEBGL_lose_context')
+
+ext.loseContext()
+
+setTimeout(()=> {
+    ext.restoreContext()
+}, 1000)
+
+*/
