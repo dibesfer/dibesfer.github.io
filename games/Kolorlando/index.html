@@ -97,33 +97,33 @@
             <div style="height: 20px;"></div>
         </div>
 
-        <div id="mainMenu" >
-            
+        <div id="mainMenu">
+
             <div id="MainIntroBox" class="box">
                 <h2 style="text-align: center;">Landing</h2>
 
             </div>
 
             <div class="kLevelsDisplay">
-            
-            <div class="kLevels" onclick="changePage('avatar')">
-                <h2>Avatar</h2>
-                <div>
-                    <img src="assets/imagenesPortada/avatar_photo.png" alt="">
+
+                <div class="kLevels" onclick="changePage('avatar')">
+                    <h2>Avatar</h2>
+                    <div>
+                        <img src="assets/imagenesPortada/avatar_photo.png" alt="">
+                    </div>
+                    <p>Customize your character</p>
                 </div>
-                <p>Customize your character</p>
-            </div>
 
-            <div id="mainMenu_worldsCard" class="kLevels" onclick="changePage('yourWorlds')">
-                <h2>Worlds</h2>
-                <div>
-                    <img src="assets/imagenesPortada/Captura desde 2026-03-09 11-11-06.png" alt="">
+                <div id="mainMenu_worldsCard" class="kLevels" onclick="changePage('yourWorlds')">
+                    <h2>Worlds</h2>
+                    <div>
+                        <img src="assets/imagenesPortada/Captura desde 2026-03-09 11-11-06.png" alt="">
 
+                    </div>
+                    <p>Save your progress!</p>
                 </div>
-                <p>Save your progress!</p>
-            </div>
 
-            <!-- <div class="kLevels" onclick="changePage('galaxy')">
+                <!-- <div class="kLevels" onclick="changePage('galaxy')">
                 <h2>Galaxy</h2>
                 <div>
                     <img src="assets/imagenesPortada/Captura desde 2026-03-10 13-02-09.png" alt="">
@@ -177,6 +177,32 @@
 
             <div id="yourWorldsIntroBox" class="box">
                 <h2 style="text-align: center;">Worlds</h2>
+
+                <div id="paypal-button-container-P-2YT92971CA715924LNHRIN2Q"></div>
+                <script
+                    src="https://www.paypal.com/sdk/js?client-id=ATXT0-b_zqAc3TfQiXE8P4IKocpc3DopDA59WT3Meu2zpPFlMF8xXc7mtOWIAvpPByfYSLH2OWg7dt2Y&vault=true&intent=subscription"
+                    data-sdk-integration-source="button-factory"></script>
+                <script>
+                    paypal.Buttons({
+                        style: {
+                            shape: 'pill',
+                            color: 'blue',
+                            layout: 'vertical',
+                            label: 'subscribe'
+                        },
+                        createSubscription: function (data, actions) {
+                            return actions.subscription.create({
+                                /* Creates the subscription */
+                                plan_id: 'P-2YT92971CA715924LNHRIN2Q'
+                            });
+                        },
+                        onApprove: function (data, actions) {
+                            alert(data.subscriptionID); // You can add optional success message for the subscriber here
+                        }
+                    }).render('#paypal-button-container-P-2YT92971CA715924LNHRIN2Q'); // Renders the PayPal button
+                </script>
+
+
                 <!-- <p>Create your singleplayer world</p>
                 <p>Choose a template</p>
                 <ol>
@@ -247,7 +273,8 @@
                 </div>
 
                 <div>
-                    <img src="https://docs.google.com/drawings/d/e/2PACX-1vQ38f9SUvb_rpw1ZxN2Y_kAlRMKdYpDkcPlYI-HPDtvl0YLn3MXbPx_VUN8x9djInHLtmbYD0Iusk2f/pub?w=1000&amp;h=1000">
+                    <img
+                        src="https://docs.google.com/drawings/d/e/2PACX-1vQ38f9SUvb_rpw1ZxN2Y_kAlRMKdYpDkcPlYI-HPDtvl0YLn3MXbPx_VUN8x9djInHLtmbYD0Iusk2f/pub?w=1000&amp;h=1000">
                 </div>
                 <div>
                     <img src="assets/imagenesPortada/blue_soldier.jpg" alt="">
@@ -259,8 +286,7 @@
                 </div>
 
                 <div>
-                    <img
-                        src="assets/white_soldier.png">
+                    <img src="assets/white_soldier.png">
                 </div>
 
             </div>
@@ -457,10 +483,10 @@
         let exampleUserProfile = document.getElementById("exampleUserProfile")
 
         fetch("/games/Kolorlando/code/UI/userProfile.html")
-        .then(x => x.text())
-        .then(y => {
-            exampleUserProfile.innerHTML = y
-        })
+            .then(x => x.text())
+            .then(y => {
+                exampleUserProfile.innerHTML = y
+            })
 
     </script>
 </body>
