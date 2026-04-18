@@ -178,29 +178,7 @@
             <div id="yourWorldsIntroBox" class="box">
                 <h2 style="text-align: center;">Worlds</h2>
 
-                <div id="paypal-button-container-P-2YT92971CA715924LNHRIN2Q"></div>
-                <script
-                    src="https://www.paypal.com/sdk/js?client-id=ATXT0-b_zqAc3TfQiXE8P4IKocpc3DopDA59WT3Meu2zpPFlMF8xXc7mtOWIAvpPByfYSLH2OWg7dt2Y&vault=true&intent=subscription"
-                    data-sdk-integration-source="button-factory"></script>
-                <script>
-                    paypal.Buttons({
-                        style: {
-                            shape: 'pill',
-                            color: 'blue',
-                            layout: 'vertical',
-                            label: 'subscribe'
-                        },
-                        createSubscription: function (data, actions) {
-                            return actions.subscription.create({
-                                /* Creates the subscription */
-                                plan_id: 'P-2YT92971CA715924LNHRIN2Q'
-                            });
-                        },
-                        onApprove: function (data, actions) {
-                            alert(data.subscriptionID); // You can add optional success message for the subscriber here
-                        }
-                    }).render('#paypal-button-container-P-2YT92971CA715924LNHRIN2Q'); // Renders the PayPal button
-                </script>
+                
 
 
                 <!-- <p>Create your singleplayer world</p>
