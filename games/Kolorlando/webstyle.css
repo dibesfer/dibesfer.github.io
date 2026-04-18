@@ -465,6 +465,8 @@ footer {
 }
 
 #exampleUserProfile {
-    width: max-content;
+    
     margin: auto;
+    max-width: 230px;
+
 }
