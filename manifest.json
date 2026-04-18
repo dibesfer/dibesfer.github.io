@@ -1,0 +1,23 @@
+{
+  "name": "dibesfer",
+  "short_name": "dibesfer",
+  "start_url": "/",
+  "background_color": "white",
+  "theme_color": "#000000",
+  "description": "dibesfer web app",
+  "display": "standalone",
+  "icons": [
+   
+    {
+      "src": "assets/branding/dibesfer-logo-whiteinside192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "assets/branding/dibesfer-logo-whiteinside512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+  
+    }
+  ]
+}
