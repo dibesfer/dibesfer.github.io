@@ -43,7 +43,7 @@ function app() {
     arrayFranjas = shuffle(arrayFranjas)
     for (let i = 0; i < imgFranjas.length; i++) {
         imgFranjas[i].src = arrayFranjas[i]
-        
+
     }
 
     let scrollBottom = getid("scrollBottom")
@@ -70,7 +70,7 @@ function app() {
         leftMenuLinkGallery.classList.add("leftMenuLinkCurrent")
     if (url.includes("/games"))
         leftMenuLinkGames.classList.add("leftMenuLinkCurrent")
-        if (url.includes("/web"))
+    if (url.includes("/web"))
         leftMenuLinkWeb.classList.add("leftMenuLinkCurrent")
 
 
@@ -125,9 +125,16 @@ function app() {
             }
         });
 
+        let dibesfer_ls_description_id = localStorage.getItem("dibesfer_ls_description_id")
+
+
+
         let description = getid("description")
         let descriptions = [
-            "<<<---··· /// wOwOw \\\ ###--->>>",
+            "Created the <i style='font-family: serif'>1996</i> in Barcelona",
+            "---[<'''.ö.'''>]---",
+            "Symbology Minimalism Abstraction Symmetrical",
+            "<<<---··· /// wOwOw \\\\\\ ···--->>>",
             "<b>Dib</b>ujos y <i>es</i>critos de <u>Fer</u>",
             "<b>Dev</b> <i>Illustr</i><u>author</u>",
             "No <b>space</b> is <i>limited</i> if <u>ideas</u> fit in.",
@@ -139,7 +146,22 @@ function app() {
         ]
         function changeDescription() {
             let random = randomInt(0, descriptions.length - 1);
+
+            if (dibesfer_ls_description_id == null) {
+                localStorage.setItem("dibesfer_ls_description_id", random)
+            }
+
+            else if (random == dibesfer_ls_description_id){
+                while (random == dibesfer_ls_description_id){
+                    random = randomInt(0, descriptions.length - 1);
+                }
+            }
+            localStorage.setItem("dibesfer_ls_description_id", random)
             description.innerHTML = descriptions[random]
+            dibesfer_ls_description_id = localStorage.getItem("dibesfer_ls_description_id")
+            console.log(dibesfer_ls_description_id)
+            
+            
         }
         changeDescription()
     }
@@ -211,5 +233,5 @@ function scrollToBottom() {
 }
 
 if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("/service-worker.js");
+    navigator.serviceWorker.register("/service-worker.js");
 }
