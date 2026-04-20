@@ -9,6 +9,7 @@
 - Do not explain implementations in chat.
 - Put concise implementation details in code comments instead.
 - We do not patch problems (write solutions on top of it), we redesign flow to allow new behaviors (fixing original infrastructure). From big to specific.
+-Start from the minimum true structure and grow only by explicit decisions.
 
 ## Aesthetics
 - When applying style we should follow these patterns:
