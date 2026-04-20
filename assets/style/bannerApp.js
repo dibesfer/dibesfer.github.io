@@ -98,7 +98,7 @@ banner.link = "https://dibesfer.com/web/FakeUsers/";
 banners.push(banner);
 banner = new Banner();
 
-banner.emoji = "🪶";
+banner.emoji = "📇";
 banner.title = "Fake Writer";
 banner.desc = "Automatic typewriting fake text";
 banner.link = "https://dibesfer.com/web/FakeWriter/";
@@ -169,7 +169,8 @@ banner.link = "/web/VoxelViewer";
 banners.push(banner);
 banner = new Banner();
 
-banner.emoji = "🌳";
+// banner.emoji = "🌳";
+banner.icon = "/assets/branding/Boxel128.png"
 banner.title = "BoxelViewer";
 banner.desc = "15³ 3D boxel viewer-editor (WIP)";
 banner.link = "";
