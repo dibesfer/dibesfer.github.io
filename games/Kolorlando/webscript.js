@@ -5,6 +5,8 @@ let avatarMenu = document.getElementById("avatarMenu")
 
 let yourWorldsMenu = document.getElementById("yourWorldsMenu")
 
+let worldListMenu = document.getElementById("worldListMenu")
+
 let galaxyMenu = document.getElementById("galaxyMenu")
 
 let idDivIcon = document.getElementById("idDiv_icon")
@@ -14,7 +16,7 @@ let authModal = document.getElementById("authModal")
 let authModalPanel = document.getElementById("authModal_panel")
 
 let currentPage = "home"
-const navigablePages = new Set(["home", "avatar", "yourWorlds"])
+const navigablePages = new Set(["home", "avatar", "yourWorlds", "worldList"])
 
 function isAuthModalLockedOpen(){
     /* Duplicate-session state is a stop-state, so the shared shell should not
@@ -58,6 +60,7 @@ function renderPage(string){
     mainMenu.classList.add("invisible")
     avatarMenu.classList.add("invisible")
     yourWorldsMenu.classList.add("invisible")
+    worldListMenu.classList.add("invisible")
     //galaxyMenu.classList.add("invisible")
 
     currentPage = string
@@ -67,6 +70,9 @@ function renderPage(string){
     }
     else if (string == "yourWorlds"){
         yourWorldsMenu.classList.remove("invisible")
+    }
+    else if (string == "worldList"){
+        worldListMenu.classList.remove("invisible")
     }
     else if (string == "galaxy"){
         galaxyMenu.classList.remove("invisible")
@@ -85,6 +91,10 @@ function getHistoryUrlForPage(string){
 
     if (string === "yourWorlds"){
         return "#worlds"
+    }
+
+    if (string === "worldList"){
+        return "#singleplayer"
     }
 
     return window.location.pathname + window.location.search
@@ -130,6 +140,10 @@ if (initialHash === "#avatar"){
 else if (initialHash === "#worlds"){
     window.history.replaceState({ kolorlandoPage: "yourWorlds" }, "", "#worlds")
     renderPage("yourWorlds")
+}
+else if (initialHash === "#singleplayer"){
+    window.history.replaceState({ kolorlandoPage: "worldList" }, "", "#singleplayer")
+    renderPage("worldList")
 }
 else {
     renderPage("home")

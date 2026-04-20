@@ -164,6 +164,8 @@ export class Voxel {
       x: this.x,
       y: this.y,
       z: this.z,
+      // Preserve the declared voxel mode when cloning across systems.
+      type: this.type,
       color: this.color,
       texture: this.texture,
       active: this.active,
