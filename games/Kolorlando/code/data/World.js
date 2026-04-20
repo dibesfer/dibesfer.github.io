@@ -1,4 +1,5 @@
 import { Boxel } from './Boxel.js';
+import { Voxel } from './Voxel.js';
 
 export const Boxel10 = new Boxel({
   name: 'Boxel10',
@@ -9,15 +10,25 @@ export class World {
   constructor({
     name = 'Default World',
     size = { x: 100, y: 100, z: 100 },
+    land = { x: 1, y: 1, z: 1 },
+    spawnPosition = { x: 0, y: 0, z: 0 },
     boxels = null,
+    voxels = null,
   } = {}) {
     // World is the top container layer for placed Boxels in world space.
     this.name = normalizeText(name, '');
     this.size = normalizeWorldSize(size);
+    this.land = normalizeWorldSize(land);
+    this.spawnPosition = normalizeWorldPosition(spawnPosition);
     this.boxels = [];
+    this.voxels = new Map();
 
     if (Array.isArray(boxels)) {
       this.setBoxels(boxels);
+    }
+
+    if (voxels instanceof Map || Array.isArray(voxels)) {
+      this.setVoxels(voxels);
     }
   }
 
@@ -29,6 +40,74 @@ export class World {
   setSize(size = { x: 100, y: 100, z: 100 }) {
     this.size = normalizeWorldSize(size);
     return this;
+  }
+
+  setLand(land = { x: 1, y: 1, z: 1 }) {
+    this.land = normalizeWorldSize(land);
+    return this;
+  }
+
+  setSpawnPosition(position = { x: 0, y: 0, z: 0 }) {
+    this.spawnPosition = normalizeWorldPosition(position);
+    return this;
+  }
+
+  getVoxel(x = 0, y = 0, z = 0) {
+    const position = normalizeWorldPosition({ x, y, z });
+    return this.voxels.get(createVoxelKey(position.x, position.y, position.z)) ?? null;
+  }
+
+  setVoxel(x = 0, y = 0, z = 0, voxel = null) {
+    const position = normalizeWorldPosition({ x, y, z });
+    const normalizedVoxel = normalizeWorldVoxel(voxel, position);
+    this.assertVoxelPositionWithinWorld(position);
+    this.voxels.set(createVoxelKey(position.x, position.y, position.z), normalizedVoxel);
+    return this;
+  }
+
+  removeVoxel(x = 0, y = 0, z = 0) {
+    const position = normalizeWorldPosition({ x, y, z });
+    return this.voxels.delete(createVoxelKey(position.x, position.y, position.z));
+  }
+
+  hasVoxel(x = 0, y = 0, z = 0) {
+    const position = normalizeWorldPosition({ x, y, z });
+    return this.voxels.has(createVoxelKey(position.x, position.y, position.z));
+  }
+
+  clearVoxels() {
+    this.voxels.clear();
+    return this;
+  }
+
+  setVoxels(voxels) {
+    this.voxels = new Map();
+
+    if (voxels instanceof Map) {
+      for (const [key, voxel] of voxels.entries()) {
+        const position = parseVoxelKey(key);
+        if (!position) continue;
+        this.setVoxel(position.x, position.y, position.z, voxel);
+      }
+      return this;
+    }
+
+    if (Array.isArray(voxels)) {
+      for (let i = 0; i < voxels.length; i++) {
+        const entry = voxels[i];
+        const sourcePosition = entry?.position ?? entry;
+        this.setVoxel(sourcePosition?.x, sourcePosition?.y, sourcePosition?.z, entry?.voxel ?? entry);
+      }
+    }
+
+    return this;
+  }
+
+  getVoxelEntries() {
+    return Array.from(this.voxels.entries()).map(([key, voxel]) => ({
+      position: parseVoxelKey(key),
+      voxel: voxel.clone(),
+    }));
   }
 
   get(index) {
@@ -74,6 +153,24 @@ export class World {
         y: this.size.y,
         z: this.size.z,
       },
+      land: {
+        x: this.land.x,
+        y: this.land.y,
+        z: this.land.z,
+      },
+      spawnPosition: {
+        x: this.spawnPosition.x,
+        y: this.spawnPosition.y,
+        z: this.spawnPosition.z,
+      },
+      voxels: this.getVoxelEntries().map(entry => ({
+        position: {
+          x: entry.position.x,
+          y: entry.position.y,
+          z: entry.position.z,
+        },
+        voxel: entry.voxel.toJSON(),
+      })),
       boxels: this.boxels.map(entry => ({
         position: {
           x: entry.position.x,
@@ -94,6 +191,18 @@ export class World {
       this.setSize(data.size);
     }
 
+    if ('land' in data) {
+      this.setLand(data.land);
+    }
+
+    if ('spawnPosition' in data) {
+      this.setSpawnPosition(data.spawnPosition);
+    }
+
+    if (data?.voxels instanceof Map || Array.isArray(data?.voxels)) {
+      this.setVoxels(data.voxels);
+    }
+
     if (Array.isArray(data?.boxels)) {
       this.setBoxels(data.boxels);
     }
@@ -105,8 +214,23 @@ export class World {
     return new World({
       name: this.name,
       size: this.size,
+      land: this.land,
+      spawnPosition: this.spawnPosition,
       boxels: this.boxels,
+      voxels: this.voxels,
     });
+  }
+
+  assertVoxelPositionWithinWorld(position = {}) {
+    if (
+      position.x < 0 || position.x >= this.size.x
+      || position.y < 0 || position.y >= this.size.y
+      || position.z < 0 || position.z >= this.size.z
+    ) {
+      throw new Error(`Voxel position ${position.x},${position.y},${position.z} is outside world bounds.`);
+    }
+
+    return this;
   }
 }
 
@@ -123,6 +247,15 @@ function normalizePlacedBoxel(boxel, position = {}) {
     },
     boxel: normalizedBoxel,
   };
+}
+
+function normalizeWorldVoxel(voxel, position = {}) {
+  const normalizedVoxel = voxel instanceof Voxel
+    ? voxel.clone()
+    : new Voxel().fromJSON(voxel ?? {});
+
+  normalizedVoxel.setPosition(position.x, position.y, position.z);
+  return normalizedVoxel;
 }
 
 function normalizeText(value, fallback = '') {
@@ -145,6 +278,34 @@ function normalizeWorldSize(size = {}) {
     y: normalizeWorldAxisSize(size?.y),
     z: normalizeWorldAxisSize(size?.z),
   };
+}
+
+function normalizeWorldPosition(position = {}) {
+  return {
+    x: toFiniteNumber(position?.x, 0),
+    y: toFiniteNumber(position?.y, 0),
+    z: toFiniteNumber(position?.z, 0),
+  };
+}
+
+function createVoxelKey(x = 0, y = 0, z = 0) {
+  return `${x}|${y}|${z}`;
+}
+
+function parseVoxelKey(key) {
+  const parts = String(key).split('|');
+  if (parts.length !== 3) {
+    return null;
+  }
+
+  const x = toFiniteNumber(parts[0], NaN);
+  const y = toFiniteNumber(parts[1], NaN);
+  const z = toFiniteNumber(parts[2], NaN);
+  if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(z)) {
+    return null;
+  }
+
+  return { x, y, z };
 }
 
 function normalizeWorldAxisSize(value) {
