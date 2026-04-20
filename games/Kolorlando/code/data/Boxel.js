@@ -4,11 +4,13 @@ export class Boxel {
   constructor({
     size = 7,
     name = 'Default Boxel',
+    active = true,
     voxels = null,
   } = {}) {
     // Boxel is the first container layer: a named 3D group of Voxels.
     this.size = normalizeBoxelSize(size);
     this.name = normalizeText(name, '');
+    this.active = Boolean(active);
     this.voxels = createVoxelGrid(this.size);
 
     if (Array.isArray(voxels)) {
@@ -18,6 +20,16 @@ export class Boxel {
 
   setName(name = '') {
     this.name = normalizeText(name, '');
+    return this;
+  }
+
+  destroy() {
+    this.active = false;
+    return this;
+  }
+
+  revive() {
+    this.active = true;
     return this;
   }
 
@@ -70,6 +82,7 @@ export class Boxel {
     return {
       name: this.name,
       size: this.size,
+      active: this.active,
       voxels: this.voxels.map(plane =>
         plane.map(row =>
           row.map(voxel => voxel.toJSON())
@@ -87,6 +100,10 @@ export class Boxel {
       this.setName(data.name);
     }
 
+    if ('active' in data) {
+      this.active = Boolean(data.active);
+    }
+
     if (Array.isArray(data?.voxels)) {
       this.setVoxels(data.voxels);
     }
@@ -97,6 +114,7 @@ export class Boxel {
     return new Boxel({
       size: this.size,
       name: this.name,
+      active: this.active,
       voxels: this.voxels,
     });
   }

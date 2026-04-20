@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>VoxelEditor</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="shortcut icon" href="assets/brand/vvicon.png" type="image/x-icon">
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+    }
+  }
+  </script>
+</head>
+
+<body>
+
+  <div id="consola">
+    <div id="supertitle"><span class="only-mobile">VV</span><span class="only-desktop">VoxelEditor</span></div>
+    <div id="fpsCounter">FPS:</div>
+    <div>
+      Name:
+      <input id="UIVoxelName" style="width: 120px;font: unset;border: solid 3px;" type="text" name="" placeholder="Table">
+    </div>
+    <div id="loadButton">⬇️<span class="only-desktop">Load</span></div>
+    <div id="saveButton">💾<span class="only-desktop">Save</span></div>
+   
+    <div style="background-color: lightblue;">👤<span class="only-desktop">Log in</span></div>
+   
+  </div>
+
+  <div id="menu" class="invisible">
+    <h2>test</h2>
+  
+  </div>
+
+  <div id="options">
+    <div class="optionstitle">⚙️<span class="only-desktop">Options</span></div>
+    <div>
+      🌈<span class="only-desktop">Color</span>
+      <input type="color" name="" id="">
+      
+    </div>
+    <div>🖌️<span class="only-desktop">Paint</span></div>
+
+    <div>👇<span class="only-desktop">Place</span></div>
+    
+    <div class="option_selected">✖️<span class="only-desktop">Eraser</span></div>
+    <div>↗️<span class="only-desktop">Line</span></div>
+    <div>🔝<span class="only-desktop">Extrude</span></div>
+    <div>📦<span class="only-desktop">Box Select</span></div>
+    <div>
+      🪞<span class="only-desktop">Mirror</span>
+      <input type="checkbox" name="" id="">X
+      <input type="checkbox" name="" id="">Y
+      <input type="checkbox" name="" id="">Z
+
+    </div>
+  </div>
+
+  <!-- UI -->
+  <script src="script.js"></script>
+
+  <!-- Threejs -->
+   <script src="three.js" type="module"></script>
+</body>
+
+</html>
