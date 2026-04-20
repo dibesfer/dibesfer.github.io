@@ -3,6 +3,8 @@ const menu = document.getElementById("menu");
 const supertitle = document.getElementById("supertitle");
 const loadButton = document.getElementById("loadButton");
 const saveButton = document.getElementById("saveButton");
+const consola = document.getElementById("consola");
+const optionsBar = document.getElementById("options");
 const menuState = {
     active: false,
     panel: null,
@@ -67,18 +69,33 @@ function hydrateMenu(panel) {
     }
 
     if (panel === "load") {
+        const fileInput = menu.querySelector("#loadVoxelFileInput");
         const input = menu.querySelector("#loadJsonInput");
         const button = menu.querySelector("#loadJsonButton");
         const status = menu.querySelector("#loadStatus");
         const templateInputs = menu.querySelectorAll('input[name="loadTemplate"]');
 
-        if (!input || !button || !status) return;
+        if (!fileInput || !input || !button || !status) return;
 
-        button.addEventListener("click", () => {
+        button.addEventListener("click", async () => {
             const selectedTemplate = Array.from(templateInputs).find((radio) => radio.checked)?.value;
-            const result = input.value.trim()
-                ? window.applyVoxelSaveData?.(input.value)
-                : window.applyVoxelPreset?.(selectedTemplate);
+            let result = null;
+
+            if (fileInput.files?.[0]) {
+                try {
+                    const fileText = await fileInput.files[0].text();
+                    result = window.applyVoxelSaveData?.(fileText);
+                } catch (error) {
+                    result = {
+                        ok: false,
+                        message: error instanceof Error ? error.message : "File could not be loaded."
+                    };
+                }
+            } else if (input.value.trim()) {
+                result = window.applyVoxelSaveData?.(input.value);
+            } else {
+                result = window.applyVoxelPreset?.(selectedTemplate);
+            }
 
             status.textContent = result?.message || "Load failed.";
         });
@@ -147,4 +164,75 @@ supertitle.addEventListener("click", () => toggleMenu("about"));
 loadButton.addEventListener("click", () => toggleMenu("load"));
 saveButton.addEventListener("click", () => toggleMenu("save"));
 
+enableDesktopDragScroll(consola);
+enableDesktopDragScroll(optionsBar);
 
+function enableDesktopDragScroll(element) {
+    if (!element || !window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
+        return;
+    }
+
+    const dragState = {
+        pressed: false,
+        dragging: false,
+        pointerId: null,
+        startX: 0,
+        startY: 0,
+        startScrollLeft: 0
+    };
+    const DRAG_THRESHOLD = 6;
+
+    element.addEventListener("pointerdown", event => {
+        if (event.button !== 0) return;
+
+        dragState.pressed = true;
+        dragState.dragging = false;
+        dragState.pointerId = event.pointerId;
+        dragState.startX = event.clientX;
+        dragState.startY = event.clientY;
+        dragState.startScrollLeft = element.scrollLeft;
+    });
+
+    element.addEventListener("pointermove", event => {
+        if (!dragState.pressed || dragState.pointerId !== event.pointerId) return;
+
+        const offsetX = event.clientX - dragState.startX;
+        const offsetY = event.clientY - dragState.startY;
+
+        if (!dragState.dragging) {
+            if (Math.abs(offsetX) < DRAG_THRESHOLD || Math.abs(offsetX) < Math.abs(offsetY)) {
+                return;
+            }
+
+            dragState.dragging = true;
+            element.classList.add("is-dragging");
+            element.setPointerCapture?.(event.pointerId);
+        }
+
+        element.scrollLeft = dragState.startScrollLeft - offsetX;
+        event.preventDefault();
+    });
+
+    function stopDragging(event) {
+        if (!dragState.pressed) return;
+        if (event?.pointerId != null && dragState.pointerId !== event.pointerId) return;
+
+        dragState.pressed = false;
+        dragState.dragging = false;
+        dragState.pointerId = null;
+        element.classList.remove("is-dragging");
+
+        if (event?.pointerId != null && element.hasPointerCapture?.(event.pointerId)) {
+            element.releasePointerCapture(event.pointerId);
+        }
+    }
+
+    element.addEventListener("pointerup", stopDragging);
+    element.addEventListener("pointercancel", stopDragging);
+    element.addEventListener("lostpointercapture", () => {
+        dragState.pressed = false;
+        dragState.dragging = false;
+        dragState.pointerId = null;
+        element.classList.remove("is-dragging");
+    });
+}

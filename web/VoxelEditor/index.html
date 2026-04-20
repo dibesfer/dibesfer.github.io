@@ -43,22 +43,22 @@
     <div class="optionstitle">⚙️<span class="only-desktop">Options</span></div>
     <div>
       🌈<span class="only-desktop">Color</span>
-      <input type="color" name="" id="">
+      <input type="color" name="" id="editorColorInput" value="#ffffff">
       
     </div>
-    <div>🖌️<span class="only-desktop">Paint</span></div>
+    <div id="paintToolButton">🖌️<span class="only-desktop">Paint</span></div>
 
-    <div>👇<span class="only-desktop">Place</span></div>
+    <div id="placeToolButton">👇<span class="only-desktop">Place</span></div>
     
-    <div class="option_selected">✖️<span class="only-desktop">Eraser</span></div>
-    <div>↗️<span class="only-desktop">Line</span></div>
+    <div id="eraserToolButton" class="option_selected">✖️<span class="only-desktop">Eraser</span></div>
+    <div id="lineModeButton" class="secondary_option">↗️<span class="only-desktop">Line</span></div>
     <div>🔝<span class="only-desktop">Extrude</span></div>
-    <div>📦<span class="only-desktop">Box Select</span></div>
+    <div id="boxModeButton" class="secondary_option">📦<span class="only-desktop">Box Select</span></div>
     <div>
       🪞<span class="only-desktop">Mirror</span>
-      <input type="checkbox" name="" id="">X
-      <input type="checkbox" name="" id="">Y
-      <input type="checkbox" name="" id="">Z
+      <input type="checkbox" name="mirror-x" id="mirrorXInput" autocomplete="off">X
+      <input type="checkbox" name="mirror-y" id="mirrorYInput" autocomplete="off">Y
+      <input type="checkbox" name="mirror-z" id="mirrorZInput" autocomplete="off">Z
 
     </div>
   </div>
