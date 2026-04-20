@@ -1,74 +1,129 @@
-class Boxel {
-    constructor(size = 7) {
-        this.size = size;
-        this.name = "";
-        this.voxels = Array.from({ length: size }, () =>
-            Array.from({ length: size }, () =>
-                Array.from({ length: size }, () => new Voxel())
-            )
-        );
+import { Voxel } from './Voxel.js';
 
-        this.applyPreset("full");
+export class Boxel {
+  constructor({
+    size = 7,
+    name = 'Default Boxel',
+    voxels = null,
+  } = {}) {
+    // Boxel is the first container layer: a named 3D group of Voxels.
+    this.size = normalizeBoxelSize(size);
+    this.name = normalizeText(name, '');
+    this.voxels = createVoxelGrid(this.size);
+
+    if (Array.isArray(voxels)) {
+      this.setVoxels(voxels);
+    }
+  }
+
+  setName(name = '') {
+    this.name = normalizeText(name, '');
+    return this;
+  }
+
+  get(x, y, z) {
+    return this.voxels?.[x]?.[y]?.[z] ?? null;
+  }
+
+  set(x, y, z, voxel) {
+    if (!(voxel instanceof Voxel)) {
+      throw new Error('set expects a Voxel instance.');
     }
 
-    get(x, y, z) {
-        return this.voxels[x]?.[y]?.[z];
+    if (!this.voxels?.[x]?.[y]) {
+      throw new Error(`Invalid voxel position ${x},${y},${z}.`);
     }
 
-    setName(name = "") {
-        this.name = String(name).trim();
+    voxel.setPosition(x, y, z);
+    this.voxels[x][y][z] = voxel;
+    return this;
+  }
+
+  setVoxels(voxelsArray) {
+    if (!Array.isArray(voxelsArray) || voxelsArray.length === 0) {
+      this.voxels = createVoxelGrid(this.size);
+      return this;
     }
 
-    toJSON() {
-        return {
-            name: this.name,
-            size: this.size,
-            voxels: this.voxels.map((plane) =>
-                plane.map((row) =>
-                    row.map((cell) => ({
-                        color: cell.color,
-                        active: cell.active
-                    }))
-                )
-            )
-        };
+    this.voxels = Array.from({ length: this.size }, (_, x) =>
+      Array.from({ length: this.size }, (_, y) =>
+        Array.from({ length: this.size }, (_, z) => {
+          const sourceVoxel = voxelsArray?.[x]?.[y]?.[z];
+
+          if (sourceVoxel instanceof Voxel) {
+            return sourceVoxel.clone().setPosition(x, y, z);
+          }
+
+          return new Voxel({
+            x,
+            y,
+            z,
+          }).fromJSON(sourceVoxel ?? {});
+        })
+      )
+    );
+
+    return this;
+  }
+
+  toJSON() {
+    return {
+      name: this.name,
+      size: this.size,
+      voxels: this.voxels.map(plane =>
+        plane.map(row =>
+          row.map(voxel => voxel.toJSON())
+        )
+      ),
+    };
+  }
+
+  fromJSON(data = {}) {
+    if (normalizeBoxelSize(data?.size) !== this.size) {
+      throw new Error('Loaded boxel size does not match the current boxel.');
     }
 
-    loadFromData(data) {
-        if (!data || data.size !== this.size || !Array.isArray(data.voxels)) {
-            throw new Error("Loaded voxel size does not match the current editor.");
-        }
-
-        // Only explicit names should replace the current voxel name.
-        if ("name" in data) {
-            this.setName(data.name ?? "");
-        }
-
-        for (let x = 0; x < this.size; x++) {
-            for (let y = 0; y < this.size; y++) {
-                for (let z = 0; z < this.size; z++) {
-                    const nextCell = data.voxels?.[x]?.[y]?.[z];
-
-                    if (!nextCell) {
-                        throw new Error(`Missing Voxel at ${x},${y},${z}.`);
-                    }
-
-                    const cell = this.get(x, y, z);
-                    cell.color = typeof nextCell.color === "string" ? nextCell.color : cell.color;
-                    cell.active = Boolean(nextCell.active);
-                }
-            }
-        }
+    if ('name' in data) {
+      this.setName(data.name);
     }
 
-    // revise
-    applyPreset(presetName) {
-        const presetBuilder = voxelPresets[`${presetName}_preset`];
-
-        if (!presetBuilder) {
-            throw new Error(`Unknown preset "${presetName}".`);
-        }
-
-        this.loadFromData(presetBuilder(this.size));
+    if (Array.isArray(data?.voxels)) {
+      this.setVoxels(data.voxels);
     }
+
+    return this;
+  }
+  clone() {
+    return new Boxel({
+      size: this.size,
+      name: this.name,
+      voxels: this.voxels,
+    });
+  }
+}
+
+function normalizeBoxelSize(size) {
+  const numericSize = Math.floor(Number(size));
+  return Number.isFinite(numericSize) && numericSize > 0 ? numericSize : 7;
+}
+
+function normalizeText(value, fallback = '') {
+  if (typeof value !== 'string') {
+    return fallback;
+  }
+
+  const trimmedValue = value.trim();
+  return trimmedValue || fallback;
+}
+
+function createVoxelGrid(size) {
+  return Array.from({ length: size }, (_, x) =>
+    Array.from({ length: size }, (_, y) =>
+      Array.from({ length: size }, (_, z) => new Voxel({
+        x,
+        y,
+        z,
+      }))
+    )
+  );
 }
