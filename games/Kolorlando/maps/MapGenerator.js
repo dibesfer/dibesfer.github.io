@@ -38,11 +38,7 @@ export function buildMapFromWorld({
   const instanceMatrix = new THREE.Matrix4();
   const instanceColor = new THREE.Color();
   const voxelCellByInstanceId = [];
-  const worldOrigin = new THREE.Vector3(
-    -world.size.x * voxelSize * 0.5,
-    0,
-    -world.size.z * voxelSize * 0.5
-  );
+  const worldOrigin = world.getMapOrigin(voxelSize);
 
   mapGroup.name = world.name || 'World';
 
@@ -51,11 +47,8 @@ export function buildMapFromWorld({
   }
 
   function setBoxFromCell(cellX, cellY, cellZ, targetBox = new THREE.Box3()) {
-    targetBox.min.set(
-      worldOrigin.x + cellX * voxelSize,
-      worldOrigin.y + cellY * voxelSize,
-      worldOrigin.z + cellZ * voxelSize
-    );
+    const minPosition = world.gridToMapPosition(cellX, cellY, cellZ, voxelSize);
+    targetBox.min.set(minPosition.x, minPosition.y, minPosition.z);
     targetBox.max.set(
       targetBox.min.x + voxelSize,
       targetBox.min.y + voxelSize,
@@ -119,11 +112,12 @@ export function buildMapFromWorld({
   for (let i = 0; i < voxelEntries.length; i++) {
     const entry = voxelEntries[i];
     const { position, voxel } = entry;
+    const centerPosition = world.gridToMapCenterPosition(position.x, position.y, position.z, voxelSize);
 
     instanceMatrix.makeTranslation(
-      worldOrigin.x + position.x * voxelSize + voxelSize * 0.5,
-      worldOrigin.y + position.y * voxelSize + voxelSize * 0.5,
-      worldOrigin.z + position.z * voxelSize + voxelSize * 0.5
+      centerPosition.x,
+      centerPosition.y,
+      centerPosition.z
     );
     voxelGrid.setMatrixAt(i, instanceMatrix);
     voxelGrid.setColorAt(i, instanceColor.set(normalizeColor(voxel.color)));
@@ -152,9 +146,9 @@ export function buildMapFromWorld({
     groundY: 0,
     hasInfiniteGround: false,
     spawnPoint: new THREE.Vector3(
-      worldOrigin.x + world.spawnPosition.x,
-      worldOrigin.y + world.spawnPosition.y,
-      worldOrigin.z + world.spawnPosition.z
+      world.spawnPosition.x,
+      world.spawnPosition.y,
+      world.spawnPosition.z
     ),
     buildingColliders,
     entities: [],
@@ -186,12 +180,14 @@ export function buildMapFromWorld({
         }
       }
 
-      const minCellX = Math.floor((box.min.x - worldOrigin.x) / voxelSize);
-      const maxCellX = Math.ceil((box.max.x - worldOrigin.x) / voxelSize) - 1;
-      const minCellY = Math.floor((box.min.y - worldOrigin.y) / voxelSize);
-      const maxCellY = Math.ceil((box.max.y - worldOrigin.y) / voxelSize) - 1;
-      const minCellZ = Math.floor((box.min.z - worldOrigin.z) / voxelSize);
-      const maxCellZ = Math.ceil((box.max.z - worldOrigin.z) / voxelSize) - 1;
+      const minGridPosition = world.mapToGridPosition(box.min.x, box.min.y, box.min.z, voxelSize);
+      const maxGridPosition = world.mapToGridPosition(box.max.x, box.max.y, box.max.z, voxelSize);
+      const minCellX = Math.floor(minGridPosition.x);
+      const maxCellX = Math.ceil(maxGridPosition.x) - 1;
+      const minCellY = Math.floor(minGridPosition.y);
+      const maxCellY = Math.ceil(maxGridPosition.y) - 1;
+      const minCellZ = Math.floor(minGridPosition.z);
+      const maxCellZ = Math.ceil(maxGridPosition.z) - 1;
 
       for (let cellY = minCellY; cellY <= maxCellY; cellY++) {
         for (let cellX = minCellX; cellX <= maxCellX; cellX++) {
@@ -211,12 +207,16 @@ export function buildMapFromWorld({
     isBoxSupported(box, epsilon = 0.03) {
       if (!box) return false;
 
-      const minCellX = Math.floor((box.min.x - worldOrigin.x + 0.001) / voxelSize);
-      const maxCellX = Math.ceil((box.max.x - worldOrigin.x - 0.001) / voxelSize) - 1;
-      const minCellZ = Math.floor((box.min.z - worldOrigin.z + 0.001) / voxelSize);
-      const maxCellZ = Math.ceil((box.max.z - worldOrigin.z - 0.001) / voxelSize) - 1;
-      const supportMinY = Math.floor((box.min.y - worldOrigin.y - epsilon) / voxelSize) - 1;
-      const supportMaxY = Math.ceil((box.min.y - worldOrigin.y + epsilon) / voxelSize) - 1;
+      const minGridPosition = world.mapToGridPosition(box.min.x + 0.001, box.min.y, box.min.z + 0.001, voxelSize);
+      const maxGridPosition = world.mapToGridPosition(box.max.x - 0.001, box.max.y, box.max.z - 0.001, voxelSize);
+      const supportMinGridPosition = world.mapToGridPosition(box.min.x, box.min.y - epsilon, box.min.z, voxelSize);
+      const supportMaxGridPosition = world.mapToGridPosition(box.min.x, box.min.y + epsilon, box.min.z, voxelSize);
+      const minCellX = Math.floor(minGridPosition.x);
+      const maxCellX = Math.ceil(maxGridPosition.x) - 1;
+      const minCellZ = Math.floor(minGridPosition.z);
+      const maxCellZ = Math.ceil(maxGridPosition.z) - 1;
+      const supportMinY = Math.floor(supportMinGridPosition.y) - 1;
+      const supportMaxY = Math.ceil(supportMaxGridPosition.y) - 1;
 
       for (let cellY = supportMinY; cellY <= supportMaxY; cellY++) {
         for (let cellX = minCellX; cellX <= maxCellX; cellX++) {
@@ -244,12 +244,24 @@ export function buildMapFromWorld({
         center.z + halfExtent
       );
 
-      const minCellX = Math.floor((searchRegion.min.x - worldOrigin.x) / voxelSize);
-      const maxCellX = Math.floor((searchRegion.max.x - worldOrigin.x) / voxelSize);
-      const minCellY = Math.floor((searchRegion.min.y - worldOrigin.y) / voxelSize);
-      const maxCellY = Math.floor((searchRegion.max.y - worldOrigin.y) / voxelSize);
-      const minCellZ = Math.floor((searchRegion.min.z - worldOrigin.z) / voxelSize);
-      const maxCellZ = Math.floor((searchRegion.max.z - worldOrigin.z) / voxelSize);
+      const minGridPosition = world.mapToGridPosition(
+        searchRegion.min.x,
+        searchRegion.min.y,
+        searchRegion.min.z,
+        voxelSize
+      );
+      const maxGridPosition = world.mapToGridPosition(
+        searchRegion.max.x,
+        searchRegion.max.y,
+        searchRegion.max.z,
+        voxelSize
+      );
+      const minCellX = Math.floor(minGridPosition.x);
+      const maxCellX = Math.floor(maxGridPosition.x);
+      const minCellY = Math.floor(minGridPosition.y);
+      const maxCellY = Math.floor(maxGridPosition.y);
+      const minCellZ = Math.floor(minGridPosition.z);
+      const maxCellZ = Math.floor(maxGridPosition.z);
 
       for (let i = 0; i < boundaryColliders.length; i++) {
         if (searchRegion.intersectsBox(boundaryColliders[i])) {

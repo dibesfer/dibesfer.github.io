@@ -52,6 +52,50 @@ export class World {
     return this;
   }
 
+  getMapOrigin(unitSize = 1) {
+    const normalizedUnitSize = toFiniteNumber(unitSize, 1);
+    return {
+      x: -this.size.x * normalizedUnitSize * 0.5,
+      y: 0,
+      z: -this.size.z * normalizedUnitSize * 0.5,
+    };
+  }
+
+  gridToMapPosition(x = 0, y = 0, z = 0, unitSize = 1) {
+    const position = normalizeWorldPosition({ x, y, z });
+    const normalizedUnitSize = toFiniteNumber(unitSize, 1);
+    const origin = this.getMapOrigin(normalizedUnitSize);
+
+    return {
+      x: origin.x + position.x * normalizedUnitSize,
+      y: origin.y + position.y * normalizedUnitSize,
+      z: origin.z + position.z * normalizedUnitSize,
+    };
+  }
+
+  gridToMapCenterPosition(x = 0, y = 0, z = 0, unitSize = 1) {
+    const basePosition = this.gridToMapPosition(x, y, z, unitSize);
+    const normalizedUnitSize = toFiniteNumber(unitSize, 1);
+
+    return {
+      x: basePosition.x + normalizedUnitSize * 0.5,
+      y: basePosition.y + normalizedUnitSize * 0.5,
+      z: basePosition.z + normalizedUnitSize * 0.5,
+    };
+  }
+
+  mapToGridPosition(x = 0, y = 0, z = 0, unitSize = 1) {
+    const position = normalizeWorldPosition({ x, y, z });
+    const normalizedUnitSize = toFiniteNumber(unitSize, 1);
+    const origin = this.getMapOrigin(normalizedUnitSize);
+
+    return {
+      x: (position.x - origin.x) / normalizedUnitSize,
+      y: (position.y - origin.y) / normalizedUnitSize,
+      z: (position.z - origin.z) / normalizedUnitSize,
+    };
+  }
+
   getVoxel(x = 0, y = 0, z = 0) {
     const position = normalizeWorldPosition({ x, y, z });
     return this.voxels.get(createVoxelKey(position.x, position.y, position.z)) ?? null;

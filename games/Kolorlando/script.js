@@ -34,6 +34,8 @@ import { createEquipment } from './code/entities/equipment.js';
 import { buildSimpleMap } from './maps/simpleMap.js';
 import { buildCityMap } from './maps/cityMap.js';
 import { buildVoxelandiaMap } from './maps/voxelandiaMap.js';
+import { buildMapFromWorld } from './maps/MapGenerator.js';
+import { Voxelaar, fillWorldWithVoxel } from './maps/Voxelaar.js';
 import { createMultiplayerController } from './code/multiplayer/multiplayer.js';
 import { createCommandHandler } from './code/commands.js';
 import { createBoxelId, readLocalBoxels, writeLocalBoxel } from './code/data/boxelStorage.js';
@@ -65,6 +67,8 @@ function resolveSingleplayerWorldPreset() {
       return 'simple';
     case 'city':
       return 'city';
+    case 'voxelaar':
+      return 'voxelaar';
     case 'voxelandia':
     default:
       return 'voxelandia';
@@ -1736,25 +1740,31 @@ if (settingsRestoreDefaultsButton) {
 // --------------------
 // GROUND
 // --------------------
-const MAP_PRESET = resolveSingleplayerWorldPreset(); // 'simple' | 'city' | 'voxelandia'
+const MAP_PRESET = resolveSingleplayerWorldPreset(); // 'simple' | 'city' | 'voxelandia' | 'voxelaar'
 const mapBuilders = {
   simple: buildSimpleMap,
   city: buildCityMap,
   voxelandia: buildVoxelandiaMap,
 };
+const isClassWorldPreset = MAP_PRESET === 'voxelaar';
 const selectedMapBuilder = mapBuilders[MAP_PRESET] ?? buildSimpleMap;
-const mapData = selectedMapBuilder({
-  scene,
-  camera,
-  playerEye,
-  groundTexture,
-  brickTexture,
-  spawnPadTexture,
-  brickTileSize: BRICK_TILE_SIZE,
-  /* Multiplayer should not synthesize extra authored NPCs locally; dynamic
-  shared instances will move behind the shared-world bootstrap instead. */
-  spawnDynamicEntities: !MULTIPLAYER_ENABLED,
-});
+const mapData = isClassWorldPreset
+  ? buildMapFromWorld({
+    scene,
+    world: fillWorldWithVoxel(Voxelaar.clone()),
+  })
+  : selectedMapBuilder({
+    scene,
+    camera,
+    playerEye,
+    groundTexture,
+    brickTexture,
+    spawnPadTexture,
+    brickTileSize: BRICK_TILE_SIZE,
+    /* Multiplayer should not synthesize extra authored NPCs locally; dynamic
+    shared instances will move behind the shared-world bootstrap instead. */
+    spawnDynamicEntities: !MULTIPLAYER_ENABLED,
+  });
 const GROUND_Y = mapData.groundY;
 const buildingColliders = mapData.buildingColliders;
 const entities = mapData.entities;
