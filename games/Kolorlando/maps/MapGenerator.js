@@ -1,19 +1,20 @@
 import * as THREE from 'three';
 import { World } from '../code/data/World.js';
+import { Voxel } from '../code/data/Voxel.js';
 
 /*
 
-edit flow X
+edit flow V
 collision helpers V
 dynamic entities X
 map boundary colliders V
 
 rendering scalability
 voxelandiaMap.js used InstancedMesh
-current MapGenerator uses one mesh per voxel
+current MapGenerator keeps an InstancedMesh and syncs it from World edits
 coordinate convention
 voxelandiaMap.js centered the world around origin
-MapGenerator currently builds from 0,0,0
+MapGenerator now follows World spatial helpers
 
 */
 
@@ -37,8 +38,20 @@ export function buildMapFromWorld({
   const boundaryThickness = voxelSize;
   const instanceMatrix = new THREE.Matrix4();
   const instanceColor = new THREE.Color();
+  const hiddenInstanceMatrix = new THREE.Matrix4().makeTranslation(0, -10000, 0);
+  const hitNormalWorld = new THREE.Vector3();
+  const adjacentVoxelPoint = new THREE.Vector3();
   const voxelCellByInstanceId = [];
+  const voxelInstanceIdByKey = new Map();
+  const voxelColliderByKey = new Map();
+  const voxelTypesByName = new Map();
+  const freeVoxelIds = [];
   const worldOrigin = world.getMapOrigin(voxelSize);
+  const voxelEntries = world.getVoxelEntries();
+  const initialVoxelCount = voxelEntries.length;
+  const extraVoxelCapacity = 20000;
+  const maxVoxelCount = Math.max(initialVoxelCount + extraVoxelCapacity, 1);
+  let nextVoxelInstanceId = 0;
 
   mapGroup.name = world.name || 'World';
 
@@ -46,15 +59,12 @@ export function buildMapFromWorld({
     return typeof color === 'string' && color.trim() ? color.trim() : '#ffffff';
   }
 
+  function createCellKey(cellX, cellY, cellZ) {
+    return `${cellX}|${cellY}|${cellZ}`;
+  }
+
   function setBoxFromCell(cellX, cellY, cellZ, targetBox = new THREE.Box3()) {
-    const minPosition = world.gridToMapPosition(cellX, cellY, cellZ, voxelSize);
-    targetBox.min.set(minPosition.x, minPosition.y, minPosition.z);
-    targetBox.max.set(
-      targetBox.min.x + voxelSize,
-      targetBox.min.y + voxelSize,
-      targetBox.min.z + voxelSize
-    );
-    return targetBox;
+    return world.getVoxelBox(cellX, cellY, cellZ, voxelSize, targetBox);
   }
 
   function createWorldBoundaryColliders() {
@@ -93,7 +103,138 @@ export function buildMapFromWorld({
     ];
   }
 
-  const voxelEntries = world.getVoxelEntries();
+  function registerVoxelType(voxel = null) {
+    const voxelName = String(voxel?.name ?? '').trim();
+    if (!voxelName || voxelTypesByName.has(voxelName)) return;
+
+    voxelTypesByName.set(voxelName, {
+      name: voxelName,
+      color: new THREE.Color(normalizeColor(voxel?.color)).getHex(),
+    });
+  }
+
+  function syncVoxelInstance(voxelId, cellX, cellY, cellZ, voxel) {
+    const centerPosition = world.gridToMapCenterPosition(cellX, cellY, cellZ, voxelSize);
+    instanceMatrix.makeTranslation(
+      centerPosition.x,
+      centerPosition.y,
+      centerPosition.z
+    );
+    voxelGrid.setMatrixAt(voxelId, instanceMatrix);
+    voxelGrid.setColorAt(voxelId, instanceColor.set(normalizeColor(voxel?.color)));
+    voxelCellByInstanceId[voxelId] = {
+      x: cellX,
+      y: cellY,
+      z: cellZ,
+    };
+  }
+
+  function addColliderForCell(cellX, cellY, cellZ) {
+    const key = createCellKey(cellX, cellY, cellZ);
+    if (voxelColliderByKey.has(key)) {
+      return voxelColliderByKey.get(key);
+    }
+
+    const collider = setBoxFromCell(cellX, cellY, cellZ).clone();
+    voxelColliderByKey.set(key, collider);
+    buildingColliders.push(collider);
+    return collider;
+  }
+
+  function removeColliderForCell(cellX, cellY, cellZ) {
+    const key = createCellKey(cellX, cellY, cellZ);
+    const collider = voxelColliderByKey.get(key);
+    if (!collider) return false;
+
+    const colliderIndex = buildingColliders.indexOf(collider);
+    if (colliderIndex >= 0) {
+      buildingColliders.splice(colliderIndex, 1);
+    }
+
+    voxelColliderByKey.delete(key);
+    return true;
+  }
+
+  function getNextVoxelInstanceId() {
+    if (freeVoxelIds.length > 0) {
+      return freeVoxelIds.pop();
+    }
+
+    if (nextVoxelInstanceId >= maxVoxelCount) {
+      return null;
+    }
+
+    const voxelId = nextVoxelInstanceId;
+    nextVoxelInstanceId += 1;
+    voxelGrid.count = Math.max(voxelGrid.count, nextVoxelInstanceId);
+    return voxelId;
+  }
+
+  function syncWorldVoxelAddedAtCell(cellX, cellY, cellZ) {
+    const voxel = world.getVoxel(cellX, cellY, cellZ);
+    if (!voxel) return false;
+
+    registerVoxelType(voxel);
+    const key = createCellKey(cellX, cellY, cellZ);
+    const currentVoxelId = voxelInstanceIdByKey.get(key);
+    const voxelId = Number.isInteger(currentVoxelId) ? currentVoxelId : getNextVoxelInstanceId();
+    if (!Number.isInteger(voxelId)) return false;
+
+    syncVoxelInstance(voxelId, cellX, cellY, cellZ, voxel);
+    voxelInstanceIdByKey.set(key, voxelId);
+    addColliderForCell(cellX, cellY, cellZ);
+    voxelGrid.instanceMatrix.needsUpdate = true;
+    if (voxelGrid.instanceColor) {
+      voxelGrid.instanceColor.needsUpdate = true;
+    }
+    return true;
+  }
+
+  function syncWorldVoxelRemovedAtCell(cellX, cellY, cellZ) {
+    const key = createCellKey(cellX, cellY, cellZ);
+    const voxelId = voxelInstanceIdByKey.get(key);
+    if (!Number.isInteger(voxelId)) return false;
+
+    voxelGrid.setMatrixAt(voxelId, hiddenInstanceMatrix);
+    voxelGrid.instanceMatrix.needsUpdate = true;
+    voxelCellByInstanceId[voxelId] = null;
+    voxelInstanceIdByKey.delete(key);
+    freeVoxelIds.push(voxelId);
+    removeColliderForCell(cellX, cellY, cellZ);
+    return true;
+  }
+
+  function getVoxelCellFromRaycastHit(hit) {
+    const cell = voxelCellByInstanceId[hit?.instanceId];
+    if (!cell) return null;
+
+    return {
+      cellX: cell.x,
+      cellY: cell.y,
+      cellZ: cell.z,
+    };
+  }
+
+  function getAdjacentVoxelCellFromRaycastHit(hit) {
+    if (!hit || hit.object !== voxelGrid || !hit.face) return null;
+
+    hitNormalWorld.copy(hit.face.normal).transformDirection(voxelGrid.matrixWorld);
+    adjacentVoxelPoint.copy(hit.point).addScaledVector(hitNormalWorld, voxelSize * 0.5 + 0.001);
+
+    const adjacentGridPosition = world.mapToGridPosition(
+      adjacentVoxelPoint.x,
+      adjacentVoxelPoint.y,
+      adjacentVoxelPoint.z,
+      voxelSize
+    );
+
+    return {
+      cellX: Math.floor(adjacentGridPosition.x),
+      cellY: Math.floor(adjacentGridPosition.y),
+      cellZ: Math.floor(adjacentGridPosition.z),
+    };
+  }
+
   const voxelGeometry = new THREE.BoxGeometry(voxelSize, voxelSize, voxelSize);
   const voxelMaterial = new THREE.MeshStandardMaterial({
     color: 0xffffff,
@@ -103,32 +244,21 @@ export function buildMapFromWorld({
   const voxelGrid = new THREE.InstancedMesh(
     voxelGeometry,
     voxelMaterial,
-    Math.max(voxelEntries.length, 1)
+    maxVoxelCount
   );
 
   voxelGrid.name = `${mapGroup.name} Voxels`;
   voxelGrid.receiveShadow = true;
+  voxelGrid.count = Math.max(initialVoxelCount, 1);
 
   for (let i = 0; i < voxelEntries.length; i++) {
     const entry = voxelEntries[i];
     const { position, voxel } = entry;
-    const centerPosition = world.gridToMapCenterPosition(position.x, position.y, position.z, voxelSize);
-
-    instanceMatrix.makeTranslation(
-      centerPosition.x,
-      centerPosition.y,
-      centerPosition.z
-    );
-    voxelGrid.setMatrixAt(i, instanceMatrix);
-    voxelGrid.setColorAt(i, instanceColor.set(normalizeColor(voxel.color)));
-    voxelCellByInstanceId[i] = {
-      x: position.x,
-      y: position.y,
-      z: position.z,
-    };
-
-    // Runtime colliders stay derived from authored world voxels.
-    buildingColliders.push(setBoxFromCell(position.x, position.y, position.z).clone());
+    registerVoxelType(voxel);
+    syncVoxelInstance(i, position.x, position.y, position.z, voxel);
+    voxelInstanceIdByKey.set(createCellKey(position.x, position.y, position.z), i);
+    addColliderForCell(position.x, position.y, position.z);
+    nextVoxelInstanceId = i + 1;
   }
 
   voxelGrid.instanceMatrix.needsUpdate = true;
@@ -143,6 +273,8 @@ export function buildMapFromWorld({
   scene.add(mapGroup);
 
   return {
+    world,
+    voxelSize,
     groundY: 0,
     hasInfiniteGround: false,
     spawnPoint: new THREE.Vector3(
@@ -153,24 +285,28 @@ export function buildMapFromWorld({
     buildingColliders,
     entities: [],
     raycastTargets: [voxelGrid],
+    voxelTypes: Array.from(voxelTypesByName.values()),
     resolveRaycastLabel(hit) {
       const cell = voxelCellByInstanceId[hit?.instanceId];
       if (!cell) return null;
       return world.getVoxel(cell.x, cell.y, cell.z)?.name ?? null;
     },
-    getVoxelCellFromRaycastHit(hit) {
-      const cell = voxelCellByInstanceId[hit?.instanceId];
-      if (!cell) return null;
-
-      return {
-        cellX: cell.x,
-        cellY: cell.y,
-        cellZ: cell.z,
-      };
-    },
+    getVoxelCellFromRaycastHit,
+    getAdjacentVoxelCellFromRaycastHit,
     getVoxelAtCell(cellX, cellY, cellZ) {
       return world.getVoxel(cellX, cellY, cellZ);
     },
+    createVoxelFromType(voxelTypeName) {
+      const voxelType = voxelTypesByName.get(String(voxelTypeName ?? '').trim());
+      if (!voxelType) return null;
+
+      return new Voxel({
+        name: voxelType.name,
+        color: '#' + voxelType.color.toString(16).padStart(6, '0'),
+      });
+    },
+    syncWorldVoxelAddedAtCell,
+    syncWorldVoxelRemovedAtCell,
     intersectColliderBox(box) {
       if (!box) return null;
 

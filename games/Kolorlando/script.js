@@ -41,6 +41,7 @@ import { createCommandHandler } from './code/commands.js';
 import { createBoxelId, readLocalBoxels, writeLocalBoxel } from './code/data/boxelStorage.js';
 import { createLocalWorldSaveStore } from './code/data/worldSaving.js';
 import { loadPlayerFaceData } from './code/data/playerSaving.js';
+import { WorldEditor } from './code/data/WorldEditor.js';
 import { SpaceShipVehicle } from './code/entities/vehicle.js';
 
 const KOLORLANDO_MODE = window.KOLORLANDO_MODE === 'multiplayer' ? 'multiplayer' : 'singleplayer';
@@ -1791,9 +1792,39 @@ const addVoxelAtCell = typeof mapData.addVoxelAtCell === 'function'
 const removeVoxelAtCell = typeof mapData.removeVoxelAtCell === 'function'
   ? mapData.removeVoxelAtCell
   : () => false;
-const getVoxelBoxFromRaycastHit = typeof mapData.getVoxelBoxFromRaycastHit === 'function'
-  ? mapData.getVoxelBoxFromRaycastHit
+const createVoxelFromType = typeof mapData.createVoxelFromType === 'function'
+  ? mapData.createVoxelFromType
   : () => null;
+const syncWorldVoxelAddedAtCell = typeof mapData.syncWorldVoxelAddedAtCell === 'function'
+  ? mapData.syncWorldVoxelAddedAtCell
+  : () => false;
+const syncWorldVoxelRemovedAtCell = typeof mapData.syncWorldVoxelRemovedAtCell === 'function'
+  ? mapData.syncWorldVoxelRemovedAtCell
+  : () => false;
+const worldData = mapData.world ?? null;
+const worldVoxelSize = Number(mapData.voxelSize) || 1;
+const useWorldEditorVoxelMode = isClassWorldPreset && worldData !== null;
+const worldEditor = new WorldEditor({
+  world: worldData,
+  voxelSize: worldVoxelSize,
+  getVoxelCellFromRaycastHit,
+  getAdjacentVoxelCellFromRaycastHit,
+});
+const legacyGetVoxelBoxFromRaycastHit = typeof mapData.getVoxelBoxFromRaycastHit === 'function'
+  ? mapData.getVoxelBoxFromRaycastHit
+  : null;
+function getVoxelBoxFromRaycastHit(hit, targetBox) {
+  /* Shared highlight flow now grows from world spatial truth first, while
+  legacy maps can still opt into their older direct hit-to-box adapter. */
+  const targetVoxelBox = worldEditor.getTargetVoxelBox(hit, targetBox);
+  if (targetVoxelBox) {
+    return targetVoxelBox;
+  }
+
+  return typeof legacyGetVoxelBoxFromRaycastHit === 'function'
+    ? legacyGetVoxelBoxFromRaycastHit(hit, targetBox)
+    : null;
+}
 const getVoxelAtCell = typeof mapData.getVoxelAtCell === 'function'
   ? mapData.getVoxelAtCell
   : () => null;
@@ -3955,6 +3986,10 @@ function isBoxelSelectionToolSelected() {
   return getSelectedActionItemType() === BOXEL_SELECTION_TOOL_ITEM.id;
 }
 
+// --------------------
+// START INPUT ZONE
+// --------------------
+
 function syncVoxelHighlightStyle() {
   /* The same highlight mesh is reused for normal voxel aiming and the new
   Boxel mode so we only swap colors here instead of creating duplicate meshes
@@ -4050,7 +4085,7 @@ function placeBoxelSelectedVoxelHighlightFromAdjacentHit(voxelHit) {
   /* Right-click should target the empty voxel space on the pointed face, so we
   derive the adjacent cell coordinates from the existing map helper and then
   rebuild that cell's box using the currently hit voxel dimensions. */
-  const adjacentVoxelCell = getAdjacentVoxelCellFromRaycastHit(voxelHit);
+  const adjacentVoxelCell = worldEditor.getAdjacentTargetVoxelCell(voxelHit);
   if (!adjacentVoxelCell || !getVoxelBoxFromRaycastHit(voxelHit, boxelSelectionInputBox)) {
     clearBoxelSelectedVoxelHighlight();
     return false;
@@ -4091,8 +4126,17 @@ function triggerActionForMouseButton(button, options = {}) {
       if (!canEditCurrentVoxelWorld()) return;
 
       const removedVoxelType = resolveRaycastLabel(currentRaycastState.hit);
-      const removedVoxelCell = getVoxelCellFromRaycastHit(currentRaycastState.hit);
-      const removed = removeVoxelAtRaycastHit(currentRaycastState.hit);
+      const removedResult = useWorldEditorVoxelMode
+        ? worldEditor.removeVoxelFromHit(currentRaycastState.hit)
+        : null;
+      const removedVoxelCell = removedResult ?? worldEditor.getTargetVoxelCell(currentRaycastState.hit);
+      const removed = useWorldEditorVoxelMode
+        ? Boolean(removedResult && syncWorldVoxelRemovedAtCell(
+          removedResult.cellX,
+          removedResult.cellY,
+          removedResult.cellZ
+        ))
+        : removeVoxelAtRaycastHit(currentRaycastState.hit);
       if (removed && removedVoxelType) {
         if (removedVoxelCell && localWorldSaveStore) {
           localWorldSaveStore.recordVoxelRemoved(
@@ -4139,13 +4183,30 @@ function triggerActionForMouseButton(button, options = {}) {
       const selectedVoxelType = inventoryUI.getSelectedPlaceableVoxelType();
       if (!selectedVoxelType) return;
 
-      const addedVoxelCell = getAdjacentVoxelCellFromRaycastHit(currentRaycastState.hit);
+      const addedVoxelCell = worldEditor.getAdjacentTargetVoxelCell(currentRaycastState.hit);
       if (!addedVoxelCell) return;
 
-      const added = addVoxelAtRaycastHit(currentRaycastState.hit, {
-        playerCollider,
-        voxelType: selectedVoxelType,
-      });
+      const added = useWorldEditorVoxelMode
+        ? (() => {
+          const selectedWorldVoxel = createVoxelFromType(selectedVoxelType);
+          if (!selectedWorldVoxel) return false;
+
+          const addedResult = worldEditor.setVoxelFromHit(
+            currentRaycastState.hit,
+            selectedWorldVoxel
+          );
+          if (!addedResult) return false;
+
+          return syncWorldVoxelAddedAtCell(
+            addedResult.cellX,
+            addedResult.cellY,
+            addedResult.cellZ
+          );
+        })()
+        : addVoxelAtRaycastHit(currentRaycastState.hit, {
+          playerCollider,
+          voxelType: selectedVoxelType,
+        });
       if (added && localWorldSaveStore) {
         localWorldSaveStore.recordVoxelAdded(
           addedVoxelCell.cellX,
@@ -4176,6 +4237,10 @@ function triggerActionForMouseButton(button, options = {}) {
     startLeftPunch({ allowMobile });
   }
 }
+
+// --------------------
+// END INPUT ZONE
+// --------------------
 
 function updateRightPunch(deltaTime) {
   const shoulder = firstPersonArmsRig.joints.rightShoulder;

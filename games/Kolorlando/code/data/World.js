@@ -96,6 +96,40 @@ export class World {
     };
   }
 
+  getVoxelBox(x = 0, y = 0, z = 0, unitSize = 1, targetBox = null) {
+    const position = normalizeWorldPosition({ x, y, z });
+    const normalizedUnitSize = toFiniteNumber(unitSize, 1);
+    const minPosition = this.gridToMapPosition(
+      position.x,
+      position.y,
+      position.z,
+      normalizedUnitSize
+    );
+
+    if (!targetBox?.min || !targetBox?.max) {
+      return {
+        min: {
+          x: minPosition.x,
+          y: minPosition.y,
+          z: minPosition.z,
+        },
+        max: {
+          x: minPosition.x + normalizedUnitSize,
+          y: minPosition.y + normalizedUnitSize,
+          z: minPosition.z + normalizedUnitSize,
+        },
+      };
+    }
+
+    targetBox.min.set(minPosition.x, minPosition.y, minPosition.z);
+    targetBox.max.set(
+      minPosition.x + normalizedUnitSize,
+      minPosition.y + normalizedUnitSize,
+      minPosition.z + normalizedUnitSize
+    );
+    return targetBox;
+  }
+
   getVoxel(x = 0, y = 0, z = 0) {
     const position = normalizeWorldPosition({ x, y, z });
     return this.voxels.get(createVoxelKey(position.x, position.y, position.z)) ?? null;
