@@ -27,6 +27,8 @@ export function buildMapFromWorld({
   const voxelMeshes = [];
   const buildingColliders = [];
   const materialByColor = new Map();
+  const tempCollisionBox = new THREE.Box3();
+  const searchRegion = new THREE.Box3();
 
   mapGroup.name = world.name || 'World';
 
@@ -67,14 +69,30 @@ export function buildMapFromWorld({
     return mesh;
   }
 
+  function setBoxFromCell(cellX, cellY, cellZ, targetBox = new THREE.Box3()) {
+    targetBox.min.set(
+      cellX * voxelSize,
+      cellY * voxelSize,
+      cellZ * voxelSize
+    );
+    targetBox.max.set(
+      targetBox.min.x + voxelSize,
+      targetBox.min.y + voxelSize,
+      targetBox.min.z + voxelSize
+    );
+    return targetBox;
+  }
+
   const voxelEntries = world.getVoxelEntries();
   for (let i = 0; i < voxelEntries.length; i++) {
     const entry = voxelEntries[i];
     const mesh = createVoxelMesh(entry);
+    const { position } = entry;
 
     voxelMeshes.push(mesh);
     mapGroup.add(mesh);
-    buildingColliders.push(new THREE.Box3().setFromObject(mesh));
+    // Runtime colliders stay derived from authored world voxels.
+    buildingColliders.push(setBoxFromCell(position.x, position.y, position.z).clone());
   }
 
   scene.add(mapGroup);
@@ -106,13 +124,86 @@ export function buildMapFromWorld({
       };
     },
     getVoxelAtCell(cellX, cellY, cellZ) {
-      const voxel = world.getVoxel(cellX, cellY, cellZ);
-      if (!voxel) return null;
+      return world.getVoxel(cellX, cellY, cellZ);
+    },
+    intersectColliderBox(box) {
+      if (!box) return null;
 
-      return {
-        voxelTypeId: voxel.name || 'voxel',
-        color: voxel.color,
-      };
+      const minCellX = Math.floor(box.min.x / voxelSize);
+      const maxCellX = Math.ceil(box.max.x / voxelSize) - 1;
+      const minCellY = Math.floor(box.min.y / voxelSize);
+      const maxCellY = Math.ceil(box.max.y / voxelSize) - 1;
+      const minCellZ = Math.floor(box.min.z / voxelSize);
+      const maxCellZ = Math.ceil(box.max.z / voxelSize) - 1;
+
+      for (let cellY = minCellY; cellY <= maxCellY; cellY++) {
+        for (let cellX = minCellX; cellX <= maxCellX; cellX++) {
+          for (let cellZ = minCellZ; cellZ <= maxCellZ; cellZ++) {
+            if (!world.hasVoxel(cellX, cellY, cellZ)) continue;
+
+            setBoxFromCell(cellX, cellY, cellZ, tempCollisionBox);
+            if (tempCollisionBox.intersectsBox(box)) {
+              return tempCollisionBox.clone();
+            }
+          }
+        }
+      }
+
+      return null;
+    },
+    isBoxSupported(box, epsilon = 0.03) {
+      if (!box) return false;
+
+      const minCellX = Math.floor((box.min.x + 0.001) / voxelSize);
+      const maxCellX = Math.ceil((box.max.x - 0.001) / voxelSize) - 1;
+      const minCellZ = Math.floor((box.min.z + 0.001) / voxelSize);
+      const maxCellZ = Math.ceil((box.max.z - 0.001) / voxelSize) - 1;
+      const supportMinY = Math.floor((box.min.y - epsilon) / voxelSize) - 1;
+      const supportMaxY = Math.ceil((box.min.y + epsilon) / voxelSize) - 1;
+
+      for (let cellY = supportMinY; cellY <= supportMaxY; cellY++) {
+        for (let cellX = minCellX; cellX <= maxCellX; cellX++) {
+          for (let cellZ = minCellZ; cellZ <= maxCellZ; cellZ++) {
+            if (world.hasVoxel(cellX, cellY, cellZ)) {
+              return true;
+            }
+          }
+        }
+      }
+
+      return false;
+    },
+    collectDebugCollisionBoxes(center, halfExtent = 6, targetBoxes = []) {
+      if (!center || !Array.isArray(targetBoxes)) return targetBoxes;
+
+      searchRegion.min.set(
+        center.x - halfExtent,
+        center.y - halfExtent,
+        center.z - halfExtent
+      );
+      searchRegion.max.set(
+        center.x + halfExtent,
+        center.y + halfExtent,
+        center.z + halfExtent
+      );
+
+      const minCellX = Math.floor(searchRegion.min.x / voxelSize);
+      const maxCellX = Math.floor(searchRegion.max.x / voxelSize);
+      const minCellY = Math.floor(searchRegion.min.y / voxelSize);
+      const maxCellY = Math.floor(searchRegion.max.y / voxelSize);
+      const minCellZ = Math.floor(searchRegion.min.z / voxelSize);
+      const maxCellZ = Math.floor(searchRegion.max.z / voxelSize);
+
+      for (let cellY = minCellY; cellY <= maxCellY; cellY++) {
+        for (let cellX = minCellX; cellX <= maxCellX; cellX++) {
+          for (let cellZ = minCellZ; cellZ <= maxCellZ; cellZ++) {
+            if (!world.hasVoxel(cellX, cellY, cellZ)) continue;
+            targetBoxes.push(setBoxFromCell(cellX, cellY, cellZ).clone());
+          }
+        }
+      }
+
+      return targetBoxes;
     },
     shadowRange: Math.max(world.size.x, world.size.z),
     miniMapViewSize: Math.max(world.size.x, world.size.z),
