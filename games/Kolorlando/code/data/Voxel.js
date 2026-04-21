@@ -223,13 +223,12 @@ export class Voxel {
       this.type = normalizeVoxelType(data.type);
     }
 
-    if (typeof data?.texture === 'string' && data.texture.trim()) {
-      this.texture = normalizeText(data.texture, '');
-      return this;
-    }
-
     if (typeof data?.color === 'string' && data.color.trim()) {
       this.color = normalizeText(data.color, this.color || '#ffffff');
+    }
+
+    if (typeof data?.texture === 'string' && data.texture.trim()) {
+      this.texture = normalizeText(data.texture, '');
       return this;
     }
 

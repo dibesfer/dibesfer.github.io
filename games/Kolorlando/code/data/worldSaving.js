@@ -53,6 +53,16 @@ function clonePlayerState(player) {
   return Object.keys(cloned).length > 0 ? cloned : null;
 }
 
+function cloneWorldSnapshot(snapshot) {
+  if (!snapshot || typeof snapshot !== 'object') return null;
+
+  try {
+    return JSON.parse(JSON.stringify(snapshot));
+  } catch {
+    return null;
+  }
+}
+
 function createEmptyWorldSave(worldId = 'default') {
   /* The save format intentionally stores only player-authored mutations instead
   of the whole generated world. The base map remains code-driven, while this
@@ -62,6 +72,7 @@ function createEmptyWorldSave(worldId = 'default') {
     worldId: sanitizeWorldId(worldId),
     savedAt: null,
     player: null,
+    worldSnapshot: null,
     voxelEdits: {},
   };
 }
@@ -72,6 +83,7 @@ function cloneWorldSave(saveData) {
     worldId: saveData.worldId,
     savedAt: saveData.savedAt,
     player: saveData.player ? { ...saveData.player } : null,
+    worldSnapshot: cloneWorldSnapshot(saveData.worldSnapshot),
     voxelEdits: { ...saveData.voxelEdits },
   };
 }
@@ -101,6 +113,7 @@ function normalizeWorldSave(rawSave, fallbackWorldId = 'default') {
   normalized.worldId = sanitizeWorldId(rawSave.worldId ?? fallbackWorldId);
   normalized.savedAt = typeof rawSave.savedAt === 'string' ? rawSave.savedAt : null;
   normalized.player = clonePlayerState(rawSave.player);
+  normalized.worldSnapshot = cloneWorldSnapshot(rawSave.worldSnapshot);
 
   if (rawSave.voxelEdits && typeof rawSave.voxelEdits === 'object') {
     Object.entries(rawSave.voxelEdits).forEach(([key, record]) => {
@@ -187,6 +200,9 @@ export function createLocalWorldSaveStore({
     const saveToPersist = ensureLoadedSave();
     saveToPersist.savedAt = new Date().toISOString();
     writeStorage(storage, storageKey, JSON.stringify(saveToPersist));
+    if (saveToPersist.worldSnapshot) {
+      console.log('[World Save] Saved local world snapshot:', saveToPersist.worldSnapshot);
+    }
     return cloneWorldSave(saveToPersist);
   }
 
@@ -214,6 +230,15 @@ export function createLocalWorldSaveStore({
     return cloneWorldSave(ensureLoadedSave());
   }
 
+  function loadWorldSnapshot() {
+    const saveData = ensureLoadedSave();
+    const worldSnapshot = cloneWorldSnapshot(saveData.worldSnapshot);
+    if (worldSnapshot) {
+      console.log('[World Save] Loaded local world snapshot:', worldSnapshot);
+    }
+    return worldSnapshot;
+  }
+
   function replaceWorldSave(nextSave) {
     currentSave = normalizeWorldSave(nextSave, normalizedWorldId);
     return persistCurrentSave();
@@ -235,6 +260,12 @@ export function createLocalWorldSaveStore({
     const saveData = ensureLoadedSave();
     saveData.player = clonePlayerState(playerState);
     return persistCurrentSave();
+  }
+
+  function setWorldSnapshot(worldSnapshot) {
+    const saveData = ensureLoadedSave();
+    saveData.worldSnapshot = cloneWorldSnapshot(worldSnapshot);
+    return schedulePersistCurrentSave();
   }
 
   function recordVoxelAdded(cellX, cellY, cellZ, voxelType) {
@@ -289,9 +320,11 @@ export function createLocalWorldSaveStore({
     worldId: normalizedWorldId,
     storageKey,
     loadWorldSave,
+    loadWorldSnapshot,
     replaceWorldSave,
     clearWorldSave,
     setPlayerState,
+    setWorldSnapshot,
     recordVoxelAdded,
     recordVoxelRemoved,
     flushPendingSave,

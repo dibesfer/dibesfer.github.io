@@ -41,6 +41,7 @@ import { createCommandHandler } from './code/commands.js';
 import { createBoxelId, readLocalBoxels, writeLocalBoxel } from './code/data/boxelStorage.js';
 import { createLocalWorldSaveStore } from './code/data/worldSaving.js';
 import { loadPlayerFaceData } from './code/data/playerSaving.js';
+import { World } from './code/data/World.js';
 import { WorldEditor } from './code/data/WorldEditor.js';
 import { SpaceShipVehicle } from './code/entities/vehicle.js';
 
@@ -1751,11 +1752,31 @@ const worldPresets = {
   voxelandia: () => fillVoxelandiaWorldWithVoxel(Voxelandia.clone()),
 };
 const isClassWorldPreset = typeof worldPresets[MAP_PRESET] === 'function';
+const localWorldSaveStore = !MULTIPLAYER_ENABLED && isClassWorldPreset
+  ? createLocalWorldSaveStore({
+    worldId: `${KOLORLANDO_MODE}-${MAP_PRESET}`,
+  })
+  : null;
+const savedLocalWorldSnapshot = localWorldSaveStore?.loadWorldSnapshot?.() ?? null;
 const selectedMapBuilder = mapBuilders[MAP_PRESET] ?? buildSimpleMap;
+function resolveInitialVoxelWorld() {
+  const buildPresetWorld = worldPresets[MAP_PRESET];
+  if (typeof buildPresetWorld !== 'function') {
+    return null;
+  }
+
+  const nextWorld = buildPresetWorld();
+  if (!savedLocalWorldSnapshot) {
+    return nextWorld;
+  }
+
+  nextWorld.fromSnapshot(savedLocalWorldSnapshot);
+  return nextWorld;
+}
 const mapData = isClassWorldPreset
   ? buildMapFromWorld({
     scene,
-    world: worldPresets[MAP_PRESET](),
+    world: resolveInitialVoxelWorld(),
   })
   : selectedMapBuilder({
     scene,
@@ -1837,11 +1858,6 @@ const multiplayerWorldBootstrap = MULTIPLAYER_ENABLED && MAP_PRESET === 'voxelan
 const multiplayerWorldStore = MULTIPLAYER_ENABLED && MAP_PRESET === 'voxelandia'
   ? window.KOLORLANDO_MULTIPLAYER_WORLD_STORE ?? null
   : null;
-const localWorldSaveStore = !MULTIPLAYER_ENABLED && MAP_PRESET === 'voxelandia'
-  ? createLocalWorldSaveStore({
-    worldId: `${KOLORLANDO_MODE}-${MAP_PRESET}`,
-  })
-  : null;
 const entityRaycastPoint = new THREE.Vector3();
 const MULTIPLAYER_WORLD_PLAYER_SAVE_INTERVAL = 2;
 let multiplayerWorldPlayerSaveAccumulator = MULTIPLAYER_WORLD_PLAYER_SAVE_INTERVAL;
@@ -1849,25 +1865,46 @@ let lastSavedMultiplayerPlayerStateKey = '';
 let currentMultiplayerWorldState = multiplayerWorldBootstrap;
 let initialPlayerRotationY = 0;
 
+function scheduleLocalWorldSnapshotSave() {
+  if (!localWorldSaveStore || !(worldData instanceof World) || typeof worldData.toSnapshot !== 'function') return;
+  localWorldSaveStore.setWorldSnapshot(worldData.toSnapshot());
+}
+
 function applyLocalSavedWorld() {
   /* Replaying saved voxel diffs immediately after the map boots keeps local
   persistence scoped to player edits while letting the authored base map remain
   the single source of truth for untouched terrain. */
   if (!localWorldSaveStore) return;
+  if (savedLocalWorldSnapshot || !useWorldEditorVoxelMode || !worldData) return;
 
   const voxelEdits = localWorldSaveStore.getVoxelEditsList();
+  let migratedLegacyEdits = false;
   for (let i = 0; i < voxelEdits.length; i += 1) {
     const edit = voxelEdits[i];
     if (edit.action === 'remove') {
-      removeVoxelAtCell(edit.cellX, edit.cellY, edit.cellZ);
+      if (worldData.removeVoxel(edit.cellX, edit.cellY, edit.cellZ)) {
+        syncWorldVoxelRemovedAtCell(edit.cellX, edit.cellY, edit.cellZ);
+        migratedLegacyEdits = true;
+      }
       continue;
     }
 
     if (edit.action === 'add') {
-      addVoxelAtCell(edit.cellX, edit.cellY, edit.cellZ, {
-        voxelType: edit.voxelType,
-      });
+      const savedVoxel = createVoxelFromType(edit.voxelType);
+      if (!savedVoxel) continue;
+      try {
+        worldData.setVoxel(edit.cellX, edit.cellY, edit.cellZ, savedVoxel);
+        if (syncWorldVoxelAddedAtCell(edit.cellX, edit.cellY, edit.cellZ)) {
+          migratedLegacyEdits = true;
+        }
+      } catch {
+        continue;
+      }
     }
+  }
+
+  if (migratedLegacyEdits) {
+    scheduleLocalWorldSnapshotSave();
   }
 }
 
@@ -4136,11 +4173,15 @@ function triggerActionForMouseButton(button, options = {}) {
         : removeVoxelAtRaycastHit(currentRaycastState.hit);
       if (removed && removedVoxelType) {
         if (removedVoxelCell && localWorldSaveStore) {
-          localWorldSaveStore.recordVoxelRemoved(
-            removedVoxelCell.cellX,
-            removedVoxelCell.cellY,
-            removedVoxelCell.cellZ
-          );
+          if (useWorldEditorVoxelMode) {
+            scheduleLocalWorldSnapshotSave();
+          } else {
+            localWorldSaveStore.recordVoxelRemoved(
+              removedVoxelCell.cellX,
+              removedVoxelCell.cellY,
+              removedVoxelCell.cellZ
+            );
+          }
         }
         if (removedVoxelCell && multiplayerWorldStore) {
           multiplayerWorldStore.recordVoxelRemoved(
@@ -4205,12 +4246,16 @@ function triggerActionForMouseButton(button, options = {}) {
           voxelType: selectedVoxelType,
         });
       if (added && localWorldSaveStore) {
-        localWorldSaveStore.recordVoxelAdded(
-          addedVoxelCell.cellX,
-          addedVoxelCell.cellY,
-          addedVoxelCell.cellZ,
-          selectedVoxelType
-        );
+        if (useWorldEditorVoxelMode) {
+          scheduleLocalWorldSnapshotSave();
+        } else {
+          localWorldSaveStore.recordVoxelAdded(
+            addedVoxelCell.cellX,
+            addedVoxelCell.cellY,
+            addedVoxelCell.cellZ,
+            selectedVoxelType
+          );
+        }
       }
       if (added && addedVoxelCell && multiplayerWorldStore) {
         multiplayerWorldStore.recordVoxelAdded(

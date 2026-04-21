@@ -6,6 +6,9 @@ export const Boxel10 = new Boxel({
   size: 10,
 });
 
+const WORLD_SNAPSHOT_FORMAT = 'kolorlando.worldSnapshot.compact';
+const WORLD_SNAPSHOT_VERSION = 1;
+
 export class World {
   constructor({
     name = 'Default World',
@@ -279,6 +282,44 @@ export class World {
     };
   }
 
+  toSnapshot() {
+    const worldJson = this.toJSON();
+    const voxelPalette = [];
+    const voxelPaletteByKey = new Map();
+    const encodedVoxels = [];
+    const voxelEntries = Array.isArray(worldJson.voxels) ? worldJson.voxels : [];
+
+    for (let i = 0; i < voxelEntries.length; i += 1) {
+      const voxelEntry = voxelEntries[i];
+      const position = normalizeSnapshotVoxelPosition(voxelEntry?.position ?? voxelEntry);
+      const voxel = cloneSnapshotVoxelDefinition(voxelEntry?.voxel ?? voxelEntry);
+      if (!position || !voxel) continue;
+
+      const voxelKey = JSON.stringify(voxel);
+      let paletteIndex = voxelPaletteByKey.get(voxelKey);
+      if (!Number.isInteger(paletteIndex)) {
+        paletteIndex = voxelPalette.length;
+        voxelPaletteByKey.set(voxelKey, paletteIndex);
+        voxelPalette.push(voxel);
+      }
+
+      encodedVoxels.push([position.x, position.y, position.z, paletteIndex]);
+    }
+
+    return {
+      format: WORLD_SNAPSHOT_FORMAT,
+      version: WORLD_SNAPSHOT_VERSION,
+      name: worldJson.name,
+      size: cloneSnapshotValue(worldJson.size) ?? null,
+      land: cloneSnapshotValue(worldJson.land) ?? null,
+      spawnPosition: cloneSnapshotValue(worldJson.spawnPosition) ?? null,
+      entities: cloneSnapshotValue(worldJson.entities) ?? [],
+      boxels: cloneSnapshotValue(worldJson.boxels) ?? [],
+      voxelPalette,
+      voxels: encodedVoxels,
+    };
+  }
+
   fromJSON(data = {}) {
     if ('name' in data) {
       this.setName(data.name);
@@ -309,6 +350,47 @@ export class World {
     }
 
     return this;
+  }
+
+  fromSnapshot(snapshot = {}) {
+    const normalizedSnapshot = cloneSnapshotValue(snapshot);
+    if (!normalizedSnapshot || typeof normalizedSnapshot !== 'object') {
+      return this;
+    }
+
+    if (normalizedSnapshot.format !== WORLD_SNAPSHOT_FORMAT) {
+      return this.fromJSON(normalizedSnapshot);
+    }
+
+    const voxelPalette = Array.isArray(normalizedSnapshot.voxelPalette)
+      ? normalizedSnapshot.voxelPalette
+      : [];
+    const encodedVoxels = Array.isArray(normalizedSnapshot.voxels)
+      ? normalizedSnapshot.voxels
+      : [];
+
+    return this.fromJSON({
+      name: typeof normalizedSnapshot.name === 'string' ? normalizedSnapshot.name : '',
+      size: cloneSnapshotValue(normalizedSnapshot.size) ?? null,
+      land: cloneSnapshotValue(normalizedSnapshot.land) ?? null,
+      spawnPosition: cloneSnapshotValue(normalizedSnapshot.spawnPosition) ?? null,
+      entities: cloneSnapshotValue(normalizedSnapshot.entities) ?? [],
+      boxels: cloneSnapshotValue(normalizedSnapshot.boxels) ?? [],
+      voxels: encodedVoxels.map(entry => {
+        const position = normalizeSnapshotVoxelPosition({
+          x: entry?.[0],
+          y: entry?.[1],
+          z: entry?.[2],
+        });
+        const voxel = cloneSnapshotVoxelDefinition(voxelPalette[entry?.[3]]);
+        if (!position || !voxel) return null;
+
+        return {
+          position,
+          voxel,
+        };
+      }).filter(Boolean),
+    });
   }
 
   clone() {
@@ -349,6 +431,46 @@ function normalizePlacedBoxel(boxel, position = {}) {
     },
     boxel: normalizedBoxel,
   };
+}
+
+function cloneSnapshotValue(value = null) {
+  if (value === null || value === undefined) return null;
+
+  try {
+    return JSON.parse(JSON.stringify(value));
+  } catch {
+    return null;
+  }
+}
+
+function normalizeSnapshotVoxelPosition(position = null) {
+  if (!position || typeof position !== 'object') return null;
+
+  const x = Number(position.x);
+  const y = Number(position.y);
+  const z = Number(position.z);
+  if (!Number.isInteger(x) || !Number.isInteger(y) || !Number.isInteger(z)) {
+    return null;
+  }
+
+  return { x, y, z };
+}
+
+function cloneSnapshotVoxelDefinition(voxel = null) {
+  if (!voxel || typeof voxel !== 'object') return null;
+
+  const clonedVoxel = {};
+  if (typeof voxel.name === 'string' && voxel.name.trim()) clonedVoxel.name = voxel.name.trim();
+  if (typeof voxel.type === 'string' && voxel.type.trim()) clonedVoxel.type = voxel.type.trim();
+  if (typeof voxel.color === 'string' && voxel.color.trim()) clonedVoxel.color = voxel.color.trim();
+  if (typeof voxel.texture === 'string' && voxel.texture.trim()) clonedVoxel.texture = voxel.texture.trim();
+  if (typeof voxel.active === 'boolean') clonedVoxel.active = voxel.active;
+  if (Number.isFinite(voxel.microxelSize) && voxel.microxelSize > 0) clonedVoxel.microxelSize = Number(voxel.microxelSize);
+  if (Array.isArray(voxel.microxels) && voxel.microxels.length > 0) {
+    clonedVoxel.microxels = cloneSnapshotValue(voxel.microxels);
+  }
+
+  return Object.keys(clonedVoxel).length > 0 ? clonedVoxel : null;
 }
 
 function normalizeWorldVoxel(voxel, position = {}) {
