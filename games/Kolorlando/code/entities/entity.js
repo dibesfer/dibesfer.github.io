@@ -267,9 +267,10 @@ export class Entity {
     );
   }
 
-  willHitObstacleAt(nextPos, colliders) {
+  willHitObstacleAt(nextPos, colliders, collisionTester = null) {
     const halfW = this.bodyWidth * 0.5;
     const halfD = this.bodyDepth * 0.5;
+    const verticalOverlapEpsilon = 0.001;
     this._testBox.min.set(
       nextPos.x - halfW,
       this.groundY,
@@ -286,8 +287,8 @@ export class Entity {
       if (
         this._testBox.max.x < c.min.x - this.clearance ||
         this._testBox.min.x > c.max.x + this.clearance ||
-        this._testBox.max.y < c.min.y ||
-        this._testBox.min.y > c.max.y ||
+        this._testBox.max.y <= c.min.y + verticalOverlapEpsilon ||
+        this._testBox.min.y >= c.max.y - verticalOverlapEpsilon ||
         this._testBox.max.z < c.min.z - this.clearance ||
         this._testBox.min.z > c.max.z + this.clearance
       ) {
@@ -296,15 +297,19 @@ export class Entity {
       return true;
     }
 
+    if (typeof collisionTester === 'function' && collisionTester(this._testBox)) {
+      return true;
+    }
+
     return false;
   }
 
-  tryFindOpenDirection(colliders, deltaTime) {
+  tryFindOpenDirection(colliders, deltaTime, collisionTester = null) {
     const stepDistance = this.speed * deltaTime;
     for (let i = 0; i < 10; i++) {
       this.pickRandomDirection();
       this._nextPos.copy(this.position).addScaledVector(this.direction, stepDistance);
-      if (!this.willHitObstacleAt(this._nextPos, colliders)) {
+      if (!this.willHitObstacleAt(this._nextPos, colliders, collisionTester)) {
         return true;
       }
     }
@@ -350,7 +355,7 @@ export class Entity {
     return true;
   }
 
-  update(deltaTime, colliders) {
+  update(deltaTime, colliders, playerPosition = null, collisionTester = null) {
     this.updateKnockback(deltaTime, colliders);
 
     this.turnTimer -= deltaTime;
@@ -361,8 +366,8 @@ export class Entity {
     const stepDistance = this.speed * deltaTime;
     this._nextPos.copy(this.position).addScaledVector(this.direction, stepDistance);
 
-    if (this.willHitObstacleAt(this._nextPos, colliders)) {
-      if (!this.tryFindOpenDirection(colliders, deltaTime)) {
+    if (this.willHitObstacleAt(this._nextPos, colliders, collisionTester)) {
+      if (!this.tryFindOpenDirection(colliders, deltaTime, collisionTester)) {
         return;
       }
       this._nextPos.copy(this.position).addScaledVector(this.direction, stepDistance);
@@ -401,7 +406,7 @@ export class HunterEntity extends Entity {
     this.isAggro = false;
   }
 
-  update(deltaTime, colliders, playerPosition) {
+  update(deltaTime, colliders, playerPosition, collisionTester = null) {
     this.updateKnockback(deltaTime, colliders);
 
     this.turnTimer -= deltaTime;
@@ -443,8 +448,8 @@ export class HunterEntity extends Entity {
       const stepDistance = this.speed * deltaTime;
       this._nextPos.copy(this.position).addScaledVector(this.direction, stepDistance);
 
-      if (this.willHitObstacleAt(this._nextPos, colliders)) {
-        if (!this.tryFindOpenDirection(colliders, deltaTime)) {
+      if (this.willHitObstacleAt(this._nextPos, colliders, collisionTester)) {
+        if (!this.tryFindOpenDirection(colliders, deltaTime, collisionTester)) {
           this.updateAnimation(deltaTime, false);
           return;
         }

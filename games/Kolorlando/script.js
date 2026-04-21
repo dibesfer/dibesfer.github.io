@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { HunterEntity, TalkerEntity } from './code/entities/entity.js';
+import { Entity, HunterEntity, TalkerEntity } from './code/entities/entity.js';
 import {
   applyHumanoidEquipment,
   createHumanoidModel,
@@ -29,13 +29,13 @@ import {
 import { createChatUI } from './code/UI/chat.js';
 import { createPlayerHud } from './playerHud.js';
 import { BoxelSelectionToolItemAppearance, CoinItemAppearance, ColorBootsItemAppearance, ColorCapeItemAppearance, ColorChestItemAppearance, ColorGlovesItemAppearance, ColorHelmetItemAppearance, ColorPantsItemAppearance, ColorShouldersItemAppearance, ColorTabardItemAppearance, GoxelItemAppearance, ItemAppearance } from './code/entities/itemAppearance.js';
-import { BOXEL_SELECTION_TOOL_ITEM, COLOR_BOOTS_ITEM, COLOR_CAPE_ITEM, COLOR_CHEST_ITEM, COLOR_GLOVES_ITEM, COLOR_HELMET_ITEM, COLOR_PANTS_ITEM, COLOR_SHOULDERS_ITEM, COLOR_TABARD_ITEM, COIN_ITEM, GUN_ITEM, ITEM_DEFINITIONS, SPAWN_POINT_ITEM, SWORD_ITEM } from './code/item.js';
+import { BOXEL_SELECTION_TOOL_ITEM, COLOR_BOOTS_ITEM, COLOR_CAPE_ITEM, COLOR_CHEST_ITEM, COLOR_GLOVES_ITEM, COLOR_HELMET_ITEM, COLOR_PANTS_ITEM, COLOR_SHOULDERS_ITEM, COLOR_TABARD_ITEM, COIN_ITEM, GUN_ITEM, ITEM_DEFINITIONS, SWORD_ITEM } from './code/item.js';
 import { createEquipment } from './code/entities/equipment.js';
 import { buildSimpleMap } from './maps/simpleMap.js';
 import { buildCityMap } from './maps/cityMap.js';
-import { buildVoxelandiaMap } from './maps/voxelandiaMap.js';
 import { buildMapFromWorld } from './maps/MapGenerator.js';
 import { Voxelaar, fillWorldWithVoxel } from './maps/Voxelaar.js';
+import { Voxelandia, fillWorldWithVoxel as fillVoxelandiaWorldWithVoxel } from './maps/Voxelandia.js';
 import { createMultiplayerController } from './code/multiplayer/multiplayer.js';
 import { createCommandHandler } from './code/commands.js';
 import { createBoxelId, readLocalBoxels, writeLocalBoxel } from './code/data/boxelStorage.js';
@@ -1745,15 +1745,17 @@ const MAP_PRESET = resolveSingleplayerWorldPreset(); // 'simple' | 'city' | 'vox
 const mapBuilders = {
   simple: buildSimpleMap,
   city: buildCityMap,
-  voxelandia: buildVoxelandiaMap,
 };
-const isClassWorldPreset = MAP_PRESET === 'voxelaar';
-const isLegacyVoxelandiaPreset = MAP_PRESET === 'voxelandia';
+const worldPresets = {
+  voxelaar: () => fillWorldWithVoxel(Voxelaar.clone()),
+  voxelandia: () => fillVoxelandiaWorldWithVoxel(Voxelandia.clone()),
+};
+const isClassWorldPreset = typeof worldPresets[MAP_PRESET] === 'function';
 const selectedMapBuilder = mapBuilders[MAP_PRESET] ?? buildSimpleMap;
 const mapData = isClassWorldPreset
   ? buildMapFromWorld({
     scene,
-    world: fillWorldWithVoxel(Voxelaar.clone()),
+    world: worldPresets[MAP_PRESET](),
   })
   : selectedMapBuilder({
     scene,
@@ -2161,17 +2163,6 @@ playerSpawnPoint.y += 1;
 playerEye.copy(playerSpawnPoint);
 camera.position.copy(playerEye);
 
-if (isLegacyVoxelandiaPreset) {
-  const spawnTalkerPosition = playerSpawnPoint.clone().add(new THREE.Vector3(2.5, -1, 1.5));
-  entities.push(new TalkerEntity({
-    scene,
-    position: spawnTalkerPosition,
-    groundY: GROUND_Y,
-    name: 'Guide',
-    dialogLines: ['Welcome back to Kolorlando', 'Check the item appearances nearby', 'Debug mode shows the item spheres'],
-  }));
-}
-
 const itemAppearances = [];
 const PICKUP_ITEM_TYPES = new Set([
   SWORD_ITEM.id,
@@ -2187,6 +2178,9 @@ const PICKUP_ITEM_TYPES = new Set([
   COLOR_CAPE_ITEM.id,
   COLOR_TABARD_ITEM.id,
 ]);
+const itemDefinitionsById = new Map(
+  Object.values(ITEM_DEFINITIONS).map(item => [item.id, item])
+);
 const PLAYER_PICKUP_RADIUS = 3;
 const PLAYER_PICKUP_RADIUS_SQ = PLAYER_PICKUP_RADIUS * PLAYER_PICKUP_RADIUS;
 const ITEM_APPEARANCE_NEARBY_UPDATE_RADIUS = 18;
@@ -2196,181 +2190,184 @@ const ITEM_APPEARANCE_FAR_UPDATE_INTERVAL = 0.25;
 const ITEM_PICKUP_COLLISION_RADIUS = 0.45;
 const ITEM_PICKUP_MAGNET_MIN_SPEED = 1.6;
 const ITEM_PICKUP_MAGNET_MAX_SPEED = 10.5;
-const TEST_ITEM_SPAWN_DISTANCE = 3;
-const TEST_ITEM_BEHIND_DISTANCE = 10;
-const TEST_ITEM_SIDE_OFFSET = 2.8;
-/* ItemAppearance resolves visible Y from groundY plus its own hover/placement
-defaults, so the Spawn Point anchor applies the requested +2 world-space lift
-before that presentation logic takes over. */
-const firstItemSpawnPosition = mapData.spawnPoint.clone();
-itemAppearances.push(new ItemAppearance({
-  scene,
-  position: firstItemSpawnPosition,
-  label: SPAWN_POINT_ITEM.label,
-  inventoryType: SPAWN_POINT_ITEM.id,
-  pickable: SPAWN_POINT_ITEM.pickable,
-  groundY: mapData.spawnPoint.y + 1,
-}));
+function worldEntityRunsInCurrentMode(worldEntity) {
+  const runtime = String(worldEntity?.runtime ?? 'all').trim().toLowerCase();
+  if (runtime === 'all') return true;
+  if (runtime === 'singleplayer') return !MULTIPLAYER_ENABLED;
+  if (runtime === 'multiplayer') return MULTIPLAYER_ENABLED;
+  return true;
+}
 
-if (!MULTIPLAYER_ENABLED && isLegacyVoxelandiaPreset) {
-  /* Singleplayer keeps the current authored starter kit, while multiplayer now
-  boots only the guide plus Spawn Point until shared dynamic instances land. */
-  const firstSpaceShipPosition = new THREE.Vector3(30, 6, -7);
-  entities.push(new SpaceShipVehicle({
-    scene,
-    position: firstSpaceShipPosition,
-    name: 'SpaceShip1',
-  }));
+function resolveWorldEntityPosition(worldEntity) {
+  const position = worldEntity?.position ?? {};
 
-  const swordItemSpawnPosition = playerSpawnPoint.clone().add(new THREE.Vector3(TEST_ITEM_SIDE_OFFSET, 0, -TEST_ITEM_BEHIND_DISTANCE));
-  itemAppearances.push(new GoxelItemAppearance({
-    scene,
-    position: swordItemSpawnPosition,
-    label: SWORD_ITEM.label,
-    inventoryType: SWORD_ITEM.id,
-    pickable: SWORD_ITEM.pickable,
-    groundY: GROUND_Y,
-    modelUrl: SWORD_ITEM.itemAppearance?.modelUrl ?? 'assets/3D/weapons/sword.gltf',
-  }));
-
-  const gunItemSpawnPosition = playerSpawnPoint.clone().add(new THREE.Vector3(-TEST_ITEM_SIDE_OFFSET, 0, -TEST_ITEM_BEHIND_DISTANCE));
-  itemAppearances.push(new GoxelItemAppearance({
-    scene,
-    position: gunItemSpawnPosition,
-    label: GUN_ITEM.label,
-    inventoryType: GUN_ITEM.id,
-    pickable: GUN_ITEM.pickable,
-    groundY: GROUND_Y,
-    modelUrl: GUN_ITEM.itemAppearance?.modelUrl ?? 'assets/3D/weapons/gun.gltf',
-  }));
-
-  const boxelSelectionToolSpawnPosition = playerSpawnPoint.clone().add(new THREE.Vector3(0, 0, -TEST_ITEM_BEHIND_DISTANCE - 3.2));
-  itemAppearances.push(new BoxelSelectionToolItemAppearance({
-    scene,
-    position: boxelSelectionToolSpawnPosition,
-    /* The Boxel Selection Tool now renders as its own floating sigil plane so
-    the world pickup matches the icon used in the encyclopedia and inventory. */
-    label: BOXEL_SELECTION_TOOL_ITEM.label,
-    inventoryType: BOXEL_SELECTION_TOOL_ITEM.id,
-    pickable: BOXEL_SELECTION_TOOL_ITEM.pickable,
-    groundY: GROUND_Y,
-    iconUrl: BOXEL_SELECTION_TOOL_ITEM.itemAppearance?.iconUrl ?? 'assets/icons/Asymmetrical_symbol_of_Chaos.png',
-  }));
-
-  const colorChestSpawnPosition = playerSpawnPoint.clone().add(new THREE.Vector3(0, 0, -TEST_ITEM_BEHIND_DISTANCE + 3.1));
-  itemAppearances.push(new ColorChestItemAppearance({
-    scene,
-    position: colorChestSpawnPosition,
-    label: COLOR_CHEST_ITEM.label,
-    inventoryType: COLOR_CHEST_ITEM.id,
-    pickable: COLOR_CHEST_ITEM.pickable,
-    groundY: GROUND_Y,
-    color: COLOR_CHEST_ITEM.itemAppearance?.color ?? 0xffffff,
-  }));
-
-  const colorPantsSpawnPosition = playerSpawnPoint.clone().add(new THREE.Vector3(3.4, 0, -TEST_ITEM_BEHIND_DISTANCE + 3.1));
-  itemAppearances.push(new ColorPantsItemAppearance({
-    scene,
-    position: colorPantsSpawnPosition,
-    label: COLOR_PANTS_ITEM.label,
-    inventoryType: COLOR_PANTS_ITEM.id,
-    pickable: COLOR_PANTS_ITEM.pickable,
-    groundY: GROUND_Y,
-    color: COLOR_PANTS_ITEM.itemAppearance?.color ?? 0xffffff,
-  }));
-
-  const colorBootsSpawnPosition = playerSpawnPoint.clone().add(new THREE.Vector3(-3.4, 0, -TEST_ITEM_BEHIND_DISTANCE + 3.1));
-  itemAppearances.push(new ColorBootsItemAppearance({
-    scene,
-    position: colorBootsSpawnPosition,
-    label: COLOR_BOOTS_ITEM.label,
-    inventoryType: COLOR_BOOTS_ITEM.id,
-    pickable: COLOR_BOOTS_ITEM.pickable,
-    groundY: GROUND_Y,
-    color: COLOR_BOOTS_ITEM.itemAppearance?.color ?? 0xffffff,
-  }));
-
-  const colorGlovesSpawnPosition = playerSpawnPoint.clone().add(new THREE.Vector3(0, 0, -TEST_ITEM_BEHIND_DISTANCE + 5.7));
-  itemAppearances.push(new ColorGlovesItemAppearance({
-    scene,
-    position: colorGlovesSpawnPosition,
-    label: COLOR_GLOVES_ITEM.label,
-    inventoryType: COLOR_GLOVES_ITEM.id,
-    pickable: COLOR_GLOVES_ITEM.pickable,
-    groundY: GROUND_Y,
-    color: COLOR_GLOVES_ITEM.itemAppearance?.color ?? 0xffffff,
-  }));
-
-  const colorShouldersSpawnPosition = playerSpawnPoint.clone().add(new THREE.Vector3(0, 0, -TEST_ITEM_BEHIND_DISTANCE + 14.5));
-  itemAppearances.push(new ColorShouldersItemAppearance({
-    scene,
-    position: colorShouldersSpawnPosition,
-    label: COLOR_SHOULDERS_ITEM.label,
-    inventoryType: COLOR_SHOULDERS_ITEM.id,
-    pickable: COLOR_SHOULDERS_ITEM.pickable,
-    groundY: GROUND_Y,
-    color: COLOR_SHOULDERS_ITEM.itemAppearance?.color ?? 0xffffff,
-  }));
-
-  const colorHelmetSpawnPosition = playerSpawnPoint.clone().add(new THREE.Vector3(0, 0, -TEST_ITEM_BEHIND_DISTANCE + 17.9));
-  itemAppearances.push(new ColorHelmetItemAppearance({
-    scene,
-    position: colorHelmetSpawnPosition,
-    label: COLOR_HELMET_ITEM.label,
-    inventoryType: COLOR_HELMET_ITEM.id,
-    pickable: COLOR_HELMET_ITEM.pickable,
-    groundY: GROUND_Y,
-    color: COLOR_HELMET_ITEM.itemAppearance?.color ?? 0xffffff,
-  }));
-
-  const colorCapeSpawnPosition = playerSpawnPoint.clone().add(new THREE.Vector3(0, 0, -TEST_ITEM_BEHIND_DISTANCE + 21.3));
-  itemAppearances.push(new ColorCapeItemAppearance({
-    scene,
-    position: colorCapeSpawnPosition,
-    label: COLOR_CAPE_ITEM.label,
-    inventoryType: COLOR_CAPE_ITEM.id,
-    pickable: COLOR_CAPE_ITEM.pickable,
-    groundY: GROUND_Y,
-    color: COLOR_CAPE_ITEM.itemAppearance?.color ?? 0xffffff,
-  }));
-
-  const colorTabardSpawnPosition = playerSpawnPoint.clone().add(new THREE.Vector3(0, 0, -TEST_ITEM_BEHIND_DISTANCE + 24.7));
-  itemAppearances.push(new ColorTabardItemAppearance({
-    scene,
-    position: colorTabardSpawnPosition,
-    label: COLOR_TABARD_ITEM.label,
-    inventoryType: COLOR_TABARD_ITEM.id,
-    pickable: COLOR_TABARD_ITEM.pickable,
-    groundY: GROUND_Y,
-    imageUrl: COLOR_TABARD_ITEM.itemAppearance?.imageUrl ?? 'games/Kolorlando/assets/icons/Asymmetrical_symbol_of_Chaos.png',
-  }));
-
-  const coinSpawnOffsets = [
-    new THREE.Vector3(0, 0, -10),
-    new THREE.Vector3(3.2, 0, -9.4),
-    new THREE.Vector3(-3.2, 0, -9.4),
-    new THREE.Vector3(6.2, 0, -7.5),
-    new THREE.Vector3(-6.2, 0, -7.5),
-    new THREE.Vector3(8.1, 0, -4.2),
-    new THREE.Vector3(-8.1, 0, -4.2),
-    new THREE.Vector3(8.4, 0, 0.5),
-    new THREE.Vector3(-8.4, 0, 0.5),
-    new THREE.Vector3(0, 0, 9.5),
-  ];
-
-  for (let i = 0; i < coinSpawnOffsets.length; i++) {
-    // These fixed offsets keep the coins around the same outer starter ring as the
-    // sword and gun so players naturally encounter them while exploring the area.
-    const coinPosition = playerSpawnPoint.clone().add(coinSpawnOffsets[i]);
-    itemAppearances.push(new CoinItemAppearance({
-      scene,
-      position: coinPosition,
-      label: COIN_ITEM.label,
-      inventoryType: COIN_ITEM.id,
-      pickable: COIN_ITEM.pickable,
-      groundY: GROUND_Y,
-    }));
+  if (worldEntity?.positionMode === 'spawn-relative') {
+    return playerSpawnPoint.clone().add(new THREE.Vector3(
+      Number(position?.x) || 0,
+      Number(position?.y) || 0,
+      Number(position?.z) || 0
+    ));
   }
+
+  if (worldEntity?.positionMode === 'floor-centered') {
+    return new THREE.Vector3(
+      Number(position?.x) || 0,
+      GROUND_Y + (Number(position?.y) || 0),
+      Number(position?.z) || 0
+    );
+  }
+
+  return new THREE.Vector3(
+    Number(position?.x) || 0,
+    Number(position?.y) || 0,
+    Number(position?.z) || 0
+  );
+}
+
+function resolveWorldEntityGroundY(worldEntity, resolvedPosition) {
+  if (worldEntity?.groundYMode === 'position') {
+    return resolvedPosition.y;
+  }
+
+  if (worldEntity?.positionMode === 'spawn-relative' && worldEntity?.kind === 'item') {
+    return GROUND_Y;
+  }
+
+  return GROUND_Y;
+}
+
+function spawnWorldItemAppearance(worldEntity, resolvedPosition) {
+  const itemDefinition = itemDefinitionsById.get(worldEntity?.itemId);
+  if (!itemDefinition) return;
+
+  const itemAppearanceOptions = {
+    scene,
+    position: resolvedPosition,
+    label: itemDefinition.label,
+    inventoryType: itemDefinition.id,
+    pickable: itemDefinition.pickable,
+    groundY: resolveWorldEntityGroundY(worldEntity, resolvedPosition),
+  };
+
+  switch (worldEntity?.appearanceType) {
+    case 'goxel':
+      itemAppearances.push(new GoxelItemAppearance({
+        ...itemAppearanceOptions,
+        modelUrl: itemDefinition.itemAppearance?.modelUrl,
+      }));
+      return;
+    case 'coin':
+      itemAppearances.push(new CoinItemAppearance(itemAppearanceOptions));
+      return;
+    case 'boxel-selection-tool':
+      itemAppearances.push(new BoxelSelectionToolItemAppearance({
+        ...itemAppearanceOptions,
+        iconUrl: itemDefinition.itemAppearance?.iconUrl,
+      }));
+      return;
+    case 'color-chest':
+      itemAppearances.push(new ColorChestItemAppearance({
+        ...itemAppearanceOptions,
+        color: itemDefinition.itemAppearance?.color ?? 0xffffff,
+      }));
+      return;
+    case 'color-pants':
+      itemAppearances.push(new ColorPantsItemAppearance({
+        ...itemAppearanceOptions,
+        color: itemDefinition.itemAppearance?.color ?? 0xffffff,
+      }));
+      return;
+    case 'color-boots':
+      itemAppearances.push(new ColorBootsItemAppearance({
+        ...itemAppearanceOptions,
+        color: itemDefinition.itemAppearance?.color ?? 0xffffff,
+      }));
+      return;
+    case 'color-gloves':
+      itemAppearances.push(new ColorGlovesItemAppearance({
+        ...itemAppearanceOptions,
+        color: itemDefinition.itemAppearance?.color ?? 0xffffff,
+      }));
+      return;
+    case 'color-shoulders':
+      itemAppearances.push(new ColorShouldersItemAppearance({
+        ...itemAppearanceOptions,
+        color: itemDefinition.itemAppearance?.color ?? 0xffffff,
+      }));
+      return;
+    case 'color-helmet':
+      itemAppearances.push(new ColorHelmetItemAppearance({
+        ...itemAppearanceOptions,
+        color: itemDefinition.itemAppearance?.color ?? 0xffffff,
+      }));
+      return;
+    case 'color-cape':
+      itemAppearances.push(new ColorCapeItemAppearance({
+        ...itemAppearanceOptions,
+        color: itemDefinition.itemAppearance?.color ?? 0xffffff,
+      }));
+      return;
+    case 'color-tabard':
+      itemAppearances.push(new ColorTabardItemAppearance({
+        ...itemAppearanceOptions,
+        imageUrl: itemDefinition.itemAppearance?.imageUrl,
+      }));
+      return;
+    case 'spawn-point':
+    default:
+      itemAppearances.push(new ItemAppearance(itemAppearanceOptions));
+  }
+}
+
+function spawnWorldEntity(worldEntity) {
+  if (!worldEntityRunsInCurrentMode(worldEntity)) return;
+
+  const resolvedPosition = resolveWorldEntityPosition(worldEntity);
+
+  switch (worldEntity?.kind) {
+    case 'item':
+      spawnWorldItemAppearance(worldEntity, resolvedPosition);
+      return;
+    case 'talker':
+      entities.push(new TalkerEntity({
+        scene,
+        position: resolvedPosition,
+        groundY: GROUND_Y,
+        name: worldEntity?.name,
+        dialogLines: worldEntity?.dialogLines,
+      }));
+      return;
+    case 'vehicle':
+      if (worldEntity?.vehicleType === 'spaceship') {
+        entities.push(new SpaceShipVehicle({
+          scene,
+          position: resolvedPosition,
+          name: worldEntity?.name,
+        }));
+      }
+      return;
+    case 'chaser':
+      entities.push(new HunterEntity({
+        scene,
+        position: resolvedPosition,
+        groundY: GROUND_Y,
+      }));
+      return;
+    case 'walker':
+      entities.push(new Entity({
+        scene,
+        position: resolvedPosition,
+        groundY: GROUND_Y,
+      }));
+      return;
+    default:
+      return;
+  }
+}
+
+const worldEntitySpecs = Array.isArray(mapData.world?.entities) ? mapData.world.entities : [];
+for (let i = 0; i < worldEntitySpecs.length; i += 1) {
+  spawnWorldEntity(worldEntitySpecs[i]);
 }
 
 
@@ -4410,7 +4407,12 @@ function updateProjectilesAndExplosions(deltaTime) {
 
 function updateEntities(deltaTime) {
   for (let i = 0; i < entities.length; i++) {
-    entities[i].update(deltaTime, buildingColliders, playerEye);
+    entities[i].update(
+      deltaTime,
+      buildingColliders,
+      playerEye,
+      intersectMapColliderBox
+    );
   }
 }
 

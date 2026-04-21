@@ -55,8 +55,37 @@ export function buildMapFromWorld({
 
   mapGroup.name = world.name || 'World';
 
+  function createBorderedVoxelTexture() {
+    const size = 64;
+    const border = 1;
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+
+    const context = canvas.getContext('2d');
+    context.fillStyle = '#ffffff';
+    context.fillRect(0, 0, size, size);
+
+    context.strokeStyle = 'rgba(120, 120, 120, 0.5)';
+    context.lineWidth = border;
+    context.strokeRect(border * 0.5, border * 0.5, size - border, size - border);
+
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.colorSpace = THREE.SRGBColorSpace;
+    texture.magFilter = THREE.NearestFilter;
+    texture.minFilter = THREE.NearestFilter;
+    texture.wrapS = THREE.ClampToEdgeWrapping;
+    texture.wrapT = THREE.ClampToEdgeWrapping;
+    texture.needsUpdate = true;
+    return texture;
+  }
+
   function normalizeColor(color = '#ffffff') {
     return typeof color === 'string' && color.trim() ? color.trim() : '#ffffff';
+  }
+
+  function normalizeTexture(texture = '') {
+    return typeof texture === 'string' && texture.trim() ? texture.trim().toLowerCase() : '';
   }
 
   function createCellKey(cellX, cellY, cellZ) {
@@ -110,6 +139,7 @@ export function buildMapFromWorld({
     voxelTypesByName.set(voxelName, {
       name: voxelName,
       color: new THREE.Color(normalizeColor(voxel?.color)).getHex(),
+      texture: normalizeTexture(voxel?.texture),
     });
   }
 
@@ -137,7 +167,6 @@ export function buildMapFromWorld({
 
     const collider = setBoxFromCell(cellX, cellY, cellZ).clone();
     voxelColliderByKey.set(key, collider);
-    buildingColliders.push(collider);
     return collider;
   }
 
@@ -145,11 +174,6 @@ export function buildMapFromWorld({
     const key = createCellKey(cellX, cellY, cellZ);
     const collider = voxelColliderByKey.get(key);
     if (!collider) return false;
-
-    const colliderIndex = buildingColliders.indexOf(collider);
-    if (colliderIndex >= 0) {
-      buildingColliders.splice(colliderIndex, 1);
-    }
 
     voxelColliderByKey.delete(key);
     return true;
@@ -236,8 +260,10 @@ export function buildMapFromWorld({
   }
 
   const voxelGeometry = new THREE.BoxGeometry(voxelSize, voxelSize, voxelSize);
+  const hasBorderedTexture = voxelEntries.some(entry => normalizeTexture(entry?.voxel?.texture) === 'bordered');
   const voxelMaterial = new THREE.MeshStandardMaterial({
     color: 0xffffff,
+    map: hasBorderedTexture ? createBorderedVoxelTexture() : null,
     roughness: 0.95,
     metalness: 0.0,
   });
@@ -275,7 +301,9 @@ export function buildMapFromWorld({
   return {
     world,
     voxelSize,
-    groundY: 0,
+    /* Voxel worlds stand on top of their authored land stack, so runtime
+    systems should treat that top face as the playable floor height. */
+    groundY: world.land.y * voxelSize,
     hasInfiniteGround: false,
     spawnPoint: new THREE.Vector3(
       world.spawnPosition.x,
@@ -303,6 +331,7 @@ export function buildMapFromWorld({
       return new Voxel({
         name: voxelType.name,
         color: '#' + voxelType.color.toString(16).padStart(6, '0'),
+        texture: voxelType.texture || null,
       });
     },
     syncWorldVoxelAddedAtCell,
