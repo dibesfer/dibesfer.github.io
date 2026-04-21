@@ -25,22 +25,17 @@ let VoxelaarVoxels = {
   black: new Voxel({ name: 'black', color: '#171717' }),
 };
 
-function createVoxelGrid({ width, height, depth, voxel }) {
-  return Array.from({ length: width }, (_, x) =>
-    Array.from({ length: height }, (_, y) =>
-      Array.from({ length: depth }, (_, z) => voxel.clone().setPosition(x, y, z))
-    )
-  );
-}
-
 function fillWorldWithVoxel(world = Voxelaar, voxel = VoxelaarVoxels.brown) {
-  /* Until Boxel layout is defined, keep a direct voxel grid on the world object. */
-  world.voxels = createVoxelGrid({
-    width: world.land.x,
-    height: world.land.y,
-    depth: world.land.z,
-    voxel,
-  });
+  /* Author voxels through the World API so storage stays sparse and consistent. */
+  world.clearVoxels();
+
+  for (let x = 0; x < world.land.x; x++) {
+    for (let y = 0; y < world.land.y; y++) {
+      for (let z = 0; z < world.land.z; z++) {
+        world.setVoxel(x, y, z, voxel);
+      }
+    }
+  }
 
   return world;
 }
