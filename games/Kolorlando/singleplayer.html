@@ -16,6 +16,8 @@
 
     <script>
         window.KOLORLANDO_MODE = 'singleplayer';
+        const selectedWorld = window.localStorage.getItem('KL_Singleplayer_World') || 'Voxelandia';
+        document.title = `Singleplayer: ${selectedWorld}`;
     </script>
 
     <script type="importmap">

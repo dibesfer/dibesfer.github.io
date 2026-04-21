@@ -43,10 +43,33 @@ import { SpaceShipVehicle } from './code/entities/vehicle.js';
 
 const KOLORLANDO_MODE = window.KOLORLANDO_MODE === 'multiplayer' ? 'multiplayer' : 'singleplayer';
 const MULTIPLAYER_ENABLED = KOLORLANDO_MODE === 'multiplayer';
+const KL_SINGLEPLAYER_WORLD_STORAGE_KEY = 'KL_Singleplayer_World';
+const DEFAULT_SINGLEPLAYER_WORLD = 'Voxelandia';
 const KOLORLANDO_PLAYER_NAME_STORAGE_KEY = 'kolorlando.playerName';
 const KOLORLANDO_ACCOUNT_CLAIMED_STORAGE_KEY = 'kolorlando.accountClaimed';
 const KOLORLANDO_DEBUG_MODE_EVENT = 'kolorlando:debug-mode-change';
 const playerFaceDataResult = await loadPlayerFaceData();
+
+function resolveSingleplayerWorldPreset() {
+  const storedWorld = window.localStorage.getItem(KL_SINGLEPLAYER_WORLD_STORAGE_KEY);
+  const normalizedWorld = typeof storedWorld === 'string' ? storedWorld.trim() : '';
+  const selectedWorld = normalizedWorld || DEFAULT_SINGLEPLAYER_WORLD;
+
+  // Keep a stable local selection so future world loaders can reuse the same key.
+  if (!normalizedWorld) {
+    window.localStorage.setItem(KL_SINGLEPLAYER_WORLD_STORAGE_KEY, DEFAULT_SINGLEPLAYER_WORLD);
+  }
+
+  switch (selectedWorld.toLowerCase()) {
+    case 'simple':
+      return 'simple';
+    case 'city':
+      return 'city';
+    case 'voxelandia':
+    default:
+      return 'voxelandia';
+  }
+}
 
 function canEditCurrentVoxelWorld() {
   /* Shared multiplayer voxel edits should only run for authenticated tabs
@@ -1713,7 +1736,7 @@ if (settingsRestoreDefaultsButton) {
 // --------------------
 // GROUND
 // --------------------
-const MAP_PRESET = 'voxelandia'; // 'simple' | 'city' | 'voxelandia'
+const MAP_PRESET = resolveSingleplayerWorldPreset(); // 'simple' | 'city' | 'voxelandia'
 const mapBuilders = {
   simple: buildSimpleMap,
   city: buildCityMap,
