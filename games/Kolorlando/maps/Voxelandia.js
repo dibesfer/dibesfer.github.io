@@ -26,6 +26,8 @@ let VoxelandiaVoxels = {
   fer: new Voxel({ name: 'fer', color: '#000000', type: 'textured', texture: 'bordered' }),
 };
 
+Voxelandia.setVoxelTypes(Object.values(VoxelandiaVoxels));
+
 function createCenteredWorldEntity({
   kind = 'walker',
   position = { x: 0, y: 0, z: 0 },

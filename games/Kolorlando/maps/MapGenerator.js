@@ -138,9 +138,19 @@ export function buildMapFromWorld({
 
     voxelTypesByName.set(voxelName, {
       name: voxelName,
+      type: typeof voxel?.type === 'string' && voxel.type.trim()
+        ? voxel.type.trim().toLowerCase()
+        : 'colored',
       color: new THREE.Color(normalizeColor(voxel?.color)).getHex(),
       texture: normalizeTexture(voxel?.texture),
     });
+  }
+
+  const authoredVoxelTypes = typeof world.getVoxelTypes === 'function'
+    ? world.getVoxelTypes()
+    : [];
+  for (let i = 0; i < authoredVoxelTypes.length; i += 1) {
+    registerVoxelType(authoredVoxelTypes[i]);
   }
 
   function syncVoxelInstance(voxelId, cellX, cellY, cellZ, voxel) {

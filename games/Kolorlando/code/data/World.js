@@ -15,6 +15,7 @@ export class World {
     size = { x: 100, y: 100, z: 100 },
     land = { x: 1, y: 1, z: 1 },
     spawnPosition = { x: 0, y: 0, z: 0 },
+    voxelTypes = null,
     entities = null,
     boxels = null,
     voxels = null,
@@ -26,7 +27,12 @@ export class World {
     this.spawnPosition = normalizeWorldPosition(spawnPosition);
     this.entities = createDefaultWorldEntities();
     this.boxels = [];
+    this.voxelTypes = new Map();
     this.voxels = new Map();
+
+    if (voxelTypes instanceof Map || Array.isArray(voxelTypes)) {
+      this.setVoxelTypes(voxelTypes);
+    }
 
     if (Array.isArray(entities)) {
       this.setEntities(entities);
@@ -59,6 +65,38 @@ export class World {
   setSpawnPosition(position = { x: 0, y: 0, z: 0 }) {
     this.spawnPosition = normalizeWorldPosition(position);
     return this;
+  }
+
+  setVoxelTypes(voxelTypes = null) {
+    this.voxelTypes = new Map();
+
+    if (voxelTypes instanceof Map) {
+      for (const [, voxel] of voxelTypes.entries()) {
+        this.registerVoxelType(voxel);
+      }
+      return this;
+    }
+
+    if (Array.isArray(voxelTypes)) {
+      for (let i = 0; i < voxelTypes.length; i += 1) {
+        this.registerVoxelType(voxelTypes[i]?.voxel ?? voxelTypes[i]);
+      }
+    }
+
+    return this;
+  }
+
+  registerVoxelType(voxel = null) {
+    const normalizedVoxel = normalizeWorldVoxel(voxel);
+    const voxelName = normalizeText(normalizedVoxel?.name, '');
+    if (!voxelName) return this;
+
+    this.voxelTypes.set(voxelName, normalizedVoxel);
+    return this;
+  }
+
+  getVoxelTypes() {
+    return Array.from(this.voxelTypes.values()).map(voxel => voxel.clone());
   }
 
   setEntities(entitiesArray = []) {
@@ -160,6 +198,7 @@ export class World {
     const position = normalizeWorldPosition({ x, y, z });
     const normalizedVoxel = normalizeWorldVoxel(voxel, position);
     this.assertVoxelPositionWithinWorld(position);
+    this.registerVoxelType(normalizedVoxel);
     this.voxels.set(createVoxelKey(position.x, position.y, position.z), normalizedVoxel);
     return this;
   }
@@ -262,6 +301,7 @@ export class World {
         y: this.spawnPosition.y,
         z: this.spawnPosition.z,
       },
+      voxelTypes: this.getVoxelTypes().map(voxel => voxel.toJSON()),
       entities: this.entities.map(entity => cloneWorldEntityValue(entity)),
       voxels: this.getVoxelEntries().map(entry => ({
         position: {
@@ -313,6 +353,7 @@ export class World {
       size: cloneSnapshotValue(worldJson.size) ?? null,
       land: cloneSnapshotValue(worldJson.land) ?? null,
       spawnPosition: cloneSnapshotValue(worldJson.spawnPosition) ?? null,
+      voxelTypes: cloneSnapshotValue(worldJson.voxelTypes) ?? [],
       entities: cloneSnapshotValue(worldJson.entities) ?? [],
       boxels: cloneSnapshotValue(worldJson.boxels) ?? [],
       voxelPalette,
@@ -335,6 +376,10 @@ export class World {
 
     if ('spawnPosition' in data) {
       this.setSpawnPosition(data.spawnPosition);
+    }
+
+    if (data?.voxelTypes instanceof Map || Array.isArray(data?.voxelTypes)) {
+      this.setVoxelTypes(data.voxelTypes);
     }
 
     if (Array.isArray(data?.entities)) {
@@ -369,7 +414,7 @@ export class World {
       ? normalizedSnapshot.voxels
       : [];
 
-    return this.fromJSON({
+    const nextWorldData = {
       name: typeof normalizedSnapshot.name === 'string' ? normalizedSnapshot.name : '',
       size: cloneSnapshotValue(normalizedSnapshot.size) ?? null,
       land: cloneSnapshotValue(normalizedSnapshot.land) ?? null,
@@ -390,7 +435,16 @@ export class World {
           voxel,
         };
       }).filter(Boolean),
-    });
+    };
+
+    /* Legacy snapshots may not include the authored voxel catalog yet. In that
+    case we keep the preset world catalog instead of collapsing the world to
+    only the voxel types currently placed in the save payload. */
+    if (Array.isArray(normalizedSnapshot.voxelTypes)) {
+      nextWorldData.voxelTypes = cloneSnapshotValue(normalizedSnapshot.voxelTypes) ?? [];
+    }
+
+    return this.fromJSON(nextWorldData);
   }
 
   clone() {
@@ -399,6 +453,7 @@ export class World {
       size: this.size,
       land: this.land,
       spawnPosition: this.spawnPosition,
+      voxelTypes: this.getVoxelTypes(),
       entities: this.entities,
       boxels: this.boxels,
       voxels: this.voxels,

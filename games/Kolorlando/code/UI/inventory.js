@@ -175,6 +175,10 @@ export function createInventoryUI(options) {
     return found ? found.color : 0xffffff;
   }
 
+  function getVoxelTypeDefinition(itemId) {
+    return voxelTypes.find(function (type) { return type.name === itemId; }) ?? null;
+  }
+
   function getVoxelTypeHexColor(itemId) {
     return '#' + getVoxelTypeColor(itemId).toString(16).padStart(6, '0');
   }
@@ -195,7 +199,12 @@ export function createInventoryUI(options) {
       // the inventory window and the hotbar instead of falling back to voxel cubes.
       return createImageIcon(iconDefinition.src, itemLabel);
     }
-    return createVoxelIcon(getVoxelTypeHexColor(itemId));
+    return createVoxelIcon(getVoxelTypeDefinition(itemId) ?? {
+      name: itemId,
+      color: getVoxelTypeHexColor(itemId),
+      type: 'colored',
+      texture: null,
+    });
   }
 
   function createEncyclopediaItemIcon(itemEntry) {
@@ -841,7 +850,7 @@ export function createInventoryUI(options) {
       slot.type = 'button';
       slot.className = 'hotbar-slot creative-slot';
       slot.dataset.voxelType = voxelType.name;
-      slot.appendChild(createVoxelIcon(getVoxelTypeHexColor(voxelType.name)));
+      slot.appendChild(createVoxelIcon(voxelType));
 
       label.className = 'hotbar-slot-label';
       label.textContent = voxelType.name;

@@ -25,6 +25,8 @@ let VoxelaarVoxels = {
   black: new Voxel({ name: 'black', color: '#171717' }),
 };
 
+Voxelaar.setVoxelTypes(Object.values(VoxelaarVoxels));
+
 function fillWorldWithVoxel(world = Voxelaar, voxel = VoxelaarVoxels.brown) {
   /* Author voxels through the World API so storage stays sparse and consistent. */
   world.clearVoxels();

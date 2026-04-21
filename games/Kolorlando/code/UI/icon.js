@@ -19,6 +19,137 @@ function tintHexColor(hexColor, amount) {
   return '#' + tinted.toString(16).padStart(6, '0');
 }
 
+function normalizeHexColor(color = '#ffffff') {
+  if (typeof color === 'number' && Number.isFinite(color)) {
+    return '#' + Math.max(0, color).toString(16).padStart(6, '0').slice(-6);
+  }
+
+  if (typeof color === 'string' && color.trim()) {
+    const normalizedColor = color.trim();
+    if (normalizedColor.startsWith('#')) return normalizedColor;
+
+    const parsed = Number.parseInt(normalizedColor, 16);
+    if (Number.isFinite(parsed)) {
+      return '#' + parsed.toString(16).padStart(6, '0').slice(-6);
+    }
+  }
+
+  return '#ffffff';
+}
+
+function normalizeVoxelIconSpec(voxel = null) {
+  if (typeof voxel === 'string') {
+    return {
+      type: 'colored',
+      color: normalizeHexColor(voxel),
+      texture: '',
+    };
+  }
+
+  return {
+    type: typeof voxel?.type === 'string' && voxel.type.trim() ? voxel.type.trim().toLowerCase() : 'colored',
+    color: normalizeHexColor(voxel?.color),
+    texture: typeof voxel?.texture === 'string' && voxel.texture.trim() ? voxel.texture.trim().toLowerCase() : '',
+  };
+}
+
+function createSvgPolygon(svgNs, points, fill) {
+  const polygon = document.createElementNS(svgNs, 'polygon');
+  polygon.setAttribute('points', points);
+  polygon.setAttribute('fill', fill);
+  return polygon;
+}
+
+function createInsetFacePoints(points, insetAmount = 0.18) {
+  const parsedPoints = points.split(' ').map(function (point) {
+    const [x, y] = point.split(',').map(Number);
+    return { x, y };
+  });
+
+  const center = parsedPoints.reduce(function (accumulator, point) {
+    return {
+      x: accumulator.x + point.x / parsedPoints.length,
+      y: accumulator.y + point.y / parsedPoints.length,
+    };
+  }, { x: 0, y: 0 });
+
+  return parsedPoints.map(function (point) {
+    const nextX = point.x + (center.x - point.x) * insetAmount;
+    const nextY = point.y + (center.y - point.y) * insetAmount;
+    return `${nextX},${nextY}`;
+  }).join(' ');
+}
+
+function appendVoxelFace(svg, svgNs, {
+  points,
+  fill,
+  borderFill = '',
+  insetAmount = 0.16,
+} = {}) {
+  svg.appendChild(createSvgPolygon(svgNs, points, borderFill || fill));
+
+  if (!borderFill) return;
+  svg.appendChild(createSvgPolygon(svgNs, createInsetFacePoints(points, insetAmount), fill));
+}
+
+function createBaseVoxelFaceVisuals(voxel = null) {
+  return {
+    top: {
+      fill: tintHexColor(voxel?.color ?? '#ffffff', 0.22),
+      borderFill: '',
+    },
+    left: {
+      fill: tintHexColor(voxel?.color ?? '#ffffff', 0.06),
+      borderFill: '',
+    },
+    right: {
+      fill: voxel?.color ?? '#ffffff',
+      borderFill: '',
+    },
+    showEdges: false,
+  };
+}
+
+const voxelTextureFacePainters = {
+  bordered(voxel) {
+    const baseFaces = createBaseVoxelFaceVisuals(voxel);
+    return {
+      top: {
+        ...baseFaces.top,
+        borderFill: tintHexColor(voxel.color, 0.05),
+      },
+      left: {
+        ...baseFaces.left,
+        borderFill: tintHexColor(voxel.color, -0.1),
+      },
+      right: {
+        ...baseFaces.right,
+        borderFill: tintHexColor(voxel.color, -0.18),
+      },
+      showEdges: true,
+    };
+  },
+};
+
+const voxelTypeFacePainters = {
+  colored: createBaseVoxelFaceVisuals,
+  textured(voxel) {
+    const texturePainter = voxelTextureFacePainters[voxel?.texture];
+    return typeof texturePainter === 'function'
+      ? texturePainter(voxel)
+      : createBaseVoxelFaceVisuals(voxel);
+  },
+  microxeled: createBaseVoxelFaceVisuals,
+};
+
+function resolveVoxelFaceVisuals(voxel = null) {
+  const typePainter = voxelTypeFacePainters[voxel?.type] ?? voxelTypeFacePainters.colored;
+
+  /* Icons keep one cube structure. The selected type/texture painter only
+  resolves how each face should look. */
+  return typePainter(voxel);
+}
+
 export function createIcon(className = 'icon-chip') {
   const icon = document.createElement('span');
   icon.className = className;
@@ -86,32 +217,42 @@ export function createImageIcon(src, alt = '') {
 
 export function createVoxelIcon(hexColor) {
   const icon = createIcon('icon-chip item-slot-icon voxel-icon');
+  const voxel = normalizeVoxelIconSpec(hexColor);
   const svgNs = 'http://www.w3.org/2000/svg';
   const svg = document.createElementNS(svgNs, 'svg');
-  const top = document.createElementNS(svgNs, 'polygon');
-  const left = document.createElementNS(svgNs, 'polygon');
-  const right = document.createElementNS(svgNs, 'polygon');
   const edge = document.createElementNS(svgNs, 'path');
+  const topPoints = '32,6 56,18 32,30 8,18';
+  const leftPoints = '8,18 32,30 32,56 8,44';
+  const rightPoints = '56,18 32,30 32,56 56,44';
+  const faceVisuals = resolveVoxelFaceVisuals(voxel);
 
   svg.classList.add('voxel-icon__svg');
   svg.setAttribute('viewBox', '0 0 64 64');
-
-  top.setAttribute('points', '32,6 56,18 32,30 8,18');
-  top.setAttribute('fill', tintHexColor(hexColor, 0.22));
-  left.setAttribute('points', '8,18 32,30 32,56 8,44');
-  left.setAttribute('fill', tintHexColor(hexColor, 0.06));
-  right.setAttribute('points', '56,18 32,30 32,56 56,44');
-  right.setAttribute('fill', hexColor);
   edge.setAttribute('d', 'M32 6L56 18L32 30L8 18ZM32 30V56M8 18V44L32 56L56 44V18');
   edge.setAttribute('fill', 'none');
-  edge.setAttribute('stroke', 'rgba(15,23,42,0.35)');
-  edge.setAttribute('stroke-width', '3');
   edge.setAttribute('stroke-linejoin', 'round');
 
-  svg.appendChild(top);
-  svg.appendChild(left);
-  svg.appendChild(right);
-  svg.appendChild(edge);
+  appendVoxelFace(svg, svgNs, {
+    points: topPoints,
+    fill: faceVisuals.top.fill,
+    borderFill: faceVisuals.top.borderFill,
+  });
+  appendVoxelFace(svg, svgNs, {
+    points: leftPoints,
+    fill: faceVisuals.left.fill,
+    borderFill: faceVisuals.left.borderFill,
+  });
+  appendVoxelFace(svg, svgNs, {
+    points: rightPoints,
+    fill: faceVisuals.right.fill,
+    borderFill: faceVisuals.right.borderFill,
+  });
+
+  if (faceVisuals.showEdges) {
+    edge.setAttribute('stroke', 'rgba(15,23,42,0.18)');
+    edge.setAttribute('stroke-width', '1.5');
+    svg.appendChild(edge);
+  }
   icon.appendChild(svg);
   return icon;
 }
