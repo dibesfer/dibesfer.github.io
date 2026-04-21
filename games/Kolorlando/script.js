@@ -1747,6 +1747,7 @@ const mapBuilders = {
   voxelandia: buildVoxelandiaMap,
 };
 const isClassWorldPreset = MAP_PRESET === 'voxelaar';
+const isLegacyVoxelandiaPreset = MAP_PRESET === 'voxelandia';
 const selectedMapBuilder = mapBuilders[MAP_PRESET] ?? buildSimpleMap;
 const mapData = isClassWorldPreset
   ? buildMapFromWorld({
@@ -2129,14 +2130,16 @@ playerSpawnPoint.y += 1;
 playerEye.copy(playerSpawnPoint);
 camera.position.copy(playerEye);
 
-const spawnTalkerPosition = playerSpawnPoint.clone().add(new THREE.Vector3(2.5, -1, 1.5));
-entities.push(new TalkerEntity({
-  scene,
-  position: spawnTalkerPosition,
-  groundY: GROUND_Y,
-  name: 'Guide',
-  dialogLines: ['Welcome back to Kolorlando', 'Check the item appearances nearby', 'Debug mode shows the item spheres'],
-}));
+if (isLegacyVoxelandiaPreset) {
+  const spawnTalkerPosition = playerSpawnPoint.clone().add(new THREE.Vector3(2.5, -1, 1.5));
+  entities.push(new TalkerEntity({
+    scene,
+    position: spawnTalkerPosition,
+    groundY: GROUND_Y,
+    name: 'Guide',
+    dialogLines: ['Welcome back to Kolorlando', 'Check the item appearances nearby', 'Debug mode shows the item spheres'],
+  }));
+}
 
 const itemAppearances = [];
 const PICKUP_ITEM_TYPES = new Set([
@@ -2165,20 +2168,20 @@ const ITEM_PICKUP_MAGNET_MAX_SPEED = 10.5;
 const TEST_ITEM_SPAWN_DISTANCE = 3;
 const TEST_ITEM_BEHIND_DISTANCE = 10;
 const TEST_ITEM_SIDE_OFFSET = 2.8;
-/* ItemAppearance computes its rendered Y from groundY plus its hover settings,
-so the Spawn Point keeps its authored X/Z at the world origin while using an
-elevated base plane so the visible pickup sits at world Y=2. */
-const firstItemSpawnPosition = new THREE.Vector3(0, 0, 0);
+/* ItemAppearance resolves visible Y from groundY plus its own hover/placement
+defaults, so the Spawn Point anchor applies the requested +2 world-space lift
+before that presentation logic takes over. */
+const firstItemSpawnPosition = mapData.spawnPoint.clone();
 itemAppearances.push(new ItemAppearance({
   scene,
   position: firstItemSpawnPosition,
   label: SPAWN_POINT_ITEM.label,
   inventoryType: SPAWN_POINT_ITEM.id,
   pickable: SPAWN_POINT_ITEM.pickable,
-  groundY: GROUND_Y + (SPAWN_POINT_ITEM.itemAppearance?.groundYOffset ?? 2),
+  groundY: mapData.spawnPoint.y + 1,
 }));
 
-if (!MULTIPLAYER_ENABLED) {
+if (!MULTIPLAYER_ENABLED && isLegacyVoxelandiaPreset) {
   /* Singleplayer keeps the current authored starter kit, while multiplayer now
   boots only the guide plus Spawn Point until shared dynamic instances land. */
   const firstSpaceShipPosition = new THREE.Vector3(30, 6, -7);
