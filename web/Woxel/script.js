@@ -16,10 +16,15 @@ const statusLine = document.getElementById('statusLine');
 const importPanel = document.getElementById('importPanel');
 
 const worldRaycastTargets = [];
-const worldCollisionBoxes = [];
+const worldVoxelEntriesByCell = new Map();
 const worldDebugGroup = new THREE.Group();
 const worldGroup = new THREE.Group();
-const worldVoxelMaterialCache = new Map();
+const worldBounds = new THREE.Box3();
+const worldOrigin = new THREE.Vector3();
+const worldVoxelInstanceMatrix = new THREE.Matrix4();
+const worldVoxelInstanceColor = new THREE.Color();
+const tempCollisionBox = new THREE.Box3();
+let worldVoxelGrid = null;
 
 const PLAYER_RADIUS = 0.35;
 const PLAYER_HEIGHT = 1.7;
@@ -223,19 +228,27 @@ function getWorldOrigin(worldData) {
     );
 }
 
-function getVoxelMaterial(color) {
-    const normalizedColor = typeof color === 'string' && color.trim() ? color.trim() : '#8fb3cc';
-    if (worldVoxelMaterialCache.has(normalizedColor)) {
-        return worldVoxelMaterialCache.get(normalizedColor);
-    }
+function gridToWorldPosition(x = 0, y = 0, z = 0) {
+    return new THREE.Vector3(
+        worldOrigin.x + x,
+        y,
+        worldOrigin.z + z,
+    );
+}
 
-    const material = new THREE.MeshStandardMaterial({
-        color: normalizedColor,
-        roughness: 0.94,
-        metalness: 0,
-    });
-    worldVoxelMaterialCache.set(normalizedColor, material);
-    return material;
+function gridToWorldCenterPosition(x = 0, y = 0, z = 0) {
+    return new THREE.Vector3(
+        worldOrigin.x + x + 0.5,
+        y + 0.5,
+        worldOrigin.z + z + 0.5,
+    );
+}
+
+function setBoxFromCell(cellX, cellY, cellZ, targetBox = new THREE.Box3()) {
+    const min = gridToWorldPosition(cellX, cellY, cellZ);
+    targetBox.min.copy(min);
+    targetBox.max.set(min.x + 1, min.y + 1, min.z + 1);
+    return targetBox;
 }
 
 function clearWorldScene() {
@@ -244,18 +257,32 @@ function clearWorldScene() {
         if (!child) continue;
         worldGroup.remove(child);
         if (child.geometry) child.geometry.dispose();
+        if (child.material) child.material.dispose();
     }
 
     worldRaycastTargets.length = 0;
-    worldCollisionBoxes.length = 0;
+    worldVoxelEntriesByCell.clear();
+    worldBounds.makeEmpty();
+    worldVoxelGrid = null;
 }
 
 function buildWorldScene(worldData) {
     clearWorldScene();
 
     const voxelEntries = resolveWorldVoxelEntries(worldData);
-    const worldOrigin = getWorldOrigin(worldData);
-    const voxelGeometry = new THREE.BoxGeometry(1, 1, 1);
+    worldOrigin.copy(getWorldOrigin(worldData));
+    const worldSize = worldData?.size ?? { x: 0, y: 0, z: 0 };
+
+    worldBounds.min.set(
+        worldOrigin.x,
+        0,
+        worldOrigin.z,
+    );
+    worldBounds.max.set(
+        worldOrigin.x + Math.max(Number(worldSize.x) || 0, 1),
+        Math.max(Number(worldSize.y) || 0, 1),
+        worldOrigin.z + Math.max(Number(worldSize.z) || 0, 1),
+    );
 
     for (let i = 0; i < voxelEntries.length; i += 1) {
         const entry = voxelEntries[i];
@@ -264,32 +291,78 @@ function buildWorldScene(worldData) {
         const active = voxel?.active !== false;
         if (!active) continue;
 
-        const mapX = worldOrigin.x + (Number(position.x) || 0) + 0.5;
-        const mapY = (Number(position.y) || 0) + 0.5;
-        const mapZ = worldOrigin.z + (Number(position.z) || 0) + 0.5;
+        const cellX = Number(position.x) || 0;
+        const cellY = Number(position.y) || 0;
+        const cellZ = Number(position.z) || 0;
+        const cellKey = createWorldCellKey(cellX, cellY, cellZ);
+        const normalizedColor = typeof voxel?.color === 'string' && voxel.color.trim()
+            ? voxel.color.trim()
+            : '#8fb3cc';
 
-        const mesh = new THREE.Mesh(voxelGeometry.clone(), getVoxelMaterial(voxel?.color));
-        mesh.position.set(mapX, mapY, mapZ);
-        mesh.castShadow = false;
-        mesh.receiveShadow = true;
-        worldGroup.add(mesh);
-        worldRaycastTargets.push(mesh);
+        worldVoxelEntriesByCell.set(cellKey, {
+            cellX,
+            cellY,
+            cellZ,
+            voxel: {
+                ...voxel,
+                color: normalizedColor,
+            },
+        });
+    }
 
-        const box = new THREE.Box3(
-            new THREE.Vector3(mapX - 0.5, mapY - 0.5, mapZ - 0.5),
-            new THREE.Vector3(mapX + 0.5, mapY + 0.5, mapZ + 0.5),
-        );
-        worldCollisionBoxes.push(box);
+    const renderVoxelEntries = [];
+    for (const entry of worldVoxelEntriesByCell.values()) {
+        if (!isVoxelExposed(entry.cellX, entry.cellY, entry.cellZ)) {
+            continue;
+        }
+
+        renderVoxelEntries.push({
+            cellX: entry.cellX,
+            cellY: entry.cellY,
+            cellZ: entry.cellZ,
+            color: entry.voxel.color,
+        });
+    }
+
+    if (renderVoxelEntries.length > 0) {
+        const voxelGeometry = new THREE.BoxGeometry(1, 1, 1);
+        const voxelMaterial = new THREE.MeshStandardMaterial({
+            color: 0xffffff,
+            roughness: 0.94,
+            metalness: 0,
+        });
+        const voxelGrid = new THREE.InstancedMesh(voxelGeometry, voxelMaterial, renderVoxelEntries.length);
+        voxelGrid.receiveShadow = true;
+        voxelGrid.castShadow = false;
+        voxelGrid.count = renderVoxelEntries.length;
+
+        for (let i = 0; i < renderVoxelEntries.length; i += 1) {
+            const entry = renderVoxelEntries[i];
+            const center = gridToWorldCenterPosition(entry.cellX, entry.cellY, entry.cellZ);
+            worldVoxelInstanceMatrix.makeTranslation(center.x, center.y, center.z);
+            voxelGrid.setMatrixAt(i, worldVoxelInstanceMatrix);
+            voxelGrid.setColorAt(i, worldVoxelInstanceColor.set(entry.color));
+        }
+
+        voxelGrid.instanceMatrix.needsUpdate = true;
+        if (voxelGrid.instanceColor) {
+            voxelGrid.instanceColor.needsUpdate = true;
+        }
+
+        worldGroup.add(voxelGrid);
+        worldRaycastTargets.push(voxelGrid);
+        worldVoxelGrid = voxelGrid;
     }
 
     const spawn = worldData?.spawnPosition ?? { x: 0, y: 2, z: 0 };
-    const spawnPosition = new THREE.Vector3(
-        worldOrigin.x + (Number(spawn.x) || 0) + 0.5,
-        (Number(spawn.y) || 0) + 0.1 + PLAYER_EYE_HEIGHT,
-        worldOrigin.z + (Number(spawn.z) || 0) + 0.5,
+    const spawnBase = new THREE.Vector3(
+        Number(spawn.x) || 0,
+        Number(spawn.y) || 0,
+        Number(spawn.z) || 0,
     );
+    const spawnPosition = new THREE.Vector3(spawnBase.x, spawnBase.y + PLAYER_EYE_HEIGHT, spawnBase.z);
     player.setSpawn(spawnPosition);
-    setStatus(`Loaded ${worldData?.name || 'World'} with ${worldCollisionBoxes.length} voxels.`);
+    setStatus(`Loaded ${worldData?.name || 'World'} with ${worldVoxelEntriesByCell.size} voxels.`);
 }
 
 async function loadWorldFromUrl(worldUrl) {
@@ -349,8 +422,8 @@ async function startWorld({ worldUrl = '', worldData = null } = {}) {
 function resolveWishDirection() {
     const direction = new THREE.Vector3();
 
-    if (inputState.keys.KeyW) direction.z -= 1;
-    if (inputState.keys.KeyS) direction.z += 1;
+    if (inputState.keys.KeyW) direction.z += 1;
+    if (inputState.keys.KeyS) direction.z -= 1;
     if (inputState.keys.KeyA) direction.x -= 1;
     if (inputState.keys.KeyD) direction.x += 1;
 
@@ -369,66 +442,187 @@ function getCameraPlanarVectors() {
         forward.normalize();
     }
 
-    const right = new THREE.Vector3().crossVectors(forward, new THREE.Vector3(0, 1, 0)).negate();
+    const right = new THREE.Vector3().crossVectors(forward, new THREE.Vector3(0, 1, 0));
     return { forward, right };
 }
 
-function movePlayerAxis(axis, delta) {
-    if (delta === 0) return;
+function createWorldCellKey(cellX, cellY, cellZ) {
+    return `${cellX}|${cellY}|${cellZ}`;
+}
 
-    const nextPosition = player.position.clone();
-    nextPosition[axis] += delta;
-    const nextCollider = player.updateCollider().clone();
-    nextCollider.min[axis] += delta;
-    nextCollider.max[axis] += delta;
+function hasVoxelAtCell(cellX, cellY, cellZ) {
+    return worldVoxelEntriesByCell.has(createWorldCellKey(cellX, cellY, cellZ));
+}
 
-    for (let i = 0; i < worldCollisionBoxes.length; i += 1) {
-        if (nextCollider.intersectsBox(worldCollisionBoxes[i])) {
-            return;
+function isVoxelExposed(cellX, cellY, cellZ) {
+    return (
+        !hasVoxelAtCell(cellX + 1, cellY, cellZ)
+        || !hasVoxelAtCell(cellX - 1, cellY, cellZ)
+        || !hasVoxelAtCell(cellX, cellY + 1, cellZ)
+        || !hasVoxelAtCell(cellX, cellY - 1, cellZ)
+        || !hasVoxelAtCell(cellX, cellY, cellZ + 1)
+        || !hasVoxelAtCell(cellX, cellY, cellZ - 1)
+    );
+}
+
+function worldPositionToGridPosition(position) {
+    return {
+        x: position.x - worldOrigin.x,
+        y: position.y,
+        z: position.z - worldOrigin.z,
+    };
+}
+
+function getColliderCellRange(box, cellPadding = 0) {
+    const minGridPosition = worldPositionToGridPosition(box.min);
+    const maxGridPosition = worldPositionToGridPosition(box.max);
+
+    return {
+        minCellX: Math.floor(minGridPosition.x) - cellPadding,
+        maxCellX: Math.ceil(maxGridPosition.x) - 1 + cellPadding,
+        minCellY: Math.floor(minGridPosition.y) - cellPadding,
+        maxCellY: Math.ceil(maxGridPosition.y) - 1 + cellPadding,
+        minCellZ: Math.floor(minGridPosition.z) - cellPadding,
+        maxCellZ: Math.ceil(maxGridPosition.z) - 1 + cellPadding,
+    };
+}
+
+function forEachNearbyCollisionBox(box, callback, cellPadding = 0) {
+    const {
+        minCellX,
+        maxCellX,
+        minCellY,
+        maxCellY,
+        minCellZ,
+        maxCellZ,
+    } = getColliderCellRange(box, cellPadding);
+
+    for (let cellY = minCellY; cellY <= maxCellY; cellY += 1) {
+        for (let cellX = minCellX; cellX <= maxCellX; cellX += 1) {
+            for (let cellZ = minCellZ; cellZ <= maxCellZ; cellZ += 1) {
+                if (!hasVoxelAtCell(cellX, cellY, cellZ)) {
+                    continue;
+                }
+
+                if (callback(setBoxFromCell(cellX, cellY, cellZ, tempCollisionBox)) === true) {
+                    return true;
+                }
+            }
         }
     }
 
-    player.position.copy(nextPosition);
-    player.updateCollider();
+    return false;
 }
 
-function resolveVerticalMotion(deltaTime) {
-    player.velocity.y -= PLAYER_GRAVITY * deltaTime;
-
-    if (player.onGround && player.jumpQueued) {
-        player.velocity.y = PLAYER_JUMP_SPEED;
-        player.onGround = false;
+function boxesOverlapOnAxes(a, b, axes) {
+    for (let i = 0; i < axes.length; i += 1) {
+        const axis = axes[i];
+        if (a.max[axis] <= b.min[axis] || a.min[axis] >= b.max[axis]) {
+            return false;
+        }
     }
 
-    player.jumpQueued = false;
-    movePlayerAxis('y', player.velocity.y * deltaTime);
-    player.onGround = false;
+    return true;
+}
 
+function getRemainingAxes(axis) {
+    if (axis === 'x') return ['y', 'z'];
+    if (axis === 'y') return ['x', 'z'];
+    return ['x', 'y'];
+}
+
+function resolveWorldBoundsDelta(axis, delta, collider) {
+    if (worldBounds.isEmpty()) {
+        return delta;
+    }
+
+    if (axis === 'y') {
+        return delta;
+    }
+
+    let resolvedDelta = delta;
+
+    if (resolvedDelta > 0) {
+        resolvedDelta = Math.min(resolvedDelta, worldBounds.max[axis] - collider.max[axis]);
+    } else if (resolvedDelta < 0) {
+        resolvedDelta = Math.max(resolvedDelta, worldBounds.min[axis] - collider.min[axis]);
+    }
+
+    return resolvedDelta;
+}
+
+function movePlayerAxis(axis, delta) {
+    if (delta === 0) return 0;
+
+    const collider = player.updateCollider().clone();
+    const remainingAxes = getRemainingAxes(axis);
+    let resolvedDelta = resolveWorldBoundsDelta(axis, delta, collider);
+    const nextCollider = collider.clone();
+    nextCollider.min[axis] += resolvedDelta;
+    nextCollider.max[axis] += resolvedDelta;
+    const sweepCollider = collider.clone().union(nextCollider);
+
+    forEachNearbyCollisionBox(sweepCollider, blockingBox => {
+        if (!boxesOverlapOnAxes(nextCollider, blockingBox, remainingAxes)) {
+            return false;
+        }
+
+        if (resolvedDelta > 0 && collider.max[axis] <= blockingBox.min[axis]) {
+            resolvedDelta = Math.min(resolvedDelta, blockingBox.min[axis] - collider.max[axis]);
+            nextCollider.min[axis] = collider.min[axis] + resolvedDelta;
+            nextCollider.max[axis] = collider.max[axis] + resolvedDelta;
+        } else if (resolvedDelta < 0 && collider.min[axis] >= blockingBox.max[axis]) {
+            resolvedDelta = Math.max(resolvedDelta, blockingBox.max[axis] - collider.min[axis]);
+            nextCollider.min[axis] = collider.min[axis] + resolvedDelta;
+            nextCollider.max[axis] = collider.max[axis] + resolvedDelta;
+        }
+        return false;
+    }, 1);
+
+    if (resolvedDelta === 0) {
+        return 0;
+    }
+
+    player.position[axis] += resolvedDelta;
+    player.updateCollider();
+    return resolvedDelta;
+}
+
+function hasGroundSupport() {
     const supportCollider = player.collider.clone();
     supportCollider.min.y -= PLAYER_SUPPORT_EPSILON;
     supportCollider.max.y -= PLAYER_SUPPORT_EPSILON;
 
-    for (let i = 0; i < worldCollisionBoxes.length; i += 1) {
-        const blockingBox = worldCollisionBoxes[i];
-        if (!player.collider.intersectsBox(blockingBox) && !supportCollider.intersectsBox(blockingBox)) {
-            continue;
-        }
+    return forEachNearbyCollisionBox(
+        supportCollider,
+        collisionBox => supportCollider.intersectsBox(collisionBox),
+        1,
+    );
+}
 
-        if (player.velocity.y <= 0 && player.collider.min.y >= blockingBox.max.y - 0.3) {
-            const groundedEyeY = blockingBox.max.y + PLAYER_EYE_HEIGHT;
-            player.position.y = groundedEyeY;
-            player.velocity.y = 0;
-            player.onGround = true;
-            player.updateCollider();
-            return;
-        }
+function resolveVerticalMotion(deltaTime) {
+    if (player.onGround && player.jumpQueued) {
+        player.velocity.y = PLAYER_JUMP_SPEED;
+        player.onGround = false;
+    } else {
+        player.velocity.y -= PLAYER_GRAVITY * deltaTime;
+    }
 
-        if (player.velocity.y > 0 && player.collider.max.y <= blockingBox.min.y + 0.3) {
-            player.position.y = blockingBox.min.y - (PLAYER_HEIGHT - PLAYER_EYE_HEIGHT);
-            player.velocity.y = 0;
-            player.updateCollider();
-            return;
-        }
+    player.jumpQueued = false;
+
+    const intendedDelta = player.velocity.y * deltaTime;
+    const resolvedDelta = movePlayerAxis('y', intendedDelta);
+    const hitSurface = Math.abs(intendedDelta - resolvedDelta) > 1e-6;
+
+    if (hitSurface) {
+        player.onGround = intendedDelta < 0;
+        player.velocity.y = 0;
+        return;
+    }
+
+    player.onGround = hasGroundSupport();
+    if (player.onGround && player.velocity.y < 0) {
+        player.velocity.y = 0;
     }
 }
 
