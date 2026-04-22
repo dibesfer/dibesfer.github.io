@@ -187,7 +187,13 @@ export function renderKolorlandoMenuPanel(container) {
                     <option value="1">Off (100%)</option>
                     <option value="0.75">Light (75%)</option>
                     <option value="0.5">Strong (50%)</option>
+                    <option value="0.33">Chunky (33%)</option>
+                    <option value="0.25">Extreme (25%)</option>
                 </select>
+            </div>
+            <div class="settings-toggle">
+                <input type="checkbox" name="pixelatedUpscale" id="settingsPixelatedUpscale">
+                <label for="settingsPixelatedUpscale">Pixelated upscale</label>
             </div>
             <button id="settingsDownloadWorldButton" type="button">Download World</button>
             <br><br>

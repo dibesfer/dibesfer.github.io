@@ -285,6 +285,7 @@ const settingsMenuThemeDark = document.getElementById('settingsMenuThemeDark');
 const settingsShadows = document.getElementById('settingsShadows');
 const settingsShadowPreset = document.getElementById('settingsShadowPreset');
 const settingsUndersampling = document.getElementById('settingsUndersampling');
+const settingsPixelatedUpscale = document.getElementById('settingsPixelatedUpscale');
 const settingsBackgroundMusic = document.getElementById('settingsBackgroundMusic');
 const settingsRestoreDefaultsButton = document.getElementById('settingsRestoreDefaultsButton');
 const settingsDownloadWorldButton = document.getElementById('settingsDownloadWorldButton');
@@ -354,14 +355,18 @@ let isMiniMapDockedInMenu = false;
 const SHADOWS_STORAGE_KEY = 'kolorlando.settings.shadows';
 const SHADOW_PRESET_STORAGE_KEY = 'kolorlando.settings.shadowPreset';
 const RENDER_SCALE_STORAGE_KEY = 'kolorlando.settings.renderScale';
+const PIXELATED_UPSCALE_STORAGE_KEY = 'kolorlando.settings.pixelatedUpscale';
 const CAMERA_MODE_STORAGE_KEY = 'kolorlando.cameraMode';
 const DEFAULT_RENDER_SCALE = 1;
 const DEFAULT_MOBILE_RENDER_SCALE = 0.5;
 const DEFAULT_SHADOWS_ENABLED = false;
-const VALID_RENDER_SCALE_VALUES = new Set(['1', '0.75', '0.5']);
+const DEFAULT_PIXELATED_UPSCALE = false;
+const MIN_RENDER_SCALE = 0.25;
+const VALID_RENDER_SCALE_VALUES = new Set(['1', '0.75', '0.5', '0.33', '0.25']);
 const POINTER_LOCK_RETRY_COOLDOWN_MS = 350;
 let rendererPixelRatioBase = Math.min(window.devicePixelRatio, 2);
 let renderScaleMultiplier = DEFAULT_RENDER_SCALE;
+let pixelatedUpscaleEnabled = DEFAULT_PIXELATED_UPSCALE;
 let shadowPresetName = DEFAULT_SHADOW_PRESET;
 const VOXEL_RAYCAST_REFRESH_INTERVAL = 1 / 30;
 const WOW_CURSOR_RAYCAST_NDC_EPSILON_SQ = 0.000004;
@@ -374,12 +379,17 @@ function getEffectiveRenderPixelRatio() {
   Multiplying that capped base by the user-selected scale gives us a compact
   "undersampling" control that behaves like a lighter-weight render resolution
   slider without changing canvas CSS size or camera math. */
-  return Math.max(0.5, rendererPixelRatioBase * renderScaleMultiplier);
+  return Math.max(MIN_RENDER_SCALE, rendererPixelRatioBase * renderScaleMultiplier);
 }
 
 function syncRenderScaleSetting() {
   if (!settingsUndersampling) return;
   settingsUndersampling.value = String(renderScaleMultiplier);
+}
+
+function syncPixelatedUpscaleSetting() {
+  if (!settingsPixelatedUpscale) return;
+  settingsPixelatedUpscale.checked = pixelatedUpscaleEnabled;
 }
 
 function persistRenderScalePreference(nextScale) {
@@ -396,6 +406,31 @@ function readSavedRenderScalePreference() {
   } catch (error) {
     return null;
   }
+}
+
+function persistPixelatedUpscalePreference(nextEnabled) {
+  try {
+    window.localStorage.setItem(PIXELATED_UPSCALE_STORAGE_KEY, String(nextEnabled));
+  } catch (error) {
+    console.warn('Failed to persist the Kolorlando pixelated upscale setting.', error);
+  }
+}
+
+function readSavedPixelatedUpscalePreference() {
+  try {
+    return window.localStorage.getItem(PIXELATED_UPSCALE_STORAGE_KEY);
+  } catch (error) {
+    return null;
+  }
+}
+
+function resolvePixelatedUpscalePreference(rawValue) {
+  return rawValue === 'true';
+}
+
+function applyCanvasUpscaleMode(canvas) {
+  if (!canvas) return;
+  canvas.style.imageRendering = pixelatedUpscaleEnabled ? 'pixelated' : 'auto';
 }
 
 function resolveRenderScalePreference(rawValue) {
@@ -500,11 +535,13 @@ async function restoreDefaultSettings() {
   setRenderScale(mobileMode ? DEFAULT_MOBILE_RENDER_SCALE : DEFAULT_RENDER_SCALE, {
     persist: false,
   });
+  setPixelatedUpscaleEnabled(DEFAULT_PIXELATED_UPSCALE, { persist: false });
 
   clearPersistedSetting(CAMERA_MODE_STORAGE_KEY);
   clearPersistedSetting(SHADOWS_STORAGE_KEY);
   clearPersistedSetting(SHADOW_PRESET_STORAGE_KEY);
   clearPersistedSetting(RENDER_SCALE_STORAGE_KEY);
+  clearPersistedSetting(PIXELATED_UPSCALE_STORAGE_KEY);
 }
 
 function shouldWantGameplayPointerLock() {
@@ -1083,6 +1120,7 @@ function initCharacterPreview() {
   characterPreviewRenderer.setClearColor(0x000000, 0);
   characterPreviewRenderer.outputColorSpace = THREE.SRGBColorSpace;
   characterPreviewRenderer.domElement.setAttribute('aria-hidden', 'true');
+  applyCanvasUpscaleMode(characterPreviewRenderer.domElement);
   characterMenuPlayer.appendChild(characterPreviewRenderer.domElement);
 
   if (typeof ResizeObserver === 'function') {
@@ -1295,6 +1333,7 @@ undersampling setting can reduce GPU load immediately without changing layout. *
 renderer.setPixelRatio(getEffectiveRenderPixelRatio());
 renderer.setClearColor(0x5EC9FF);
 renderer.shadowMap.enabled = DEFAULT_SHADOWS_ENABLED;
+applyCanvasUpscaleMode(renderer.domElement);
 
 sceneView.appendChild(renderer.domElement);
 
@@ -1666,6 +1705,12 @@ function applyRenderScale(options = {}) {
   }
 }
 
+function applyPixelatedUpscale() {
+  applyCanvasUpscaleMode(renderer?.domElement);
+  applyCanvasUpscaleMode(characterPreviewRenderer?.domElement);
+  syncPixelatedUpscaleSetting();
+}
+
 function setRenderScale(nextScale, options = {}) {
   const shouldPersist = options.persist !== false;
   renderScaleMultiplier = resolveRenderScalePreference(String(nextScale));
@@ -1673,6 +1718,16 @@ function setRenderScale(nextScale, options = {}) {
 
   if (shouldPersist) {
     persistRenderScalePreference(renderScaleMultiplier);
+  }
+}
+
+function setPixelatedUpscaleEnabled(nextEnabled, options = {}) {
+  const shouldPersist = options.persist !== false;
+  pixelatedUpscaleEnabled = nextEnabled === true;
+  applyPixelatedUpscale();
+
+  if (shouldPersist) {
+    persistPixelatedUpscalePreference(pixelatedUpscaleEnabled);
   }
 }
 
@@ -1755,6 +1810,18 @@ if (settingsShadowPreset) {
 if (settingsUndersampling) {
   settingsUndersampling.addEventListener('change', function () {
     setRenderScale(settingsUndersampling.value);
+  });
+}
+
+const savedPixelatedUpscalePreference = readSavedPixelatedUpscalePreference();
+setPixelatedUpscaleEnabled(
+  resolvePixelatedUpscalePreference(savedPixelatedUpscalePreference),
+  { persist: false }
+);
+
+if (settingsPixelatedUpscale) {
+  settingsPixelatedUpscale.addEventListener('change', function () {
+    setPixelatedUpscaleEnabled(settingsPixelatedUpscale.checked);
   });
 }
 
