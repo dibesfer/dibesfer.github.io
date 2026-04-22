@@ -248,6 +248,7 @@ scene.add(camera);
 const consola = document.getElementById('consola');
 const miniMap = document.getElementById('miniMap');
 const menuCentral = document.getElementById('menuCentral');
+const menuTabs = document.querySelector('#menuCentral .menu-tabs');
 const menuCloseButton = document.getElementById('menuCloseButton');
 const menuTabButtons = Array.from(document.querySelectorAll('#menuCentral .menu-tab'));
 const menuPanels = Array.from(document.querySelectorAll('#menuCentral .menu-panel'));
@@ -355,6 +356,7 @@ const SHADOW_PRESET_STORAGE_KEY = 'kolorlando.settings.shadowPreset';
 const RENDER_SCALE_STORAGE_KEY = 'kolorlando.settings.renderScale';
 const CAMERA_MODE_STORAGE_KEY = 'kolorlando.cameraMode';
 const DEFAULT_RENDER_SCALE = 1;
+const DEFAULT_MOBILE_RENDER_SCALE = 0.5;
 const DEFAULT_SHADOWS_ENABLED = false;
 const VALID_RENDER_SCALE_VALUES = new Set(['1', '0.75', '0.5']);
 const POINTER_LOCK_RETRY_COOLDOWN_MS = 350;
@@ -402,6 +404,24 @@ function resolveRenderScalePreference(rawValue) {
     return Number(normalizedValue);
   }
   return DEFAULT_RENDER_SCALE;
+}
+
+function applyRenderScaleForCurrentMode() {
+  /* Mobile mode gets a stronger default undersampling baseline so both touch
+  layouts start from the same lighter GPU profile without changing desktop. */
+  if (mobileMode) {
+    setRenderScale(DEFAULT_MOBILE_RENDER_SCALE, {
+      persist: false,
+      resize: false,
+    });
+    return;
+  }
+
+  const savedRenderScalePreference = readSavedRenderScalePreference();
+  setRenderScale(resolveRenderScalePreference(savedRenderScalePreference), {
+    persist: false,
+    resize: false,
+  });
 }
 
 function isLegoLolCameraMode() {
@@ -477,7 +497,9 @@ async function restoreDefaultSettings() {
   setCurrentCameraMode('skyrim');
   setShadowsEnabled(DEFAULT_SHADOWS_ENABLED, { persist: false });
   setShadowPreset(DEFAULT_SHADOW_PRESET, { persist: false });
-  setRenderScale(DEFAULT_RENDER_SCALE, { persist: false });
+  setRenderScale(mobileMode ? DEFAULT_MOBILE_RENDER_SCALE : DEFAULT_RENDER_SCALE, {
+    persist: false,
+  });
 
   clearPersistedSetting(CAMERA_MODE_STORAGE_KEY);
   clearPersistedSetting(SHADOWS_STORAGE_KEY);
@@ -982,6 +1004,7 @@ const chatUI = createChatUI({
 
 const menuUI = createMenuUI({
   menuCentral,
+  menuTabs,
   menuTabButtons,
   menuPanels,
   settingsFullScreen,
@@ -1728,12 +1751,6 @@ if (settingsShadowPreset) {
     setShadowPreset(settingsShadowPreset.value);
   });
 }
-
-const savedRenderScalePreference = readSavedRenderScalePreference();
-setRenderScale(resolveRenderScalePreference(savedRenderScalePreference), {
-  persist: false,
-  resize: false,
-});
 
 if (settingsUndersampling) {
   settingsUndersampling.addEventListener('change', function () {
@@ -2612,6 +2629,7 @@ screenController = createScreenController({
   onMobileModeChange: nextMobileMode => {
     mobileMode = nextMobileMode;
     input.setMobileMode(nextMobileMode);
+    applyRenderScaleForCurrentMode();
   },
   onSyncCameraModeAvailability: () => {
     syncCameraModeAvailability();

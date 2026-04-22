@@ -9,6 +9,7 @@ export class Voxel {
     type = 'colored',
     color = '#ffffff',
     texture = null,
+    transparent = false,
     active = true,
     microxelSize = 0,
     microxels = null,
@@ -22,6 +23,7 @@ export class Voxel {
     this.type = normalizeVoxelType(type);
     this.color = normalizeText(color, '#ffffff');
     this.texture = normalizeVoxelTexture(texture);
+    this.transparent = Boolean(transparent);
     this.active = Boolean(active);
     this.name = normalizeText(name, '');
     this.microxelSize = normalizeGridSize(microxelSize);
@@ -56,6 +58,11 @@ export class Voxel {
   setTexture(texture = '') {
     this.type = 'textured';
     this.texture = normalizeVoxelTexture(texture);
+    return this;
+  }
+
+  setTransparent(transparent = false) {
+    this.transparent = Boolean(transparent);
     return this;
   }
 
@@ -176,6 +183,7 @@ export class Voxel {
       type: this.type,
       color: this.color,
       texture: cloneVoxelTexture(this.texture),
+      transparent: this.transparent,
       active: this.active,
       microxelSize: this.microxelSize,
       microxels: this.microxels ? cloneMicroxelGrid(this.microxels) : null,
@@ -194,6 +202,7 @@ export class Voxel {
       type: this.type,
       color: this.color,
       texture: serializeVoxelTexture(this.texture),
+      transparent: this.transparent,
       active: this.active,
       microxelSize: this.microxelSize,
       microxels: this.microxels
@@ -237,10 +246,92 @@ export class Voxel {
 
     if ('texture' in data) {
       this.texture = normalizeVoxelTexture(data.texture);
+    }
+
+    if ('transparent' in data) {
+      this.transparent = Boolean(data.transparent);
+    }
+
+    if ('texture' in data) {
       return this;
     }
 
     this.clearMicroxels();
+    return this;
+  }
+}
+
+export class VoxelPlane extends Voxel {
+  constructor({
+    planeFace = 'front',
+    doubleSided = false,
+    inset = 0,
+    ...voxelOptions
+  } = {}) {
+    super(voxelOptions);
+    this.kind = 'plane';
+    this.planeFace = normalizeVoxelPlaneFace(planeFace);
+    this.doubleSided = Boolean(doubleSided);
+    this.inset = toFiniteNumber(inset, 0);
+  }
+
+  setPlaneFace(planeFace = 'front') {
+    this.planeFace = normalizeVoxelPlaneFace(planeFace);
+    return this;
+  }
+
+  setDoubleSided(doubleSided = false) {
+    this.doubleSided = Boolean(doubleSided);
+    return this;
+  }
+
+  setInset(inset = 0) {
+    this.inset = toFiniteNumber(inset, 0);
+    return this;
+  }
+
+  clone() {
+    return new VoxelPlane({
+      x: this.x,
+      y: this.y,
+      z: this.z,
+      type: this.type,
+      color: this.color,
+      texture: cloneVoxelTexture(this.texture),
+      transparent: this.transparent,
+      active: this.active,
+      name: this.name,
+      planeFace: this.planeFace,
+      doubleSided: this.doubleSided,
+      inset: this.inset,
+    });
+  }
+
+  toJSON() {
+    return {
+      ...super.toJSON(),
+      kind: this.kind,
+      planeFace: this.planeFace,
+      doubleSided: this.doubleSided,
+      inset: this.inset,
+    };
+  }
+
+  fromJSON(data = {}) {
+    super.fromJSON(data);
+
+    if ('planeFace' in data) {
+      this.planeFace = normalizeVoxelPlaneFace(data.planeFace);
+    }
+
+    if ('doubleSided' in data) {
+      this.doubleSided = Boolean(data.doubleSided);
+    }
+
+    if ('inset' in data) {
+      this.inset = toFiniteNumber(data.inset, 0);
+    }
+
     return this;
   }
 }
@@ -271,6 +362,12 @@ function normalizeVoxelType(type) {
   }
 
   return 'colored';
+}
+
+function normalizeVoxelPlaneFace(planeFace = 'front') {
+  const normalizedPlaneFace = normalizeText(planeFace, 'front').toLowerCase();
+  const supportedPlaneFaces = new Set(['top', 'bottom', 'left', 'right', 'front', 'back']);
+  return supportedPlaneFaces.has(normalizedPlaneFace) ? normalizedPlaneFace : 'front';
 }
 
 function normalizeVoxelTexture(texture) {

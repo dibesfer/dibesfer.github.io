@@ -43,13 +43,16 @@ function normalizeVoxelIconSpec(voxel = null) {
       type: 'colored',
       color: normalizeHexColor(voxel),
       texture: '',
+      textureFaces: null,
     };
   }
 
   return {
+    name: typeof voxel?.name === 'string' ? voxel.name : '',
     type: typeof voxel?.type === 'string' && voxel.type.trim() ? voxel.type.trim().toLowerCase() : 'colored',
     color: normalizeHexColor(voxel?.color),
-    texture: typeof voxel?.texture === 'string' && voxel.texture.trim() ? voxel.texture.trim().toLowerCase() : '',
+    texture: normalizeVoxelIconTexture(voxel?.texture),
+    textureFaces: resolveVoxelIconTextureFaces(voxel?.texture),
   };
 }
 
@@ -90,6 +93,66 @@ function appendVoxelFace(svg, svgNs, {
 
   if (!borderFill) return;
   svg.appendChild(createSvgPolygon(svgNs, createInsetFacePoints(points, insetAmount), fill));
+}
+
+let voxelIconTextureIdCounter = 0;
+
+function appendVoxelTextureFace(svg, svgNs, defs, {
+  points,
+  textureHref = '',
+  fallbackFill = '#ffffff',
+  borderFill = '',
+  insetAmount = 0.16,
+  imageTransform = '',
+} = {}) {
+  const normalizedTextureHref = typeof textureHref === 'string' ? textureHref.trim() : '';
+  if (!normalizedTextureHref) {
+    appendVoxelFace(svg, svgNs, {
+      points,
+      fill: fallbackFill,
+      borderFill,
+      insetAmount,
+    });
+    return;
+  }
+
+  const clipPathId = `voxel-icon-texture-clip-${voxelIconTextureIdCounter}`;
+  voxelIconTextureIdCounter += 1;
+  const insetPoints = createInsetFacePoints(points, borderFill ? insetAmount : 0);
+
+  svg.appendChild(createSvgPolygon(svgNs, points, borderFill || fallbackFill));
+
+  const clipPath = document.createElementNS(svgNs, 'clipPath');
+  clipPath.setAttribute('id', clipPathId);
+  clipPath.setAttribute('clipPathUnits', 'userSpaceOnUse');
+  clipPath.appendChild(createSvgPolygon(svgNs, insetPoints, fallbackFill));
+  defs.appendChild(clipPath);
+
+  const image = document.createElementNS(svgNs, 'image');
+  image.setAttribute('href', normalizedTextureHref);
+  image.setAttributeNS('http://www.w3.org/1999/xlink', 'href', normalizedTextureHref);
+  image.setAttribute('x', '0');
+  image.setAttribute('y', '0');
+  image.setAttribute('width', '1');
+  image.setAttribute('height', '1');
+  image.setAttribute('preserveAspectRatio', 'none');
+  image.setAttribute('image-rendering', 'pixelated');
+  if (imageTransform) {
+    image.setAttribute('transform', imageTransform);
+  }
+  image.setAttribute('clip-path', `url(#${clipPathId})`);
+  svg.appendChild(image);
+}
+
+function createFaceImageTransform({
+  originX,
+  originY,
+  xAxisX,
+  xAxisY,
+  yAxisX,
+  yAxisY,
+} = {}) {
+  return `matrix(${xAxisX} ${xAxisY} ${yAxisX} ${yAxisY} ${originX} ${originY})`;
 }
 
 function createBaseVoxelFaceVisuals(voxel = null) {
@@ -215,19 +278,116 @@ export function createImageIcon(src, alt = '') {
   return icon;
 }
 
+export function createVoxelTextureIcon(src, alt = '') {
+  const icon = createIcon('icon-chip item-slot-icon image-icon voxel-texture-icon');
+  const image = document.createElement('img');
+  image.className = 'image-icon__img voxel-texture-icon__img';
+  image.src = src;
+  image.alt = alt;
+  image.decoding = 'async';
+  icon.appendChild(image);
+  return icon;
+}
+
+export function createIsometricVoxelTextureIcon(voxel = null) {
+  const icon = createIcon('icon-chip item-slot-icon voxel-icon voxel-texture-cube-icon');
+  const canvas = document.createElement('canvas');
+  const textureFaces = voxel?.textureFaces ?? null;
+  const faceTextureSources = {
+    top: textureFaces?.top || '',
+    left: textureFaces?.left || textureFaces?.front || textureFaces?.right || '',
+    right: textureFaces?.right || textureFaces?.front || textureFaces?.left || '',
+  };
+  const textureImages = {
+    top: new Image(),
+    left: new Image(),
+    right: new Image(),
+  };
+  let pendingTextures = 0;
+
+  canvas.className = 'voxel-icon__svg voxel-texture-cube-icon__canvas';
+  canvas.width = 64;
+  canvas.height = 64;
+  canvas.setAttribute('aria-label', voxel?.name || '');
+  icon.appendChild(canvas);
+
+  function draw() {
+    drawTexturedVoxelCubeIcon(canvas, textureImages);
+  }
+
+  const faceNames = Object.keys(faceTextureSources);
+  for (let i = 0; i < faceNames.length; i += 1) {
+    const faceName = faceNames[i];
+    const faceSource = faceTextureSources[faceName];
+    const faceImage = textureImages[faceName];
+
+    if (!faceSource) continue;
+
+    pendingTextures += 1;
+    faceImage.decoding = 'async';
+    faceImage.addEventListener('load', function () {
+      pendingTextures -= 1;
+      if (pendingTextures === 0) {
+        draw();
+      }
+    }, { once: true });
+    faceImage.src = faceSource;
+
+    if (faceImage.complete) {
+      pendingTextures -= 1;
+    }
+  }
+
+  if (pendingTextures === 0) {
+    draw();
+  }
+
+  return icon;
+}
+
 export function createVoxelIcon(hexColor) {
-  const icon = createIcon('icon-chip item-slot-icon voxel-icon');
   const voxel = normalizeVoxelIconSpec(hexColor);
+  const previewTextureHref = resolveVoxelIconPreviewTexture(voxel);
+  if (previewTextureHref) {
+    return createIsometricVoxelTextureIcon(voxel);
+  }
+  const icon = createIcon('icon-chip item-slot-icon voxel-icon');
   const svgNs = 'http://www.w3.org/2000/svg';
   const svg = document.createElementNS(svgNs, 'svg');
+  const defs = document.createElementNS(svgNs, 'defs');
   const edge = document.createElementNS(svgNs, 'path');
   const topPoints = '32,6 56,18 32,30 8,18';
   const leftPoints = '8,18 32,30 32,56 8,44';
   const rightPoints = '56,18 32,30 32,56 56,44';
+  const topTextureTransform = createFaceImageTransform({
+    originX: 8,
+    originY: 18,
+    xAxisX: 24,
+    xAxisY: -12,
+    yAxisX: 24,
+    yAxisY: 12,
+  });
+  const leftTextureTransform = createFaceImageTransform({
+    originX: 8,
+    originY: 18,
+    xAxisX: 24,
+    xAxisY: 12,
+    yAxisX: 0,
+    yAxisY: 26,
+  });
+  const rightTextureTransform = createFaceImageTransform({
+    originX: 32,
+    originY: 30,
+    xAxisX: 24,
+    xAxisY: -12,
+    yAxisX: 0,
+    yAxisY: 26,
+  });
   const faceVisuals = resolveVoxelFaceVisuals(voxel);
 
   svg.classList.add('voxel-icon__svg');
   svg.setAttribute('viewBox', '0 0 64 64');
+  svg.appendChild(defs);
   edge.setAttribute('d', 'M32 6L56 18L32 30L8 18ZM32 30V56M8 18V44L32 56L56 44V18');
   edge.setAttribute('fill', 'none');
   edge.setAttribute('stroke-linejoin', 'round');
@@ -255,4 +415,200 @@ export function createVoxelIcon(hexColor) {
   }
   icon.appendChild(svg);
   return icon;
+}
+
+function drawTexturedVoxelCubeIcon(canvas, textureImages) {
+  const context = canvas.getContext('2d');
+  if (!context || !textureImages) return;
+
+  context.clearRect(0, 0, canvas.width, canvas.height);
+  context.imageSmoothingEnabled = false;
+
+  const topFace = [
+    { x: 32, y: 6 },
+    { x: 56, y: 18 },
+    { x: 32, y: 30 },
+    { x: 8, y: 18 },
+  ];
+  const leftFace = [
+    { x: 8, y: 18 },
+    { x: 32, y: 30 },
+    { x: 32, y: 56 },
+    { x: 8, y: 44 },
+  ];
+  const rightFace = [
+    { x: 32, y: 30 },
+    { x: 56, y: 18 },
+    { x: 56, y: 44 },
+    { x: 32, y: 56 },
+  ];
+
+  drawTextureOnFace(context, textureImages.top, topFace, { shade: 'rgba(255, 255, 255, 0.08)' });
+  drawTextureOnFace(context, textureImages.left, leftFace, { shade: 'rgba(0, 0, 0, 0.1)' });
+  drawTextureOnFace(context, textureImages.right, rightFace, { shade: 'rgba(0, 0, 0, 0.03)' });
+
+  context.save();
+  context.strokeStyle = 'rgba(15, 23, 42, 0.18)';
+  context.lineWidth = 1.5;
+  context.lineJoin = 'round';
+  context.beginPath();
+  context.moveTo(32, 6);
+  context.lineTo(56, 18);
+  context.lineTo(32, 30);
+  context.lineTo(8, 18);
+  context.closePath();
+  context.moveTo(32, 30);
+  context.lineTo(32, 56);
+  context.moveTo(8, 18);
+  context.lineTo(8, 44);
+  context.lineTo(32, 56);
+  context.lineTo(56, 44);
+  context.lineTo(56, 18);
+  context.stroke();
+  context.restore();
+}
+
+function drawTextureOnFace(context, image, points, { shade = '' } = {}) {
+  if (!context || !image || !Array.isArray(points) || points.length !== 4) return;
+
+  const sourceWidth = image.naturalWidth || image.width || 1;
+  const sourceHeight = image.naturalHeight || image.height || 1;
+  const origin = points[0];
+  const xAxis = {
+    x: points[1].x - points[0].x,
+    y: points[1].y - points[0].y,
+  };
+  const yAxis = {
+    x: points[3].x - points[0].x,
+    y: points[3].y - points[0].y,
+  };
+
+  context.save();
+  context.beginPath();
+  context.moveTo(points[0].x, points[0].y);
+  for (let i = 1; i < points.length; i += 1) {
+    context.lineTo(points[i].x, points[i].y);
+  }
+  context.closePath();
+  context.clip();
+
+  context.setTransform(
+    xAxis.x / sourceWidth,
+    xAxis.y / sourceWidth,
+    yAxis.x / sourceHeight,
+    yAxis.y / sourceHeight,
+    origin.x,
+    origin.y
+  );
+  context.drawImage(image, 0, 0, sourceWidth, sourceHeight);
+  context.restore();
+
+  if (!shade) return;
+
+  context.save();
+  context.fillStyle = shade;
+  context.beginPath();
+  context.moveTo(points[0].x, points[0].y);
+  for (let i = 1; i < points.length; i += 1) {
+    context.lineTo(points[i].x, points[i].y);
+  }
+  context.closePath();
+  context.fill();
+  context.restore();
+}
+
+function resolveVoxelIconPreviewTexture(voxel = null) {
+  if (voxel?.type !== 'textured') return '';
+
+  return voxel.texture && voxel.texture !== 'bordered'
+    ? voxel.texture
+    : '';
+}
+
+function normalizeVoxelIconTexture(texture) {
+  if (typeof texture === 'string') {
+    return texture.trim();
+  }
+
+  if (!texture || typeof texture !== 'object' || Array.isArray(texture)) {
+    return '';
+  }
+
+  const normalizedTexture = {};
+  const supportedFaces = ['all', 'top', 'bottom', 'sides', 'left', 'right', 'front', 'back'];
+
+  for (let i = 0; i < supportedFaces.length; i += 1) {
+    const faceKey = supportedFaces[i];
+    const faceTexture = typeof texture[faceKey] === 'string' ? texture[faceKey].trim() : '';
+    if (faceTexture) {
+      normalizedTexture[faceKey] = faceTexture;
+    }
+  }
+
+  return (
+    normalizedTexture.front
+    || normalizedTexture.right
+    || normalizedTexture.left
+    || normalizedTexture.top
+    || normalizedTexture.bottom
+    || normalizedTexture.back
+    || normalizedTexture.all
+    || normalizedTexture.sides
+    || ''
+  );
+}
+
+function resolveVoxelIconTextureFaces(texture) {
+  const normalizedTexture = normalizeVoxelTexture(texture);
+
+  if (typeof normalizedTexture === 'string') {
+    if (!normalizedTexture) return null;
+    return {
+      top: normalizedTexture,
+      bottom: normalizedTexture,
+      left: normalizedTexture,
+      right: normalizedTexture,
+      front: normalizedTexture,
+      back: normalizedTexture,
+    };
+  }
+
+  if (!normalizedTexture || typeof normalizedTexture !== 'object') {
+    return null;
+  }
+
+  const allTexture = normalizedTexture.all ?? '';
+  const sideTexture = normalizedTexture.sides ?? allTexture;
+
+  return {
+    top: normalizedTexture.top ?? allTexture ?? '',
+    bottom: normalizedTexture.bottom ?? allTexture ?? '',
+    left: normalizedTexture.left ?? sideTexture ?? '',
+    right: normalizedTexture.right ?? sideTexture ?? '',
+    front: normalizedTexture.front ?? sideTexture ?? '',
+    back: normalizedTexture.back ?? sideTexture ?? '',
+  };
+}
+
+function normalizeVoxelTexture(texture) {
+  if (typeof texture === 'string') {
+    return texture.trim();
+  }
+
+  if (!texture || typeof texture !== 'object' || Array.isArray(texture)) {
+    return '';
+  }
+
+  const normalizedTexture = {};
+  const supportedFaces = ['all', 'top', 'bottom', 'sides', 'left', 'right', 'front', 'back'];
+
+  for (let i = 0; i < supportedFaces.length; i += 1) {
+    const faceKey = supportedFaces[i];
+    const faceTexture = typeof texture[faceKey] === 'string' ? texture[faceKey].trim() : '';
+    if (faceTexture) {
+      normalizedTexture[faceKey] = faceTexture;
+    }
+  }
+
+  return Object.keys(normalizedTexture).length > 0 ? normalizedTexture : '';
 }

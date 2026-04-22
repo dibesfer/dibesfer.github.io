@@ -1,5 +1,6 @@
 export function createMenuUI(options) {
   const menuCentral = options.menuCentral;
+  const menuTabs = options.menuTabs || null;
   const menuTabButtons = options.menuTabButtons || [];
   const menuPanels = options.menuPanels || [];
   const settingsFullScreen = options.settingsFullScreen;
@@ -9,6 +10,11 @@ export function createMenuUI(options) {
   const onVisibilityChange = typeof options.onVisibilityChange === 'function' ? options.onVisibilityChange : null;
   let activeTab = options.initialTab || 'settings';
   let themePreference = options.initialThemePreference || 'system';
+  const MENU_TABS_DRAG_THRESHOLD_PX = 8;
+  let menuTabsDragPointerId = null;
+  let menuTabsDragStartX = 0;
+  let menuTabsDragStartScrollLeft = 0;
+  let menuTabsDraggingActive = false;
 
   function setElementHidden(element, hidden) {
     if (!element) return;
@@ -35,6 +41,11 @@ export function createMenuUI(options) {
   function setThemePreference(nextPreference) {
     themePreference = nextPreference;
     applyMenuTheme();
+  }
+
+  function isMobileMode() {
+    return document.body?.dataset?.mode === 'mobile-portrait'
+      || document.body?.dataset?.mode === 'mobile-landscape';
   }
 
   function isVisible() {
@@ -114,6 +125,51 @@ export function createMenuUI(options) {
     menuCentral.addEventListener('click', function (event) {
       event.stopPropagation();
     });
+  }
+
+  if (menuTabs) {
+    menuTabs.addEventListener('pointerdown', function (event) {
+      if (isMobileMode() || event.pointerType === 'touch' || event.button !== 0) return;
+      menuTabsDragPointerId = event.pointerId;
+      menuTabsDragStartX = event.clientX;
+      menuTabsDragStartScrollLeft = menuTabs.scrollLeft;
+      menuTabsDraggingActive = false;
+    });
+
+    menuTabs.addEventListener('pointermove', function (event) {
+      if (menuTabsDragPointerId !== event.pointerId) return;
+      const dragOffsetX = event.clientX - menuTabsDragStartX;
+
+      if (!menuTabsDraggingActive && Math.abs(dragOffsetX) < MENU_TABS_DRAG_THRESHOLD_PX) {
+        return;
+      }
+
+      if (!menuTabsDraggingActive) {
+        menuTabsDraggingActive = true;
+        menuTabs.classList.add('is-dragging');
+        menuTabs.setPointerCapture(event.pointerId);
+      }
+
+      event.preventDefault();
+      menuTabs.scrollLeft = menuTabsDragStartScrollLeft - dragOffsetX;
+    });
+
+    function stopMenuTabsDrag(event) {
+      if (menuTabsDragPointerId == null) return;
+      if (event && menuTabsDragPointerId !== event.pointerId) return;
+
+      if (event && menuTabsDraggingActive && menuTabs.hasPointerCapture?.(event.pointerId)) {
+        menuTabs.releasePointerCapture(event.pointerId);
+      }
+
+      menuTabsDragPointerId = null;
+      menuTabsDraggingActive = false;
+      menuTabs.classList.remove('is-dragging');
+    }
+
+    menuTabs.addEventListener('pointerup', stopMenuTabsDrag);
+    menuTabs.addEventListener('pointercancel', stopMenuTabsDrag);
+    menuTabs.addEventListener('lostpointercapture', stopMenuTabsDrag);
   }
 
   if (settingsFullScreen) {

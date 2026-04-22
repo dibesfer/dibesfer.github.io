@@ -45,6 +45,7 @@ export function buildMapFromWorld({
   const voxelInstanceIdByKey = new Map();
   const voxelColliderByKey = new Map();
   const voxelTypesByName = new Map();
+  const texturedVoxelMeshByKey = new Map();
   const freeVoxelIds = [];
   const worldOrigin = world.getMapOrigin(voxelSize);
   const voxelEntries = world.getVoxelEntries();
@@ -52,6 +53,18 @@ export function buildMapFromWorld({
   const extraVoxelCapacity = 20000;
   const maxVoxelCount = Math.max(initialVoxelCount + extraVoxelCapacity, 1);
   let nextVoxelInstanceId = 0;
+  const textureLoader = new THREE.TextureLoader();
+  const voxelFaceTextureCache = new Map();
+  const HIDDEN_FACE_MATERIAL = new THREE.MeshStandardMaterial({ visible: false });
+  const FACE_NEIGHBOR_OFFSETS = {
+    right: { x: 1, y: 0, z: 0 },
+    left: { x: -1, y: 0, z: 0 },
+    top: { x: 0, y: 1, z: 0 },
+    bottom: { x: 0, y: -1, z: 0 },
+    front: { x: 0, y: 0, z: 1 },
+    back: { x: 0, y: 0, z: -1 },
+  };
+  const TEXTURED_FACE_ORDER = ['right', 'left', 'top', 'bottom', 'front', 'back'];
 
   mapGroup.name = world.name || 'World';
 
@@ -86,6 +99,124 @@ export function buildMapFromWorld({
 
   function normalizeTexture(texture = '') {
     return typeof texture === 'string' && texture.trim() ? texture.trim().toLowerCase() : '';
+  }
+
+  function cloneTextureSpec(texture = '') {
+    if (typeof texture === 'string') {
+      return texture.trim();
+    }
+
+    if (!texture || typeof texture !== 'object' || Array.isArray(texture)) {
+      return '';
+    }
+
+    return { ...texture };
+  }
+
+  function resolveVoxelTextureFaces(voxel = null) {
+    if (typeof voxel?.getResolvedTextureFaces === 'function') {
+      return voxel.getResolvedTextureFaces();
+    }
+
+    return null;
+  }
+
+  function hasImageTextureFaces(voxel = null) {
+    const resolvedFaces = resolveVoxelTextureFaces(voxel);
+    if (!resolvedFaces) return false;
+
+    return Object.values(resolvedFaces).some(faceTexture => normalizeTexture(faceTexture) !== 'bordered');
+  }
+
+  function isTransparentVoxel(voxel = null) {
+    return Boolean(voxel?.transparent);
+  }
+
+  function shouldRenderVoxelFace(cellX, cellY, cellZ, faceName, voxel = null) {
+    const neighborOffset = FACE_NEIGHBOR_OFFSETS[faceName];
+    if (!neighborOffset) return true;
+
+    const neighborVoxel = world.getVoxel(
+      cellX + neighborOffset.x,
+      cellY + neighborOffset.y,
+      cellZ + neighborOffset.z
+    );
+
+    if (!neighborVoxel) {
+      return true;
+    }
+
+    const currentTransparent = isTransparentVoxel(voxel);
+    const neighborTransparent = isTransparentVoxel(neighborVoxel);
+
+    if (currentTransparent && neighborTransparent) {
+      return false;
+    }
+
+    if (currentTransparent && !neighborTransparent) {
+      return true;
+    }
+
+    if (!currentTransparent && neighborTransparent) {
+      return true;
+    }
+
+    return false;
+  }
+
+  function getLoadedVoxelFaceTexture(texturePath = '') {
+    const normalizedPath = typeof texturePath === 'string' ? texturePath.trim() : '';
+    if (!normalizedPath) return null;
+
+    if (voxelFaceTextureCache.has(normalizedPath)) {
+      return voxelFaceTextureCache.get(normalizedPath);
+    }
+
+    const texture = textureLoader.load(normalizedPath);
+    texture.colorSpace = THREE.SRGBColorSpace;
+    texture.magFilter = THREE.NearestFilter;
+    texture.minFilter = THREE.NearestFilter;
+    texture.wrapS = THREE.ClampToEdgeWrapping;
+    texture.wrapT = THREE.ClampToEdgeWrapping;
+    texture.needsUpdate = true;
+    voxelFaceTextureCache.set(normalizedPath, texture);
+    return texture;
+  }
+
+  function createTexturedVoxelMesh(cellX, cellY, cellZ, voxel = null) {
+    const resolvedFaces = resolveVoxelTextureFaces(voxel);
+    if (!resolvedFaces) return null;
+
+    const faceMaterials = TEXTURED_FACE_ORDER.map(faceName => {
+      if (!shouldRenderVoxelFace(cellX, cellY, cellZ, faceName, voxel)) {
+        return HIDDEN_FACE_MATERIAL;
+      }
+
+      const faceTexture = resolvedFaces[faceName];
+      const resolvedTexture = getLoadedVoxelFaceTexture(faceTexture);
+      return new THREE.MeshStandardMaterial({
+        color: 0xffffff,
+        map: resolvedTexture,
+        transparent: true,
+        alphaTest: 0.5,
+        side: isTransparentVoxel(voxel) ? THREE.DoubleSide : THREE.FrontSide,
+        roughness: 0.95,
+        metalness: 0.0,
+      });
+    });
+    const mesh = new THREE.Mesh(voxelGeometry, faceMaterials);
+    const centerPosition = world.gridToMapCenterPosition(cellX, cellY, cellZ, voxelSize);
+
+    mesh.position.set(centerPosition.x, centerPosition.y, centerPosition.z);
+    mesh.castShadow = false;
+    mesh.receiveShadow = true;
+    mesh.userData.voxelCell = {
+      x: cellX,
+      y: cellY,
+      z: cellZ,
+    };
+
+    return mesh;
   }
 
   function createCellKey(cellX, cellY, cellZ) {
@@ -142,7 +273,8 @@ export function buildMapFromWorld({
         ? voxel.type.trim().toLowerCase()
         : 'colored',
       color: new THREE.Color(normalizeColor(voxel?.color)).getHex(),
-      texture: normalizeTexture(voxel?.texture),
+      texture: cloneTextureSpec(voxel?.texture),
+      transparent: isTransparentVoxel(voxel),
     });
   }
 
@@ -204,28 +336,79 @@ export function buildMapFromWorld({
     return voxelId;
   }
 
+  function refreshAdjacentTexturedVoxelMeshes(cellX, cellY, cellZ) {
+    const faceNames = Object.keys(FACE_NEIGHBOR_OFFSETS);
+
+    for (let i = 0; i < faceNames.length; i += 1) {
+      const offset = FACE_NEIGHBOR_OFFSETS[faceNames[i]];
+      const neighborCellX = cellX + offset.x;
+      const neighborCellY = cellY + offset.y;
+      const neighborCellZ = cellZ + offset.z;
+      const neighborVoxel = world.getVoxel(neighborCellX, neighborCellY, neighborCellZ);
+      if (!hasImageTextureFaces(neighborVoxel)) continue;
+
+      const neighborKey = createCellKey(neighborCellX, neighborCellY, neighborCellZ);
+      const existingMesh = texturedVoxelMeshByKey.get(neighborKey);
+      if (existingMesh) {
+        texturedVoxelGroup.remove(existingMesh);
+        texturedVoxelMeshByKey.delete(neighborKey);
+      }
+
+      const nextNeighborMesh = createTexturedVoxelMesh(
+        neighborCellX,
+        neighborCellY,
+        neighborCellZ,
+        neighborVoxel,
+      );
+
+      if (!nextNeighborMesh) continue;
+      texturedVoxelGroup.add(nextNeighborMesh);
+      texturedVoxelMeshByKey.set(neighborKey, nextNeighborMesh);
+    }
+  }
+
   function syncWorldVoxelAddedAtCell(cellX, cellY, cellZ) {
     const voxel = world.getVoxel(cellX, cellY, cellZ);
     if (!voxel) return false;
 
     registerVoxelType(voxel);
+    syncWorldVoxelRemovedAtCell(cellX, cellY, cellZ);
     const key = createCellKey(cellX, cellY, cellZ);
-    const currentVoxelId = voxelInstanceIdByKey.get(key);
-    const voxelId = Number.isInteger(currentVoxelId) ? currentVoxelId : getNextVoxelInstanceId();
-    if (!Number.isInteger(voxelId)) return false;
 
-    syncVoxelInstance(voxelId, cellX, cellY, cellZ, voxel);
-    voxelInstanceIdByKey.set(key, voxelId);
-    addColliderForCell(cellX, cellY, cellZ);
-    voxelGrid.instanceMatrix.needsUpdate = true;
-    if (voxelGrid.instanceColor) {
-      voxelGrid.instanceColor.needsUpdate = true;
+    if (hasImageTextureFaces(voxel)) {
+      const texturedVoxelMesh = createTexturedVoxelMesh(cellX, cellY, cellZ, voxel);
+      if (!texturedVoxelMesh) return false;
+      texturedVoxelGroup.add(texturedVoxelMesh);
+      texturedVoxelMeshByKey.set(key, texturedVoxelMesh);
+    } else {
+      const currentVoxelId = voxelInstanceIdByKey.get(key);
+      const voxelId = Number.isInteger(currentVoxelId) ? currentVoxelId : getNextVoxelInstanceId();
+      if (!Number.isInteger(voxelId)) return false;
+
+      syncVoxelInstance(voxelId, cellX, cellY, cellZ, voxel);
+      voxelInstanceIdByKey.set(key, voxelId);
+      voxelGrid.instanceMatrix.needsUpdate = true;
+      if (voxelGrid.instanceColor) {
+        voxelGrid.instanceColor.needsUpdate = true;
+      }
     }
+
+    addColliderForCell(cellX, cellY, cellZ);
+    refreshAdjacentTexturedVoxelMeshes(cellX, cellY, cellZ);
     return true;
   }
 
   function syncWorldVoxelRemovedAtCell(cellX, cellY, cellZ) {
     const key = createCellKey(cellX, cellY, cellZ);
+    const texturedVoxelMesh = texturedVoxelMeshByKey.get(key);
+    if (texturedVoxelMesh) {
+      texturedVoxelGroup.remove(texturedVoxelMesh);
+      texturedVoxelMeshByKey.delete(key);
+      removeColliderForCell(cellX, cellY, cellZ);
+      refreshAdjacentTexturedVoxelMeshes(cellX, cellY, cellZ);
+      return true;
+    }
+
     const voxelId = voxelInstanceIdByKey.get(key);
     if (!Number.isInteger(voxelId)) return false;
 
@@ -235,10 +418,20 @@ export function buildMapFromWorld({
     voxelInstanceIdByKey.delete(key);
     freeVoxelIds.push(voxelId);
     removeColliderForCell(cellX, cellY, cellZ);
+    refreshAdjacentTexturedVoxelMeshes(cellX, cellY, cellZ);
     return true;
   }
 
   function getVoxelCellFromRaycastHit(hit) {
+    const texturedVoxelCell = hit?.object?.userData?.voxelCell;
+    if (texturedVoxelCell) {
+      return {
+        cellX: texturedVoxelCell.x,
+        cellY: texturedVoxelCell.y,
+        cellZ: texturedVoxelCell.z,
+      };
+    }
+
     const cell = voxelCellByInstanceId[hit?.instanceId];
     if (!cell) return null;
 
@@ -250,9 +443,9 @@ export function buildMapFromWorld({
   }
 
   function getAdjacentVoxelCellFromRaycastHit(hit) {
-    if (!hit || hit.object !== voxelGrid || !hit.face) return null;
+    if (!hit?.object || !hit.face) return null;
 
-    hitNormalWorld.copy(hit.face.normal).transformDirection(voxelGrid.matrixWorld);
+    hitNormalWorld.copy(hit.face.normal).transformDirection(hit.object.matrixWorld);
     adjacentVoxelPoint.copy(hit.point).addScaledVector(hitNormalWorld, voxelSize * 0.5 + 0.001);
 
     const adjacentGridPosition = world.mapToGridPosition(
@@ -271,6 +464,9 @@ export function buildMapFromWorld({
 
   const voxelGeometry = new THREE.BoxGeometry(voxelSize, voxelSize, voxelSize);
   const hasBorderedTexture = voxelEntries.some(entry => normalizeTexture(entry?.voxel?.texture) === 'bordered');
+  const initialInstancedVoxelCount = voxelEntries.reduce((count, entry) => (
+    hasImageTextureFaces(entry?.voxel) ? count : count + 1
+  ), 0);
   const voxelMaterial = new THREE.MeshStandardMaterial({
     color: 0xffffff,
     map: hasBorderedTexture ? createBorderedVoxelTexture() : null,
@@ -282,19 +478,33 @@ export function buildMapFromWorld({
     voxelMaterial,
     maxVoxelCount
   );
+  const texturedVoxelGroup = new THREE.Group();
 
   voxelGrid.name = `${mapGroup.name} Voxels`;
   voxelGrid.receiveShadow = true;
-  voxelGrid.count = Math.max(initialVoxelCount, 1);
+  voxelGrid.count = Math.max(initialInstancedVoxelCount, 1);
+  texturedVoxelGroup.name = `${mapGroup.name} Textured Voxels`;
 
+  let initialInstancedIndex = 0;
   for (let i = 0; i < voxelEntries.length; i++) {
     const entry = voxelEntries[i];
     const { position, voxel } = entry;
     registerVoxelType(voxel);
-    syncVoxelInstance(i, position.x, position.y, position.z, voxel);
-    voxelInstanceIdByKey.set(createCellKey(position.x, position.y, position.z), i);
+
+    if (hasImageTextureFaces(voxel)) {
+      const texturedVoxelMesh = createTexturedVoxelMesh(position.x, position.y, position.z, voxel);
+      if (texturedVoxelMesh) {
+        texturedVoxelGroup.add(texturedVoxelMesh);
+        texturedVoxelMeshByKey.set(createCellKey(position.x, position.y, position.z), texturedVoxelMesh);
+      }
+    } else {
+      syncVoxelInstance(initialInstancedIndex, position.x, position.y, position.z, voxel);
+      voxelInstanceIdByKey.set(createCellKey(position.x, position.y, position.z), initialInstancedIndex);
+      initialInstancedIndex += 1;
+      nextVoxelInstanceId = initialInstancedIndex;
+    }
+
     addColliderForCell(position.x, position.y, position.z);
-    nextVoxelInstanceId = i + 1;
   }
 
   voxelGrid.instanceMatrix.needsUpdate = true;
@@ -306,6 +516,7 @@ export function buildMapFromWorld({
   buildingColliders.push(...boundaryColliders);
 
   mapGroup.add(voxelGrid);
+  mapGroup.add(texturedVoxelGroup);
   scene.add(mapGroup);
 
   return {
@@ -322,7 +533,7 @@ export function buildMapFromWorld({
     ),
     buildingColliders,
     entities: [],
-    raycastTargets: [voxelGrid],
+    raycastTargets: [voxelGrid, texturedVoxelGroup],
     miniMapStaticLayer: {
       type: 'voxel-grid',
       worldMinX: worldOrigin.x,
@@ -342,6 +553,11 @@ export function buildMapFromWorld({
     },
     voxelTypes: Array.from(voxelTypesByName.values()),
     resolveRaycastLabel(hit) {
+      const texturedVoxelCell = hit?.object?.userData?.voxelCell;
+      if (texturedVoxelCell) {
+        return world.getVoxel(texturedVoxelCell.x, texturedVoxelCell.y, texturedVoxelCell.z)?.name ?? null;
+      }
+
       const cell = voxelCellByInstanceId[hit?.instanceId];
       if (!cell) return null;
       return world.getVoxel(cell.x, cell.y, cell.z)?.name ?? null;
@@ -357,8 +573,10 @@ export function buildMapFromWorld({
 
       return new Voxel({
         name: voxelType.name,
+        type: voxelType.type,
         color: '#' + voxelType.color.toString(16).padStart(6, '0'),
-        texture: voxelType.texture || null,
+        texture: cloneTextureSpec(voxelType.texture) || null,
+        transparent: voxelType.transparent === true,
       });
     },
     syncWorldVoxelAddedAtCell,

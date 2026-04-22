@@ -23,6 +23,29 @@ let VoxelaarVoxels = {
   white: new Voxel({ name: 'white', color: '#f5f5f5' }),
   gray: new Voxel({ name: 'gray', color: '#8a8a8a' }),
   black: new Voxel({ name: 'black', color: '#171717' }),
+  Kolori: new Voxel({
+    name: 'Kolori',
+    color: '#ffffff',
+    texture: 'assets/voxels/textures/kolori.png',
+    type: 'textured',
+  }),
+  Kolumno: new Voxel({
+    name: 'Kolumno',
+    color: '#ffffff',
+    texture: {
+      top: 'assets/voxels/textures/kolumn-top.png',
+      bottom: 'assets/voxels/textures/kolumn-top.png',
+      sides: 'assets/voxels/textures/kolumn-side.png',
+    },
+    type: 'textured',
+  }),
+  Bloko: new Voxel({
+    name: 'Bloko',
+    color: '#ffffff',
+    texture: 'assets/voxels/textures/bloko.png',
+    transparent: true,
+    type: 'textured',
+  }),
 };
 
 Voxelaar.setVoxelTypes(Object.values(VoxelaarVoxels));
