@@ -180,11 +180,12 @@ function setLoadMode(nextMode) {
 
 function buildDemoWorldData() {
     const voxels = [];
+    const demoOriginCell = 8;
 
     for (let x = 0; x < 16; x += 1) {
         for (let z = 0; z < 16; z += 1) {
             voxels.push({
-                position: { x, y: 0, z },
+                position: { x: demoOriginCell + x, y: 0, z: demoOriginCell + z },
                 voxel: {
                     name: 'floor',
                     color: '#7ea56b',
@@ -197,7 +198,7 @@ function buildDemoWorldData() {
 
     for (let y = 1; y < 4; y += 1) {
         voxels.push({
-            position: { x: 4, y, z: 4 },
+            position: { x: demoOriginCell + 4, y, z: demoOriginCell + 4 },
             voxel: {
                 name: 'pillar',
                 color: '#8d6947',
@@ -210,7 +211,7 @@ function buildDemoWorldData() {
     return {
         name: 'Demo World',
         size: { x: 32, y: 16, z: 32 },
-        spawnPosition: { x: 8, y: 2, z: 12 },
+        spawnPosition: { x: 0, y: 2, z: 0 },
         voxels,
     };
 }
