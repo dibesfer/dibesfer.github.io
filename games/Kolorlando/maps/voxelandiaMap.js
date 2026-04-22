@@ -466,6 +466,23 @@ export function buildVoxelandiaMap({
     spawnPoint,
     buildingColliders: jailColliders,
     entities,
+    miniMapStaticLayer: {
+      type: 'voxel-grid',
+      worldMinX: -gridWidth * 0.5,
+      worldMinZ: -gridDepth * 0.5,
+      worldWidth: gridWidth * voxelSize,
+      worldDepth: gridDepth * voxelSize,
+      pixelWidth: gridWidth,
+      pixelHeight: gridDepth,
+      sampleColor(cellX, cellZ) {
+        for (let cellY = gridHeight - 1; cellY >= 0; cellY -= 1) {
+          const voxel = getVoxelAtCell(cellX, cellY, cellZ);
+          if (!voxel) continue;
+          return voxel.color ?? null;
+        }
+        return null;
+      },
+    },
     intersectColliderBox,
     isBoxSupported,
     collectDebugCollisionBoxes(center, halfExtent = 6, targetBoxes = []) {

@@ -21,7 +21,7 @@ export class Voxel {
     this.position = [this.x, this.y, this.z];
     this.type = normalizeVoxelType(type);
     this.color = normalizeText(color, '#ffffff');
-    this.texture = normalizeText(texture, '');
+    this.texture = normalizeVoxelTexture(texture);
     this.active = Boolean(active);
     this.name = normalizeText(name, '');
     this.microxelSize = normalizeGridSize(microxelSize);
@@ -55,8 +55,16 @@ export class Voxel {
 
   setTexture(texture = '') {
     this.type = 'textured';
-    this.texture = normalizeText(texture, '');
+    this.texture = normalizeVoxelTexture(texture);
     return this;
+  }
+
+  getTexture() {
+    return cloneVoxelTexture(this.texture);
+  }
+
+  getResolvedTextureFaces() {
+    return resolveVoxelTextureFaces(this.texture);
   }
 
   initializeMicroxels(size = 7, presetName = 'full') {
@@ -167,7 +175,7 @@ export class Voxel {
       // Preserve the declared voxel mode when cloning across systems.
       type: this.type,
       color: this.color,
-      texture: this.texture,
+      texture: cloneVoxelTexture(this.texture),
       active: this.active,
       microxelSize: this.microxelSize,
       microxels: this.microxels ? cloneMicroxelGrid(this.microxels) : null,
@@ -185,7 +193,7 @@ export class Voxel {
       },
       type: this.type,
       color: this.color,
-      texture: this.texture || null,
+      texture: serializeVoxelTexture(this.texture),
       active: this.active,
       microxelSize: this.microxelSize,
       microxels: this.microxels
@@ -227,8 +235,8 @@ export class Voxel {
       this.color = normalizeText(data.color, this.color || '#ffffff');
     }
 
-    if (typeof data?.texture === 'string' && data.texture.trim()) {
-      this.texture = normalizeText(data.texture, '');
+    if ('texture' in data) {
+      this.texture = normalizeVoxelTexture(data.texture);
       return this;
     }
 
@@ -263,6 +271,90 @@ function normalizeVoxelType(type) {
   }
 
   return 'colored';
+}
+
+function normalizeVoxelTexture(texture) {
+  if (typeof texture === 'string') {
+    return normalizeText(texture, '');
+  }
+
+  if (!texture || typeof texture !== 'object' || Array.isArray(texture)) {
+    return '';
+  }
+
+  const normalizedTexture = {};
+  const supportedFaces = ['all', 'top', 'bottom', 'sides', 'left', 'right', 'front', 'back'];
+
+  for (let i = 0; i < supportedFaces.length; i += 1) {
+    const faceKey = supportedFaces[i];
+    const faceTexture = normalizeText(texture[faceKey], '');
+    if (faceTexture) {
+      normalizedTexture[faceKey] = faceTexture;
+    }
+  }
+
+  return Object.keys(normalizedTexture).length > 0 ? normalizedTexture : '';
+}
+
+function cloneVoxelTexture(texture) {
+  if (typeof texture === 'string') {
+    return texture;
+  }
+
+  if (!texture || typeof texture !== 'object') {
+    return '';
+  }
+
+  return { ...texture };
+}
+
+function serializeVoxelTexture(texture) {
+  if (typeof texture === 'string') {
+    return texture || null;
+  }
+
+  if (!texture || typeof texture !== 'object') {
+    return null;
+  }
+
+  return { ...texture };
+}
+
+function resolveVoxelTextureFaces(texture) {
+  const normalizedTexture = normalizeVoxelTexture(texture);
+
+  if (typeof normalizedTexture === 'string') {
+    if (!normalizedTexture) {
+      return null;
+    }
+
+    return {
+      top: normalizedTexture,
+      bottom: normalizedTexture,
+      left: normalizedTexture,
+      right: normalizedTexture,
+      front: normalizedTexture,
+      back: normalizedTexture,
+    };
+  }
+
+  if (!normalizedTexture || typeof normalizedTexture !== 'object') {
+    return null;
+  }
+
+  const allTexture = normalizedTexture.all ?? '';
+  const sideTexture = normalizedTexture.sides ?? allTexture;
+
+  const resolvedFaces = {
+    top: normalizedTexture.top ?? allTexture ?? '',
+    bottom: normalizedTexture.bottom ?? allTexture ?? '',
+    left: normalizedTexture.left ?? sideTexture ?? '',
+    right: normalizedTexture.right ?? sideTexture ?? '',
+    front: normalizedTexture.front ?? sideTexture ?? '',
+    back: normalizedTexture.back ?? sideTexture ?? '',
+  };
+
+  return Object.values(resolvedFaces).some(Boolean) ? resolvedFaces : null;
 }
 
 function cloneMicroxelGrid(grid) {

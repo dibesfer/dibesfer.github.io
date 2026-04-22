@@ -355,6 +355,7 @@ const SHADOW_PRESET_STORAGE_KEY = 'kolorlando.settings.shadowPreset';
 const RENDER_SCALE_STORAGE_KEY = 'kolorlando.settings.renderScale';
 const CAMERA_MODE_STORAGE_KEY = 'kolorlando.cameraMode';
 const DEFAULT_RENDER_SCALE = 1;
+const DEFAULT_SHADOWS_ENABLED = false;
 const VALID_RENDER_SCALE_VALUES = new Set(['1', '0.75', '0.5']);
 const POINTER_LOCK_RETRY_COOLDOWN_MS = 350;
 let rendererPixelRatioBase = Math.min(window.devicePixelRatio, 2);
@@ -474,7 +475,7 @@ async function restoreDefaultSettings() {
   menuUI.setThemePreference('system');
   await menuUI.setFullScreenEnabled(false);
   setCurrentCameraMode('skyrim');
-  setShadowsEnabled(true, { persist: false });
+  setShadowsEnabled(DEFAULT_SHADOWS_ENABLED, { persist: false });
   setShadowPreset(DEFAULT_SHADOW_PRESET, { persist: false });
   setRenderScale(DEFAULT_RENDER_SCALE, { persist: false });
 
@@ -1051,7 +1052,7 @@ function initCharacterPreview() {
   characterPreviewCamera.position.set(0, CHARACTER_PREVIEW_LOOK_Y, 5.1);
   characterPreviewCamera.lookAt(0, CHARACTER_PREVIEW_LOOK_Y, 0);
 
-  characterPreviewRenderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+  characterPreviewRenderer = new THREE.WebGLRenderer({ alpha: true, antialias: false });
   /* The preview renderer follows the same render scale as the main scene so
   the graphics setting feels global and the extra UI scene does not keep
   burning full-resolution pixels after the player lowers quality for FPS. */
@@ -1265,12 +1266,12 @@ if (menuCloseButton) {
 
 const sceneView = document.getElementById('sceneView');
 
-const renderer = new THREE.WebGLRenderer({ antialias: true });
+const renderer = new THREE.WebGLRenderer({ antialias: false });
 /* The main scene renderer uses the effective scaled pixel ratio so the
 undersampling setting can reduce GPU load immediately without changing layout. */
 renderer.setPixelRatio(getEffectiveRenderPixelRatio());
 renderer.setClearColor(0x5EC9FF);
-renderer.shadowMap.enabled = true;
+renderer.shadowMap.enabled = DEFAULT_SHADOWS_ENABLED;
 
 sceneView.appendChild(renderer.domElement);
 
@@ -1571,7 +1572,7 @@ scene.add(hemi);
 const dir = new THREE.DirectionalLight(0xffffff, 1.2);
 dir.position.set(100, 200, 100);
 dir.target.position.set(0, 0, 0);
-dir.castShadow = true;
+dir.castShadow = DEFAULT_SHADOWS_ENABLED;
 scene.add(dir);
 scene.add(dir.target);
 
@@ -1713,7 +1714,7 @@ const savedShadowsPreference = readSavedShadowsPreference();
 if (savedShadowsPreference === 'true' || savedShadowsPreference === 'false') {
   setShadowsEnabled(savedShadowsPreference === 'true', { persist: false });
 } else {
-  setShadowsEnabled(true, { persist: false });
+  setShadowsEnabled(DEFAULT_SHADOWS_ENABLED, { persist: false });
 }
 
 if (settingsShadows) {
@@ -2225,6 +2226,7 @@ miniMapUI = createMiniMapUI({
   groundY: GROUND_Y,
   miniMapViewSize: MINI_MAP_VIEW_SIZE,
   miniMapHeight: MINI_MAP_HEIGHT,
+  staticLayer: mapData.miniMapStaticLayer ?? null,
 });
 miniMap.parentNode?.insertBefore(miniMapHomeAnchor, miniMap);
 miniMapUI.setPixelRatio(getEffectiveRenderPixelRatio());
@@ -5585,6 +5587,7 @@ const clock = new THREE.Clock();
 let frames = 0;
 let accTime = 0;
 let fps = 0;
+let debugHudRefreshAccumulator = 0;
 
 miniMapUI.updateMiniMapSize();
 updatePlayerHealthUI();
@@ -5592,6 +5595,7 @@ refreshVoxelRaycast(true);
 
 function checkFPS(delta) {
   accTime += delta;
+  debugHudRefreshAccumulator += delta;
   frames++;
 
   if (accTime >= 1) {
@@ -5603,6 +5607,11 @@ function checkFPS(delta) {
   /* The debug coordinate readout should expose one coherent gameplay-space
   position. Using the grounded playerFoot vector for X, Y, and Z avoids mixing
   camera-eye axes with collider-foot axes, which made Y appear inconsistent. */
+  if (!consola || debugHudRefreshAccumulator < 0.25) {
+    return;
+  }
+
+  debugHudRefreshAccumulator = 0;
   const { x, y, z } = playerFoot;
   /* Tiny floating-point corrections around world zero can round to "-0.00",
   which looks like throttling even though the position is effectively stable.

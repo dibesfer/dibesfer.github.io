@@ -323,6 +323,23 @@ export function buildMapFromWorld({
     buildingColliders,
     entities: [],
     raycastTargets: [voxelGrid],
+    miniMapStaticLayer: {
+      type: 'voxel-grid',
+      worldMinX: worldOrigin.x,
+      worldMinZ: worldOrigin.z,
+      worldWidth: world.size.x * voxelSize,
+      worldDepth: world.size.z * voxelSize,
+      pixelWidth: world.size.x,
+      pixelHeight: world.size.z,
+      sampleColor(cellX, cellZ) {
+        for (let cellY = world.size.y - 1; cellY >= 0; cellY -= 1) {
+          const voxel = world.getVoxel(cellX, cellY, cellZ);
+          if (!voxel) continue;
+          return voxel.color ?? null;
+        }
+        return null;
+      },
+    },
     voxelTypes: Array.from(voxelTypesByName.values()),
     resolveRaycastLabel(hit) {
       const cell = voxelCellByInstanceId[hit?.instanceId];
