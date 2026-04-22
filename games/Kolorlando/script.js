@@ -1886,11 +1886,85 @@ const multiplayerWorldStore = MULTIPLAYER_ENABLED && MAP_PRESET === 'voxelandia'
   ? window.KOLORLANDO_MULTIPLAYER_WORLD_STORE ?? null
   : null;
 const entityRaycastPoint = new THREE.Vector3();
+const voxelPlacementHitNormal = new THREE.Vector3();
 const MULTIPLAYER_WORLD_PLAYER_SAVE_INTERVAL = 2;
 let multiplayerWorldPlayerSaveAccumulator = MULTIPLAYER_WORLD_PLAYER_SAVE_INTERVAL;
 let lastSavedMultiplayerPlayerStateKey = '';
 let currentMultiplayerWorldState = multiplayerWorldBootstrap;
 let initialPlayerRotationY = 0;
+
+function getVoxelFaceFromWorldNormal(normal = null) {
+  if (!normal) return null;
+
+  const absX = Math.abs(normal.x);
+  const absY = Math.abs(normal.y);
+  const absZ = Math.abs(normal.z);
+
+  if (absX >= absY && absX >= absZ) {
+    return normal.x >= 0 ? 'right' : 'left';
+  }
+
+  if (absY >= absX && absY >= absZ) {
+    return normal.y >= 0 ? 'top' : 'bottom';
+  }
+
+  return normal.z >= 0 ? 'front' : 'back';
+}
+
+function getOppositeVoxelFace(faceName = 'front') {
+  switch (faceName) {
+    case 'right': return 'left';
+    case 'left': return 'right';
+    case 'top': return 'bottom';
+    case 'bottom': return 'top';
+    case 'front': return 'back';
+    case 'back': return 'front';
+    default: return 'front';
+  }
+}
+
+function snapAngleToStep(angle = 0, stepDegrees = 45) {
+  const stepRadians = (stepDegrees * Math.PI) / 180;
+  if (!Number.isFinite(angle) || !Number.isFinite(stepRadians) || stepRadians <= 0) {
+    return 0;
+  }
+
+  return Math.round(angle / stepRadians) * stepRadians;
+}
+
+function getTopBottomPlaneRollFromPlayerYaw() {
+  return snapAngleToStep(Math.PI + (playerBody?.rotation?.y ?? 0), 90);
+}
+
+function orientPlacedVoxelFromHit(hit = null, voxel = null) {
+  if (!hit?.object || !hit?.face || !voxel || voxel?.kind !== 'plane') {
+    return voxel;
+  }
+
+  voxelPlacementHitNormal
+    .copy(hit.face.normal)
+    .transformDirection(hit.object.matrixWorld);
+
+  const hitFace = getVoxelFaceFromWorldNormal(voxelPlacementHitNormal);
+  const planeFace = getOppositeVoxelFace(hitFace);
+  if (typeof voxel.setPlaneFace === 'function') {
+    voxel.setPlaneFace(planeFace);
+  } else {
+    voxel.planeFace = planeFace;
+  }
+
+  if (typeof voxel.setRotation === 'function') {
+    voxel.setRotation({
+      x: 0,
+      y: 0,
+      z: planeFace === 'top' || planeFace === 'bottom'
+        ? getTopBottomPlaneRollFromPlayerYaw()
+        : 0,
+    });
+  }
+
+  return voxel;
+}
 
 function scheduleLocalWorldSnapshotSave() {
   if (!localWorldSaveStore || !(worldData instanceof World) || typeof worldData.toSnapshot !== 'function') return;
@@ -4294,6 +4368,7 @@ function triggerActionForMouseButton(button, options = {}) {
         ? (() => {
           const selectedWorldVoxel = createVoxelFromType(selectedVoxelType);
           if (!selectedWorldVoxel) return false;
+          orientPlacedVoxelFromHit(currentRaycastState.hit, selectedWorldVoxel);
 
           const addedResult = worldEditor.setVoxelFromHit(
             currentRaycastState.hit,

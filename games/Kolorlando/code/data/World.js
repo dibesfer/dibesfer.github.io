@@ -1,5 +1,5 @@
 import { Boxel } from './Boxel.js';
-import { Voxel } from './Voxel.js';
+import { Voxel, VoxelPlane } from './Voxel.js';
 
 export const Boxel10 = new Boxel({
   name: 'Boxel10',
@@ -517,11 +517,22 @@ function cloneSnapshotVoxelDefinition(voxel = null) {
   if (!voxel || typeof voxel !== 'object') return null;
 
   const clonedVoxel = {};
+  if (typeof voxel.kind === 'string' && voxel.kind.trim()) clonedVoxel.kind = voxel.kind.trim();
   if (typeof voxel.name === 'string' && voxel.name.trim()) clonedVoxel.name = voxel.name.trim();
+  if (voxel.rotation && typeof voxel.rotation === 'object' && !Array.isArray(voxel.rotation)) {
+    clonedVoxel.rotation = cloneSnapshotValue(voxel.rotation);
+  }
   if (typeof voxel.type === 'string' && voxel.type.trim()) clonedVoxel.type = voxel.type.trim();
   if (typeof voxel.color === 'string' && voxel.color.trim()) clonedVoxel.color = voxel.color.trim();
   if (typeof voxel.texture === 'string' && voxel.texture.trim()) clonedVoxel.texture = voxel.texture.trim();
+  if (voxel.texture && typeof voxel.texture === 'object' && !Array.isArray(voxel.texture)) {
+    clonedVoxel.texture = cloneSnapshotValue(voxel.texture);
+  }
+  if (typeof voxel.transparent === 'boolean') clonedVoxel.transparent = voxel.transparent;
   if (typeof voxel.active === 'boolean') clonedVoxel.active = voxel.active;
+  if (typeof voxel.planeFace === 'string' && voxel.planeFace.trim()) clonedVoxel.planeFace = voxel.planeFace.trim();
+  if (typeof voxel.doubleSided === 'boolean') clonedVoxel.doubleSided = voxel.doubleSided;
+  if (Number.isFinite(voxel.inset)) clonedVoxel.inset = Number(voxel.inset);
   if (Number.isFinite(voxel.microxelSize) && voxel.microxelSize > 0) clonedVoxel.microxelSize = Number(voxel.microxelSize);
   if (Array.isArray(voxel.microxels) && voxel.microxels.length > 0) {
     clonedVoxel.microxels = cloneSnapshotValue(voxel.microxels);
@@ -533,10 +544,16 @@ function cloneSnapshotVoxelDefinition(voxel = null) {
 function normalizeWorldVoxel(voxel, position = {}) {
   const normalizedVoxel = voxel instanceof Voxel
     ? voxel.clone()
-    : new Voxel().fromJSON(voxel ?? {});
+    : isVoxelPlaneData(voxel)
+      ? new VoxelPlane().fromJSON(voxel ?? {})
+      : new Voxel().fromJSON(voxel ?? {});
 
   normalizedVoxel.setPosition(position.x, position.y, position.z);
   return normalizedVoxel;
+}
+
+function isVoxelPlaneData(voxel = null) {
+  return voxel instanceof VoxelPlane || voxel?.kind === 'plane';
 }
 
 function normalizeWorldEntitySpec(entity = {}) {

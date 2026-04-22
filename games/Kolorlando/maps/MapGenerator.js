@@ -46,6 +46,7 @@ export function buildMapFromWorld({
   const voxelColliderByKey = new Map();
   const voxelTypesByName = new Map();
   const texturedVoxelMeshByKey = new Map();
+  const planeRaycastMeshByKey = new Map();
   const freeVoxelIds = [];
   const worldOrigin = world.getMapOrigin(voxelSize);
   const voxelEntries = world.getVoxelEntries();
@@ -132,8 +133,34 @@ export function buildMapFromWorld({
     return voxel instanceof VoxelPlane || voxel?.kind === 'plane';
   }
 
+  function isCollidableVoxel(voxel = null) {
+    return Boolean(voxel) && !isVoxelPlane(voxel);
+  }
+
   function isTransparentVoxel(voxel = null) {
     return Boolean(voxel?.transparent);
+  }
+
+  function getVoxelRotation(voxel = null) {
+    const rotation = voxel?.rotation;
+    if (!rotation || typeof rotation !== 'object' || Array.isArray(rotation)) {
+      return { x: 0, y: 0, z: 0 };
+    }
+
+    return {
+      x: Number.isFinite(rotation.x) ? rotation.x : 0,
+      y: Number.isFinite(rotation.y) ? rotation.y : 0,
+      z: Number.isFinite(rotation.z) ? rotation.z : 0,
+    };
+  }
+
+  function applyVoxelMeshRotation(mesh, voxel = null) {
+    if (!mesh?.rotation) return;
+
+    const rotation = getVoxelRotation(voxel);
+    mesh.rotation.x += rotation.x;
+    mesh.rotation.y += rotation.y;
+    mesh.rotation.z += rotation.z;
   }
 
   function shouldRenderVoxelFace(cellX, cellY, cellZ, faceName, voxel = null) {
@@ -212,6 +239,7 @@ export function buildMapFromWorld({
     const centerPosition = world.gridToMapCenterPosition(cellX, cellY, cellZ, voxelSize);
 
     mesh.position.set(centerPosition.x, centerPosition.y, centerPosition.z);
+    applyVoxelMeshRotation(mesh, voxel);
     mesh.castShadow = false;
     mesh.receiveShadow = true;
     mesh.userData.voxelCell = {
@@ -265,8 +293,18 @@ export function buildMapFromWorld({
       mesh.rotation.x = -Math.PI * 0.5;
     }
 
+    applyVoxelMeshRotation(mesh, voxel);
     mesh.castShadow = false;
     mesh.receiveShadow = true;
+    mesh.userData.voxelCell = { x: cellX, y: cellY, z: cellZ };
+    return mesh;
+  }
+
+  function createPlaneRaycastMesh(cellX, cellY, cellZ) {
+    const mesh = new THREE.Mesh(voxelGeometry, planeRaycastMaterial);
+    const centerPosition = world.gridToMapCenterPosition(cellX, cellY, cellZ, voxelSize);
+
+    mesh.position.set(centerPosition.x, centerPosition.y, centerPosition.z);
     mesh.userData.voxelCell = { x: cellX, y: cellY, z: cellZ };
     return mesh;
   }
@@ -328,6 +366,7 @@ export function buildMapFromWorld({
       color: new THREE.Color(normalizeColor(voxel?.color)).getHex(),
       texture: cloneTextureSpec(voxel?.texture),
       transparent: isTransparentVoxel(voxel),
+      rotation: getVoxelRotation(voxel),
       planeFace: typeof voxel?.planeFace === 'string' ? voxel.planeFace : 'front',
       doubleSided: voxel?.doubleSided === true,
       inset: Number.isFinite(voxel?.inset) ? Number(voxel.inset) : 0,
@@ -359,7 +398,7 @@ export function buildMapFromWorld({
 
   function addColliderForCell(cellX, cellY, cellZ) {
     const voxel = world.getVoxel(cellX, cellY, cellZ);
-    if (isVoxelPlane(voxel)) {
+    if (!isCollidableVoxel(voxel)) {
       return null;
     }
 
@@ -440,6 +479,11 @@ export function buildMapFromWorld({
       if (!texturedVoxelMesh) return false;
       texturedVoxelGroup.add(texturedVoxelMesh);
       texturedVoxelMeshByKey.set(key, texturedVoxelMesh);
+      if (isVoxelPlane(voxel)) {
+        const planeRaycastMesh = createPlaneRaycastMesh(cellX, cellY, cellZ);
+        planeRaycastGroup.add(planeRaycastMesh);
+        planeRaycastMeshByKey.set(key, planeRaycastMesh);
+      }
     } else {
       const currentVoxelId = voxelInstanceIdByKey.get(key);
       const voxelId = Number.isInteger(currentVoxelId) ? currentVoxelId : getNextVoxelInstanceId();
@@ -464,6 +508,11 @@ export function buildMapFromWorld({
     if (texturedVoxelMesh) {
       texturedVoxelGroup.remove(texturedVoxelMesh);
       texturedVoxelMeshByKey.delete(key);
+      const planeRaycastMesh = planeRaycastMeshByKey.get(key);
+      if (planeRaycastMesh) {
+        planeRaycastGroup.remove(planeRaycastMesh);
+        planeRaycastMeshByKey.delete(key);
+      }
       removeColliderForCell(cellX, cellY, cellZ);
       refreshAdjacentTexturedVoxelMeshes(cellX, cellY, cellZ);
       return true;
@@ -533,17 +582,25 @@ export function buildMapFromWorld({
     roughness: 0.95,
     metalness: 0.0,
   });
+  const planeRaycastMaterial = new THREE.MeshBasicMaterial({
+    transparent: true,
+    opacity: 0,
+    depthWrite: false,
+    colorWrite: false,
+  });
   const voxelGrid = new THREE.InstancedMesh(
     voxelGeometry,
     voxelMaterial,
     maxVoxelCount
   );
   const texturedVoxelGroup = new THREE.Group();
+  const planeRaycastGroup = new THREE.Group();
 
   voxelGrid.name = `${mapGroup.name} Voxels`;
   voxelGrid.receiveShadow = true;
   voxelGrid.count = Math.max(initialInstancedVoxelCount, 1);
   texturedVoxelGroup.name = `${mapGroup.name} Textured Voxels`;
+  planeRaycastGroup.name = `${mapGroup.name} Plane Raycast`;
 
   let initialInstancedIndex = 0;
   for (let i = 0; i < voxelEntries.length; i++) {
@@ -558,6 +615,11 @@ export function buildMapFromWorld({
       if (texturedVoxelMesh) {
         texturedVoxelGroup.add(texturedVoxelMesh);
         texturedVoxelMeshByKey.set(createCellKey(position.x, position.y, position.z), texturedVoxelMesh);
+        if (isVoxelPlane(voxel)) {
+          const planeRaycastMesh = createPlaneRaycastMesh(position.x, position.y, position.z);
+          planeRaycastGroup.add(planeRaycastMesh);
+          planeRaycastMeshByKey.set(createCellKey(position.x, position.y, position.z), planeRaycastMesh);
+        }
       }
     } else {
       syncVoxelInstance(initialInstancedIndex, position.x, position.y, position.z, voxel);
@@ -579,6 +641,7 @@ export function buildMapFromWorld({
 
   mapGroup.add(voxelGrid);
   mapGroup.add(texturedVoxelGroup);
+  mapGroup.add(planeRaycastGroup);
   scene.add(mapGroup);
 
   return {
@@ -595,7 +658,7 @@ export function buildMapFromWorld({
     ),
     buildingColliders,
     entities: [],
-    raycastTargets: [voxelGrid, texturedVoxelGroup],
+    raycastTargets: [voxelGrid, texturedVoxelGroup, planeRaycastGroup],
     miniMapStaticLayer: {
       type: 'voxel-grid',
       worldMinX: worldOrigin.x,
@@ -640,6 +703,7 @@ export function buildMapFromWorld({
           color: '#' + voxelType.color.toString(16).padStart(6, '0'),
           texture: cloneTextureSpec(voxelType.texture) || null,
           transparent: voxelType.transparent === true,
+          rotation: getVoxelRotation(voxelType),
           planeFace: voxelType.planeFace || 'front',
           doubleSided: voxelType.doubleSided === true,
           inset: voxelType.inset ?? 0,
@@ -652,6 +716,7 @@ export function buildMapFromWorld({
         color: '#' + voxelType.color.toString(16).padStart(6, '0'),
         texture: cloneTextureSpec(voxelType.texture) || null,
         transparent: voxelType.transparent === true,
+        rotation: getVoxelRotation(voxelType),
       });
     },
     syncWorldVoxelAddedAtCell,
@@ -677,7 +742,7 @@ export function buildMapFromWorld({
       for (let cellY = minCellY; cellY <= maxCellY; cellY++) {
         for (let cellX = minCellX; cellX <= maxCellX; cellX++) {
           for (let cellZ = minCellZ; cellZ <= maxCellZ; cellZ++) {
-            if (!world.hasVoxel(cellX, cellY, cellZ)) continue;
+            if (!isCollidableVoxel(world.getVoxel(cellX, cellY, cellZ))) continue;
 
             setBoxFromCell(cellX, cellY, cellZ, tempCollisionBox);
             if (tempCollisionBox.intersectsBox(box)) {
@@ -706,7 +771,7 @@ export function buildMapFromWorld({
       for (let cellY = supportMinY; cellY <= supportMaxY; cellY++) {
         for (let cellX = minCellX; cellX <= maxCellX; cellX++) {
           for (let cellZ = minCellZ; cellZ <= maxCellZ; cellZ++) {
-            if (world.hasVoxel(cellX, cellY, cellZ)) {
+            if (isCollidableVoxel(world.getVoxel(cellX, cellY, cellZ))) {
               return true;
             }
           }
@@ -757,7 +822,7 @@ export function buildMapFromWorld({
       for (let cellY = minCellY; cellY <= maxCellY; cellY++) {
         for (let cellX = minCellX; cellX <= maxCellX; cellX++) {
           for (let cellZ = minCellZ; cellZ <= maxCellZ; cellZ++) {
-            if (!world.hasVoxel(cellX, cellY, cellZ)) continue;
+            if (!isCollidableVoxel(world.getVoxel(cellX, cellY, cellZ))) continue;
             targetBoxes.push(setBoxFromCell(cellX, cellY, cellZ).clone());
           }
         }

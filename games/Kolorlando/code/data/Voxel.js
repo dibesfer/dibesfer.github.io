@@ -6,6 +6,7 @@ export class Voxel {
     x = 0,
     y = 0,
     z = 0,
+    rotation = null,
     type = 'colored',
     color = '#ffffff',
     texture = null,
@@ -20,6 +21,7 @@ export class Voxel {
     this.y = toFiniteNumber(y, 0);
     this.z = toFiniteNumber(z, 0);
     this.position = [this.x, this.y, this.z];
+    this.rotation = normalizeVoxelRotation(rotation);
     this.type = normalizeVoxelType(type);
     this.color = normalizeText(color, '#ffffff');
     this.texture = normalizeVoxelTexture(texture);
@@ -46,6 +48,11 @@ export class Voxel {
 
   setName(name = '') {
     this.name = normalizeText(name, '');
+    return this;
+  }
+
+  setRotation(rotation = null) {
+    this.rotation = normalizeVoxelRotation(rotation);
     return this;
   }
 
@@ -179,6 +186,7 @@ export class Voxel {
       x: this.x,
       y: this.y,
       z: this.z,
+      rotation: { ...this.rotation },
       // Preserve the declared voxel mode when cloning across systems.
       type: this.type,
       color: this.color,
@@ -198,6 +206,11 @@ export class Voxel {
         x: this.x,
         y: this.y,
         z: this.z,
+      },
+      rotation: {
+        x: this.rotation.x,
+        y: this.rotation.y,
+        z: this.rotation.z,
       },
       type: this.type,
       color: this.color,
@@ -221,6 +234,10 @@ export class Voxel {
   fromJSON(data = {}) {
     if (data?.position) {
       this.setPosition(data.position.x, data.position.y, data.position.z);
+    }
+
+    if ('rotation' in data) {
+      this.setRotation(data.rotation);
     }
 
     if ('name' in data) {
@@ -295,6 +312,7 @@ export class VoxelPlane extends Voxel {
       x: this.x,
       y: this.y,
       z: this.z,
+      rotation: { ...this.rotation },
       type: this.type,
       color: this.color,
       texture: cloneVoxelTexture(this.texture),
@@ -391,6 +409,18 @@ function normalizeVoxelTexture(texture) {
   }
 
   return Object.keys(normalizedTexture).length > 0 ? normalizedTexture : '';
+}
+
+function normalizeVoxelRotation(rotation = null) {
+  if (!rotation || typeof rotation !== 'object' || Array.isArray(rotation)) {
+    return { x: 0, y: 0, z: 0 };
+  }
+
+  return {
+    x: toFiniteNumber(rotation.x, 0),
+    y: toFiniteNumber(rotation.y, 0),
+    z: toFiniteNumber(rotation.z, 0),
+  };
 }
 
 function cloneVoxelTexture(texture) {
