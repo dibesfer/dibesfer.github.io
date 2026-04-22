@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { World } from '../code/data/World.js';
-import { Voxel } from '../code/data/Voxel.js';
+import { Voxel, VoxelPlane } from '../code/data/Voxel.js';
 
 /*
 
@@ -128,6 +128,10 @@ export function buildMapFromWorld({
     return Object.values(resolvedFaces).some(faceTexture => normalizeTexture(faceTexture) !== 'bordered');
   }
 
+  function isVoxelPlane(voxel = null) {
+    return voxel instanceof VoxelPlane || voxel?.kind === 'plane';
+  }
+
   function isTransparentVoxel(voxel = null) {
     return Boolean(voxel?.transparent);
   }
@@ -219,6 +223,54 @@ export function buildMapFromWorld({
     return mesh;
   }
 
+  function createVoxelPlaneMesh(cellX, cellY, cellZ, voxel = null) {
+    const planeFace = typeof voxel?.planeFace === 'string' ? voxel.planeFace : 'front';
+    const inset = Number.isFinite(voxel?.inset) ? voxel.inset : 0;
+    const textureHref = normalizeTexture(voxel?.texture) ? String(voxel.texture).trim() : '';
+    const planeGeometry = new THREE.PlaneGeometry(voxelSize, voxelSize);
+    const resolvedTexture = textureHref ? getLoadedVoxelFaceTexture(textureHref) : null;
+    const planeMaterial = new THREE.MeshStandardMaterial({
+      color: normalizeColor(voxel?.color),
+      map: resolvedTexture,
+      transparent: Boolean(voxel?.transparent) || Boolean(resolvedTexture),
+      alphaTest: voxel?.transparent ? 0.5 : 0,
+      side: voxel?.doubleSided ? THREE.DoubleSide : THREE.FrontSide,
+      roughness: 0.95,
+      metalness: 0.0,
+    });
+    const mesh = new THREE.Mesh(planeGeometry, planeMaterial);
+    const centerPosition = world.gridToMapCenterPosition(cellX, cellY, cellZ, voxelSize);
+    const halfVoxel = voxelSize * 0.5;
+    const insetOffset = THREE.MathUtils.clamp(inset, 0, halfVoxel);
+
+    mesh.position.set(centerPosition.x, centerPosition.y, centerPosition.z);
+
+    if (planeFace === 'front') {
+      mesh.position.z += halfVoxel - insetOffset;
+      mesh.rotation.y = Math.PI;
+    } else if (planeFace === 'back') {
+      mesh.position.z -= halfVoxel - insetOffset;
+      mesh.rotation.y = 0;
+    } else if (planeFace === 'left') {
+      mesh.position.x -= halfVoxel - insetOffset;
+      mesh.rotation.y = Math.PI * 0.5;
+    } else if (planeFace === 'right') {
+      mesh.position.x += halfVoxel - insetOffset;
+      mesh.rotation.y = -Math.PI * 0.5;
+    } else if (planeFace === 'top') {
+      mesh.position.y += halfVoxel - insetOffset;
+      mesh.rotation.x = Math.PI * 0.5;
+    } else if (planeFace === 'bottom') {
+      mesh.position.y -= halfVoxel - insetOffset;
+      mesh.rotation.x = -Math.PI * 0.5;
+    }
+
+    mesh.castShadow = false;
+    mesh.receiveShadow = true;
+    mesh.userData.voxelCell = { x: cellX, y: cellY, z: cellZ };
+    return mesh;
+  }
+
   function createCellKey(cellX, cellY, cellZ) {
     return `${cellX}|${cellY}|${cellZ}`;
   }
@@ -269,12 +321,16 @@ export function buildMapFromWorld({
 
     voxelTypesByName.set(voxelName, {
       name: voxelName,
+      kind: isVoxelPlane(voxel) ? 'plane' : 'voxel',
       type: typeof voxel?.type === 'string' && voxel.type.trim()
         ? voxel.type.trim().toLowerCase()
         : 'colored',
       color: new THREE.Color(normalizeColor(voxel?.color)).getHex(),
       texture: cloneTextureSpec(voxel?.texture),
       transparent: isTransparentVoxel(voxel),
+      planeFace: typeof voxel?.planeFace === 'string' ? voxel.planeFace : 'front',
+      doubleSided: voxel?.doubleSided === true,
+      inset: Number.isFinite(voxel?.inset) ? Number(voxel.inset) : 0,
     });
   }
 
@@ -302,6 +358,11 @@ export function buildMapFromWorld({
   }
 
   function addColliderForCell(cellX, cellY, cellZ) {
+    const voxel = world.getVoxel(cellX, cellY, cellZ);
+    if (isVoxelPlane(voxel)) {
+      return null;
+    }
+
     const key = createCellKey(cellX, cellY, cellZ);
     if (voxelColliderByKey.has(key)) {
       return voxelColliderByKey.get(key);
@@ -345,7 +406,7 @@ export function buildMapFromWorld({
       const neighborCellY = cellY + offset.y;
       const neighborCellZ = cellZ + offset.z;
       const neighborVoxel = world.getVoxel(neighborCellX, neighborCellY, neighborCellZ);
-      if (!hasImageTextureFaces(neighborVoxel)) continue;
+      if (!(hasImageTextureFaces(neighborVoxel) || isVoxelPlane(neighborVoxel))) continue;
 
       const neighborKey = createCellKey(neighborCellX, neighborCellY, neighborCellZ);
       const existingMesh = texturedVoxelMeshByKey.get(neighborKey);
@@ -354,12 +415,9 @@ export function buildMapFromWorld({
         texturedVoxelMeshByKey.delete(neighborKey);
       }
 
-      const nextNeighborMesh = createTexturedVoxelMesh(
-        neighborCellX,
-        neighborCellY,
-        neighborCellZ,
-        neighborVoxel,
-      );
+      const nextNeighborMesh = isVoxelPlane(neighborVoxel)
+        ? createVoxelPlaneMesh(neighborCellX, neighborCellY, neighborCellZ, neighborVoxel)
+        : createTexturedVoxelMesh(neighborCellX, neighborCellY, neighborCellZ, neighborVoxel);
 
       if (!nextNeighborMesh) continue;
       texturedVoxelGroup.add(nextNeighborMesh);
@@ -375,8 +433,10 @@ export function buildMapFromWorld({
     syncWorldVoxelRemovedAtCell(cellX, cellY, cellZ);
     const key = createCellKey(cellX, cellY, cellZ);
 
-    if (hasImageTextureFaces(voxel)) {
-      const texturedVoxelMesh = createTexturedVoxelMesh(cellX, cellY, cellZ, voxel);
+    if (isVoxelPlane(voxel) || hasImageTextureFaces(voxel)) {
+      const texturedVoxelMesh = isVoxelPlane(voxel)
+        ? createVoxelPlaneMesh(cellX, cellY, cellZ, voxel)
+        : createTexturedVoxelMesh(cellX, cellY, cellZ, voxel);
       if (!texturedVoxelMesh) return false;
       texturedVoxelGroup.add(texturedVoxelMesh);
       texturedVoxelMeshByKey.set(key, texturedVoxelMesh);
@@ -491,8 +551,10 @@ export function buildMapFromWorld({
     const { position, voxel } = entry;
     registerVoxelType(voxel);
 
-    if (hasImageTextureFaces(voxel)) {
-      const texturedVoxelMesh = createTexturedVoxelMesh(position.x, position.y, position.z, voxel);
+    if (isVoxelPlane(voxel) || hasImageTextureFaces(voxel)) {
+      const texturedVoxelMesh = isVoxelPlane(voxel)
+        ? createVoxelPlaneMesh(position.x, position.y, position.z, voxel)
+        : createTexturedVoxelMesh(position.x, position.y, position.z, voxel);
       if (texturedVoxelMesh) {
         texturedVoxelGroup.add(texturedVoxelMesh);
         texturedVoxelMeshByKey.set(createCellKey(position.x, position.y, position.z), texturedVoxelMesh);
@@ -570,6 +632,19 @@ export function buildMapFromWorld({
     createVoxelFromType(voxelTypeName) {
       const voxelType = voxelTypesByName.get(String(voxelTypeName ?? '').trim());
       if (!voxelType) return null;
+
+      if (voxelType.kind === 'plane') {
+        return new VoxelPlane({
+          name: voxelType.name,
+          type: voxelType.type,
+          color: '#' + voxelType.color.toString(16).padStart(6, '0'),
+          texture: cloneTextureSpec(voxelType.texture) || null,
+          transparent: voxelType.transparent === true,
+          planeFace: voxelType.planeFace || 'front',
+          doubleSided: voxelType.doubleSided === true,
+          inset: voxelType.inset ?? 0,
+        });
+      }
 
       return new Voxel({
         name: voxelType.name,

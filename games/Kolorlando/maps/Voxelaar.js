@@ -53,6 +53,8 @@ let VoxelaarVoxels = {
     transparent: true,
     type: 'textured',
     planeFace: 'front',
+    doubleSided: true,
+    inset: 0.001,
   }),
 };
 
