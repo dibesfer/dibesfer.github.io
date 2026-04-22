@@ -286,6 +286,7 @@ const settingsShadowPreset = document.getElementById('settingsShadowPreset');
 const settingsUndersampling = document.getElementById('settingsUndersampling');
 const settingsBackgroundMusic = document.getElementById('settingsBackgroundMusic');
 const settingsRestoreDefaultsButton = document.getElementById('settingsRestoreDefaultsButton');
+const settingsDownloadWorldButton = document.getElementById('settingsDownloadWorldButton');
 const settingsReloadWorldButton = document.getElementById('settingsReloadWorldButton');
 const playerHealthFill = document.getElementById('playerHealthFill');
 const playerHealthText = document.getElementById('playerHealthText');
@@ -2100,6 +2101,33 @@ if (settingsReloadWorldButton) {
 
       localWorldSaveStore.clearWorldSave();
       window.location.reload();
+    });
+  }
+}
+
+if (settingsDownloadWorldButton) {
+  /* Download World exports the live singleplayer world model as JSON so the
+  authored and player-edited state can later be re-imported through one
+  consistent .world file flow. */
+  if (!(worldData instanceof World) || MULTIPLAYER_ENABLED) {
+    settingsDownloadWorldButton.hidden = true;
+  } else {
+    settingsDownloadWorldButton.addEventListener('click', () => {
+      const worldJson = worldData.toJSON();
+      const worldName = typeof worldJson?.name === 'string' && worldJson.name.trim()
+        ? worldJson.name.trim()
+        : 'world';
+      const worldFileName = createBoxelId(worldName).replace(/^boxel-/, 'world-');
+      const worldBlob = new Blob([JSON.stringify(worldJson, null, 2)], {
+        type: 'application/json',
+      });
+      const downloadUrl = URL.createObjectURL(worldBlob);
+      const downloadLink = document.createElement('a');
+
+      downloadLink.href = downloadUrl;
+      downloadLink.download = `${worldFileName}.world`;
+      downloadLink.click();
+      URL.revokeObjectURL(downloadUrl);
     });
   }
 }

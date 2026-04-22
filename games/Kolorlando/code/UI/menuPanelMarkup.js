@@ -189,7 +189,8 @@ export function renderKolorlandoMenuPanel(container) {
                     <option value="0.5">Strong (50%)</option>
                 </select>
             </div>
-
+            <button id="settingsDownloadWorldButton" type="button">Download World</button>
+            <br><br>
             <button id="settingsReloadWorldButton" type="button">Reload World</button>
             <br><br>
             <label for="volume">Volume</label>
