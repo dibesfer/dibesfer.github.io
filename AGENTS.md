@@ -11,6 +11,8 @@
 
 ## Code Style
 - Add concise comments when implementing code.
+- Prefer class-based architecture over factory functions
+- Prefer single responsability files.
 
 ## Aesthetics
 - When applying style we should follow these patterns:
