@@ -38,12 +38,15 @@ import { Voxelaar, fillWorldWithVoxel } from './maps/Voxelaar.js';
 import { Voxelandia, fillWorldWithVoxel as fillVoxelandiaWorldWithVoxel } from './maps/Voxelandia.js';
 import { createMultiplayerController } from './code/multiplayer/multiplayer.js';
 import { createCommandHandler } from './code/commands.js';
-import { createBoxelId, readLocalBoxels, writeLocalBoxel } from './code/data/boxelStorage.js';
+import { createBoxelId, createStoredBoxel, deserializeStoredBoxel, getBoxelVoxelEntries, readLocalBoxels, writeLocalBoxel } from './code/data/boxelStorage.js';
 import { createLocalWorldSaveStore } from './code/data/worldSaving.js';
 import { loadPlayerFaceData } from './code/data/playerSaving.js';
 import { World } from './code/data/World.js';
 import { WorldEditor } from './code/data/WorldEditor.js';
 import { SpaceShipVehicle } from './code/entities/vehicle.js';
+import { Input } from './code/Input.js';
+import { Boxel } from './code/data/Boxel.js';
+import { Voxel } from './code/data/Voxel.js';
 
 const KOLORLANDO_MODE = window.KOLORLANDO_MODE === 'multiplayer' ? 'multiplayer' : 'singleplayer';
 const MULTIPLAYER_ENABLED = KOLORLANDO_MODE === 'multiplayer';
@@ -301,10 +304,9 @@ const buttonLeft0 = document.getElementById('Left0');
 const cameraModeInputs = Array.from(document.querySelectorAll('input[name="cameraMode"]'));
 const cameraModeWowInput = document.getElementById('cameraModeWow');
 const cameraModeLegoLolInput = document.getElementById('cameraModeLegoLol');
-let mobileShootPressed = false;
-let mobileSprintEnabled = false;
-let mobileFlyUpPressed = false;
-let mobileFlyDownPressed = false;
+const input = new Input({
+  isMobile: mobileMode,
+}).mount();
 let suppressRight3Click = false;
 let voxelRaycastDirty = true;
 let voxelRaycastRefreshAccumulator = 1 / 30;
@@ -321,15 +323,12 @@ const playerEquipment = createEquipment({
 let lastRaycastModeKey = '';
 let lastWowCursorRaycastActive = false;
 let openingChatFromPointerLock = false;
-let pointerLockRetryArmed = false;
-let pointerLockRetryBlockedUntil = 0;
 let suppressNextDesktopAttack = false;
 let suppressNextDesktopAttackUntil = 0;
 let suppressNextDesktopAttackButton = null;
 let characterPreviewDragState = null;
 const gameAudio = createGameAudio();
 const systemMenuThemeQuery = window.matchMedia('(prefers-color-scheme: dark)');
-let wowCameraDragState = null;
 let wowCursorRaycastActive = false;
 let cameraModeController = null;
 let screenController = null;
@@ -498,11 +497,11 @@ function shouldWantGameplayPointerLock() {
 function canRetryPointerLockNow() {
   /* Browsers impose a short grace period after exiting pointer lock. Waiting
   out that cooldown avoids immediate SecurityError rejections on relock. */
-  return performance.now() >= pointerLockRetryBlockedUntil;
+  return input.canRetryPointerLock();
 }
 
 function disarmPointerLockRetry() {
-  pointerLockRetryArmed = false;
+  input.disarmPointerLockRetry();
 }
 
 function armPointerLockRetry() {
@@ -512,7 +511,7 @@ function armPointerLockRetry() {
   window. Arming a retry lets the next click or key press re-enter gameplay
   cleanly instead of leaving desktop look stuck half-disabled. */
   if (!shouldWantGameplayPointerLock()) return;
-  pointerLockRetryArmed = true;
+  input.armPointerLockRetry();
 }
 
 function requestGameplayPointerLock() {
@@ -559,7 +558,7 @@ function requestGameplayPointerLock() {
 }
 
 function retryPointerLockFromUserGesture() {
-  if (!pointerLockRetryArmed) return;
+  if (!input.pointerLockRetryArmed) return;
   requestGameplayPointerLock();
 }
 
@@ -655,7 +654,7 @@ async function loadStructureAssetByName(assetName) {
       throw new Error(`Failed to load structure "${assetName}".`);
     }
 
-    return JSON.parse(await response.text());
+    return deserializeStoredBoxel(JSON.parse(await response.text()));
   }
 
   const normalizedBoxelId = createBoxelId(assetName);
@@ -735,8 +734,8 @@ function placeStructureAssetAtPlayer(structureAsset) {
     throw new Error('Voxel editing is not available in this world.');
   }
 
-  const voxels = Array.isArray(structureAsset?.voxels) ? structureAsset.voxels : [];
-  if (voxels.length === 0) {
+  const voxelEntries = getBoxelVoxelEntries(structureAsset);
+  if (voxelEntries.length === 0) {
     throw new Error('This structure has no voxels to place.');
   }
 
@@ -748,12 +747,13 @@ function placeStructureAssetAtPlayer(structureAsset) {
   let placedCount = 0;
   let skippedCount = 0;
 
-  for (let i = 0; i < voxels.length; i += 1) {
-    const voxel = voxels[i];
-    const voxelTypeId = typeof voxel?.voxelTypeId === 'string' ? voxel.voxelTypeId.trim() : '';
-    const localX = Math.round(Number(voxel?.position?.x) || 0);
-    const localY = Math.round(Number(voxel?.position?.y) || 0);
-    const localZ = Math.round(Number(voxel?.position?.z) || 0);
+  for (let i = 0; i < voxelEntries.length; i += 1) {
+    const voxelEntry = voxelEntries[i];
+    const voxel = voxelEntry?.voxel;
+    const voxelTypeId = typeof voxel?.name === 'string' ? voxel.name.trim() : '';
+    const localX = Math.round(Number(voxelEntry?.position?.x) || 0);
+    const localY = Math.round(Number(voxelEntry?.position?.y) || 0);
+    const localZ = Math.round(Number(voxelEntry?.position?.z) || 0);
 
     if (!voxelTypeId || !isKnownVoxelTypeId(voxelTypeId)) {
       skippedCount += 1;
@@ -808,6 +808,30 @@ function getCurrentBoxelSelectionCellBounds() {
     return null;
   }
 
+  if (useWorldEditorVoxelMode && worldData) {
+    const minGridPosition = worldData.mapToGridPosition(
+      sourceBox.min.x + 0.001,
+      sourceBox.min.y + 0.001,
+      sourceBox.min.z + 0.001,
+      worldVoxelSize,
+    );
+    const maxGridPosition = worldData.mapToGridPosition(
+      sourceBox.max.x - 0.001,
+      sourceBox.max.y - 0.001,
+      sourceBox.max.z - 0.001,
+      worldVoxelSize,
+    );
+
+    return {
+      minCellX: Math.floor(minGridPosition.x),
+      minCellY: Math.floor(minGridPosition.y),
+      minCellZ: Math.floor(minGridPosition.z),
+      maxCellX: Math.floor(maxGridPosition.x),
+      maxCellY: Math.floor(maxGridPosition.y),
+      maxCellZ: Math.floor(maxGridPosition.z),
+    };
+  }
+
   return {
     minCellX: Math.floor(sourceBox.min.x + 0.001),
     minCellY: Math.floor(sourceBox.min.y + 0.001),
@@ -827,7 +851,13 @@ function createBoxelFromSelection(displayName) {
   console.log('[Boxel Save] exporting selection bounds:', cellBounds);
 
   const assetId = createBoxelId(displayName);
-  const voxels = [];
+  const boxelSize = Math.max(
+    cellBounds.maxCellX - cellBounds.minCellX + 1,
+    cellBounds.maxCellY - cellBounds.minCellY + 1,
+    cellBounds.maxCellZ - cellBounds.minCellZ + 1,
+    1,
+  );
+  const voxelEntries = [];
 
   for (let cellY = cellBounds.minCellY; cellY <= cellBounds.maxCellY; cellY += 1) {
     for (let cellX = cellBounds.minCellX; cellX <= cellBounds.maxCellX; cellX += 1) {
@@ -835,36 +865,45 @@ function createBoxelFromSelection(displayName) {
         const voxel = getVoxelAtCell(cellX, cellY, cellZ);
         if (!voxel) continue;
 
-        voxels.push({
+        const voxelName = typeof voxel?.name === 'string' && voxel.name.trim()
+          ? voxel.name.trim()
+          : (typeof voxel?.voxelTypeId === 'string' && voxel.voxelTypeId.trim()
+            ? voxel.voxelTypeId.trim()
+            : '');
+        const voxelColor = typeof voxel?.color === 'string' && voxel.color.trim()
+          ? voxel.color.trim()
+          : '#ffffff';
+        if (!voxelName) continue;
+
+        voxelEntries.push({
           position: {
             x: cellX - cellBounds.minCellX,
             y: cellY - cellBounds.minCellY,
             z: cellZ - cellBounds.minCellZ,
           },
-          voxelTypeId: voxel.voxelTypeId,
-          color: voxel.color,
+          voxel: new Voxel({
+            name: voxelName,
+            color: voxelColor,
+            active: true,
+          }),
         });
       }
     }
   }
 
-  if (voxels.length === 0) {
+  if (voxelEntries.length === 0) {
     throw new Error('The selected Boxel area has no voxels to save.');
   }
 
-  return {
-    format: 'kolorlando.boxel',
-    version: 1,
-    assetType: 'structure',
+  const boxel = new Boxel({
+    size: boxelSize,
+    name: displayName,
+  }).setVoxelEntries(voxelEntries);
+
+  return createStoredBoxel({
     assetId,
     displayName,
-    bounds: {
-      size: {
-        width: cellBounds.maxCellX - cellBounds.minCellX + 1,
-        height: cellBounds.maxCellY - cellBounds.minCellY + 1,
-        depth: cellBounds.maxCellZ - cellBounds.minCellZ + 1,
-      },
-    },
+    boxel,
     placement: {
       /* Saved Boxels spawn centered on the player footprint by default. */
       anchor: {
@@ -874,8 +913,7 @@ function createBoxelFromSelection(displayName) {
       },
       rotationY: 0,
     },
-    voxels,
-  };
+  });
 }
 
 function handleSaveBoxelCommand(args = []) {
@@ -886,7 +924,7 @@ function handleSaveBoxelCommand(args = []) {
 
   console.log(`[Boxel Save] command: /saveBoxel ${displayName}`);
   const savedBoxel = writeLocalBoxel(createBoxelFromSelection(displayName));
-  chatUI.appendLine(`Saved Boxel ${savedBoxel.displayName}: ${savedBoxel.voxels.length} voxels.`);
+  chatUI.appendLine(`Saved Boxel ${savedBoxel.displayName}: ${getBoxelVoxelEntries(savedBoxel).length} voxels.`);
 }
 
 const handleChatCommand = createCommandHandler({
@@ -1235,54 +1273,28 @@ renderer.shadowMap.enabled = true;
 
 sceneView.appendChild(renderer.domElement);
 
-sceneView.addEventListener('pointermove', event => {
-  updateWowCursorRaycastPointer(event.clientX, event.clientY);
-  if (!wowCameraDragState || event.pointerId !== wowCameraDragState.pointerId || !isScreenDragCameraActive()) return;
-
-  // WoW camera look is driven by drag deltas over the scene instead of pointer lock.
-  const dx = event.clientX - wowCameraDragState.lastX;
-  const dy = event.clientY - wowCameraDragState.lastY;
-  wowCameraDragState.lastX = event.clientX;
-  wowCameraDragState.lastY = event.clientY;
-  wowCameraDragState.dragDistance += Math.hypot(dx, dy);
-  yaw -= dx * sensitivity;
-  pitch -= dy * sensitivity;
-  pitch = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, pitch));
-  event.preventDefault();
-});
-sceneView.addEventListener('pointerenter', event => {
-  updateWowCursorRaycastPointer(event.clientX, event.clientY);
-});
-sceneView.addEventListener('pointerleave', event => {
-  if (wowCameraDragState && event.pointerId === wowCameraDragState.pointerId) return;
-  clearWowCursorRaycastPointer();
-});
-sceneView.addEventListener('pointerdown', event => {
-  if (!isScreenDragCameraActive() || isMenuCentralVisible() || event.button !== 0) return;
-  wowCameraDragState = {
-    pointerId: event.pointerId,
-    lastX: event.clientX,
-    lastY: event.clientY,
-    dragDistance: 0,
-  };
-  sceneView.setPointerCapture?.(event.pointerId);
-  updateWowCursorRaycastPointer(event.clientX, event.clientY);
-});
-const stopWowCameraDrag = event => {
-  if (!wowCameraDragState || event.pointerId !== wowCameraDragState.pointerId) return;
-  const dragDistance = wowCameraDragState.dragDistance;
-  sceneView.releasePointerCapture?.(event.pointerId);
-  wowCameraDragState = null;
-
-  // A short click still acts like a gameplay click; only longer movement counts as camera dragging.
-  if (event.type === 'pointerup' && dragDistance < 6 && isScreenDragCameraActive() && !isMenuCentralVisible()) {
+input.bindScenePointer({
+  target: sceneView,
+  getIsScreenDragCameraActive: isScreenDragCameraActive,
+  getIsMenuVisible: isMenuCentralVisible,
+  onUpdateCursor: (clientX, clientY) => {
+    updateWowCursorRaycastPointer(clientX, clientY);
+  },
+  onClearCursor: () => {
+    clearWowCursorRaycastPointer();
+  },
+  onLookDelta: (dx, dy) => {
+    // WoW camera look is driven by drag deltas over the scene instead of pointer lock.
+    yaw -= dx * sensitivity;
+    pitch -= dy * sensitivity;
+    pitch = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, pitch));
+  },
+  onSceneClick: event => {
     updateWowCursorRaycastPointer(event.clientX, event.clientY);
     refreshVoxelRaycast(true);
     triggerActionForMouseButton(0);
-  }
-};
-sceneView.addEventListener('pointerup', stopWowCameraDrag);
-sceneView.addEventListener('pointercancel', stopWowCameraDrag);
+  },
+});
 
 function updateSceneViewSize() {
   const width = Math.max(1, sceneView.clientWidth);
@@ -1352,14 +1364,14 @@ spawnPadTexture.anisotropy = maxAnisotropy;
 // --------------------
 const controls = new PointerLockControls(camera, document.body);
 controls.addEventListener('lock', () => {
-  pointerLockRetryBlockedUntil = 0;
+  input.setPointerLockRetryBlockedUntil(0);
   disarmPointerLockRetry();
   hideMenuCentral();
 });
 controls.addEventListener('unlock', () => {
   /* The browser rejects pointer-lock re-entry for a brief period after any
   unlock, including the same Escape/Enter gesture that just closed chat. */
-  pointerLockRetryBlockedUntil = performance.now() + POINTER_LOCK_RETRY_COOLDOWN_MS;
+  input.setPointerLockRetryBlockedUntil(performance.now() + POINTER_LOCK_RETRY_COOLDOWN_MS);
   if (openingChatFromPointerLock) {
     openingChatFromPointerLock = false;
     return;
@@ -1404,9 +1416,12 @@ function controlLocker(event) {
   closeDesktopMenuAndArmGameplayResume(event);
 }
 
-document.addEventListener('pointerdown', controlLocker);
-document.addEventListener('pointerdown', retryPointerLockFromUserGesture);
-document.addEventListener('keydown', handlePointerLockRetryHotkey);
+input.bindDocumentGameplayShortcuts({
+  target: document,
+  onPointerDown: controlLocker,
+  onRetryPointerLock: retryPointerLockFromUserGesture,
+  onPointerLockRetryHotkey: handlePointerLockRetryHotkey,
+});
 
 function setInventoryPanelOpen(nextOpen, { allowMobile = false } = {}) {
   if (mobileMode) {
@@ -1434,7 +1449,7 @@ cameraModeController = createCameraModeController({
   isPointerLocked: () => typeof controls !== 'undefined' && controls.isLocked,
   onSyncDesktopLookAngles: syncDesktopLookAnglesFromCamera,
   onDeactivateScreenDrag: () => {
-    wowCameraDragState = null;
+    input.clearScenePointerDrag();
     clearWowCursorRaycastPointer();
   },
   onRequestUnlock: () => {
@@ -1455,24 +1470,17 @@ if (playButton) {
   });
 }
 
-const keys = {};
 function clearTrackedKeys() {
-  Object.keys(keys).forEach(keyCode => {
-    keys[keyCode] = false;
-  });
+  input.clearKeys();
 }
 
-document.addEventListener('keydown', e => {
-  gameAudio.unlockAudio(true);
-  if (!mobileMode && (chatUI.isInputOpen() || isTypingTarget(e.target))) return;
-  keys[e.code] = true;
-});
-document.addEventListener('keyup', e => {
-  if (!mobileMode && (chatUI.isInputOpen() || isTypingTarget(e.target))) {
-    keys[e.code] = false;
-    return;
-  }
-  keys[e.code] = false;
+input.bindKeyboard({
+  target: document,
+  onBeforeKeyDown: () => {
+    gameAudio.unlockAudio(true);
+  },
+  shouldIgnoreKeyDown: event => !mobileMode && (chatUI.isInputOpen() || isTypingTarget(event.target)),
+  shouldIgnoreKeyUp: event => !mobileMode && (chatUI.isInputOpen() || isTypingTarget(event.target)),
 });
 
 const moveSpeed = 5;
@@ -1538,9 +1546,9 @@ function applyPlayerDamage(amount) {
 }
 
 function getDesktopSprintMultiplier() {
-  if (mobileMode) return mobileSprintEnabled ? 2 : 1;
+  if (mobileMode) return input.actions.sprintPressed ? 2 : 1;
   if (!isDesktopGameplayActive()) return 1;
-  return keys['KeyE'] ? 2 : 1;
+  return input.keys.KeyE ? 2 : 1;
 }
 
 function setFlyMode(nextEnabled) {
@@ -2573,6 +2581,7 @@ screenController = createScreenController({
   touchQuery,
   onMobileModeChange: nextMobileMode => {
     mobileMode = nextMobileMode;
+    input.setMobileMode(nextMobileMode);
   },
   onSyncCameraModeAvailability: () => {
     syncCameraModeAvailability();
@@ -2594,8 +2603,13 @@ screenController = createScreenController({
     }
     setElementHidden(menuInferior, true);
     menuInferior.classList.remove('flex');
-    mobileShootPressed = false;
-    mobileSprintEnabled = false;
+    input.setAction('primaryPressed', false);
+    input.setAction('secondaryPressed', false);
+    input.setAction('sprintPressed', false);
+    input.setAction('flyUpPressed', false);
+    input.setAction('flyDownPressed', false);
+    input.setMoveVector(0, 0);
+    input.setLookVector(0, 0);
     setShootButtonState(false);
     setMobileChatToggleState(false);
     setMobileSprintState(false);
@@ -3625,7 +3639,19 @@ function handleDesktopWheelThirdPerson(event) {
   event.preventDefault();
 }
 
-window.addEventListener('wheel', handleDesktopWheelThirdPerson, { passive: false });
+input.bindDesktopMouse({
+  mouseTarget: document,
+  wheelTarget: window,
+  onMouseDown: event => {
+    gameAudio.unlockAudio(true);
+    handleDesktopAttack(event);
+  },
+  onWheel: handleDesktopWheelThirdPerson,
+  onContextMenu: event => {
+    event.preventDefault();
+  },
+});
+
 document.addEventListener('touchstart', handleMobilePinchStart, { passive: false });
 document.addEventListener('touchmove', handleMobilePinchMove, { passive: false });
 document.addEventListener('touchend', handleMobilePinchEnd, { passive: false });
@@ -4117,22 +4143,14 @@ function placeBoxelSelectedVoxelHighlightFromHit(voxelHit) {
 
 function placeBoxelSelectedVoxelHighlightFromAdjacentHit(voxelHit) {
   /* Right-click should target the empty voxel space on the pointed face, so we
-  derive the adjacent cell coordinates from the existing map helper and then
-  rebuild that cell's box using the currently hit voxel dimensions. */
-  const adjacentVoxelCell = worldEditor.getAdjacentTargetVoxelCell(voxelHit);
-  if (!adjacentVoxelCell || !getVoxelBoxFromRaycastHit(voxelHit, boxelSelectionInputBox)) {
+  ask the world editor for the actual adjacent voxel box in world space. */
+  const adjacentVoxelBox = worldEditor.getAdjacentTargetVoxelBox(voxelHit, boxelSelectionInputBox);
+  if (!adjacentVoxelBox) {
     clearBoxelSelectedVoxelHighlight();
     return false;
   }
 
-  boxelSelectionInputBox.getSize(boxelSelectionInputSize);
-  boxelSelectionInputBox.min.set(
-    adjacentVoxelCell.cellX * boxelSelectionInputSize.x,
-    adjacentVoxelCell.cellY * boxelSelectionInputSize.y,
-    adjacentVoxelCell.cellZ * boxelSelectionInputSize.z
-  );
-  boxelSelectionInputBox.max.copy(boxelSelectionInputBox.min).add(boxelSelectionInputSize);
-  return placeBoxelSelectedVoxelHighlightFromBox(boxelSelectionInputBox);
+  return placeBoxelSelectedVoxelHighlightFromBox(adjacentVoxelBox);
 }
 
 function triggerActionForMouseButton(button, options = {}) {
@@ -5139,15 +5157,15 @@ function updatePlayer(deltaTime) {
   let inputRight = 0;
 
   if (isDesktopGameplayActive()) {
-    if (keys['KeyW']) inputForward += 1;
-    if (keys['KeyS']) inputForward -= 1;
-    if (keys['KeyA']) inputRight -= 1;
-    if (keys['KeyD']) inputRight += 1;
+    if (input.keys.KeyW) inputForward += 1;
+    if (input.keys.KeyS) inputForward -= 1;
+    if (input.keys.KeyA) inputRight -= 1;
+    if (input.keys.KeyD) inputRight += 1;
   }
 
   if (mobileMode) {
-    inputForward += moveForward;
-    inputRight += moveRight;
+    inputForward += input.move.forward;
+    inputRight += input.move.right;
   }
 
   const inputLength = Math.hypot(inputForward, inputRight);
@@ -5176,12 +5194,12 @@ function updatePlayer(deltaTime) {
   if (flyMode) {
     let inputVertical = 0;
     if (isDesktopGameplayActive()) {
-      if (keys['Space']) inputVertical += 1;
-      if (keys['ShiftLeft'] || keys['ShiftRight']) inputVertical -= 1;
+      if (input.keys.Space) inputVertical += 1;
+      if (input.keys.ShiftLeft || input.keys.ShiftRight) inputVertical -= 1;
     }
     if (mobileMode) {
-      if (mobileFlyUpPressed) inputVertical += 1;
-      if (mobileFlyDownPressed) inputVertical -= 1;
+      if (input.actions.flyUpPressed) inputVertical += 1;
+      if (input.actions.flyDownPressed) inputVertical -= 1;
     }
 
     const verticalDelta = inputVertical * flySpeed * deltaTime;
@@ -5193,9 +5211,9 @@ function updatePlayer(deltaTime) {
     const isMoving = horizontalMove.lengthSq() > 0.00001 || Math.abs(verticalDelta) > 0.00001;
     gameAudio.updateFootsteps(deltaTime, false, sprintMultiplier, false);
     syncPlayerBody();
-    const hasLegoLolAimInput = mobileMode && isLegoLolCameraMode() && Math.hypot(lookDx, lookDy) > JOYSTICK_MAX_OFFSET * 0.18;
+    const hasLegoLolAimInput = mobileMode && isLegoLolCameraMode() && Math.hypot(input.look.x, input.look.y) > JOYSTICK_MAX_OFFSET * 0.18;
     if (hasLegoLolAimInput) {
-      playerAimFacing.set(-lookDx, 0, -lookDy);
+      playerAimFacing.set(-input.look.x, 0, -input.look.y);
       syncPlayerFacing(playerAimFacing);
     } else if (horizontalMove.lengthSq() > 0.00001) {
       syncPlayerFacing(horizontalMove);
@@ -5226,9 +5244,9 @@ function updatePlayer(deltaTime) {
   const isMoving = horizontalMove.lengthSq() > 0.00001;
   gameAudio.updateFootsteps(deltaTime, isMoving, sprintMultiplier, playerState.onGround);
   syncPlayerBody();
-  const hasLegoLolAimInput = mobileMode && isLegoLolCameraMode() && Math.hypot(lookDx, lookDy) > JOYSTICK_MAX_OFFSET * 0.18;
+  const hasLegoLolAimInput = mobileMode && isLegoLolCameraMode() && Math.hypot(input.look.x, input.look.y) > JOYSTICK_MAX_OFFSET * 0.18;
   if (hasLegoLolAimInput) {
-    playerAimFacing.set(-lookDx, 0, -lookDy);
+    playerAimFacing.set(-input.look.x, 0, -input.look.y);
     syncPlayerFacing(playerAimFacing);
   } else if (isMoving) {
     playerMoveFacing.copy(horizontalMove);
@@ -5244,110 +5262,17 @@ function updatePlayer(deltaTime) {
 // RESIZE
 // --------------------
 
-let leftTouchId = null;
-let rightTouchId = null;
-
 const leftJoy = document.querySelector('#menuInferiorLeft .joystick');
-const leftPad = leftJoy.querySelector('.pad');
-
-leftJoy.addEventListener('touchstart', e => {
-  gameAudio.unlockAudio(true);
-  e.preventDefault();
-  for (let t of e.changedTouches) {
-    leftTouchId = t.identifier;
-  }
-}, { passive: false });
-
-leftJoy.addEventListener('touchend', e => {
-  e.preventDefault();
-  for (let t of e.changedTouches) {
-    if (t.identifier === leftTouchId) {
-      leftTouchId = null;
-      moveForward = 0;
-      moveRight = 0;
-      leftPad.style.transform = 'translate(0px,0px)';
-    }
-  }
-}, { passive: false });
-
-leftJoy.addEventListener('touchmove', e => {
-  e.preventDefault();
-  for (let t of e.touches) {
-    if (t.identifier === leftTouchId) {
-      const rect = leftJoy.getBoundingClientRect();
-      const x = t.clientX - rect.left - rect.width / 2;
-      const y = t.clientY - rect.top - rect.height / 2;
-
-      const max = JOYSTICK_MAX_OFFSET;
-      const dx = Math.max(-max, Math.min(max, x));
-      const dy = Math.max(-max, Math.min(max, y));
-
-      leftPad.style.transform = `translate(${dx}px,${dy}px)`;
-
-      moveForward = -dy / max;
-      moveRight = dx / max;
-    }
-  }
-}, { passive: false });
-
 const rightJoy = document.querySelector('#menuInferiorRight .joystick');
-const rightPad = rightJoy.querySelector('.pad');
-
-rightJoy.addEventListener('touchstart', e => {
-  gameAudio.unlockAudio(true);
-  e.preventDefault();
-  for (let t of e.changedTouches) {
-    rightTouchId = t.identifier;
-  }
-}, { passive: false });
-
-rightJoy.addEventListener('touchend', e => {
-  e.preventDefault();
-  for (let t of e.changedTouches) {
-    if (t.identifier === rightTouchId) {
-      rightTouchId = null;
-      lookDx = 0;
-      lookDy = 0;
-      rightPad.style.transform = 'translate(0px,0px)';
-    }
-  }
-}, { passive: false });
-
-rightJoy.addEventListener('touchmove', e => {
-  e.preventDefault();
-  for (let t of e.touches) {
-    if (t.identifier === rightTouchId) {
-      const rect = rightJoy.getBoundingClientRect();
-      const x = t.clientX - rect.left - rect.width / 2;
-      const y = t.clientY - rect.top - rect.height / 2;
-
-      const max = JOYSTICK_MAX_OFFSET;
-      const dx = Math.max(-max, Math.min(max, x));
-      const dy = Math.max(-max, Math.min(max, y));
-
-      rightPad.style.transform = `translate(${dx}px,${dy}px)`;
-
-      // Only Lego Lol uses the flipped mobile right-stick mapping. Skyrim and
-      // the rest of the free-look camera modes still expect the original stick
-      // direction so their yaw/pitch math keeps the legacy feel unchanged.
-      if (isLegoLolCameraMode()) {
-        lookDx = -dx;
-        lookDy = -dy;
-      } else {
-        lookDx = dx;
-        lookDy = dy;
-      }
-    }
-  }
-}, { passive: false });
-
-// --------------------
-// MOBILE CONTROL VALUES
-// --------------------
-let moveForward = 0;
-let moveRight = 0;
-let lookDx = 0;
-let lookDy = 0;
+input.bindVirtualJoysticks({
+  leftJoystick: leftJoy,
+  rightJoystick: rightJoy,
+  maxOffset: JOYSTICK_MAX_OFFSET,
+  onUnlockAudio: () => {
+    gameAudio.unlockAudio(true);
+  },
+  isLegoLolCameraMode,
+});
 
 const sensitivity = 0.002;
 const MOBILE_SHOOT_INTERVAL = 0.18;
@@ -5361,7 +5286,7 @@ function queueJump(event) {
   // In fly mode the mobile jump button becomes the upward thruster instead of
   // queueing a grounded jump, so vertical motion stays continuous while held.
   if (flyMode) {
-    mobileFlyUpPressed = true;
+    input.setAction('flyUpPressed', true);
     return;
   }
 
@@ -5371,28 +5296,7 @@ function queueJump(event) {
 function stopQueueJump(event) {
   if (event) event.preventDefault();
   setMobilePressState(buttonUp, false);
-  mobileFlyUpPressed = false;
-}
-
-buttonUp.addEventListener('touchstart', queueJump, { passive: false });
-buttonUp.addEventListener('touchend', stopQueueJump, { passive: false });
-buttonUp.addEventListener('touchcancel', stopQueueJump, { passive: false });
-buttonUp.addEventListener('pointerdown', event => {
-  if (!mobileMode) return;
-  queueJump(event);
-});
-buttonUp.addEventListener('pointerup', event => {
-  if (!mobileMode) return;
-  stopQueueJump(event);
-});
-
-if (buttonLeft0) {
-  buttonLeft0.addEventListener('touchstart', event => {
-    gameAudio.unlockAudio(true);
-    if (!mobileMode) return;
-    event.preventDefault();
-    chatUI.handleToggleAction();
-  }, { passive: false });
+  input.setAction('flyUpPressed', false);
 }
 
 function startMobileDownAction(event) {
@@ -5403,7 +5307,7 @@ function startMobileDownAction(event) {
   // In fly mode the left down button should continuously drive descent instead
   // of doing the old one-shot fast-fall behavior used for grounded jumping.
   if (flyMode) {
-    mobileFlyDownPressed = true;
+    input.setAction('flyDownPressed', true);
     return;
   }
 
@@ -5415,21 +5319,7 @@ function startMobileDownAction(event) {
 function stopMobileDownAction(event) {
   if (event) event.preventDefault();
   setMobilePressState(buttonDown, false);
-  mobileFlyDownPressed = false;
-}
-
-if (buttonDown) {
-  buttonDown.addEventListener('touchstart', startMobileDownAction, { passive: false });
-  buttonDown.addEventListener('touchend', stopMobileDownAction, { passive: false });
-  buttonDown.addEventListener('touchcancel', stopMobileDownAction, { passive: false });
-  buttonDown.addEventListener('pointerdown', event => {
-    if (!mobileMode) return;
-    startMobileDownAction(event);
-  });
-  buttonDown.addEventListener('pointerup', event => {
-    if (!mobileMode) return;
-    stopMobileDownAction(event);
-  });
+  input.setAction('flyDownPressed', false);
 }
 
 function setShootButtonState(active) {
@@ -5458,24 +5348,18 @@ function setMobileInventoryToggleState(active) {
   buttonRight3.classList.toggle('is-active', active);
 }
 
-function isTouchLikePointerEvent(event) {
-  /* Mobile browsers often emit Pointer Events after Touch Events for the same
-  physical tap. Filtering touch-like pointer sources here lets the dedicated
-  touch handlers own tap-driven gameplay actions so one tap only performs one
-  build/break interaction. */
-  return event?.pointerType === 'touch';
-}
-
 function startMobileLeftClick(event) {
   gameAudio.unlockAudio(true);
   if (!mobileMode) return;
   if (event) event.preventDefault();
+  input.setAction('primaryPressed', true);
   setShootButtonState(true);
   triggerActionForMouseButton(0, { allowMobile: true });
 }
 
 function stopMobileLeftClick(event) {
   if (event) event.preventDefault();
+  input.setAction('primaryPressed', false);
   setShootButtonState(false);
 }
 
@@ -5483,12 +5367,14 @@ function startMobileRightClick(event) {
   gameAudio.unlockAudio(true);
   if (!mobileMode) return;
   if (event) event.preventDefault();
+  input.setAction('secondaryPressed', true);
   setMobilePressState(buttonRight1, true);
   triggerActionForMouseButton(2, { allowMobile: true });
 }
 
 function stopMobileRightClick(event) {
   if (event) event.preventDefault();
+  input.setAction('secondaryPressed', false);
   setMobilePressState(buttonRight1, false);
 }
 
@@ -5496,95 +5382,54 @@ function toggleMobileSprint(event) {
   gameAudio.unlockAudio(true);
   if (!mobileMode) return;
   if (event) event.preventDefault();
-  mobileSprintEnabled = !mobileSprintEnabled;
-  setMobileSprintState(mobileSprintEnabled);
+  input.setAction('sprintPressed', !input.actions.sprintPressed);
+  setMobileSprintState(input.actions.sprintPressed);
 }
 
-if (buttonShoot) {
-  buttonShoot.addEventListener('touchstart', startMobileLeftClick, { passive: false });
-  buttonShoot.addEventListener('touchend', stopMobileLeftClick, { passive: false });
-  buttonShoot.addEventListener('touchcancel', stopMobileLeftClick, { passive: false });
-  buttonShoot.addEventListener('pointerdown', event => {
-    if (!mobileMode) return;
-    if (isTouchLikePointerEvent(event)) return;
-    event.preventDefault();
-    startMobileLeftClick(event);
-  });
-  buttonShoot.addEventListener('pointerup', event => {
-    if (!mobileMode) return;
-    if (isTouchLikePointerEvent(event)) return;
-    event.preventDefault();
-    stopMobileLeftClick(event);
-  });
-  buttonShoot.addEventListener('click', event => {
-    if (!mobileMode) return;
-    /* Touch taps already fired on touchstart, so the later synthetic click must
-    be swallowed to avoid doubling the action. Keeping the handler also stops
-    the browser from forwarding the tap into unrelated document-level logic. */
-    event.preventDefault();
-    event.stopPropagation();
-  });
+function handleMobileInventoryTouchStart() {
+  suppressRight3Click = true;
+  setInventoryPanelOpen(!isMenuCentralVisible(), { allowMobile: true });
 }
 
-if (buttonRight1) {
-  buttonRight1.addEventListener('touchstart', startMobileRightClick, { passive: false });
-  buttonRight1.addEventListener('touchend', stopMobileRightClick, { passive: false });
-  buttonRight1.addEventListener('touchcancel', stopMobileRightClick, { passive: false });
-  buttonRight1.addEventListener('pointerdown', event => {
-    if (!mobileMode) return;
-    if (isTouchLikePointerEvent(event)) return;
-    startMobileRightClick(event);
-  });
-  buttonRight1.addEventListener('pointerup', event => {
-    if (!mobileMode) return;
-    if (isTouchLikePointerEvent(event)) return;
-    stopMobileRightClick(event);
-  });
-  buttonRight1.addEventListener('click', event => {
-    if (!mobileMode) return;
-    /* Right-action taps already execute during touchstart, so the synthetic
-    click only needs to be consumed instead of firing the gameplay action again. */
-    event.preventDefault();
-    event.stopPropagation();
-  });
+function handleMobileInventoryClick() {
+  if (suppressRight3Click) {
+    suppressRight3Click = false;
+    return;
+  }
+
+  setInventoryPanelOpen(!isMenuCentralVisible(), { allowMobile: true });
 }
 
-if (buttonRight3) {
-  buttonRight3.addEventListener('touchstart', event => {
+input.bindMobileButtons({
+  getIsMobile: () => mobileMode,
+  getIsFlyMode: () => flyMode,
+  onUnlockAudio: () => {
     gameAudio.unlockAudio(true);
-    if (!mobileMode) return;
-    suppressRight3Click = true;
-    event.preventDefault();
-    event.stopPropagation();
-    setInventoryPanelOpen(!isMenuCentralVisible(), { allowMobile: true });
-  }, { passive: false });
-  buttonRight3.addEventListener('touchend', event => {
-    if (!mobileMode) return;
-    event.preventDefault();
-    event.stopPropagation();
-  }, { passive: false });
-  buttonRight3.addEventListener('click', event => {
-    if (!mobileMode) return;
-    if (suppressRight3Click) {
-      suppressRight3Click = false;
-      event.preventDefault();
-      event.stopPropagation();
-      return;
-    }
-    event.preventDefault();
-    event.stopPropagation();
-    setInventoryPanelOpen(!isMenuCentralVisible(), { allowMobile: true });
-  });
-}
-
-if (buttonLeft1) {
-  buttonLeft1.addEventListener('touchstart', toggleMobileSprint, { passive: false });
-  buttonLeft1.addEventListener('click', event => {
-    if (!mobileMode) return;
-    event.preventDefault();
-    toggleMobileSprint(event);
-  });
-}
+  },
+  onToggleChat: () => {
+    chatUI.handleToggleAction();
+  },
+  onJump: queueJump,
+  onStopJump: stopQueueJump,
+  onDownAction: startMobileDownAction,
+  onStopDownAction: stopMobileDownAction,
+  onPrimaryAction: startMobileLeftClick,
+  onStopPrimaryAction: stopMobileLeftClick,
+  onSecondaryAction: startMobileRightClick,
+  onStopSecondaryAction: stopMobileRightClick,
+  onInventoryTouchStart: handleMobileInventoryTouchStart,
+  onInventoryClick: handleMobileInventoryClick,
+  onToggleSprint: toggleMobileSprint,
+  buttons: {
+    up: buttonUp,
+    down: buttonDown,
+    chat: buttonLeft0,
+    sprint: buttonLeft1,
+    shoot: buttonShoot,
+    secondary: buttonRight1,
+    inventory: buttonRight3,
+  },
+});
 
 function updateMobileShooting(deltaTime) {
   return;
@@ -5612,104 +5457,100 @@ function toggleMenuCentralTab(tabName) {
   showMenuCentral(getActiveMenuCentralTab());
 }
 
-document.addEventListener('mousedown', event => {
-  gameAudio.unlockAudio(true);
-  handleDesktopAttack(event);
-});
 document.addEventListener('touchstart', () => {
   gameAudio.unlockAudio(true);
 }, { passive: true });
 document.addEventListener('pointerdown', () => {
   gameAudio.unlockAudio(true);
 }, { passive: true });
-document.addEventListener('contextmenu', event => event.preventDefault());
 
-document.addEventListener('keydown', e => {
-  if (e.code === 'Escape' && chatUI.isInputOpen()) {
-    e.preventDefault();
-    e.stopPropagation();
-    chatUI.hideInput();
-    return;
-  }
-
-  if (!mobileMode && e.code === 'Tab') {
-    /* Tab becomes the dedicated desktop menu toggle so the game no longer
-    depends on Escape for opening the settings menu. Preventing the browser's
-    default focus traversal keeps the gameplay surface from losing focus or
-    jumping to other controls while the player is trying to pause/open UI. */
-    e.preventDefault();
-    e.stopPropagation();
-    if (e.repeat) return;
-    toggleMenuCentralTab('settings');
-    return;
-  }
-
-  if (e.code === 'Enter') {
-    if (e.repeat) return;
-    if (e.target === chatBoxInput || !isTypingTarget(e.target)) {
+input.bindHotkeys({
+  target: document,
+  handlers: {
+    onEscape: e => {
+      if (e.code !== 'Escape' || !chatUI.isInputOpen()) return false;
       e.preventDefault();
-      chatUI.handleAction();
-      return;
-    }
-  }
-
-  // Let desktop players hit "/" to jump straight into command entry with the
-  // slash already inserted, while leaving normal typing fields untouched.
-  // Using the produced key instead of the physical key code keeps this working
-  // across keyboard layouts and prevents the browser quick-search shortcut.
-  if (!mobileMode && e.key === '/' && !e.repeat && !chatUI.isInputOpen() && !isTypingTarget(e.target)) {
-    e.preventDefault();
-    e.stopPropagation();
-    chatUI.showInput();
-    if (chatBoxInput) {
-      chatBoxInput.value = '/';
-      chatBoxInput.setSelectionRange(1, 1);
-    }
-    return;
-  }
-
-  if (isTypingTarget(e.target)) return;
-
-  if (e.code === 'KeyF' && !mobileMode) {
-    if (e.repeat) return;
-    setFlyMode(!flyMode);
-    return;
-  }
-
-  if (e.code === 'KeyC' && !mobileMode) {
-    e.preventDefault();
-    if (e.repeat) return;
-    toggleMenuCentralTab('creative');
-    return;
-  }
-
-  if (e.code === 'KeyI' && !mobileMode) {
-    e.preventDefault();
-    if (e.repeat) return;
-    toggleMenuCentralTab('inventory');
-    return;
-  }
-
-  if (e.code === 'KeyM' && !mobileMode) {
-    e.preventDefault();
-    if (e.repeat) return;
-    toggleMenuCentralTab('map');
-    return;
-  }
-
-  if (!mobileMode && /^[1-8]$/.test(e.key)) {
-    e.preventDefault();
-    if (e.repeat) return;
-    const slotIndex = Number(e.key) - 1;
-    inventoryUI.selectHotbarSlot(slotIndex);
-    return;
-  }
-
-  if (e.code === 'Space') {
-    if (flyMode) return;
-    if (e.repeat) return;
-    playerState.jumpQueued = true;
-  }
+      e.stopPropagation();
+      chatUI.hideInput();
+      return true;
+    },
+    onTab: e => {
+      if (mobileMode || e.code !== 'Tab') return false;
+      /* Tab becomes the dedicated desktop menu toggle so the game no longer
+      depends on Escape for opening the settings menu. Preventing the browser's
+      default focus traversal keeps the gameplay surface from losing focus or
+      jumping to other controls while the player is trying to pause/open UI. */
+      e.preventDefault();
+      e.stopPropagation();
+      if (e.repeat) return true;
+      toggleMenuCentralTab('settings');
+      return true;
+    },
+    onEnter: e => {
+      if (e.code !== 'Enter') return false;
+      if (e.repeat) return true;
+      if (e.target === chatBoxInput || !isTypingTarget(e.target)) {
+        e.preventDefault();
+        chatUI.handleAction();
+        return true;
+      }
+      return false;
+    },
+    onSlash: e => {
+      if (mobileMode || e.key !== '/' || e.repeat || chatUI.isInputOpen() || isTypingTarget(e.target)) {
+        return false;
+      }
+      e.preventDefault();
+      e.stopPropagation();
+      chatUI.showInput();
+      if (chatBoxInput) {
+        chatBoxInput.value = '/';
+        chatBoxInput.setSelectionRange(1, 1);
+      }
+      return true;
+    },
+    onTypingTarget: e => isTypingTarget(e.target),
+    onKeyF: e => {
+      if (mobileMode || e.code !== 'KeyF') return false;
+      if (e.repeat) return true;
+      setFlyMode(!flyMode);
+      return true;
+    },
+    onKeyC: e => {
+      if (mobileMode || e.code !== 'KeyC') return false;
+      e.preventDefault();
+      if (e.repeat) return true;
+      toggleMenuCentralTab('creative');
+      return true;
+    },
+    onKeyI: e => {
+      if (mobileMode || e.code !== 'KeyI') return false;
+      e.preventDefault();
+      if (e.repeat) return true;
+      toggleMenuCentralTab('inventory');
+      return true;
+    },
+    onKeyM: e => {
+      if (mobileMode || e.code !== 'KeyM') return false;
+      e.preventDefault();
+      if (e.repeat) return true;
+      toggleMenuCentralTab('map');
+      return true;
+    },
+    onHotbarNumber: e => {
+      if (mobileMode || !/^[1-8]$/.test(e.key)) return false;
+      e.preventDefault();
+      if (e.repeat) return true;
+      const slotIndex = Number(e.key) - 1;
+      inventoryUI.selectHotbarSlot(slotIndex);
+      return true;
+    },
+    onSpace: e => {
+      if (e.code !== 'Space' || flyMode || e.repeat) return false;
+      playerState.jumpQueued = true;
+      return true;
+    },
+  },
 });
 
 const clock = new THREE.Clock();
@@ -5756,9 +5597,9 @@ renderer.setAnimationLoop(() => {
   }
 
   if (mobileMode) {
-    if (!isLegoLolCameraMode() && rightTouchId !== null) {
-      yaw -= lookDx * sensitivity;
-      pitch -= lookDy * sensitivity;
+    if (!isLegoLolCameraMode() && input.joysticks.look.active) {
+      yaw -= input.look.x * sensitivity;
+      pitch -= input.look.y * sensitivity;
       pitch = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, pitch));
     }
 

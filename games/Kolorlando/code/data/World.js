@@ -476,7 +476,9 @@ export class World {
 function normalizePlacedBoxel(boxel, position = {}) {
   const normalizedBoxel = boxel instanceof Boxel
     ? boxel.clone()
-    : new Boxel().fromJSON(boxel ?? {});
+    : new Boxel({
+      size: Number(boxel?.size) || undefined,
+    }).fromJSON(boxel ?? {});
 
   return {
     position: {

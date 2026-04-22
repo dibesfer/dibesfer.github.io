@@ -33,6 +33,11 @@ export class Boxel {
     return this;
   }
 
+  resetVoxels(active = false) {
+    this.voxels = createVoxelGrid(this.size, { active });
+    return this;
+  }
+
   get(x, y, z) {
     return this.voxels?.[x]?.[y]?.[z] ?? null;
   }
@@ -53,7 +58,7 @@ export class Boxel {
 
   setVoxels(voxelsArray) {
     if (!Array.isArray(voxelsArray) || voxelsArray.length === 0) {
-      this.voxels = createVoxelGrid(this.size);
+      this.resetVoxels(false);
       return this;
     }
 
@@ -76,6 +81,56 @@ export class Boxel {
     );
 
     return this;
+  }
+
+  setVoxelEntries(voxelEntries = []) {
+    this.resetVoxels(false);
+
+    if (!Array.isArray(voxelEntries) || voxelEntries.length === 0) {
+      return this;
+    }
+
+    for (let i = 0; i < voxelEntries.length; i += 1) {
+      const entry = voxelEntries[i];
+      const position = normalizeVoxelEntryPosition(entry?.position ?? entry);
+      if (!position) continue;
+      if (!this.voxels?.[position.x]?.[position.y]?.[position.z]) continue;
+
+      const voxel = entry?.voxel instanceof Voxel
+        ? entry.voxel.clone()
+        : new Voxel({
+          x: position.x,
+          y: position.y,
+          z: position.z,
+        }).fromJSON(entry?.voxel ?? entry ?? {});
+
+      voxel.setPosition(position.x, position.y, position.z);
+      voxel.active = entry?.voxel?.active ?? entry?.active ?? voxel.active;
+      this.voxels[position.x][position.y][position.z] = voxel;
+    }
+
+    return this;
+  }
+
+  getVoxelEntries({ activeOnly = true } = {}) {
+    const voxelEntries = [];
+
+    for (let x = 0; x < this.size; x += 1) {
+      for (let y = 0; y < this.size; y += 1) {
+        for (let z = 0; z < this.size; z += 1) {
+          const voxel = this.get(x, y, z);
+          if (!voxel) continue;
+          if (activeOnly && voxel.active !== true) continue;
+
+          voxelEntries.push({
+            position: { x, y, z },
+            voxel: voxel.clone(),
+          });
+        }
+      }
+    }
+
+    return voxelEntries;
   }
 
   toJSON() {
@@ -134,14 +189,28 @@ function normalizeText(value, fallback = '') {
   return trimmedValue || fallback;
 }
 
-function createVoxelGrid(size) {
+function createVoxelGrid(size, { active = true } = {}) {
   return Array.from({ length: size }, (_, x) =>
     Array.from({ length: size }, (_, y) =>
       Array.from({ length: size }, (_, z) => new Voxel({
         x,
         y,
         z,
+        active,
       }))
     )
   );
+}
+
+function normalizeVoxelEntryPosition(position = null) {
+  if (!position || typeof position !== 'object') return null;
+
+  const x = Math.floor(Number(position.x));
+  const y = Math.floor(Number(position.y));
+  const z = Math.floor(Number(position.z));
+  if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(z)) {
+    return null;
+  }
+
+  return { x, y, z };
 }

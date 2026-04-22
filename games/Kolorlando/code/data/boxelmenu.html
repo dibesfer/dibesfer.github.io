@@ -294,7 +294,7 @@
     <p>You can select an area with <b>Boxel Selection Tool</b> and write <code>/saveBoxel myBoxelName</code> in the chat to store your boxel locally and access it from this panel.</p>
     <script type="module">
         import { drawBoxelIsometric, loadBoxel } from './boxelPainter.js';
-        import { KOLORLANDO_LOCAL_BOXELS_STORAGE_KEY, deleteLocalBoxel, findLocalBoxel, readLocalBoxels, writeLocalBoxel } from './boxelStorage.js';
+        import { KOLORLANDO_BOXEL_FORMAT, KOLORLANDO_LOCAL_BOXELS_STORAGE_KEY, deleteLocalBoxel, deserializeStoredBoxel, findLocalBoxel, readLocalBoxels, serializeStoredBoxel, writeLocalBoxel } from './boxelStorage.js';
 
         const boxelImportButton = document.getElementById('boxelImportButton');
         const boxelImportInput = document.getElementById('boxelImportInput');
@@ -333,7 +333,7 @@
             const boxelData = findLocalBoxel(assetId);
             if (!boxelData) return;
 
-            const blob = new Blob([JSON.stringify(boxelData, null, 2)], { type: 'application/json' });
+            const blob = new Blob([JSON.stringify(serializeStoredBoxel(boxelData), null, 2)], { type: 'application/json' });
             const downloadUrl = URL.createObjectURL(blob);
             const downloadLink = document.createElement('a');
 
@@ -394,8 +394,8 @@
 
         function importBoxelText(rawBoxelText, sourceLabel) {
             try {
-                const boxelData = JSON.parse(rawBoxelText);
-                if (boxelData?.format !== 'kolorlando.boxel' || !Array.isArray(boxelData?.voxels)) {
+                const boxelData = deserializeStoredBoxel(JSON.parse(rawBoxelText));
+                if (boxelData?.format !== KOLORLANDO_BOXEL_FORMAT || !boxelData?.boxel) {
                     throw new Error('Invalid Boxel file.');
                 }
 

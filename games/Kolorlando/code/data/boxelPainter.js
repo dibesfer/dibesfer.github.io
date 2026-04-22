@@ -1,3 +1,5 @@
+import { deserializeStoredBoxel, getBoxelVoxelEntries } from './boxelStorage.js';
+
 function mixColorChannel(channel, target, amount) {
     return Math.round(channel + (target - channel) * amount);
 }
@@ -48,21 +50,19 @@ function drawPolygon(context, points, fillStyle) {
 }
 
 function normalizeBoxelVoxels(boxelData) {
-    return Array.isArray(boxelData?.voxels)
-        ? boxelData.voxels
-            .map(voxel => ({
-                color: typeof voxel?.color === 'string' ? voxel.color : '#4a90ff',
-                position: {
-                    x: Math.round(Number(voxel?.position?.x) || 0),
-                    y: Math.round(Number(voxel?.position?.y) || 0),
-                    z: Math.round(Number(voxel?.position?.z) || 0),
-                },
-            }))
-            .sort((left, right) => (
-                (left.position.x + left.position.z + left.position.y * 2)
-                - (right.position.x + right.position.z + right.position.y * 2)
-            ))
-        : [];
+    return getBoxelVoxelEntries(deserializeStoredBoxel(boxelData))
+        .map(entry => ({
+            color: typeof entry?.voxel?.color === 'string' ? entry.voxel.color : '#4a90ff',
+            position: {
+                x: Math.round(Number(entry?.position?.x) || 0),
+                y: Math.round(Number(entry?.position?.y) || 0),
+                z: Math.round(Number(entry?.position?.z) || 0),
+            },
+        }))
+        .sort((left, right) => (
+            (left.position.x + left.position.z + left.position.y * 2)
+            - (right.position.x + right.position.z + right.position.y * 2)
+        ));
 }
 
 function measureBoxelBounds(voxels, tileWidth, tileHeight, cubeHeight) {
@@ -127,7 +127,7 @@ export async function loadBoxel(url) {
         throw new Error(`Could not load Boxel: ${url}`);
     }
 
-    return response.json();
+    return deserializeStoredBoxel(await response.json());
 }
 
 export function drawBoxelIsometric(canvas, boxelData) {
