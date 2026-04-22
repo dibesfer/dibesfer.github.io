@@ -1,5 +1,5 @@
 import { World } from '../code/data/World.js';
-import { Voxel } from '../code/data/Voxel.js';
+import { Voxel, VoxelPlane } from '../code/data/Voxel.js';
 
 /* Voxelaar starts as an empty world object.
 Inner content layers will be authored later. */
@@ -45,6 +45,14 @@ let VoxelaarVoxels = {
     texture: 'assets/voxels/textures/bloko.png',
     transparent: true,
     type: 'textured',
+  }),
+  kvadrato: new VoxelPlane({
+    name: 'kvadrato',
+    color: '#ffffff',
+    texture: 'assets/voxels/textures/kvadrato.png',
+    transparent: true,
+    type: 'textured',
+    planeFace: 'front',
   }),
 };
 
