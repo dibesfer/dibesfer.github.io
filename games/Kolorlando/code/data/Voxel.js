@@ -356,6 +356,30 @@ export class VoxelPlane extends Voxel {
   }
 }
 
+export class VoxelPlaneText extends VoxelPlane {
+  constructor({
+    text = 'Write your message',
+    fontFamily = 'monospace',
+    fontSize = '1rem',
+    textColor = 'black',
+    backgroundColor = 'white',
+    horizontalAlign = 'center',
+    verticalAlign = 'center',
+    padding = 0,
+    ...planeOptions
+  } = {}) {
+    super(planeOptions);
+    this.text = normalizeText(text, 'Write your message');
+    this.fontFamily = normalizeText(fontFamily, 'monospace');
+    this.fontSize = normalizeText(fontSize, '1rem');
+    this.textColor = normalizeText(textColor, 'black');
+    this.backgroundColor = normalizeText(backgroundColor, 'white');
+    this.horizontalAlign = normalizeText(horizontalAlign, 'center');
+    this.verticalAlign = normalizeText(verticalAlign, 'center');
+    this.padding = toFiniteNumber(padding, 0);
+  }
+}
+
 function toFiniteNumber(value, fallback = 0) {
   const numericValue = Number(value);
   return Number.isFinite(numericValue) ? numericValue : fallback;
