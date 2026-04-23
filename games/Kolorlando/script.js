@@ -2004,7 +2004,7 @@ function getTopBottomPlaneRollFromPlayerYaw() {
 }
 
 function orientPlacedVoxelFromHit(hit = null, voxel = null) {
-  if (!hit?.object || !hit?.face || !voxel || voxel?.kind !== 'plane') {
+  if (!hit?.object || !hit?.face || !voxel || voxel?.shape !== 'plane') {
     return voxel;
   }
 

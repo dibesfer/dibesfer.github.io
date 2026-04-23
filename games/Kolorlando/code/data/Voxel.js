@@ -28,6 +28,7 @@ export class Voxel {
     this.transparent = Boolean(transparent);
     this.active = Boolean(active);
     this.name = normalizeText(name, '');
+    this.shape = 'voxel';
     this.microxelSize = normalizeGridSize(microxelSize);
     this.microxels = null;
 
@@ -212,6 +213,7 @@ export class Voxel {
         y: this.rotation.y,
         z: this.rotation.z,
       },
+      shape: this.shape,
       type: this.type,
       color: this.color,
       texture: serializeVoxelTexture(this.texture),
@@ -286,7 +288,7 @@ export class VoxelPlane extends Voxel {
     ...voxelOptions
   } = {}) {
     super(voxelOptions);
-    this.kind = 'plane';
+    this.shape = 'plane';
     this.planeFace = normalizeVoxelPlaneFace(planeFace);
     this.doubleSided = Boolean(doubleSided);
     this.inset = toFiniteNumber(inset, 0);
@@ -328,7 +330,7 @@ export class VoxelPlane extends Voxel {
   toJSON() {
     return {
       ...super.toJSON(),
-      kind: this.kind,
+      shape: this.shape,
       planeFace: this.planeFace,
       doubleSided: this.doubleSided,
       inset: this.inset,

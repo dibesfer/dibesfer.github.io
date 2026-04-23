@@ -517,7 +517,7 @@ function cloneSnapshotVoxelDefinition(voxel = null) {
   if (!voxel || typeof voxel !== 'object') return null;
 
   const clonedVoxel = {};
-  if (typeof voxel.kind === 'string' && voxel.kind.trim()) clonedVoxel.kind = voxel.kind.trim();
+  if (typeof voxel.shape === 'string' && voxel.shape.trim()) clonedVoxel.shape = voxel.shape.trim();
   if (typeof voxel.name === 'string' && voxel.name.trim()) clonedVoxel.name = voxel.name.trim();
   if (voxel.rotation && typeof voxel.rotation === 'object' && !Array.isArray(voxel.rotation)) {
     clonedVoxel.rotation = cloneSnapshotValue(voxel.rotation);
@@ -553,7 +553,7 @@ function normalizeWorldVoxel(voxel, position = {}) {
 }
 
 function isVoxelPlaneData(voxel = null) {
-  return voxel instanceof VoxelPlane || voxel?.kind === 'plane';
+  return voxel instanceof VoxelPlane || voxel?.shape === 'plane';
 }
 
 function normalizeWorldEntitySpec(entity = {}) {

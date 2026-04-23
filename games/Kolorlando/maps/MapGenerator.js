@@ -130,7 +130,7 @@ export function buildMapFromWorld({
   }
 
   function isVoxelPlane(voxel = null) {
-    return voxel instanceof VoxelPlane || voxel?.kind === 'plane';
+    return voxel instanceof VoxelPlane || voxel?.shape === 'plane';
   }
 
   function isCollidableVoxel(voxel = null) {
@@ -359,7 +359,7 @@ export function buildMapFromWorld({
 
     voxelTypesByName.set(voxelName, {
       name: voxelName,
-      kind: isVoxelPlane(voxel) ? 'plane' : 'voxel',
+      shape: isVoxelPlane(voxel) ? 'plane' : 'voxel',
       type: typeof voxel?.type === 'string' && voxel.type.trim()
         ? voxel.type.trim().toLowerCase()
         : 'colored',
@@ -696,7 +696,7 @@ export function buildMapFromWorld({
       const voxelType = voxelTypesByName.get(String(voxelTypeName ?? '').trim());
       if (!voxelType) return null;
 
-      if (voxelType.kind === 'plane') {
+      if (voxelType.shape === 'plane') {
         return new VoxelPlane({
           name: voxelType.name,
           type: voxelType.type,
