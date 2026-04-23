@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { World } from '../code/data/World.js';
-import { Voxel, VoxelPlane } from '../code/data/Voxel.js';
+import { Voxel, VoxelPlane, VoxelPlaneText } from '../code/data/Voxel.js';
 
 /*
 
@@ -133,6 +133,10 @@ export function buildMapFromWorld({
     return voxel instanceof VoxelPlane || voxel?.shape === 'plane';
   }
 
+  function isVoxelPlaneText(voxel = null) {
+    return voxel instanceof VoxelPlaneText || voxel?.contentType === 'text';
+  }
+
   function isCollidableVoxel(voxel = null) {
     return Boolean(voxel) && !isVoxelPlane(voxel);
   }
@@ -256,7 +260,9 @@ export function buildMapFromWorld({
     const inset = Number.isFinite(voxel?.inset) ? voxel.inset : 0;
     const textureHref = normalizeTexture(voxel?.texture) ? String(voxel.texture).trim() : '';
     const planeGeometry = new THREE.PlaneGeometry(voxelSize, voxelSize);
-    const resolvedTexture = textureHref ? getLoadedVoxelFaceTexture(textureHref) : null;
+    const resolvedTexture = isVoxelPlaneText(voxel)
+      ? createTextPlaneCanvasTexture(voxel)
+      : textureHref ? getLoadedVoxelFaceTexture(textureHref) : null;
     const planeMaterial = new THREE.MeshStandardMaterial({
       color: normalizeColor(voxel?.color),
       map: resolvedTexture,
@@ -307,6 +313,21 @@ export function buildMapFromWorld({
     mesh.position.set(centerPosition.x, centerPosition.y, centerPosition.z);
     mesh.userData.voxelCell = { x: cellX, y: cellY, z: cellZ };
     return mesh;
+  }
+
+  function createTextPlaneCanvasTexture(voxel = null) {
+    if (typeof voxel?.createCanvasTextureSource !== 'function') {
+      return null;
+    }
+
+    const texture = new THREE.CanvasTexture(voxel.createCanvasTextureSource());
+    texture.colorSpace = THREE.SRGBColorSpace;
+    texture.magFilter = THREE.NearestFilter;
+    texture.minFilter = THREE.NearestFilter;
+    texture.wrapS = THREE.ClampToEdgeWrapping;
+    texture.wrapT = THREE.ClampToEdgeWrapping;
+    texture.needsUpdate = true;
+    return texture;
   }
 
   function createCellKey(cellX, cellY, cellZ) {
@@ -360,6 +381,7 @@ export function buildMapFromWorld({
     voxelTypesByName.set(voxelName, {
       name: voxelName,
       shape: isVoxelPlane(voxel) ? 'plane' : 'voxel',
+      contentType: isVoxelPlaneText(voxel) ? 'text' : null,
       type: typeof voxel?.type === 'string' && voxel.type.trim()
         ? voxel.type.trim().toLowerCase()
         : 'colored',
@@ -370,6 +392,14 @@ export function buildMapFromWorld({
       planeFace: typeof voxel?.planeFace === 'string' ? voxel.planeFace : 'front',
       doubleSided: voxel?.doubleSided === true,
       inset: Number.isFinite(voxel?.inset) ? Number(voxel.inset) : 0,
+      text: typeof voxel?.text === 'string' ? voxel.text : 'Write your message',
+      fontFamily: typeof voxel?.fontFamily === 'string' ? voxel.fontFamily : 'monospace',
+      fontSize: typeof voxel?.fontSize === 'string' ? voxel.fontSize : '3rem',
+      textColor: typeof voxel?.textColor === 'string' ? voxel.textColor : 'black',
+      backgroundColor: typeof voxel?.backgroundColor === 'string' ? voxel.backgroundColor : 'white',
+      horizontalAlign: typeof voxel?.horizontalAlign === 'string' ? voxel.horizontalAlign : 'center',
+      verticalAlign: typeof voxel?.verticalAlign === 'string' ? voxel.verticalAlign : 'center',
+      padding: Number.isFinite(voxel?.padding) ? Number(voxel.padding) : 0,
     });
   }
 
@@ -697,6 +727,28 @@ export function buildMapFromWorld({
       if (!voxelType) return null;
 
       if (voxelType.shape === 'plane') {
+        if (voxelType.contentType === 'text') {
+          return new VoxelPlaneText({
+            name: voxelType.name,
+            type: voxelType.type,
+            color: '#' + voxelType.color.toString(16).padStart(6, '0'),
+            texture: cloneTextureSpec(voxelType.texture) || null,
+            transparent: voxelType.transparent === true,
+            rotation: getVoxelRotation(voxelType),
+            planeFace: voxelType.planeFace || 'front',
+            doubleSided: voxelType.doubleSided === true,
+            inset: voxelType.inset ?? 0,
+            text: voxelType.text,
+            fontFamily: voxelType.fontFamily,
+            fontSize: voxelType.fontSize,
+            textColor: voxelType.textColor,
+            backgroundColor: voxelType.backgroundColor,
+            horizontalAlign: voxelType.horizontalAlign,
+            verticalAlign: voxelType.verticalAlign,
+            padding: voxelType.padding,
+          });
+        }
+
         return new VoxelPlane({
           name: voxelType.name,
           type: voxelType.type,

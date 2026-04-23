@@ -1,5 +1,5 @@
 import { Boxel } from './Boxel.js';
-import { Voxel, VoxelPlane } from './Voxel.js';
+import { Voxel, VoxelPlane, VoxelPlaneText } from './Voxel.js';
 
 export const Boxel10 = new Boxel({
   name: 'Boxel10',
@@ -518,6 +518,7 @@ function cloneSnapshotVoxelDefinition(voxel = null) {
 
   const clonedVoxel = {};
   if (typeof voxel.shape === 'string' && voxel.shape.trim()) clonedVoxel.shape = voxel.shape.trim();
+  if (typeof voxel.contentType === 'string' && voxel.contentType.trim()) clonedVoxel.contentType = voxel.contentType.trim();
   if (typeof voxel.name === 'string' && voxel.name.trim()) clonedVoxel.name = voxel.name.trim();
   if (voxel.rotation && typeof voxel.rotation === 'object' && !Array.isArray(voxel.rotation)) {
     clonedVoxel.rotation = cloneSnapshotValue(voxel.rotation);
@@ -533,6 +534,14 @@ function cloneSnapshotVoxelDefinition(voxel = null) {
   if (typeof voxel.planeFace === 'string' && voxel.planeFace.trim()) clonedVoxel.planeFace = voxel.planeFace.trim();
   if (typeof voxel.doubleSided === 'boolean') clonedVoxel.doubleSided = voxel.doubleSided;
   if (Number.isFinite(voxel.inset)) clonedVoxel.inset = Number(voxel.inset);
+  if (typeof voxel.text === 'string' && voxel.text.trim()) clonedVoxel.text = voxel.text.trim();
+  if (typeof voxel.fontFamily === 'string' && voxel.fontFamily.trim()) clonedVoxel.fontFamily = voxel.fontFamily.trim();
+  if (typeof voxel.fontSize === 'string' && voxel.fontSize.trim()) clonedVoxel.fontSize = voxel.fontSize.trim();
+  if (typeof voxel.textColor === 'string' && voxel.textColor.trim()) clonedVoxel.textColor = voxel.textColor.trim();
+  if (typeof voxel.backgroundColor === 'string' && voxel.backgroundColor.trim()) clonedVoxel.backgroundColor = voxel.backgroundColor.trim();
+  if (typeof voxel.horizontalAlign === 'string' && voxel.horizontalAlign.trim()) clonedVoxel.horizontalAlign = voxel.horizontalAlign.trim();
+  if (typeof voxel.verticalAlign === 'string' && voxel.verticalAlign.trim()) clonedVoxel.verticalAlign = voxel.verticalAlign.trim();
+  if (Number.isFinite(voxel.padding)) clonedVoxel.padding = Number(voxel.padding);
   if (Number.isFinite(voxel.microxelSize) && voxel.microxelSize > 0) clonedVoxel.microxelSize = Number(voxel.microxelSize);
   if (Array.isArray(voxel.microxels) && voxel.microxels.length > 0) {
     clonedVoxel.microxels = cloneSnapshotValue(voxel.microxels);
@@ -544,12 +553,18 @@ function cloneSnapshotVoxelDefinition(voxel = null) {
 function normalizeWorldVoxel(voxel, position = {}) {
   const normalizedVoxel = voxel instanceof Voxel
     ? voxel.clone()
+    : isVoxelPlaneTextData(voxel)
+      ? new VoxelPlaneText().fromJSON(voxel ?? {})
     : isVoxelPlaneData(voxel)
       ? new VoxelPlane().fromJSON(voxel ?? {})
       : new Voxel().fromJSON(voxel ?? {});
 
   normalizedVoxel.setPosition(position.x, position.y, position.z);
   return normalizedVoxel;
+}
+
+function isVoxelPlaneTextData(voxel = null) {
+  return voxel instanceof VoxelPlaneText || voxel?.contentType === 'text';
 }
 
 function isVoxelPlaneData(voxel = null) {

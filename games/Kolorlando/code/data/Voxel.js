@@ -354,13 +354,14 @@ export class VoxelPlane extends Voxel {
 
     return this;
   }
+
 }
 
 export class VoxelPlaneText extends VoxelPlane {
   constructor({
     text = 'Write your message',
     fontFamily = 'monospace',
-    fontSize = '1rem',
+    fontSize = '3rem',
     textColor = 'black',
     backgroundColor = 'white',
     horizontalAlign = 'center',
@@ -369,14 +370,131 @@ export class VoxelPlaneText extends VoxelPlane {
     ...planeOptions
   } = {}) {
     super(planeOptions);
+    this.contentType = 'text';
     this.text = normalizeText(text, 'Write your message');
     this.fontFamily = normalizeText(fontFamily, 'monospace');
-    this.fontSize = normalizeText(fontSize, '1rem');
+    this.fontSize = normalizeText(fontSize, '3rem');
     this.textColor = normalizeText(textColor, 'black');
     this.backgroundColor = normalizeText(backgroundColor, 'white');
     this.horizontalAlign = normalizeText(horizontalAlign, 'center');
     this.verticalAlign = normalizeText(verticalAlign, 'center');
     this.padding = toFiniteNumber(padding, 0);
+  }
+
+  clone() {
+    return new VoxelPlaneText({
+      x: this.x,
+      y: this.y,
+      z: this.z,
+      rotation: { ...this.rotation },
+      type: this.type,
+      color: this.color,
+      texture: cloneVoxelTexture(this.texture),
+      transparent: this.transparent,
+      active: this.active,
+      name: this.name,
+      planeFace: this.planeFace,
+      doubleSided: this.doubleSided,
+      inset: this.inset,
+      text: this.text,
+      fontFamily: this.fontFamily,
+      fontSize: this.fontSize,
+      textColor: this.textColor,
+      backgroundColor: this.backgroundColor,
+      horizontalAlign: this.horizontalAlign,
+      verticalAlign: this.verticalAlign,
+      padding: this.padding,
+    });
+  }
+
+  toJSON() {
+    return {
+      ...super.toJSON(),
+      contentType: this.contentType,
+      text: this.text,
+      fontFamily: this.fontFamily,
+      fontSize: this.fontSize,
+      textColor: this.textColor,
+      backgroundColor: this.backgroundColor,
+      horizontalAlign: this.horizontalAlign,
+      verticalAlign: this.verticalAlign,
+      padding: this.padding,
+    };
+  }
+
+  fromJSON(data = {}) {
+    super.fromJSON(data);
+
+    if ('text' in data) {
+      this.text = normalizeText(data.text, 'Write your message');
+    }
+
+    if ('fontFamily' in data) {
+      this.fontFamily = normalizeText(data.fontFamily, 'monospace');
+    }
+
+    if ('fontSize' in data) {
+      this.fontSize = normalizeText(data.fontSize, '3rem');
+    }
+
+    if ('textColor' in data) {
+      this.textColor = normalizeText(data.textColor, 'black');
+    }
+
+    if ('backgroundColor' in data) {
+      this.backgroundColor = normalizeText(data.backgroundColor, 'white');
+    }
+
+    if ('horizontalAlign' in data) {
+      this.horizontalAlign = normalizeText(data.horizontalAlign, 'center');
+    }
+
+    if ('verticalAlign' in data) {
+      this.verticalAlign = normalizeText(data.verticalAlign, 'center');
+    }
+
+    if ('padding' in data) {
+      this.padding = toFiniteNumber(data.padding, 0);
+    }
+
+    return this;
+  }
+
+  createCanvasTextureSource({
+    width = 512,
+    height = 512,
+    canvas = null,
+  } = {}) {
+    const targetCanvas = canvas ?? document.createElement('canvas');
+    const canvasWidth = Math.max(1, Math.floor(Number(width) || 512));
+    const canvasHeight = Math.max(1, Math.floor(Number(height) || 512));
+    const context = targetCanvas.getContext('2d');
+
+    targetCanvas.width = canvasWidth;
+    targetCanvas.height = canvasHeight;
+
+    if (!context) {
+      return targetCanvas;
+    }
+
+    context.clearRect(0, 0, canvasWidth, canvasHeight);
+    context.fillStyle = this.backgroundColor;
+    context.fillRect(0, 0, canvasWidth, canvasHeight);
+
+    const padding = Math.max(0, this.padding);
+    const drawWidth = Math.max(1, canvasWidth - padding * 2);
+    const drawHeight = Math.max(1, canvasHeight - padding * 2);
+
+    context.fillStyle = this.textColor;
+    context.font = `${this.fontSize} ${this.fontFamily}`;
+    context.textAlign = normalizeCanvasTextAlign(this.horizontalAlign);
+    context.textBaseline = normalizeCanvasTextBaseline(this.verticalAlign);
+
+    const textX = getCanvasTextX(this.horizontalAlign, padding, drawWidth);
+    const textY = getCanvasTextY(this.verticalAlign, padding, drawHeight);
+    context.fillText(this.text, textX, textY, drawWidth);
+
+    return targetCanvas;
   }
 }
 
@@ -392,6 +510,36 @@ function normalizeText(value, fallback = '') {
 
   const trimmedValue = value.trim();
   return trimmedValue || fallback;
+}
+
+function normalizeCanvasTextAlign(horizontalAlign = 'center') {
+  const normalizedAlign = normalizeText(horizontalAlign, 'center').toLowerCase();
+  if (normalizedAlign === 'left' || normalizedAlign === 'right' || normalizedAlign === 'center') {
+    return normalizedAlign;
+  }
+
+  return 'center';
+}
+
+function normalizeCanvasTextBaseline(verticalAlign = 'center') {
+  const normalizedAlign = normalizeText(verticalAlign, 'center').toLowerCase();
+  if (normalizedAlign === 'top') return 'top';
+  if (normalizedAlign === 'bottom') return 'bottom';
+  return 'middle';
+}
+
+function getCanvasTextX(horizontalAlign = 'center', padding = 0, drawWidth = 1) {
+  const normalizedAlign = normalizeCanvasTextAlign(horizontalAlign);
+  if (normalizedAlign === 'left') return padding;
+  if (normalizedAlign === 'right') return padding + drawWidth;
+  return padding + drawWidth * 0.5;
+}
+
+function getCanvasTextY(verticalAlign = 'center', padding = 0, drawHeight = 1) {
+  const normalizedAlign = normalizeCanvasTextBaseline(verticalAlign);
+  if (normalizedAlign === 'top') return padding;
+  if (normalizedAlign === 'bottom') return padding + drawHeight;
+  return padding + drawHeight * 0.5;
 }
 
 function normalizeVoxelType(type) {
