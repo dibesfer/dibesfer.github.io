@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { WorldEntity } from './entity.js';
 
 const gltfLoader = new GLTFLoader();
 
@@ -14,7 +15,7 @@ function applyShadows(root, castShadow, receiveShadow) {
   });
 }
 
-export class Vehicle {
+export class Vehicle extends WorldEntity {
   constructor({
     scene,
     position,
@@ -27,19 +28,16 @@ export class Vehicle {
     receiveShadow = false,
     miniMapType = 'vehicle',
   }) {
+    super({ scene, position, name, typeLabel, miniMapType });
+
     /* This base class deliberately mirrors the lightweight world-object shape
     used elsewhere in Kolorlando: a world position, a Three.js group, a label,
     and an update() method the main loop can call safely even if the object is
     static for now. */
-    this.scene = scene;
-    this.position = position.clone();
-    this.name = name;
-    this.typeLabel = typeLabel;
     this.modelUrl = modelUrl;
     this.modelScale = modelScale;
     this.castShadow = castShadow;
     this.receiveShadow = receiveShadow;
-    this.miniMapType = miniMapType;
 
     /* A neutral forward direction gives the minimap and any future systems a
     stable orientation value even before vehicles gain movement behavior. */
@@ -49,11 +47,9 @@ export class Vehicle {
     once the GLTF is available, which lets simple raycast/UI systems treat the
     vehicle like a normal world entity without hand-authored box values yet. */
     this.collider = new THREE.Box3();
-
-    this.group = new THREE.Group();
+    this.raycastShape = { type: 'box', box: this.collider };
     this.group.position.copy(this.position);
     this.group.rotation.y = rotationY;
-    this.scene.add(this.group);
 
     if (this.modelUrl) {
       this.loadModel();

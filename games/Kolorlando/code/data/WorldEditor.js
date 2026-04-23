@@ -65,6 +65,23 @@ export class WorldEditor {
     return this.getVoxelBox(cell.cellX, cell.cellY, cell.cellZ, targetBox);
   }
 
+  canPlaceVoxelAtCell(cellX = 0, cellY = 0, cellZ = 0, options = {}) {
+    if (!this.world) return false;
+    if (options.replaceExisting !== true && this.world.hasVoxel(cellX, cellY, cellZ)) {
+      return false;
+    }
+
+    const playerCollider = options.playerCollider;
+    if (playerCollider?.intersectsBox) {
+      const candidateBox = this.getVoxelBox(cellX, cellY, cellZ);
+      if (candidateBox && playerCollider.intersectsBox(candidateBox)) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
   setVoxel(cellX = 0, cellY = 0, cellZ = 0, voxel = null) {
     if (!this.world) return false;
     try {
@@ -87,7 +104,7 @@ export class WorldEditor {
   setVoxelFromHit(hit = null, voxel = null, options = {}) {
     const cell = this.getAdjacentTargetVoxelCell(hit);
     if (!cell) return null;
-    if (options.replaceExisting !== true && this.world?.hasVoxel(cell.cellX, cell.cellY, cell.cellZ)) {
+    if (!this.canPlaceVoxelAtCell(cell.cellX, cell.cellY, cell.cellZ, options)) {
       return null;
     }
 

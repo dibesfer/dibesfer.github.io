@@ -47,6 +47,7 @@ import { SpaceShipVehicle } from './code/entities/vehicle.js';
 import { Input } from './code/Input.js';
 import { Boxel } from './code/data/Boxel.js';
 import { Voxel } from './code/data/Voxel.js';
+import { KLRaycast } from './code/KL_Raycast.js';
 
 const KOLORLANDO_MODE = window.KOLORLANDO_MODE === 'multiplayer' ? 'multiplayer' : 'singleplayer';
 const MULTIPLAYER_ENABLED = KOLORLANDO_MODE === 'multiplayer';
@@ -293,13 +294,6 @@ const settingsReloadWorldButton = document.getElementById('settingsReloadWorldBu
 const playerHealthFill = document.getElementById('playerHealthFill');
 const playerHealthText = document.getElementById('playerHealthText');
 const voxelReadout = document.getElementById('voxelReadout');
-const wowCursorNdc = new THREE.Vector2();
-const lastRaycastCameraPosition = new THREE.Vector3();
-const lastRaycastCameraDirection = new THREE.Vector3();
-const lastRaycastPlayerPosition = new THREE.Vector3();
-const trackedRaycastCameraPosition = new THREE.Vector3();
-const trackedRaycastCameraDirection = new THREE.Vector3();
-const trackedRaycastPlayerPosition = new THREE.Vector3();
 const chatBox = document.getElementById('chatBox');
 const chatBoxOutput = document.getElementById('chatBoxOutput');
 const chatBoxInput = document.getElementById('chatBoxInput');
@@ -311,8 +305,7 @@ const input = new Input({
   isMobile: mobileMode,
 }).mount();
 let suppressRight3Click = false;
-let voxelRaycastDirty = true;
-let voxelRaycastRefreshAccumulator = 1 / 30;
+let klRaycast = null;
 const playerEquipment = createEquipment({
   resolveItemDefinition(itemOrDefinition) {
     if (typeof itemOrDefinition === 'string') {
@@ -323,8 +316,6 @@ const playerEquipment = createEquipment({
       : null;
   },
 });
-let lastRaycastModeKey = '';
-let lastWowCursorRaycastActive = false;
 let openingChatFromPointerLock = false;
 let suppressNextDesktopAttack = false;
 let suppressNextDesktopAttackUntil = 0;
@@ -332,7 +323,6 @@ let suppressNextDesktopAttackButton = null;
 let characterPreviewDragState = null;
 const gameAudio = createGameAudio();
 const systemMenuThemeQuery = window.matchMedia('(prefers-color-scheme: dark)');
-let wowCursorRaycastActive = false;
 let cameraModeController = null;
 let screenController = null;
 const STRUCTURE_ASSET_URLS = {
@@ -368,8 +358,6 @@ let rendererPixelRatioBase = Math.min(window.devicePixelRatio, 2);
 let renderScaleMultiplier = DEFAULT_RENDER_SCALE;
 let pixelatedUpscaleEnabled = DEFAULT_PIXELATED_UPSCALE;
 let shadowPresetName = DEFAULT_SHADOW_PRESET;
-const VOXEL_RAYCAST_REFRESH_INTERVAL = 1 / 30;
-const WOW_CURSOR_RAYCAST_NDC_EPSILON_SQ = 0.000004;
 const cameraForwardDirection = new THREE.Vector3();
 let yaw = 0;
 let pitch = 0;
@@ -2302,62 +2290,72 @@ document.addEventListener('visibilitychange', () => {
   }
 });
 
-function getEntityRaycastHit(origin, direction, maxDistance) {
-  let closestHit = null;
-  let closestDistance = maxDistance;
-
-  for (let i = 0; i < entities.length; i++) {
-    const entity = entities[i];
-    const collider = entity?.collider;
-    if (!collider) continue;
-    if (!cameraRaycaster.ray.intersectBox(collider, entityRaycastPoint)) continue;
-
-    const distance = origin.distanceTo(entityRaycastPoint);
-    if (!Number.isFinite(distance) || distance > maxDistance || distance >= closestDistance) {
-      continue;
-    }
-
-    const entityType = entity.typeLabel ?? 'Entity';
-    const entityName = entity.name ? ` (${entity.name})` : '';
-    closestDistance = distance;
-    closestHit = {
-      kind: 'entity',
-      label: `${entityType}${entityName}`,
-      entity,
-      distance,
-      point: entityRaycastPoint.clone(),
-    };
-  }
-
-  return closestHit;
+function formatWorldEntityRaycastLabel(worldEntity) {
+  return worldEntity?.name || worldEntity?.label || 'Entity';
 }
 
 const itemRaycastPoint = new THREE.Vector3();
 
-function getItemRaycastHit(origin, direction, maxDistance) {
-  let closestHit = null;
-  let closestDistance = maxDistance;
+function getClosestWorldEntityRaycastHitFromList({
+  list,
+  origin,
+  maxDistance,
+  ray,
+  closestHit,
+  closestDistance,
+}) {
+  for (let i = 0; i < list.length; i++) {
+    const worldEntity = list[i];
+    const raycastShape = worldEntity?.getRaycastShape?.();
+    if (!raycastShape) continue;
 
-  for (let i = 0; i < itemAppearances.length; i++) {
-    const itemAppearance = itemAppearances[i];
-    const raycastSphere = itemAppearance?.raycastSphere;
-    if (!raycastSphere || !(raycastSphere.radius > 0)) continue;
-    if (!cameraRaycaster.ray.intersectSphere(raycastSphere, itemRaycastPoint)) continue;
+    const hitPoint = raycastShape.type === 'sphere'
+      ? itemRaycastPoint
+      : entityRaycastPoint;
+    const didHit = raycastShape.type === 'sphere'
+      ? ray.intersectSphere(raycastShape.sphere, hitPoint)
+      : ray.intersectBox(raycastShape.box, hitPoint);
+    if (!didHit) continue;
 
-    const distance = origin.distanceTo(itemRaycastPoint);
+    const distance = origin.distanceTo(hitPoint);
     if (!Number.isFinite(distance) || distance > maxDistance || distance >= closestDistance) {
       continue;
     }
 
     closestDistance = distance;
     closestHit = {
-      kind: "item",
-      label: itemAppearance.label ?? "Item",
-      itemAppearance,
+      kind: 'worldEntity',
+      label: formatWorldEntityRaycastLabel(worldEntity),
+      worldEntity,
+      entity: worldEntity?.typeLabel === 'Item' ? null : worldEntity,
+      itemAppearance: worldEntity?.typeLabel === 'Item' ? worldEntity : null,
       distance,
-      point: itemRaycastPoint.clone(),
+      point: hitPoint.clone(),
     };
   }
+
+  return { closestHit, closestDistance };
+}
+
+function getWorldEntityRaycastHit(origin, direction, maxDistance, ray = cameraRaycaster.ray) {
+  let closestHit = null;
+  let closestDistance = maxDistance;
+  ({ closestHit, closestDistance } = getClosestWorldEntityRaycastHitFromList({
+    list: entities,
+    origin,
+    maxDistance,
+    ray,
+    closestHit,
+    closestDistance,
+  }));
+  ({ closestHit } = getClosestWorldEntityRaycastHitFromList({
+    list: itemAppearances,
+    origin,
+    maxDistance,
+    ray,
+    closestHit,
+    closestDistance,
+  }));
 
   return closestHit;
 }
@@ -4439,7 +4437,8 @@ function triggerActionForMouseButton(button, options = {}) {
 
           const addedResult = worldEditor.setVoxelFromHit(
             currentRaycastState.hit,
-            selectedWorldVoxel
+            selectedWorldVoxel,
+            { playerCollider }
           );
           if (!addedResult) return false;
 
@@ -5034,272 +5033,71 @@ const horizontalMove = new THREE.Vector3();
 const playerMoveFacing = new THREE.Vector3();
 const playerAimFacing = new THREE.Vector3();
 const worldUp = new THREE.Vector3(0, 1, 0);
-const currentRaycastState = {
-  hit: null,
-  kind: null,
-  entity: null,
-  item: null,
-  voxelEditionMode: false,
-  boxelEditionMode: false,
-};
-
-function invalidateVoxelRaycast() {
-  // Raycasts are now demand-driven, so any input or camera state change that can
-  // alter the aimed target simply marks the cached result as dirty for a later refresh.
-  voxelRaycastDirty = true;
-}
-
 function getCurrentRaycastModeKey() {
-  // The same camera transform can still mean a different aiming rule depending on
-  // the active camera mode, so the cache also tracks the interaction mode itself.
   if (isScreenDragCameraActive()) return 'screen-drag-active';
   if (isScreenDragCameraMode()) return 'screen-drag-idle';
   if (isLegoLolCameraMode()) return 'lego-lol';
   return 'default';
 }
 
-function syncTrackedRaycastInputs() {
-  // These snapshots are intentionally cheap to gather. They let us avoid the
-  // heavy world raycast whenever the player, camera, and mode stayed unchanged.
-  camera.getWorldPosition(trackedRaycastCameraPosition);
-  camera.getWorldDirection(trackedRaycastCameraDirection);
-  trackedRaycastPlayerPosition.copy(playerEye);
-}
+klRaycast = new KLRaycast({
+  camera,
+  raycaster: cameraRaycaster,
+  rayOrigin: cameraRayOrigin,
+  rayDirection: cameraRayDirection,
+  rayEnd: cameraRayEnd,
+  raycastTargets,
+  playerEye,
+  playerBody,
+  playerFacingDir,
+  sceneView,
+  mobileMode: () => mobileMode,
+  getModeKey: getCurrentRaycastModeKey,
+  isScreenDragCameraActive,
+  isScreenDragCameraMode,
+  isLegoLolCameraMode,
+  getThirdPersonDistance: () => currentThirdPersonDistance,
+  resolveRaycastLabel,
+  getWorldEntityRaycastHit,
+  getRemotePlayerRaycastHit: (...args) => multiplayerController.getRemotePlayerRaycastHit(...args),
+  getVoxelBoxFromRaycastHit,
+  isBoxelSelectionToolSelected,
+  syncVoxelHighlightStyle,
+  syncBoxelSelectedVoxelHighlightVisibility,
+  voxelHighlightBox,
+  voxelHighlightMesh,
+  cameraRayLine,
+  cameraRayLineGeometry,
+  cameraRayTip,
+  voxelReadout,
+  debugModeEnabled: () => debugModeEnabled,
+  multiplayerEnabled: MULTIPLAYER_ENABLED,
+  entityRaycastPoint,
+  raycastRange: CAMERA_RAYCAST_RANGE,
+  raycastStartOffset: CAMERA_RAYCAST_START_OFFSET,
+  legoLolRaycastHeight: LEGO_LOL_RAYCAST_HEIGHT,
+  legoLolRaycastRange: LEGO_LOL_RAYCAST_RANGE,
+});
+const currentRaycastState = klRaycast.getState();
 
-function hasVoxelRaycastInputsChanged() {
-  const currentModeKey = getCurrentRaycastModeKey();
-  syncTrackedRaycastInputs();
-
-  // Tiny thresholds keep floating-point jitter from retriggering expensive raycasts.
-  return currentModeKey !== lastRaycastModeKey
-    || trackedRaycastCameraPosition.distanceToSquared(lastRaycastCameraPosition) > 0.000001
-    || trackedRaycastCameraDirection.distanceToSquared(lastRaycastCameraDirection) > 0.000001
-    || trackedRaycastPlayerPosition.distanceToSquared(lastRaycastPlayerPosition) > 0.000001
-    || wowCursorRaycastActive !== lastWowCursorRaycastActive;
-}
-
-function commitVoxelRaycastInputs() {
-  // Once a raycast finishes, the tracked input snapshot becomes the new clean baseline.
-  lastRaycastCameraPosition.copy(trackedRaycastCameraPosition);
-  lastRaycastCameraDirection.copy(trackedRaycastCameraDirection);
-  lastRaycastPlayerPosition.copy(trackedRaycastPlayerPosition);
-  lastRaycastModeKey = getCurrentRaycastModeKey();
-  lastWowCursorRaycastActive = wowCursorRaycastActive;
-  voxelRaycastDirty = false;
+function invalidateVoxelRaycast() {
+  if (!klRaycast) return;
+  klRaycast.invalidate();
 }
 
 function refreshVoxelRaycast(force = false, deltaTime = 0) {
-  // The force path is used right before interactions so clicks never consume a stale
-  // target even if the world raycast has been skipped on recent idle frames.
-  if (force) {
-    syncTrackedRaycastInputs();
-    updateVoxelRaycast();
-    commitVoxelRaycastInputs();
-    voxelRaycastRefreshAccumulator = 0;
-    return;
-  }
-
-  const hasInputsChanged = hasVoxelRaycastInputsChanged();
-  if (!voxelRaycastDirty && !hasInputsChanged) return;
-
-  voxelRaycastRefreshAccumulator += Number.isFinite(deltaTime) ? deltaTime : 0;
-
-  // Capping non-forced refreshes keeps camera drag and aim jitter from issuing
-  // a full world raycast on every render frame while still updating the target
-  // often enough for smooth interaction feedback.
-  if (voxelRaycastRefreshAccumulator < VOXEL_RAYCAST_REFRESH_INTERVAL) {
-    return;
-  }
-
-  // Refreshes always snapshot the latest input state first so the cache baseline
-  // matches the exact camera/player configuration that produced this raycast.
-  syncTrackedRaycastInputs();
-  updateVoxelRaycast();
-  commitVoxelRaycastInputs();
-  voxelRaycastRefreshAccumulator %= VOXEL_RAYCAST_REFRESH_INTERVAL;
+  if (!klRaycast) return;
+  klRaycast.refresh(force, deltaTime);
 }
 
 function updateWowCursorRaycastPointer(clientX, clientY) {
-  if (!sceneView || mobileMode || !isScreenDragCameraActive()) {
-    if (wowCursorRaycastActive) {
-      wowCursorRaycastActive = false;
-      invalidateVoxelRaycast();
-    }
-    return;
-  }
-
-  const rect = sceneView.getBoundingClientRect();
-  if (rect.width <= 0 || rect.height <= 0) {
-    if (wowCursorRaycastActive) {
-      wowCursorRaycastActive = false;
-      invalidateVoxelRaycast();
-    }
-    return;
-  }
-
-  const previousNdcX = wowCursorNdc.x;
-  const previousNdcY = wowCursorNdc.y;
-  const wasCursorRaycastActive = wowCursorRaycastActive;
-  wowCursorNdc.x = ((clientX - rect.left) / rect.width) * 2 - 1;
-  wowCursorNdc.y = -((clientY - rect.top) / rect.height) * 2 + 1;
-  wowCursorRaycastActive = wowCursorNdc.x >= -1 && wowCursorNdc.x <= 1
-    && wowCursorNdc.y >= -1 && wowCursorNdc.y <= 1;
-  const cursorMovedEnoughToMatter =
-    (wowCursorNdc.x - previousNdcX) * (wowCursorNdc.x - previousNdcX)
-    + (wowCursorNdc.y - previousNdcY) * (wowCursorNdc.y - previousNdcY)
-    > WOW_CURSOR_RAYCAST_NDC_EPSILON_SQ;
-
-  if (wowCursorRaycastActive !== wasCursorRaycastActive || (wowCursorRaycastActive && cursorMovedEnoughToMatter)) {
-    invalidateVoxelRaycast();
-  }
+  if (!klRaycast) return;
+  klRaycast.updatePointer(clientX, clientY);
 }
 
 function clearWowCursorRaycastPointer() {
-  if (!wowCursorRaycastActive) {
-    return;
-  }
-  wowCursorRaycastActive = false;
-  invalidateVoxelRaycast();
-}
-
-function updateVoxelRaycast() {
-  let intersections = [];
-  cameraRaycaster.far = isLegoLolCameraMode() ? LEGO_LOL_RAYCAST_RANGE : CAMERA_RAYCAST_RANGE;
-
-  if (isScreenDragCameraActive()) {
-    if (wowCursorRaycastActive) {
-      cameraRaycaster.setFromCamera(wowCursorNdc, camera);
-      cameraRayDirection.copy(cameraRaycaster.ray.direction).normalize();
-      if (currentThirdPersonDistance > 0.001) {
-        camera.getWorldPosition(cameraRayOrigin);
-        cameraRaycaster.set(cameraRayOrigin, cameraRayDirection);
-      } else {
-        cameraRayOrigin.copy(cameraRaycaster.ray.origin);
-      }
-      intersections = raycastTargets.length > 0
-        ? cameraRaycaster.intersectObjects(raycastTargets, true)
-        : [];
-    } else {
-      camera.getWorldPosition(cameraRayOrigin);
-      camera.getWorldDirection(cameraRayDirection);
-      cameraRayDirection.normalize();
-      cameraRayEnd.copy(cameraRayOrigin);
-    }
-  } else if (isScreenDragCameraMode()) {
-    camera.getWorldPosition(cameraRayOrigin);
-    camera.getWorldDirection(cameraRayDirection);
-    cameraRayDirection.normalize();
-    cameraRayEnd.copy(cameraRayOrigin);
-  } else if (isLegoLolCameraMode()) {
-    if (playerFacingDir.lengthSq() > 0.0001) {
-      cameraRayDirection.copy(playerFacingDir);
-    } else {
-      cameraRayDirection.set(Math.sin(playerBody.rotation.y), 0, Math.cos(playerBody.rotation.y));
-    }
-    cameraRayDirection.y = 0;
-    cameraRayDirection.normalize();
-    cameraRayOrigin.set(playerEye.x, playerBody.position.y + LEGO_LOL_RAYCAST_HEIGHT, playerEye.z);
-    cameraRaycaster.far = LEGO_LOL_RAYCAST_RANGE;
-    cameraRaycaster.set(cameraRayOrigin, cameraRayDirection);
-    intersections = raycastTargets.length > 0
-      ? cameraRaycaster.intersectObjects(raycastTargets, true)
-      : [];
-  } else {
-    camera.getWorldDirection(cameraRayDirection);
-    cameraRayDirection.normalize();
-    camera.getWorldPosition(cameraRayOrigin);
-    cameraRayOrigin.addScaledVector(cameraRayDirection, CAMERA_RAYCAST_START_OFFSET);
-    cameraRaycaster.set(cameraRayOrigin, cameraRayDirection);
-    intersections = raycastTargets.length > 0
-      ? cameraRaycaster.intersectObjects(raycastTargets, true)
-      : [];
-  }
-
-  const maxRayDistance = isLegoLolCameraMode() ? LEGO_LOL_RAYCAST_RANGE : CAMERA_RAYCAST_RANGE;
-  const voxelHit = intersections.length > 0 ? intersections[0] : null;
-  const voxelLabel = voxelHit ? resolveRaycastLabel(voxelHit) : null;
-  const voxelDistance = voxelHit ? cameraRayOrigin.distanceTo(voxelHit.point) : Infinity;
-  const entityHit = getEntityRaycastHit(cameraRayOrigin, cameraRayDirection, maxRayDistance);
-  const remotePlayerHit = MULTIPLAYER_ENABLED
-    ? multiplayerController.getRemotePlayerRaycastHit(
-      cameraRayOrigin,
-      cameraRaycaster.ray,
-      maxRayDistance,
-      entityRaycastPoint
-    )
-    : null;
-  const itemHit = getItemRaycastHit(cameraRayOrigin, cameraRayDirection, maxRayDistance);
-  const closestCharacterHit = entityHit && remotePlayerHit
-    ? (entityHit.distance <= remotePlayerHit.distance ? entityHit : remotePlayerHit)
-    : (entityHit ?? remotePlayerHit);
-
-  let readoutLabel = 'none';
-  let activeVoxelHit = null;
-  let activeHit = null;
-  let activeHitKind = null;
-  let activeEntity = null;
-
-  if (voxelLabel && voxelDistance <= Math.min(closestCharacterHit?.distance ?? Infinity, itemHit?.distance ?? Infinity)) {
-    readoutLabel = voxelLabel;
-    activeVoxelHit = voxelHit;
-    activeHit = voxelHit;
-    activeHitKind = 'voxel';
-    cameraRayEnd.copy(voxelHit.point);
-  } else if (closestCharacterHit && closestCharacterHit.distance <= (itemHit?.distance ?? Infinity)) {
-    readoutLabel = closestCharacterHit.label;
-    activeHit = closestCharacterHit;
-    activeHitKind = 'entity';
-    activeEntity = closestCharacterHit.entity;
-    cameraRayEnd.copy(closestCharacterHit.point);
-  } else if (itemHit) {
-    readoutLabel = itemHit.label;
-    activeHit = itemHit;
-    activeHitKind = 'item';
-    cameraRayEnd.copy(itemHit.point);
-  } else {
-    cameraRayEnd.copy(cameraRayOrigin).addScaledVector(cameraRayDirection, maxRayDistance);
-  }
-
-  currentRaycastState.hit = activeHit;
-  currentRaycastState.kind = activeHitKind;
-  currentRaycastState.entity = activeEntity;
-  currentRaycastState.item = activeHitKind === 'item' ? activeHit?.itemAppearance ?? null : null;
-  currentRaycastState.voxelEditionMode = activeVoxelHit !== null;
-  currentRaycastState.boxelEditionMode = activeVoxelHit !== null && isBoxelSelectionToolSelected();
-
-  if (activeVoxelHit && getVoxelBoxFromRaycastHit(activeVoxelHit, voxelHighlightBox)) {
-    /* The Boxel tool is currently a visual abstraction layer over the existing
-    voxel raycast, so it reuses the same targeted box but tints it blue while
-    the dedicated hotbar tool is equipped. */
-    syncVoxelHighlightStyle();
-    voxelHighlightBox.getCenter(voxelHighlightMesh.position);
-    voxelHighlightMesh.visible = true;
-  } else {
-    voxelHighlightMesh.visible = false;
-  }
-
-  syncBoxelSelectedVoxelHighlightVisibility();
-
-  cameraRayLine.visible = debugModeEnabled;
-  cameraRayTip.visible = debugModeEnabled;
-
-  const linePosition = cameraRayLineGeometry.attributes.position;
-  linePosition.setXYZ(0, cameraRayOrigin.x, cameraRayOrigin.y, cameraRayOrigin.z);
-  linePosition.setXYZ(1, cameraRayEnd.x, cameraRayEnd.y, cameraRayEnd.z);
-  linePosition.needsUpdate = true;
-  cameraRayLineGeometry.computeBoundingSphere();
-  cameraRayTip.position.copy(cameraRayEnd);
-
-  if (voxelReadout) {
-    const readoutPrefix = activeHitKind === 'entity'
-      ? 'Entity'
-      : activeHitKind === 'voxel'
-        ? 'Voxel'
-        : activeHitKind === 'item'
-          ? 'Item'
-          : 'Target';
-    voxelReadout.textContent = `${readoutPrefix}: ${readoutLabel}`;
-  }
+  if (!klRaycast) return;
+  klRaycast.clearPointer();
 }
 
 function updateDesktopLook() {

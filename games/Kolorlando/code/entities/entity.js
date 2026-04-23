@@ -156,7 +156,36 @@ export function drawHealthBarSprite(sprite, healthRatio) {
   texture.needsUpdate = true;
 }
 
-export class Entity {
+export class WorldEntity {
+  constructor({
+    scene,
+    position,
+    groundY = 0,
+    name = 'Entity',
+    typeLabel = 'Entity',
+    miniMapType = 'entity',
+  } = {}) {
+    this.scene = scene;
+    this.position = position?.clone ? position.clone() : new THREE.Vector3();
+    this.groundY = groundY;
+    this.name = name;
+    this.typeLabel = typeLabel;
+    this.miniMapType = miniMapType;
+    this.collider = null;
+    this.raycastShape = null;
+    this.group = new THREE.Group();
+    this.group.position.copy(this.position);
+    this.scene?.add?.(this.group);
+  }
+
+  update() {}
+
+  getRaycastShape() {
+    return this.raycastShape;
+  }
+}
+
+export class Entity extends WorldEntity {
   constructor({
     scene,
     position,
@@ -171,15 +200,11 @@ export class Entity {
     miniMapType = 'walker',
     maxHealth = 100,
   }) {
-    this.scene = scene;
-    this.position = position.clone();
-    this.groundY = groundY;
+    super({ scene, position, groundY, name, typeLabel, miniMapType });
+
     this.speed = speed;
     this.clearance = clearance;
-    this.name = name;
-    this.typeLabel = typeLabel;
     this.dialogLines = dialogLines;
-    this.miniMapType = miniMapType;
     this.maxHealth = Math.max(1, maxHealth);
     this.health = this.maxHealth;
 
@@ -190,7 +215,7 @@ export class Entity {
     this.visualLift = 0.03;
 
     this.collider = new THREE.Box3();
-    this.group = new THREE.Group();
+    this.raycastShape = { type: 'box', box: this.collider };
     this.group.scale.set(1, this.bodyHeight / this.modelBaseHeight, 1);
     this.group.position.set(this.position.x, this.groundY + this.visualLift, this.position.z);
 
@@ -223,7 +248,6 @@ export class Entity {
       this.dialogSprite.position.set(0, this.bodyHeight + 1.85, 0);
       this.group.add(this.dialogSprite);
     }
-    this.scene.add(this.group);
 
     this.direction = new THREE.Vector3(1, 0, 0);
     this.turnTimer = 0;

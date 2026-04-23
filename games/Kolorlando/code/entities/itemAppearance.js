@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { WorldEntity } from './entity.js';
 
 const gltfLoader = new GLTFLoader();
 
@@ -528,7 +529,7 @@ function createColorTabardItemModel({
   };
 }
 
-export class ItemAppearance {
+export class ItemAppearance extends WorldEntity {
   constructor({
     scene,
     position,
@@ -548,13 +549,19 @@ export class ItemAppearance {
     placementHeight = DEFAULT_ITEM_PLACEMENT_HEIGHT,
     centerModel = false,
   }) {
-    this.scene = scene;
-    this.position = position.clone();
+    super({
+      scene,
+      position,
+      groundY,
+      name: label,
+      typeLabel: 'Item',
+      miniMapType: 'item',
+    });
+
     this.label = label;
     this.inventoryType = inventoryType ?? label;
     this.pickable = pickable;
     this.collected = false;
-    this.groundY = groundY;
     this.floatHeight = floatHeight;
     this.rotationSpeed = rotationSpeed;
     this.modelHeight = 0;
@@ -571,10 +578,9 @@ export class ItemAppearance {
       : createDefaultItemModel({ castShadow, receiveShadow }));
 
     this.model = resolvedModel;
-    this.group = new THREE.Group();
     this.group.position.copy(this.position);
     this.raycastSphere = new THREE.Sphere(this.position.clone(), 0);
-    this.scene.add(this.group);
+    this.raycastShape = { type: 'sphere', sphere: this.raycastSphere };
 
     this.setModel(resolvedModel);
 
@@ -644,6 +650,12 @@ export class ItemAppearance {
   update(deltaTime) {
     if (this.collected) return;
     this.group.rotation.y += this.rotationSpeed * deltaTime;
+  }
+
+  getRaycastShape() {
+    return this.raycastSphere && this.raycastSphere.radius > 0
+      ? this.raycastShape
+      : null;
   }
 
   collect() {
