@@ -6,8 +6,87 @@ export const Boxel10 = new Boxel({
   size: 10,
 });
 
+export const Boxel15 = new Boxel({
+  name: 'Boxel15',
+  size: 15,
+});
+
 const WORLD_SNAPSHOT_FORMAT = 'kolorlando.worldSnapshot.compact';
 const WORLD_SNAPSHOT_VERSION = 1;
+
+export class Boxel15DistanceRendering {
+  constructor({
+    radiusInVoxels = 30,
+  } = {}) {
+    this.radiusInVoxels = normalizeWorldAxisSize(radiusInVoxels);
+  }
+
+  setRadiusInVoxels(radiusInVoxels = 30) {
+    this.radiusInVoxels = normalizeWorldAxisSize(radiusInVoxels);
+    return this;
+  }
+
+  getChunkRadius(chunkSize = Boxel15.size) {
+    return Math.ceil(this.radiusInVoxels / normalizeWorldAxisSize(chunkSize));
+  }
+
+  getCenterChunkPosition(world = null, center = null) {
+    const fallbackCenter = center && typeof center === 'object'
+      ? center
+      : world?.spawnPosition ?? { x: 0, y: 0, z: 0 };
+    const chunkSize = world?.getChunkSize?.() ?? Boxel15.size;
+    const gridPosition = world instanceof World
+      ? world.mapToGridPosition(
+        Number(fallbackCenter.x) || 0,
+        Number(fallbackCenter.y) || 0,
+        Number(fallbackCenter.z) || 0,
+        1
+      )
+      : {
+        x: Number(fallbackCenter.x) || 0,
+        y: Number(fallbackCenter.y) || 0,
+        z: Number(fallbackCenter.z) || 0,
+      };
+
+    return {
+      x: Math.floor(gridPosition.x / chunkSize),
+      y: Math.floor(gridPosition.y / chunkSize),
+      z: Math.floor(gridPosition.z / chunkSize),
+    };
+  }
+
+  getActiveChunkPositions(world = null, center = null) {
+    const centerChunk = this.getCenterChunkPosition(world, center);
+    const chunkRadius = this.getChunkRadius(world?.getChunkSize?.() ?? Boxel15.size);
+    const activeChunkPositions = [];
+
+    for (let x = centerChunk.x - chunkRadius; x <= centerChunk.x + chunkRadius; x += 1) {
+      for (let y = centerChunk.y - chunkRadius; y <= centerChunk.y + chunkRadius; y += 1) {
+        for (let z = centerChunk.z - chunkRadius; z <= centerChunk.z + chunkRadius; z += 1) {
+          if (world instanceof World && !world.isChunkPositionWithinWorld(x, y, z)) continue;
+          activeChunkPositions.push({ x, y, z });
+        }
+      }
+    }
+
+    return activeChunkPositions;
+  }
+
+  getActiveChunkKeys(world = null, center = null) {
+    const activeChunkPositions = this.getActiveChunkPositions(world, center);
+    if (!(world instanceof World)) {
+      return activeChunkPositions.map(position => createVoxelKey(position.x, position.y, position.z));
+    }
+
+    return activeChunkPositions.map(position => world.getChunkKey(position.x, position.y, position.z));
+  }
+
+  toJSON() {
+    return {
+      radiusInVoxels: this.radiusInVoxels,
+    };
+  }
+}
 
 export class World {
   constructor({
@@ -15,8 +94,10 @@ export class World {
     size = { x: 100, y: 100, z: 100 },
     land = { x: 1, y: 1, z: 1 },
     spawnPosition = { x: 0, y: 0, z: 0 },
+    boxel15DistanceRendering = null,
     voxelTypes = null,
     entities = null,
+    chunkBoxel = null,
     boxels = null,
     voxels = null,
   } = {}) {
@@ -25,10 +106,13 @@ export class World {
     this.size = normalizeWorldSize(size);
     this.land = normalizeWorldSize(land);
     this.spawnPosition = normalizeWorldPosition(spawnPosition);
+    this.boxel15DistanceRendering = normalizeWorldBoxel15DistanceRendering(boxel15DistanceRendering);
     this.entities = createDefaultWorldEntities();
+    this.chunkBoxel = normalizeWorldChunkBoxel(chunkBoxel);
     this.boxels = [];
     this.voxelTypes = new Map();
-    this.voxels = new Map();
+    this.voxelBoxels = new Map();
+    this.activeChunkKeys = new Set(this.boxel15DistanceRendering.getActiveChunkKeys(this, this.spawnPosition));
 
     if (voxelTypes instanceof Map || Array.isArray(voxelTypes)) {
       this.setVoxelTypes(voxelTypes);
@@ -64,6 +148,22 @@ export class World {
 
   setSpawnPosition(position = { x: 0, y: 0, z: 0 }) {
     this.spawnPosition = normalizeWorldPosition(position);
+    if (this.activeChunkKeys instanceof Set) {
+      this.updateActiveChunks(this.spawnPosition);
+    }
+    return this;
+  }
+
+  setBoxel15DistanceRendering(boxel15DistanceRendering = null) {
+    this.boxel15DistanceRendering = normalizeWorldBoxel15DistanceRendering(boxel15DistanceRendering);
+    if (this.activeChunkKeys instanceof Set) {
+      this.updateActiveChunks(this.spawnPosition);
+    }
+    return this;
+  }
+
+  setChunkBoxel(chunkBoxel = null) {
+    this.chunkBoxel = normalizeWorldChunkBoxel(chunkBoxel);
     return this;
   }
 
@@ -191,7 +291,23 @@ export class World {
 
   getVoxel(x = 0, y = 0, z = 0) {
     const position = normalizeWorldPosition({ x, y, z });
-    return this.voxels.get(createVoxelKey(position.x, position.y, position.z)) ?? null;
+    const voxelAddress = this.getChunkVoxelAddress(position.x, position.y, position.z);
+    if (!voxelAddress) return null;
+
+    const chunkEntry = this.getChunkEntry(
+      voxelAddress.chunk.x,
+      voxelAddress.chunk.y,
+      voxelAddress.chunk.z
+    );
+    if (!chunkEntry) return null;
+
+    const voxel = chunkEntry.boxel.get(
+      voxelAddress.local.x,
+      voxelAddress.local.y,
+      voxelAddress.local.z
+    );
+
+    return voxel?.active === true ? voxel.clone().setPosition(position.x, position.y, position.z) : null;
   }
 
   setVoxel(x = 0, y = 0, z = 0, voxel = null) {
@@ -199,27 +315,64 @@ export class World {
     const normalizedVoxel = normalizeWorldVoxel(voxel, position);
     this.assertVoxelPositionWithinWorld(position);
     this.registerVoxelType(normalizedVoxel);
-    this.voxels.set(createVoxelKey(position.x, position.y, position.z), normalizedVoxel);
+
+    const voxelAddress = this.getChunkVoxelAddress(position.x, position.y, position.z);
+    const chunkEntry = this.ensureChunkEntry(
+      voxelAddress.chunk.x,
+      voxelAddress.chunk.y,
+      voxelAddress.chunk.z
+    );
+
+    chunkEntry.boxel.set(
+      voxelAddress.local.x,
+      voxelAddress.local.y,
+      voxelAddress.local.z,
+      normalizedVoxel
+    );
     return this;
   }
 
   removeVoxel(x = 0, y = 0, z = 0) {
     const position = normalizeWorldPosition({ x, y, z });
-    return this.voxels.delete(createVoxelKey(position.x, position.y, position.z));
+    const voxelAddress = this.getChunkVoxelAddress(position.x, position.y, position.z);
+    if (!voxelAddress) return false;
+
+    const chunkKey = createVoxelKey(
+      voxelAddress.chunk.x,
+      voxelAddress.chunk.y,
+      voxelAddress.chunk.z
+    );
+    const chunkEntry = this.voxelBoxels.get(chunkKey);
+    if (!chunkEntry) return false;
+
+    const currentVoxel = chunkEntry.boxel.get(
+      voxelAddress.local.x,
+      voxelAddress.local.y,
+      voxelAddress.local.z
+    );
+    if (!currentVoxel?.active) return false;
+
+    currentVoxel.active = false;
+
+    if (chunkEntry.boxel.getVoxelEntries({ activeOnly: true }).length === 0) {
+      this.voxelBoxels.delete(chunkKey);
+    }
+
+    return true;
   }
 
   hasVoxel(x = 0, y = 0, z = 0) {
     const position = normalizeWorldPosition({ x, y, z });
-    return this.voxels.has(createVoxelKey(position.x, position.y, position.z));
+    return Boolean(this.getVoxel(position.x, position.y, position.z));
   }
 
   clearVoxels() {
-    this.voxels.clear();
+    this.voxelBoxels.clear();
     return this;
   }
 
   setVoxels(voxels) {
-    this.voxels = new Map();
+    this.voxelBoxels = new Map();
 
     if (voxels instanceof Map) {
       for (const [key, voxel] of voxels.entries()) {
@@ -241,11 +394,156 @@ export class World {
     return this;
   }
 
-  getVoxelEntries() {
-    return Array.from(this.voxels.entries()).map(([key, voxel]) => ({
-      position: parseVoxelKey(key),
-      voxel: voxel.clone(),
+  getVoxelEntries({ activeChunksOnly = false } = {}) {
+    const voxelEntries = [];
+
+    for (const chunkEntry of this.voxelBoxels.values()) {
+      if (activeChunksOnly && !this.isChunkActive(chunkEntry.position.x, chunkEntry.position.y, chunkEntry.position.z)) {
+        continue;
+      }
+
+      const chunkVoxelEntries = chunkEntry.boxel.getVoxelEntries({ activeOnly: true });
+
+      for (let i = 0; i < chunkVoxelEntries.length; i += 1) {
+        const chunkVoxelEntry = chunkVoxelEntries[i];
+        const worldPosition = {
+          x: chunkEntry.position.x * this.chunkBoxel.size + chunkVoxelEntry.position.x,
+          y: chunkEntry.position.y * this.chunkBoxel.size + chunkVoxelEntry.position.y,
+          z: chunkEntry.position.z * this.chunkBoxel.size + chunkVoxelEntry.position.z,
+        };
+
+        voxelEntries.push({
+          position: worldPosition,
+          voxel: chunkVoxelEntry.voxel.clone().setPosition(
+            worldPosition.x,
+            worldPosition.y,
+            worldPosition.z
+          ),
+        });
+      }
+    }
+
+    return voxelEntries;
+  }
+
+  getChunkSize() {
+    return this.chunkBoxel.size;
+  }
+
+  getChunkCounts() {
+    const chunkSize = this.getChunkSize();
+    return {
+      x: Math.ceil(this.size.x / chunkSize),
+      y: Math.ceil(this.size.y / chunkSize),
+      z: Math.ceil(this.size.z / chunkSize),
+    };
+  }
+
+  getChunkKey(chunkX = 0, chunkY = 0, chunkZ = 0) {
+    return createVoxelKey(chunkX, chunkY, chunkZ);
+  }
+
+  parseChunkKey(chunkKey = '') {
+    return parseVoxelKey(chunkKey);
+  }
+
+  isChunkPositionWithinWorld(chunkX = 0, chunkY = 0, chunkZ = 0) {
+    const chunkCounts = this.getChunkCounts();
+
+    return (
+      chunkX >= 0 && chunkX < chunkCounts.x
+      && chunkY >= 0 && chunkY < chunkCounts.y
+      && chunkZ >= 0 && chunkZ < chunkCounts.z
+    );
+  }
+
+  getChunkVoxelAddress(x = 0, y = 0, z = 0) {
+    const position = normalizeWorldPosition({ x, y, z });
+    const chunkSize = this.getChunkSize();
+
+    return {
+      chunk: {
+        x: Math.floor(position.x / chunkSize),
+        y: Math.floor(position.y / chunkSize),
+        z: Math.floor(position.z / chunkSize),
+      },
+      local: {
+        x: position.x % chunkSize,
+        y: position.y % chunkSize,
+        z: position.z % chunkSize,
+      },
+    };
+  }
+
+  getChunkEntry(chunkX = 0, chunkY = 0, chunkZ = 0) {
+    return this.voxelBoxels.get(this.getChunkKey(chunkX, chunkY, chunkZ)) ?? null;
+  }
+
+  ensureChunkEntry(chunkX = 0, chunkY = 0, chunkZ = 0) {
+    const chunkKey = this.getChunkKey(chunkX, chunkY, chunkZ);
+    const existingChunkEntry = this.voxelBoxels.get(chunkKey);
+    if (existingChunkEntry) return existingChunkEntry;
+
+    const nextChunkEntry = {
+      position: { x: chunkX, y: chunkY, z: chunkZ },
+      boxel: this.chunkBoxel.clone(),
+    };
+
+    this.voxelBoxels.set(chunkKey, nextChunkEntry);
+    return nextChunkEntry;
+  }
+
+  getChunkEntries() {
+    return Array.from(this.voxelBoxels.values()).map(entry => ({
+      position: { ...entry.position },
+      boxel: entry.boxel.clone(),
     }));
+  }
+
+  getActiveChunkKeys() {
+    return Array.from(this.activeChunkKeys);
+  }
+
+  isChunkActive(chunkX = 0, chunkY = 0, chunkZ = 0) {
+    return this.activeChunkKeys.has(this.getChunkKey(chunkX, chunkY, chunkZ));
+  }
+
+  isVoxelCellActive(cellX = 0, cellY = 0, cellZ = 0) {
+    const voxelAddress = this.getChunkVoxelAddress(cellX, cellY, cellZ);
+    return this.isChunkActive(
+      voxelAddress.chunk.x,
+      voxelAddress.chunk.y,
+      voxelAddress.chunk.z
+    );
+  }
+
+  updateActiveChunks(center = null) {
+    const nextActiveChunkKeys = new Set(
+      this.boxel15DistanceRendering.getActiveChunkKeys(this, center ?? this.spawnPosition)
+    );
+    const added = [];
+    const removed = [];
+
+    for (const chunkKey of nextActiveChunkKeys) {
+      if (!this.activeChunkKeys.has(chunkKey)) {
+        added.push(chunkKey);
+      }
+    }
+
+    for (const chunkKey of this.activeChunkKeys) {
+      if (!nextActiveChunkKeys.has(chunkKey)) {
+        removed.push(chunkKey);
+      }
+    }
+
+    this.activeChunkKeys = nextActiveChunkKeys;
+
+    return {
+      center: normalizeWorldPosition(center ?? this.spawnPosition),
+      active: this.getActiveChunkKeys(),
+      added,
+      removed,
+    };
   }
 
   get(index) {
@@ -301,6 +599,8 @@ export class World {
         y: this.spawnPosition.y,
         z: this.spawnPosition.z,
       },
+      boxel15DistanceRendering: this.boxel15DistanceRendering.toJSON(),
+      chunkBoxel: serializeChunkBoxel(this.chunkBoxel),
       voxelTypes: this.getVoxelTypes().map(voxel => voxel.toJSON()),
       entities: this.entities.map(entity => cloneWorldEntityValue(entity)),
       voxels: this.getVoxelEntries().map(entry => ({
@@ -378,6 +678,14 @@ export class World {
       this.setSpawnPosition(data.spawnPosition);
     }
 
+    if ('boxel15DistanceRendering' in data) {
+      this.setBoxel15DistanceRendering(data.boxel15DistanceRendering);
+    }
+
+    if ('chunkBoxel' in data) {
+      this.setChunkBoxel(data.chunkBoxel);
+    }
+
     if (data?.voxelTypes instanceof Map || Array.isArray(data?.voxelTypes)) {
       this.setVoxelTypes(data.voxelTypes);
     }
@@ -453,10 +761,12 @@ export class World {
       size: this.size,
       land: this.land,
       spawnPosition: this.spawnPosition,
+      boxel15DistanceRendering: this.boxel15DistanceRendering,
+      chunkBoxel: this.chunkBoxel,
       voxelTypes: this.getVoxelTypes(),
       entities: this.entities,
       boxels: this.boxels,
-      voxels: this.voxels,
+      voxels: this.getVoxelEntries(),
     });
   }
 
@@ -487,6 +797,30 @@ function normalizePlacedBoxel(boxel, position = {}) {
       z: toFiniteNumber(position?.z, 0),
     },
     boxel: normalizedBoxel,
+  };
+}
+
+function normalizeWorldChunkBoxel(chunkBoxel = null) {
+  return new Boxel({
+    name: 'Boxel15',
+    size: Boxel15.size,
+    active: chunkBoxel?.active ?? true,
+  }).resetVoxels(false);
+}
+
+function normalizeWorldBoxel15DistanceRendering(boxel15DistanceRendering = null) {
+  if (boxel15DistanceRendering instanceof Boxel15DistanceRendering) {
+    return new Boxel15DistanceRendering(boxel15DistanceRendering.toJSON());
+  }
+
+  return new Boxel15DistanceRendering(boxel15DistanceRendering ?? {});
+}
+
+function serializeChunkBoxel(chunkBoxel = null) {
+  return {
+    name: 'Boxel15',
+    size: Boxel15.size,
+    active: chunkBoxel?.active ?? true,
   };
 }
 

@@ -49,7 +49,7 @@ export function buildMapFromWorld({
   const planeRaycastMeshByKey = new Map();
   const freeVoxelIds = [];
   const worldOrigin = world.getMapOrigin(voxelSize);
-  const voxelEntries = world.getVoxelEntries();
+  const voxelEntries = world.getVoxelEntries({ activeChunksOnly: true });
   const initialVoxelCount = voxelEntries.length;
   const extraVoxelCapacity = 20000;
   const maxVoxelCount = Math.max(initialVoxelCount + extraVoxelCapacity, 1);
@@ -171,10 +171,17 @@ export function buildMapFromWorld({
     const neighborOffset = FACE_NEIGHBOR_OFFSETS[faceName];
     if (!neighborOffset) return true;
 
+    const neighborCellX = cellX + neighborOffset.x;
+    const neighborCellY = cellY + neighborOffset.y;
+    const neighborCellZ = cellZ + neighborOffset.z;
+    if (!world.isVoxelCellActive(neighborCellX, neighborCellY, neighborCellZ)) {
+      return true;
+    }
+
     const neighborVoxel = world.getVoxel(
-      cellX + neighborOffset.x,
-      cellY + neighborOffset.y,
-      cellZ + neighborOffset.z
+      neighborCellX,
+      neighborCellY,
+      neighborCellZ
     );
 
     if (!neighborVoxel) {
@@ -427,6 +434,10 @@ export function buildMapFromWorld({
   }
 
   function addColliderForCell(cellX, cellY, cellZ) {
+    if (!world.isVoxelCellActive(cellX, cellY, cellZ)) {
+      return null;
+    }
+
     const voxel = world.getVoxel(cellX, cellY, cellZ);
     if (!isCollidableVoxel(voxel)) {
       return null;
@@ -474,6 +485,7 @@ export function buildMapFromWorld({
       const neighborCellX = cellX + offset.x;
       const neighborCellY = cellY + offset.y;
       const neighborCellZ = cellZ + offset.z;
+      if (!world.isVoxelCellActive(neighborCellX, neighborCellY, neighborCellZ)) continue;
       const neighborVoxel = world.getVoxel(neighborCellX, neighborCellY, neighborCellZ);
       if (!(hasImageTextureFaces(neighborVoxel) || isVoxelPlane(neighborVoxel))) continue;
 
@@ -497,6 +509,10 @@ export function buildMapFromWorld({
   function syncWorldVoxelAddedAtCell(cellX, cellY, cellZ) {
     const voxel = world.getVoxel(cellX, cellY, cellZ);
     if (!voxel) return false;
+
+    if (!world.isVoxelCellActive(cellX, cellY, cellZ)) {
+      return true;
+    }
 
     registerVoxelType(voxel);
     syncWorldVoxelRemovedAtCell(cellX, cellY, cellZ);
@@ -559,6 +575,64 @@ export function buildMapFromWorld({
     removeColliderForCell(cellX, cellY, cellZ);
     refreshAdjacentTexturedVoxelMeshes(cellX, cellY, cellZ);
     return true;
+  }
+
+  function syncChunkAdded(chunkKey = '') {
+    const chunkPosition = typeof world.parseChunkKey === 'function'
+      ? world.parseChunkKey(chunkKey)
+      : null;
+    const chunkEntry = chunkPosition
+      ? world.getChunkEntry(chunkPosition.x, chunkPosition.y, chunkPosition.z)
+      : null;
+    if (!chunkEntry?.boxel) return false;
+
+    const chunkVoxelEntries = chunkEntry.boxel.getVoxelEntries({ activeOnly: true });
+    for (let i = 0; i < chunkVoxelEntries.length; i += 1) {
+      const entry = chunkVoxelEntries[i];
+      const cellX = chunkPosition.x * world.getChunkSize() + entry.position.x;
+      const cellY = chunkPosition.y * world.getChunkSize() + entry.position.y;
+      const cellZ = chunkPosition.z * world.getChunkSize() + entry.position.z;
+      syncWorldVoxelAddedAtCell(cellX, cellY, cellZ);
+    }
+
+    return true;
+  }
+
+  function syncChunkRemoved(chunkKey = '') {
+    const chunkPosition = typeof world.parseChunkKey === 'function'
+      ? world.parseChunkKey(chunkKey)
+      : null;
+    const chunkEntry = chunkPosition
+      ? world.getChunkEntry(chunkPosition.x, chunkPosition.y, chunkPosition.z)
+      : null;
+    if (!chunkEntry?.boxel) return false;
+
+    const chunkVoxelEntries = chunkEntry.boxel.getVoxelEntries({ activeOnly: true });
+    for (let i = 0; i < chunkVoxelEntries.length; i += 1) {
+      const entry = chunkVoxelEntries[i];
+      const cellX = chunkPosition.x * world.getChunkSize() + entry.position.x;
+      const cellY = chunkPosition.y * world.getChunkSize() + entry.position.y;
+      const cellZ = chunkPosition.z * world.getChunkSize() + entry.position.z;
+      syncWorldVoxelRemovedAtCell(cellX, cellY, cellZ);
+    }
+
+    return true;
+  }
+
+  function updateActiveChunks(center = null) {
+    const chunkDelta = typeof world.updateActiveChunks === 'function'
+      ? world.updateActiveChunks(center)
+      : { added: [], removed: [], active: [] };
+
+    for (let i = 0; i < chunkDelta.removed.length; i += 1) {
+      syncChunkRemoved(chunkDelta.removed[i]);
+    }
+
+    for (let i = 0; i < chunkDelta.added.length; i += 1) {
+      syncChunkAdded(chunkDelta.added[i]);
+    }
+
+    return chunkDelta;
   }
 
   function getVoxelCellFromRaycastHit(hit) {
@@ -773,6 +847,7 @@ export function buildMapFromWorld({
     },
     syncWorldVoxelAddedAtCell,
     syncWorldVoxelRemovedAtCell,
+    updateActiveChunks,
     intersectColliderBox(box) {
       if (!box) return null;
 
@@ -794,6 +869,7 @@ export function buildMapFromWorld({
       for (let cellY = minCellY; cellY <= maxCellY; cellY++) {
         for (let cellX = minCellX; cellX <= maxCellX; cellX++) {
           for (let cellZ = minCellZ; cellZ <= maxCellZ; cellZ++) {
+            if (!world.isVoxelCellActive(cellX, cellY, cellZ)) continue;
             if (!isCollidableVoxel(world.getVoxel(cellX, cellY, cellZ))) continue;
 
             setBoxFromCell(cellX, cellY, cellZ, tempCollisionBox);
@@ -823,6 +899,7 @@ export function buildMapFromWorld({
       for (let cellY = supportMinY; cellY <= supportMaxY; cellY++) {
         for (let cellX = minCellX; cellX <= maxCellX; cellX++) {
           for (let cellZ = minCellZ; cellZ <= maxCellZ; cellZ++) {
+            if (!world.isVoxelCellActive(cellX, cellY, cellZ)) continue;
             if (isCollidableVoxel(world.getVoxel(cellX, cellY, cellZ))) {
               return true;
             }
@@ -874,6 +951,7 @@ export function buildMapFromWorld({
       for (let cellY = minCellY; cellY <= maxCellY; cellY++) {
         for (let cellX = minCellX; cellX <= maxCellX; cellX++) {
           for (let cellZ = minCellZ; cellZ <= maxCellZ; cellZ++) {
+            if (!world.isVoxelCellActive(cellX, cellY, cellZ)) continue;
             if (!isCollidableVoxel(world.getVoxel(cellX, cellY, cellZ))) continue;
             targetBoxes.push(setBoxFromCell(cellX, cellY, cellZ).clone());
           }

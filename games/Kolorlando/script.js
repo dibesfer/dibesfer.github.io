@@ -227,8 +227,12 @@ const gltfLoader = new GLTFLoader();
 // --------------------
 // SCENE
 // --------------------
+const WORLD_SKY_COLOR = 0x00d5ff;
+const WORLD_FOG_NEAR = 14;
+const WORLD_FOG_FAR = 25;
 const scene = new THREE.Scene();
-scene.fog = new THREE.FogExp2(0x5EC9FF, 0.002);
+scene.background = new THREE.Color(WORLD_SKY_COLOR);
+scene.fog = new THREE.Fog(WORLD_SKY_COLOR, WORLD_FOG_NEAR, WORLD_FOG_FAR);
 
 // --------------------
 // CAMERA
@@ -1906,6 +1910,9 @@ const syncWorldVoxelAddedAtCell = typeof mapData.syncWorldVoxelAddedAtCell === '
 const syncWorldVoxelRemovedAtCell = typeof mapData.syncWorldVoxelRemovedAtCell === 'function'
   ? mapData.syncWorldVoxelRemovedAtCell
   : () => false;
+const updateWorldActiveChunks = typeof mapData.updateActiveChunks === 'function'
+  ? mapData.updateActiveChunks
+  : () => null;
 const worldData = mapData.world ?? null;
 const worldVoxelSize = Number(mapData.voxelSize) || 1;
 const useWorldEditorVoxelMode = isClassWorldPreset && worldData !== null;
@@ -2392,6 +2399,7 @@ const playerSpawnPoint = mapData.spawnPoint.clone();
 playerSpawnPoint.y += 1;
 
 playerEye.copy(playerSpawnPoint);
+updateWorldActiveChunks(playerEye);
 camera.position.copy(playerEye);
 
 const itemAppearances = [];
@@ -3604,6 +3612,7 @@ function applyInitialSavedMultiplayerPlayerTransform() {
   camera.rotation.order = 'YXZ';
   camera.rotation.y = initialPlayerRotationY;
   playerBody.rotation.y = initialPlayerRotationY;
+  updateWorldActiveChunks(playerEye);
 }
 
 function syncFirstPersonPlayerFacing() {
@@ -5114,6 +5123,7 @@ function updateDesktopLook() {
 
 function respawnPlayerAtSpawn() {
   playerEye.copy(playerSpawnPoint);
+  updateWorldActiveChunks(playerEye);
   playerState.velocity.set(0, 0, 0);
   playerState.onGround = false;
   playerState.jumpQueued = false;
@@ -5199,6 +5209,7 @@ function updatePlayer(deltaTime) {
     const isMoving = horizontalMove.lengthSq() > 0.00001 || Math.abs(verticalDelta) > 0.00001;
     gameAudio.updateFootsteps(deltaTime, false, sprintMultiplier, false);
     syncPlayerBody();
+    updateWorldActiveChunks(playerEye);
     const hasLegoLolAimInput = mobileMode && isLegoLolCameraMode() && Math.hypot(input.look.x, input.look.y) > JOYSTICK_MAX_OFFSET * 0.18;
     if (hasLegoLolAimInput) {
       playerAimFacing.set(-input.look.x, 0, -input.look.y);
@@ -5232,6 +5243,7 @@ function updatePlayer(deltaTime) {
   const isMoving = horizontalMove.lengthSq() > 0.00001;
   gameAudio.updateFootsteps(deltaTime, isMoving, sprintMultiplier, playerState.onGround);
   syncPlayerBody();
+  updateWorldActiveChunks(playerEye);
   const hasLegoLolAimInput = mobileMode && isLegoLolCameraMode() && Math.hypot(input.look.x, input.look.y) > JOYSTICK_MAX_OFFSET * 0.18;
   if (hasLegoLolAimInput) {
     playerAimFacing.set(-input.look.x, 0, -input.look.y);
