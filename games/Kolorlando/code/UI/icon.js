@@ -53,9 +53,33 @@ function normalizeVoxelIconSpec(voxel = null) {
     type: typeof voxel?.type === 'string' && voxel.type.trim() ? voxel.type.trim().toLowerCase() : 'colored',
     color: normalizeHexColor(voxel?.color),
     texture: normalizeVoxelIconTexture(voxel?.texture),
+    textureLayer: getLayeredVoxelIconTextureSpec(voxel?.texture),
     textureFaces: resolveVoxelIconTextureFaces(voxel?.texture),
     textureInfluence: normalizeVoxelIconTextureInfluence(voxel?.textureInfluence),
   };
+}
+
+function getLayeredVoxelIconTextureSpec(texture = null) {
+  if (!texture || typeof texture !== 'object' || Array.isArray(texture)) {
+    return null;
+  }
+
+  const baseTexture = typeof texture.base === 'string' && texture.base.trim()
+    ? texture.base.trim()
+    : typeof texture.background === 'string' && texture.background.trim()
+      ? texture.background.trim()
+      : typeof texture.all === 'string' && texture.all.trim()
+        ? texture.all.trim()
+        : '';
+  const maskTexture = typeof texture.mask === 'string' && texture.mask.trim()
+    ? texture.mask.trim()
+    : typeof texture.detail === 'string' && texture.detail.trim()
+      ? texture.detail.trim()
+      : '';
+
+  return baseTexture && maskTexture
+    ? { base: baseTexture, mask: maskTexture }
+    : null;
 }
 
 function normalizeVoxelIconTextureInfluence(textureInfluence = 1) {
@@ -303,16 +327,19 @@ export function createVoxelTextureIcon(src, alt = '') {
 export function createIsometricVoxelTextureIcon(voxel = null) {
   const icon = createIcon('icon-chip item-slot-icon voxel-icon voxel-texture-cube-icon');
   const canvas = document.createElement('canvas');
+  const textureLayer = voxel?.textureLayer ?? null;
   const textureFaces = voxel?.textureFaces ?? null;
   const faceTextureSources = {
-    top: textureFaces?.top || '',
-    left: textureFaces?.left || textureFaces?.front || textureFaces?.right || '',
-    right: textureFaces?.right || textureFaces?.front || textureFaces?.left || '',
+    top: textureLayer?.base || textureFaces?.top || '',
+    left: textureLayer?.base || textureFaces?.left || textureFaces?.front || textureFaces?.right || '',
+    right: textureLayer?.base || textureFaces?.right || textureFaces?.front || textureFaces?.left || '',
+    mask: textureLayer?.mask || '',
   };
   const textureImages = {
     top: new Image(),
     left: new Image(),
     right: new Image(),
+    mask: new Image(),
   };
   let pendingTextures = 0;
 
@@ -454,17 +481,25 @@ function drawTexturedVoxelCubeIcon(canvas, textureImages, voxel = null) {
     { x: 32, y: 56 },
   ];
 
-  drawTextureOnFace(context, textureImages.top, topFace, {
+  const drawFace = voxel?.textureLayer
+    ? drawLayeredTextureOnFace
+    : drawTextureOnFace;
+  const maskImage = voxel?.textureLayer ? textureImages.mask : null;
+
+  drawFace(context, textureImages.top, topFace, {
+    maskImage,
     textureInfluence: voxel?.textureInfluence,
     tint: tintHexColor(voxel?.color ?? '#ffffff', 0.22),
     shade: 'rgba(255, 255, 255, 0.08)',
   });
-  drawTextureOnFace(context, textureImages.left, leftFace, {
+  drawFace(context, textureImages.left, leftFace, {
+    maskImage,
     textureInfluence: voxel?.textureInfluence,
     tint: tintHexColor(voxel?.color ?? '#ffffff', 0.06),
     shade: 'rgba(0, 0, 0, 0.1)',
   });
-  drawTextureOnFace(context, textureImages.right, rightFace, {
+  drawFace(context, textureImages.right, rightFace, {
+    maskImage,
     textureInfluence: voxel?.textureInfluence,
     tint: voxel?.color ?? '#ffffff',
     shade: 'rgba(0, 0, 0, 0.03)',
@@ -488,6 +523,37 @@ function drawTexturedVoxelCubeIcon(canvas, textureImages, voxel = null) {
   context.lineTo(56, 44);
   context.lineTo(56, 18);
   context.stroke();
+  context.restore();
+}
+
+function drawLayeredTextureOnFace(context, image, points, {
+  maskImage = null,
+  textureInfluence = 1,
+  tint = '',
+  shade = '',
+} = {}) {
+  drawTextureOnFace(context, image, points, { textureInfluence: 1, tint: '', shade: '' });
+
+  if (maskImage) {
+    const maskCanvas = document.createElement('canvas');
+    const maskContext = maskCanvas.getContext('2d');
+    maskCanvas.width = context.canvas.width;
+    maskCanvas.height = context.canvas.height;
+    drawTextureOnFace(maskContext, maskImage, points, { textureInfluence, tint: '', shade: '' });
+    tintMaskCanvas(maskCanvas, tint, textureInfluence);
+    context.drawImage(maskCanvas, 0, 0);
+  }
+
+  if (!shade) return;
+  context.save();
+  context.fillStyle = shade;
+  context.beginPath();
+  context.moveTo(points[0].x, points[0].y);
+  for (let i = 1; i < points.length; i += 1) {
+    context.lineTo(points[i].x, points[i].y);
+  }
+  context.closePath();
+  context.fill();
   context.restore();
 }
 
@@ -569,8 +635,42 @@ function drawTextureOnFace(context, image, points, { textureInfluence = 1, tint 
   context.restore();
 }
 
+function tintMaskCanvas(canvas, tint = '#ffffff', textureInfluence = 1) {
+  const context = canvas.getContext('2d');
+  if (!context) return;
+
+  const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+  const data = imageData.data;
+  const tintRgb = parseHexRgb(tint);
+  const normalizedTextureInfluence = normalizeVoxelIconTextureInfluence(textureInfluence);
+
+  for (let i = 0; i < data.length; i += 4) {
+    const maskStrength = (data[i + 3] / 255) * Math.max(data[i], data[i + 1], data[i + 2]) / 255;
+    data[i] = tintRgb.r * (1 - normalizedTextureInfluence) + (tintRgb.r * data[i] / 255) * normalizedTextureInfluence;
+    data[i + 1] = tintRgb.g * (1 - normalizedTextureInfluence) + (tintRgb.g * data[i + 1] / 255) * normalizedTextureInfluence;
+    data[i + 2] = tintRgb.b * (1 - normalizedTextureInfluence) + (tintRgb.b * data[i + 2] / 255) * normalizedTextureInfluence;
+    data[i + 3] = Math.round(maskStrength * 255);
+  }
+
+  context.putImageData(imageData, 0, 0);
+}
+
+function parseHexRgb(hexColor = '#ffffff') {
+  const normalizedHex = normalizeHexColor(hexColor).replace('#', '');
+  const parsed = Number.parseInt(normalizedHex, 16);
+  return {
+    r: (parsed >> 16) & 0xff,
+    g: (parsed >> 8) & 0xff,
+    b: parsed & 0xff,
+  };
+}
+
 function resolveVoxelIconPreviewTexture(voxel = null) {
   if (voxel?.type !== 'textured') return '';
+
+  if (voxel.textureLayer?.base) {
+    return voxel.textureLayer.base;
+  }
 
   return voxel.texture && voxel.texture !== 'bordered'
     ? voxel.texture
@@ -587,7 +687,7 @@ function normalizeVoxelIconTexture(texture) {
   }
 
   const normalizedTexture = {};
-  const supportedFaces = ['all', 'top', 'bottom', 'sides', 'left', 'right', 'front', 'back'];
+  const supportedFaces = ['all', 'top', 'bottom', 'sides', 'left', 'right', 'front', 'back', 'base', 'background', 'mask', 'detail'];
 
   for (let i = 0; i < supportedFaces.length; i += 1) {
     const faceKey = supportedFaces[i];
@@ -652,7 +752,7 @@ function normalizeVoxelTexture(texture) {
   }
 
   const normalizedTexture = {};
-  const supportedFaces = ['all', 'top', 'bottom', 'sides', 'left', 'right', 'front', 'back'];
+  const supportedFaces = ['all', 'top', 'bottom', 'sides', 'left', 'right', 'front', 'back', 'base', 'background', 'mask', 'detail'];
 
   for (let i = 0; i < supportedFaces.length; i += 1) {
     const faceKey = supportedFaces[i];

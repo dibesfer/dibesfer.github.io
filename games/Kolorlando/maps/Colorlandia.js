@@ -68,11 +68,11 @@ function fillWorldWithVoxel(world = Colorlandia) {
   world.clearVoxels();
   world.setVoxelTypes(COLORLANDIA_VOXEL_PALETTE);
   world.setChunkGenerator(createColorlandiaChunkVoxels);
-  world.staticMiniMapColor = ColorlandiaVoxels.noise_gray.color;
+  world.staticMiniMapColor = ColorlandiaVoxels.noise_brown.color;
   return world;
 }
 
 Colorlandia.setChunkGenerator(createColorlandiaChunkVoxels);
-Colorlandia.staticMiniMapColor = ColorlandiaVoxels.noise_gray.color;
+Colorlandia.staticMiniMapColor = ColorlandiaVoxels.noise_brown.color;
 
 export { Colorlandia, ColorlandiaVoxels, fillWorldWithVoxel };

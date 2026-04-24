@@ -38,6 +38,7 @@ import { Voxelaar, fillWorldWithVoxel } from './maps/Voxelaar.js';
 import { Voxelandia, fillWorldWithVoxel as fillVoxelandiaWorldWithVoxel } from './maps/Voxelandia.js';
 import { Grandaar, fillWorldWithVoxel as fillGrandaarWorldWithVoxel } from './maps/Grandaar.js';
 import { Colorlandia, fillWorldWithVoxel as fillColorlandiaWorldWithVoxel } from './maps/Colorlandia.js';
+import { Datatest, fillWorldWithVoxel as fillDatatestWorldWithVoxel } from './maps/Datatest.js';
 import { createMultiplayerController } from './code/multiplayer/multiplayer.js';
 import { createCommandHandler } from './code/commands.js';
 import { createBoxelId, createStoredBoxel, deserializeStoredBoxel, getBoxelVoxelEntries, readLocalBoxels, writeLocalBoxel } from './code/data/boxelStorage.js';
@@ -81,6 +82,8 @@ function resolveSingleplayerWorldPreset() {
       return 'grandaar';
     case 'colorlandia':
       return 'colorlandia';
+    case 'datatest':
+      return 'datatest';
     case 'voxelandia':
     default:
       return 'voxelandia';
@@ -1929,7 +1932,7 @@ if (settingsRestoreDefaultsButton) {
 // --------------------
 // GROUND
 // --------------------
-const MAP_PRESET = resolveSingleplayerWorldPreset(); // 'simple' | 'city' | 'voxelandia' | 'voxelaar' | 'grandaar' | 'colorlandia'
+const MAP_PRESET = resolveSingleplayerWorldPreset(); // 'simple' | 'city' | class-world preset
 const mapBuilders = {
   simple: buildSimpleMap,
   city: buildCityMap,
@@ -1939,6 +1942,7 @@ const worldPresets = {
   voxelandia: () => fillVoxelandiaWorldWithVoxel(Voxelandia.clone()),
   grandaar: () => fillGrandaarWorldWithVoxel(Grandaar.clone()),
   colorlandia: () => fillColorlandiaWorldWithVoxel(Colorlandia.clone()),
+  datatest: () => fillDatatestWorldWithVoxel(Datatest.clone()),
 };
 const isClassWorldPreset = typeof worldPresets[MAP_PRESET] === 'function';
 const localWorldSaveStore = !MULTIPLAYER_ENABLED && isClassWorldPreset
@@ -4535,7 +4539,8 @@ function triggerActionForMouseButton(button, options = {}) {
         ? Boolean(removedResult && syncWorldVoxelRemovedAtCell(
           removedResult.cellX,
           removedResult.cellY,
-          removedResult.cellZ
+          removedResult.cellZ,
+          { immediateSolidChunkJobs: 2 }
         ))
         : removeVoxelAtRaycastHit(currentRaycastState.hit);
       if (removed && removedVoxelType) {
@@ -4584,8 +4589,7 @@ function triggerActionForMouseButton(button, options = {}) {
       const selectedVoxelType = inventoryUI.getSelectedPlaceableVoxelType();
       if (!selectedVoxelType) return;
 
-      const addedVoxelCell = worldEditor.getAdjacentTargetVoxelCell(currentRaycastState.hit);
-      if (!addedVoxelCell) return;
+      let addedVoxelCell = null;
 
       const added = useWorldEditorVoxelMode
         ? (() => {
@@ -4599,17 +4603,23 @@ function triggerActionForMouseButton(button, options = {}) {
             { playerCollider }
           );
           if (!addedResult) return false;
+          addedVoxelCell = addedResult;
 
           return syncWorldVoxelAddedAtCell(
             addedResult.cellX,
             addedResult.cellY,
-            addedResult.cellZ
+            addedResult.cellZ,
+            { immediateSolidChunkJobs: 1 }
           );
         })()
-        : addVoxelAtRaycastHit(currentRaycastState.hit, {
-          playerCollider,
-          voxelType: selectedVoxelType,
-        });
+        : (() => {
+          addedVoxelCell = worldEditor.getAdjacentTargetVoxelCell(currentRaycastState.hit);
+          if (!addedVoxelCell) return false;
+          return addVoxelAtRaycastHit(currentRaycastState.hit, {
+            playerCollider,
+            voxelType: selectedVoxelType,
+          });
+        })();
       if (added && localWorldSaveStore) {
         recordLocalVoxelAdded(
           addedVoxelCell.cellX,

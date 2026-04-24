@@ -587,7 +587,20 @@ function normalizeVoxelTexture(texture) {
   }
 
   const normalizedTexture = {};
-  const supportedFaces = ['all', 'top', 'bottom', 'sides', 'left', 'right', 'front', 'back'];
+  const supportedFaces = [
+    'all',
+    'top',
+    'bottom',
+    'sides',
+    'left',
+    'right',
+    'front',
+    'back',
+    'base',
+    'background',
+    'mask',
+    'detail',
+  ];
 
   for (let i = 0; i < supportedFaces.length; i += 1) {
     const faceKey = supportedFaces[i];

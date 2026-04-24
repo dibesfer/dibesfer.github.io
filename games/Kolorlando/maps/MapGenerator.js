@@ -146,6 +146,47 @@ export function buildMapFromWorld({
     return { ...texture };
   }
 
+  function getLayeredTextureSpec(texture = null) {
+    if (!texture || typeof texture !== 'object' || Array.isArray(texture)) {
+      return null;
+    }
+
+    const baseTexture = typeof texture.base === 'string' && texture.base.trim()
+      ? texture.base.trim()
+      : typeof texture.background === 'string' && texture.background.trim()
+        ? texture.background.trim()
+        : typeof texture.all === 'string' && texture.all.trim()
+          ? texture.all.trim()
+          : '';
+    const maskTexture = typeof texture.mask === 'string' && texture.mask.trim()
+      ? texture.mask.trim()
+      : typeof texture.detail === 'string' && texture.detail.trim()
+        ? texture.detail.trim()
+        : '';
+
+    return baseTexture && maskTexture
+      ? { base: baseTexture, mask: maskTexture }
+      : null;
+  }
+
+  function createLayeredTextureKey(texture = null) {
+    const layerSpec = getLayeredTextureSpec(texture);
+    return layerSpec
+      ? `layered:${layerSpec.base}|${layerSpec.mask}`
+      : '';
+  }
+
+  function parseLayeredTextureKey(textureKey = '') {
+    if (typeof textureKey !== 'string' || !textureKey.startsWith('layered:')) {
+      return null;
+    }
+
+    const [baseTexture = '', maskTexture = ''] = textureKey.slice('layered:'.length).split('|');
+    return baseTexture && maskTexture
+      ? { base: baseTexture, mask: maskTexture }
+      : null;
+  }
+
   function resolveVoxelTextureFaces(voxel = null) {
     if (typeof voxel?.getResolvedTextureFaces === 'function') {
       return voxel.getResolvedTextureFaces();
@@ -155,6 +196,10 @@ export function buildMapFromWorld({
   }
 
   function hasImageTextureFaces(voxel = null) {
+    if (createLayeredTextureKey(voxel?.texture)) {
+      return false;
+    }
+
     const resolvedFaces = resolveVoxelTextureFaces(voxel);
     if (!resolvedFaces) return false;
 
@@ -164,6 +209,11 @@ export function buildMapFromWorld({
   function getSharedOpaqueVoxelTexturePath(voxel = null) {
     if (!voxel || isVoxelPlane(voxel) || isTransparentVoxel(voxel)) {
       return '';
+    }
+
+    const layeredTextureKey = createLayeredTextureKey(voxel.texture);
+    if (layeredTextureKey) {
+      return layeredTextureKey;
     }
 
     const resolvedFaces = resolveVoxelTextureFaces(voxel);
@@ -399,6 +449,52 @@ export function buildMapFromWorld({
     return texture;
   }
 
+  function createLayeredTextureMaterial(textureKey = '', textureInfluence = 1) {
+    const layerSpec = parseLayeredTextureKey(textureKey);
+    if (!layerSpec) return null;
+
+    const baseTexture = getLoadedSolidChunkTexture(layerSpec.base);
+    const maskTexture = getLoadedSolidChunkTexture(layerSpec.mask);
+    const material = new THREE.MeshStandardMaterial({
+      color: 0xffffff,
+      map: baseTexture,
+      vertexColors: true,
+      side: THREE.FrontSide,
+      roughness: 0.95,
+      metalness: 0.0,
+    });
+    const normalizedTextureInfluence = normalizeTextureInfluence(textureInfluence);
+
+    material.userData.textureInfluence = normalizedTextureInfluence;
+    material.onBeforeCompile = shader => {
+      shader.uniforms.detailMap = { value: maskTexture };
+      shader.uniforms.textureInfluence = { value: normalizedTextureInfluence };
+      shader.fragmentShader = shader.fragmentShader.replace(
+        'uniform float opacity;',
+        'uniform float opacity;\nuniform sampler2D detailMap;\nuniform float textureInfluence;'
+      );
+      shader.fragmentShader = shader.fragmentShader.replace(
+        '#include <map_fragment>',
+        `
+        #ifdef USE_MAP
+          vec4 baseColor = texture2D( map, vMapUv );
+          vec4 detailColor = texture2D( detailMap, vMapUv );
+          float detailMask = detailColor.a * max(max(detailColor.r, detailColor.g), detailColor.b);
+          vec3 tintColor = diffuseColor.rgb;
+          vec3 tintedDetail = tintColor * mix(vec3(1.0), detailColor.rgb, textureInfluence);
+          diffuseColor.rgb = mix(baseColor.rgb, tintedDetail, detailMask);
+          diffuseColor.a *= baseColor.a;
+        #endif
+        `
+      );
+    };
+    material.customProgramCacheKey = function () {
+      return `layeredTexture:${textureKey}|${normalizedTextureInfluence.toFixed(3)}`;
+    };
+    material.needsUpdate = true;
+    return material;
+  }
+
   function applyTextureInfluenceToMaterial(material = null, textureInfluence = 1) {
     if (!material?.map) {
       return material;
@@ -558,6 +654,11 @@ export function buildMapFromWorld({
   }
 
   function getSolidVoxelTextureKey(voxel = null) {
+    const layeredTextureKey = createLayeredTextureKey(voxel?.texture);
+    if (layeredTextureKey) {
+      return layeredTextureKey;
+    }
+
     if (normalizeTexture(voxel?.texture) === 'bordered') {
       return 'bordered';
     }
@@ -588,6 +689,12 @@ export function buildMapFromWorld({
     const existingMaterial = solidChunkMaterialByTextureKey.get(cacheKey);
     if (existingMaterial) {
       return existingMaterial;
+    }
+
+    const layeredMaterial = createLayeredTextureMaterial(normalizedTextureKey, normalizedTextureInfluence);
+    if (layeredMaterial) {
+      solidChunkMaterialByTextureKey.set(cacheKey, layeredMaterial);
+      return layeredMaterial;
     }
 
     const nextMaterial = applyTextureInfluenceToMaterial(new THREE.MeshStandardMaterial({
@@ -1116,7 +1223,8 @@ export function buildMapFromWorld({
       return '';
     }
 
-    if (getSolidVoxelTextureKey(voxel) === 'bordered') {
+    const textureKey = getSolidVoxelTextureKey(voxel);
+    if (textureKey === 'bordered' || parseLayeredTextureKey(textureKey)) {
       return `${baseSignature}|cell:${cell?.x ?? 0}|${cell?.y ?? 0}|${cell?.z ?? 0}`;
     }
 
@@ -1539,7 +1647,10 @@ export function buildMapFromWorld({
     return true;
   }
 
-  function syncWorldVoxelAddedAtCell(cellX, cellY, cellZ, { refreshNeighbors = true } = {}) {
+  function syncWorldVoxelAddedAtCell(cellX, cellY, cellZ, {
+    refreshNeighbors = true,
+    immediateSolidChunkJobs = refreshNeighbors ? 8 : 0,
+  } = {}) {
     const voxel = readWorldVoxel(cellX, cellY, cellZ);
     if (!voxel) return false;
 
@@ -1552,11 +1663,16 @@ export function buildMapFromWorld({
     if (refreshNeighbors) {
       refreshAdjacentVoxelVisuals(cellX, cellY, cellZ);
     }
-    flushPrioritySolidChunkJobs({ x: cellX, y: cellY, z: cellZ });
+    if (immediateSolidChunkJobs > 0) {
+      flushPrioritySolidChunkJobs({ x: cellX, y: cellY, z: cellZ }, immediateSolidChunkJobs);
+    }
     return true;
   }
 
-  function syncWorldVoxelRemovedAtCell(cellX, cellY, cellZ, { refreshNeighbors = true } = {}) {
+  function syncWorldVoxelRemovedAtCell(cellX, cellY, cellZ, {
+    refreshNeighbors = true,
+    immediateSolidChunkJobs = refreshNeighbors ? 8 : 0,
+  } = {}) {
     const key = createCellKey(cellX, cellY, cellZ);
     const texturedVoxelMesh = texturedVoxelMeshByKey.get(key);
     if (texturedVoxelMesh) {
@@ -1574,7 +1690,9 @@ export function buildMapFromWorld({
     if (refreshNeighbors) {
       refreshAdjacentVoxelVisuals(cellX, cellY, cellZ);
     }
-    flushPrioritySolidChunkJobs({ x: cellX, y: cellY, z: cellZ });
+    if (immediateSolidChunkJobs > 0) {
+      flushPrioritySolidChunkJobs({ x: cellX, y: cellY, z: cellZ }, immediateSolidChunkJobs);
+    }
     return true;
   }
 
