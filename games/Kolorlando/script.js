@@ -36,6 +36,7 @@ import { buildCityMap } from './maps/cityMap.js';
 import { buildMapFromWorld } from './maps/MapGenerator.js';
 import { Voxelaar, fillWorldWithVoxel } from './maps/Voxelaar.js';
 import { Voxelandia, fillWorldWithVoxel as fillVoxelandiaWorldWithVoxel } from './maps/Voxelandia.js';
+import { Grandaar, fillWorldWithVoxel as fillGrandaarWorldWithVoxel } from './maps/Grandaar.js';
 import { createMultiplayerController } from './code/multiplayer/multiplayer.js';
 import { createCommandHandler } from './code/commands.js';
 import { createBoxelId, createStoredBoxel, deserializeStoredBoxel, getBoxelVoxelEntries, readLocalBoxels, writeLocalBoxel } from './code/data/boxelStorage.js';
@@ -75,6 +76,8 @@ function resolveSingleplayerWorldPreset() {
       return 'city';
     case 'voxelaar':
       return 'voxelaar';
+    case 'grandaar':
+      return 'grandaar';
     case 'voxelandia':
     default:
       return 'voxelandia';
@@ -290,6 +293,7 @@ const settingsMenuThemeDark = document.getElementById('settingsMenuThemeDark');
 const settingsShadows = document.getElementById('settingsShadows');
 const settingsShadowPreset = document.getElementById('settingsShadowPreset');
 const settingsUndersampling = document.getElementById('settingsUndersampling');
+const settingsFogRenderDistance = document.getElementById('settingsFogRenderDistance');
 const settingsPixelatedUpscale = document.getElementById('settingsPixelatedUpscale');
 const settingsBackgroundMusic = document.getElementById('settingsBackgroundMusic');
 const settingsRestoreDefaultsButton = document.getElementById('settingsRestoreDefaultsButton');
@@ -350,11 +354,17 @@ const SHADOWS_STORAGE_KEY = 'kolorlando.settings.shadows';
 const SHADOW_PRESET_STORAGE_KEY = 'kolorlando.settings.shadowPreset';
 const RENDER_SCALE_STORAGE_KEY = 'kolorlando.settings.renderScale';
 const PIXELATED_UPSCALE_STORAGE_KEY = 'kolorlando.settings.pixelatedUpscale';
+const FOG_RENDER_DISTANCE_STORAGE_KEY = 'kolorlando.settings.fogRenderDistance';
 const CAMERA_MODE_STORAGE_KEY = 'kolorlando.cameraMode';
 const DEFAULT_RENDER_SCALE = 1;
 const DEFAULT_MOBILE_RENDER_SCALE = 0.5;
 const DEFAULT_SHADOWS_ENABLED = false;
 const DEFAULT_PIXELATED_UPSCALE = false;
+const DEFAULT_FOG_RENDER_DISTANCE = 30;
+const MIN_FOG_RENDER_DISTANCE = 15;
+const MAX_FOG_RENDER_DISTANCE = 180;
+const FOG_NEAR_DISTANCE_RATIO = 14 / 30;
+const FOG_FAR_DISTANCE_RATIO = 25 / 30;
 const MIN_RENDER_SCALE = 0.25;
 const VALID_RENDER_SCALE_VALUES = new Set(['1', '0.75', '0.5', '0.33', '0.25']);
 const POINTER_LOCK_RETRY_COOLDOWN_MS = 350;
@@ -362,6 +372,7 @@ let rendererPixelRatioBase = Math.min(window.devicePixelRatio, 2);
 let renderScaleMultiplier = DEFAULT_RENDER_SCALE;
 let pixelatedUpscaleEnabled = DEFAULT_PIXELATED_UPSCALE;
 let shadowPresetName = DEFAULT_SHADOW_PRESET;
+let fogRenderDistance = DEFAULT_FOG_RENDER_DISTANCE;
 const cameraForwardDirection = new THREE.Vector3();
 let yaw = 0;
 let pitch = 0;
@@ -382,6 +393,11 @@ function syncRenderScaleSetting() {
 function syncPixelatedUpscaleSetting() {
   if (!settingsPixelatedUpscale) return;
   settingsPixelatedUpscale.checked = pixelatedUpscaleEnabled;
+}
+
+function syncFogRenderDistanceSetting() {
+  if (!settingsFogRenderDistance) return;
+  settingsFogRenderDistance.value = String(fogRenderDistance);
 }
 
 function persistRenderScalePreference(nextScale) {
@@ -416,8 +432,63 @@ function readSavedPixelatedUpscalePreference() {
   }
 }
 
+function persistFogRenderDistancePreference(nextDistance) {
+  try {
+    window.localStorage.setItem(FOG_RENDER_DISTANCE_STORAGE_KEY, String(nextDistance));
+  } catch (error) {
+    console.warn('Failed to persist the Kolorlando fog render distance setting.', error);
+  }
+}
+
+function readSavedFogRenderDistancePreference() {
+  try {
+    return window.localStorage.getItem(FOG_RENDER_DISTANCE_STORAGE_KEY);
+  } catch (error) {
+    return null;
+  }
+}
+
 function resolvePixelatedUpscalePreference(rawValue) {
   return rawValue === 'true';
+}
+
+function normalizeFogRenderDistance(rawValue) {
+  const parsedDistance = Math.round(Number(rawValue));
+  if (!Number.isFinite(parsedDistance)) {
+    return DEFAULT_FOG_RENDER_DISTANCE;
+  }
+
+  return THREE.MathUtils.clamp(
+    parsedDistance,
+    MIN_FOG_RENDER_DISTANCE,
+    MAX_FOG_RENDER_DISTANCE
+  );
+}
+
+function applyFogRenderDistanceToScene(nextDistance) {
+  const resolvedDistance = normalizeFogRenderDistance(nextDistance);
+  const nextFogNear = Math.max(4, Math.round(resolvedDistance * FOG_NEAR_DISTANCE_RATIO));
+  const nextFogFar = Math.max(nextFogNear + 1, Math.round(resolvedDistance * FOG_FAR_DISTANCE_RATIO));
+
+  scene.fog.near = nextFogNear;
+  scene.fog.far = nextFogFar;
+}
+
+function setFogRenderDistance(nextDistance, options = {}) {
+  const shouldPersist = options.persist !== false;
+  fogRenderDistance = normalizeFogRenderDistance(nextDistance);
+
+  syncFogRenderDistanceSetting();
+  applyFogRenderDistanceToScene(fogRenderDistance);
+
+  if (worldData?.boxel15DistanceRendering?.setRadiusInVoxels) {
+    worldData.boxel15DistanceRendering.setRadiusInVoxels(fogRenderDistance);
+    updateWorldActiveChunks(playerEye);
+  }
+
+  if (shouldPersist) {
+    persistFogRenderDistancePreference(fogRenderDistance);
+  }
 }
 
 function applyCanvasUpscaleMode(canvas) {
@@ -528,12 +599,14 @@ async function restoreDefaultSettings() {
     persist: false,
   });
   setPixelatedUpscaleEnabled(DEFAULT_PIXELATED_UPSCALE, { persist: false });
+  setFogRenderDistance(DEFAULT_FOG_RENDER_DISTANCE, { persist: false });
 
   clearPersistedSetting(CAMERA_MODE_STORAGE_KEY);
   clearPersistedSetting(SHADOWS_STORAGE_KEY);
   clearPersistedSetting(SHADOW_PRESET_STORAGE_KEY);
   clearPersistedSetting(RENDER_SCALE_STORAGE_KEY);
   clearPersistedSetting(PIXELATED_UPSCALE_STORAGE_KEY);
+  clearPersistedSetting(FOG_RENDER_DISTANCE_STORAGE_KEY);
 }
 
 function shouldWantGameplayPointerLock() {
@@ -1831,6 +1904,15 @@ if (settingsPixelatedUpscale) {
   });
 }
 
+if (settingsFogRenderDistance) {
+  const applySettingsFogRenderDistance = () => {
+    setFogRenderDistance(settingsFogRenderDistance.value);
+  };
+
+  settingsFogRenderDistance.addEventListener('change', applySettingsFogRenderDistance);
+  settingsFogRenderDistance.addEventListener('input', applySettingsFogRenderDistance);
+}
+
 if (settingsRestoreDefaultsButton) {
   settingsRestoreDefaultsButton.addEventListener('click', () => {
     restoreDefaultSettings().catch(error => {
@@ -1842,7 +1924,7 @@ if (settingsRestoreDefaultsButton) {
 // --------------------
 // GROUND
 // --------------------
-const MAP_PRESET = resolveSingleplayerWorldPreset(); // 'simple' | 'city' | 'voxelandia' | 'voxelaar'
+const MAP_PRESET = resolveSingleplayerWorldPreset(); // 'simple' | 'city' | 'voxelandia' | 'voxelaar' | 'grandaar'
 const mapBuilders = {
   simple: buildSimpleMap,
   city: buildCityMap,
@@ -1850,6 +1932,7 @@ const mapBuilders = {
 const worldPresets = {
   voxelaar: () => fillWorldWithVoxel(Voxelaar.clone()),
   voxelandia: () => fillVoxelandiaWorldWithVoxel(Voxelandia.clone()),
+  grandaar: () => fillGrandaarWorldWithVoxel(Grandaar.clone()),
 };
 const isClassWorldPreset = typeof worldPresets[MAP_PRESET] === 'function';
 const localWorldSaveStore = !MULTIPLAYER_ENABLED && isClassWorldPreset
@@ -1932,6 +2015,7 @@ const processPendingChunkVisualUpdates = typeof mapData.processPendingChunkVisua
   : () => null;
 const worldData = mapData.world ?? null;
 const worldVoxelSize = Number(mapData.voxelSize) || 1;
+const savedFogRenderDistancePreference = readSavedFogRenderDistancePreference();
 const useWorldEditorVoxelMode = isClassWorldPreset && worldData !== null;
 const worldEditor = new WorldEditor({
   world: worldData,
@@ -1939,6 +2023,10 @@ const worldEditor = new WorldEditor({
   getVoxelCellFromRaycastHit,
   getAdjacentVoxelCellFromRaycastHit,
 });
+setFogRenderDistance(
+  worldData?.boxel15DistanceRendering?.radiusInVoxels ?? savedFogRenderDistancePreference ?? DEFAULT_FOG_RENDER_DISTANCE,
+  { persist: false }
+);
 const legacyGetVoxelBoxFromRaycastHit = typeof mapData.getVoxelBoxFromRaycastHit === 'function'
   ? mapData.getVoxelBoxFromRaycastHit
   : null;
@@ -5645,7 +5733,7 @@ renderer.setAnimationLoop(() => {
   }
 
   updatePlayer(delta);
-  processPendingChunkVisualUpdates(180);
+  processPendingChunkVisualUpdates(48);
   updateRightPunch(delta);
   updateLeftPunch(delta);
   updatePunchHitboxes(delta);

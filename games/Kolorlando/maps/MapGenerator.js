@@ -36,25 +36,31 @@ export function buildMapFromWorld({
   const tempCollisionBox = new THREE.Box3();
   const searchRegion = new THREE.Box3();
   const boundaryThickness = voxelSize;
-  const instanceMatrix = new THREE.Matrix4();
-  const instanceColor = new THREE.Color();
-  const hiddenInstanceMatrix = new THREE.Matrix4().makeTranslation(0, -10000, 0);
-  const faceOffsetVector = new THREE.Vector3();
   const hitNormalWorld = new THREE.Vector3();
   const adjacentVoxelPoint = new THREE.Vector3();
-  const voxelFaceInstanceIdsByKey = new Map();
+  const hitVoxelPoint = new THREE.Vector3();
   const voxelColliderByKey = new Map();
   const voxelTypesByName = new Map();
   const texturedVoxelMeshByKey = new Map();
   const planeRaycastMeshByKey = new Map();
-  const freeVoxelFaceIdsByName = new Map();
+  const solidChunkMeshByKey = new Map();
   const worldOrigin = world.getMapOrigin(voxelSize);
-  const voxelEntries = world.getVoxelEntries({ activeChunksOnly: true });
+  const usesLazyChunkGeneration = typeof world.chunkGenerator === 'function';
+  const staticMiniMapColor = typeof world.staticMiniMapColor === 'string' && world.staticMiniMapColor.trim()
+    ? world.staticMiniMapColor.trim()
+    : null;
+  const miniMapPixelWidth = usesLazyChunkGeneration
+    ? Math.min(world.size.x, 128)
+    : world.size.x;
+  const miniMapPixelHeight = usesLazyChunkGeneration
+    ? Math.min(world.size.z, 128)
+    : world.size.z;
+  const voxelEntries = usesLazyChunkGeneration
+    ? []
+    : world.getVoxelEntries({ activeChunksOnly: true });
   const pendingChunkVisualJobs = [];
   const pendingChunkBoundaryJobs = [];
-  const initialVoxelCount = voxelEntries.length;
-  const extraVoxelCapacity = 20000;
-  const maxVoxelCount = Math.max(initialVoxelCount + extraVoxelCapacity, 1);
+  const pendingSolidChunkJobs = new Map();
   const textureLoader = new THREE.TextureLoader();
   const voxelFaceTextureCache = new Map();
   const HIDDEN_FACE_MATERIAL = new THREE.MeshStandardMaterial({ visible: false });
@@ -67,14 +73,6 @@ export function buildMapFromWorld({
     back: { x: 0, y: 0, z: -1 },
   };
   const TEXTURED_FACE_ORDER = ['right', 'left', 'top', 'bottom', 'front', 'back'];
-  const SOLID_FACE_TRANSFORMS = {
-    right: { normal: { x: 1, y: 0, z: 0 }, rotation: { x: 0, y: Math.PI * 0.5, z: 0 } },
-    left: { normal: { x: -1, y: 0, z: 0 }, rotation: { x: 0, y: -Math.PI * 0.5, z: 0 } },
-    top: { normal: { x: 0, y: 1, z: 0 }, rotation: { x: -Math.PI * 0.5, y: 0, z: 0 } },
-    bottom: { normal: { x: 0, y: -1, z: 0 }, rotation: { x: Math.PI * 0.5, y: 0, z: 0 } },
-    front: { normal: { x: 0, y: 0, z: 1 }, rotation: { x: 0, y: 0, z: 0 } },
-    back: { normal: { x: 0, y: 0, z: -1 }, rotation: { x: 0, y: Math.PI, z: 0 } },
-  };
 
   mapGroup.name = world.name || 'World';
 
@@ -97,8 +95,8 @@ export function buildMapFromWorld({
     texture.colorSpace = THREE.SRGBColorSpace;
     texture.magFilter = THREE.NearestFilter;
     texture.minFilter = THREE.NearestFilter;
-    texture.wrapS = THREE.ClampToEdgeWrapping;
-    texture.wrapT = THREE.ClampToEdgeWrapping;
+    texture.wrapS = THREE.RepeatWrapping;
+    texture.wrapT = THREE.RepeatWrapping;
     texture.needsUpdate = true;
     return texture;
   }
@@ -288,14 +286,6 @@ export function buildMapFromWorld({
     return true;
   }
 
-  function getVisibleSolidFaces(cellX, cellY, cellZ, voxel = null) {
-    if (!isOpaqueCubeVoxel(voxel)) {
-      return [];
-    }
-
-    return TEXTURED_FACE_ORDER.filter(faceName => shouldRenderVoxelFace(cellX, cellY, cellZ, faceName, voxel));
-  }
-
   function shouldRenderVoxelPlane(cellX, cellY, cellZ, voxel = null) {
     if (!isVoxelPlane(voxel)) {
       return false;
@@ -442,6 +432,181 @@ export function buildMapFromWorld({
     return `${cellX}|${cellY}|${cellZ}`;
   }
 
+  function getSolidVoxelTextureKey(voxel = null) {
+    return normalizeTexture(voxel?.texture) === 'bordered' ? 'bordered' : '';
+  }
+
+  function getSolidVoxelSignature(voxel = null) {
+    if (!isOpaqueCubeVoxel(voxel)) {
+      return '';
+    }
+
+    return [
+      new THREE.Color(normalizeColor(voxel?.color)).getHexString(),
+      getSolidVoxelTextureKey(voxel),
+    ].join('|');
+  }
+
+  function getSolidChunkMaterial(textureKey = '') {
+    const normalizedTextureKey = textureKey === 'bordered' ? 'bordered' : '';
+    const cacheKey = normalizedTextureKey || 'solid';
+    const existingMaterial = solidChunkMaterialByTextureKey.get(cacheKey);
+    if (existingMaterial) {
+      return existingMaterial;
+    }
+
+    const nextMaterial = new THREE.MeshStandardMaterial({
+      color: 0xffffff,
+      map: normalizedTextureKey === 'bordered' ? borderedVoxelTexture : null,
+      vertexColors: true,
+      side: THREE.DoubleSide,
+      roughness: 0.95,
+      metalness: 0.0,
+    });
+    solidChunkMaterialByTextureKey.set(cacheKey, nextMaterial);
+    return nextMaterial;
+  }
+
+  function createChunkKeyFromCell(cellX, cellY, cellZ) {
+    const voxelAddress = world.getChunkVoxelAddress(cellX, cellY, cellZ);
+    if (!voxelAddress?.chunk) {
+      return '';
+    }
+
+    return world.getChunkKey(
+      voxelAddress.chunk.x,
+      voxelAddress.chunk.y,
+      voxelAddress.chunk.z
+    );
+  }
+
+  function scheduleSolidChunkJob(chunkKey = '', action = 'rebuild') {
+    if (typeof chunkKey !== 'string' || !chunkKey.trim()) {
+      return false;
+    }
+
+    pendingSolidChunkJobs.set(chunkKey, action === 'remove' ? 'remove' : 'rebuild');
+    return true;
+  }
+
+  function scheduleSolidChunkNeighbors(chunkKey = '', action = 'rebuild') {
+    const chunkPosition = typeof world.parseChunkKey === 'function'
+      ? world.parseChunkKey(chunkKey)
+      : null;
+    if (!chunkPosition) {
+      return false;
+    }
+
+    for (const offset of Object.values(FACE_NEIGHBOR_OFFSETS)) {
+      const neighborChunkX = chunkPosition.x + offset.x;
+      const neighborChunkY = chunkPosition.y + offset.y;
+      const neighborChunkZ = chunkPosition.z + offset.z;
+      if (!world.isChunkPositionWithinWorld(neighborChunkX, neighborChunkY, neighborChunkZ)) {
+        continue;
+      }
+      if (!world.isChunkActive(neighborChunkX, neighborChunkY, neighborChunkZ)) {
+        continue;
+      }
+
+      scheduleSolidChunkJob(
+        world.getChunkKey(neighborChunkX, neighborChunkY, neighborChunkZ),
+        action
+      );
+    }
+
+    return true;
+  }
+
+  function scheduleSolidChunkRebuildForCell(cellX, cellY, cellZ, { includeNeighbors = false } = {}) {
+    const chunkKey = createChunkKeyFromCell(cellX, cellY, cellZ);
+    if (!chunkKey) {
+      return false;
+    }
+
+    scheduleSolidChunkJob(chunkKey, 'rebuild');
+    if (includeNeighbors) {
+      scheduleSolidChunkNeighbors(chunkKey, 'rebuild');
+    }
+    return true;
+  }
+
+  function getChunkDistanceToCenterSq(chunkKey = '', center = null) {
+    const chunkPosition = typeof world.parseChunkKey === 'function'
+      ? world.parseChunkKey(chunkKey)
+      : null;
+    if (!chunkPosition) {
+      return Number.POSITIVE_INFINITY;
+    }
+
+    const centerChunkPosition = world.boxel15DistanceRendering?.getCenterChunkPosition?.(world, center)
+      ?? { x: 0, y: 0, z: 0 };
+    const surfaceChunkY = Math.max(
+      0,
+      Math.floor(Math.max(0, (world.land?.y ?? 1) - 1) / Math.max(1, world.getChunkSize()))
+    );
+    const priorityCenterY = usesLazyChunkGeneration
+      ? Math.min(centerChunkPosition.y, surfaceChunkY)
+      : centerChunkPosition.y;
+    const deltaX = chunkPosition.x - centerChunkPosition.x;
+    const deltaY = chunkPosition.y - priorityCenterY;
+    const deltaZ = chunkPosition.z - centerChunkPosition.z;
+    return deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ;
+  }
+
+  function sortChunkKeysByDistance(chunkKeys = [], center = null) {
+    return [...chunkKeys].sort((leftChunkKey, rightChunkKey) =>
+      getChunkDistanceToCenterSq(leftChunkKey, center) - getChunkDistanceToCenterSq(rightChunkKey, center)
+    );
+  }
+
+  function takeNearestPendingSolidChunkJob(center = null) {
+    let nearestChunkKey = '';
+    let nearestAction = '';
+    let nearestDistance = Number.POSITIVE_INFINITY;
+
+    for (const [chunkKey, action] of pendingSolidChunkJobs.entries()) {
+      const chunkDistance = getChunkDistanceToCenterSq(chunkKey, center);
+      if (chunkDistance >= nearestDistance) {
+        continue;
+      }
+
+      nearestChunkKey = chunkKey;
+      nearestAction = action;
+      nearestDistance = chunkDistance;
+    }
+
+    if (!nearestChunkKey) {
+      return null;
+    }
+
+    pendingSolidChunkJobs.delete(nearestChunkKey);
+    return {
+      chunkKey: nearestChunkKey,
+      action: nearestAction,
+    };
+  }
+
+  function getGreedyHitVoxelCell(hit = null, directionMultiplier = -1) {
+    if (!hit?.object || !hit?.face) return null;
+    if (hit.object.userData?.isGreedySolidChunk !== true) return null;
+
+    hitNormalWorld.copy(hit.face.normal).transformDirection(hit.object.matrixWorld);
+    hitVoxelPoint.copy(hit.point).addScaledVector(hitNormalWorld, 0.001 * directionMultiplier);
+
+    const gridPosition = world.mapToGridPosition(
+      hitVoxelPoint.x,
+      hitVoxelPoint.y,
+      hitVoxelPoint.z,
+      voxelSize
+    );
+
+    return {
+      cellX: Math.floor(gridPosition.x),
+      cellY: Math.floor(gridPosition.y),
+      cellZ: Math.floor(gridPosition.z),
+    };
+  }
+
   function setBoxFromCell(cellX, cellY, cellZ, targetBox = new THREE.Box3()) {
     return world.getVoxelBox(cellX, cellY, cellZ, voxelSize, targetBox);
   }
@@ -518,24 +683,6 @@ export function buildMapFromWorld({
     registerVoxelType(authoredVoxelTypes[i]);
   }
 
-  function getFaceInstanceRecord(cellX, cellY, cellZ) {
-    return voxelFaceInstanceIdsByKey.get(createCellKey(cellX, cellY, cellZ)) ?? null;
-  }
-
-  function ensureFaceInstanceRecord(cellX, cellY, cellZ) {
-    const key = createCellKey(cellX, cellY, cellZ);
-    const existingRecord = voxelFaceInstanceIdsByKey.get(key);
-    if (existingRecord) return existingRecord;
-
-    const nextRecord = new Map();
-    voxelFaceInstanceIdsByKey.set(key, nextRecord);
-    return nextRecord;
-  }
-
-  function clearFaceInstanceRecord(cellX, cellY, cellZ) {
-    voxelFaceInstanceIdsByKey.delete(createCellKey(cellX, cellY, cellZ));
-  }
-
   function addColliderForCell(cellX, cellY, cellZ) {
     if (!world.isVoxelCellActive(cellX, cellY, cellZ)) {
       return null;
@@ -565,100 +712,380 @@ export function buildMapFromWorld({
     return true;
   }
 
-  function getNextFaceInstanceId(faceName) {
-    const freeFaceIds = freeVoxelFaceIdsByName.get(faceName) ?? [];
-    if (freeFaceIds.length > 0) {
-      return freeFaceIds.pop();
+  function removeSolidChunkMesh(chunkKey = '') {
+    const existingMesh = solidChunkMeshByKey.get(chunkKey);
+    if (!existingMesh) {
+      return false;
     }
 
-    const faceGrid = voxelFaceGridsByName.get(faceName);
-    const nextFaceInstanceId = nextVoxelFaceInstanceIdByName.get(faceName) ?? 0;
-    if (!faceGrid || nextFaceInstanceId >= maxVoxelCount) {
-      return null;
-    }
-
-    nextVoxelFaceInstanceIdByName.set(faceName, nextFaceInstanceId + 1);
-    faceGrid.count = Math.max(faceGrid.count, nextFaceInstanceId + 1);
-    return nextFaceInstanceId;
-  }
-
-  function hideVoxelFaceInstance(cellX, cellY, cellZ, faceName) {
-    const faceInstanceRecord = getFaceInstanceRecord(cellX, cellY, cellZ);
-    const faceInstanceId = faceInstanceRecord?.get(faceName);
-    if (!Number.isInteger(faceInstanceId)) return false;
-
-    const faceGrid = voxelFaceGridsByName.get(faceName);
-    const faceVoxelCells = voxelFaceCellByInstanceIdByName.get(faceName);
-    const freeFaceIds = freeVoxelFaceIdsByName.get(faceName);
-    if (!faceGrid || !faceVoxelCells || !freeFaceIds) return false;
-
-    faceGrid.setMatrixAt(faceInstanceId, hiddenInstanceMatrix);
-    faceGrid.instanceMatrix.needsUpdate = true;
-    faceVoxelCells[faceInstanceId] = null;
-    faceInstanceRecord.delete(faceName);
-    if (faceInstanceRecord.size === 0) {
-      clearFaceInstanceRecord(cellX, cellY, cellZ);
-    }
-    freeFaceIds.push(faceInstanceId);
+    existingMesh.traverse(part => {
+      if (part?.geometry?.dispose) {
+        part.geometry.dispose();
+      }
+    });
+    solidChunkGroup.remove(existingMesh);
+    solidChunkMeshByKey.delete(chunkKey);
     return true;
   }
 
-  function syncVoxelFaceInstance(cellX, cellY, cellZ, faceName, voxel = null) {
-    const faceTransform = SOLID_FACE_TRANSFORMS[faceName];
-    const faceGrid = voxelFaceGridsByName.get(faceName);
-    const faceVoxelCells = voxelFaceCellByInstanceIdByName.get(faceName);
-    if (!faceTransform || !faceGrid || !faceVoxelCells) return false;
-
-    const faceInstanceRecord = ensureFaceInstanceRecord(cellX, cellY, cellZ);
-    const currentFaceInstanceId = faceInstanceRecord.get(faceName);
-    const faceInstanceId = Number.isInteger(currentFaceInstanceId)
-      ? currentFaceInstanceId
-      : getNextFaceInstanceId(faceName);
-    if (!Number.isInteger(faceInstanceId)) return false;
-
-    const centerPosition = world.gridToMapCenterPosition(cellX, cellY, cellZ, voxelSize);
-    faceOffsetVector.set(
-      faceTransform.normal.x * voxelSize * 0.5,
-      faceTransform.normal.y * voxelSize * 0.5,
-      faceTransform.normal.z * voxelSize * 0.5
-    );
-    instanceMatrix.makeRotationFromEuler(new THREE.Euler(
-      faceTransform.rotation.x,
-      faceTransform.rotation.y,
-      faceTransform.rotation.z
-    ));
-    instanceMatrix.setPosition(
-      centerPosition.x + faceOffsetVector.x,
-      centerPosition.y + faceOffsetVector.y,
-      centerPosition.z + faceOffsetVector.z
-    );
-
-    faceGrid.setMatrixAt(faceInstanceId, instanceMatrix);
-    faceGrid.setColorAt(faceInstanceId, instanceColor.set(normalizeColor(voxel?.color)));
-    faceGrid.instanceMatrix.needsUpdate = true;
-    if (faceGrid.instanceColor) {
-      faceGrid.instanceColor.needsUpdate = true;
+  function ensureGeometryBucket(bucketMap, textureKey = '') {
+    const normalizedTextureKey = textureKey === 'bordered' ? 'bordered' : '';
+    const cacheKey = normalizedTextureKey || 'solid';
+    const existingBucket = bucketMap.get(cacheKey);
+    if (existingBucket) {
+      return existingBucket;
     }
 
-    faceVoxelCells[faceInstanceId] = { x: cellX, y: cellY, z: cellZ };
-    faceInstanceRecord.set(faceName, faceInstanceId);
-    return true;
+    const nextBucket = {
+      textureKey: normalizedTextureKey,
+      positions: [],
+      normals: [],
+      colors: [],
+      uvs: [],
+      indices: [],
+      vertexCount: 0,
+    };
+    bucketMap.set(cacheKey, nextBucket);
+    return nextBucket;
   }
 
-  function syncSolidVoxelFaces(cellX, cellY, cellZ, voxel = null) {
-    const visibleFaces = new Set(getVisibleSolidFaces(cellX, cellY, cellZ, voxel));
-    const faceInstanceRecord = getFaceInstanceRecord(cellX, cellY, cellZ);
+  function pushGreedyQuad(bucket, vertices, normal, colorHex, width, height) {
+    const baseIndex = bucket.vertexCount;
+    const color = new THREE.Color(colorHex);
 
-    for (const faceName of TEXTURED_FACE_ORDER) {
-      if (visibleFaces.has(faceName)) {
-        if (!syncVoxelFaceInstance(cellX, cellY, cellZ, faceName, voxel)) {
-          return false;
+    for (let i = 0; i < vertices.length; i += 1) {
+      const vertex = vertices[i];
+      bucket.positions.push(vertex[0], vertex[1], vertex[2]);
+      bucket.normals.push(normal[0], normal[1], normal[2]);
+      bucket.colors.push(color.r, color.g, color.b);
+    }
+
+    bucket.uvs.push(
+      0, 0,
+      width, 0,
+      width, height,
+      0, height
+    );
+    bucket.indices.push(
+      baseIndex,
+      baseIndex + 1,
+      baseIndex + 2,
+      baseIndex,
+      baseIndex + 2,
+      baseIndex + 3
+    );
+    bucket.vertexCount += 4;
+  }
+
+  function createSolidChunkGeometry(chunkPosition, chunkEntry) {
+    if (!chunkEntry?.boxel) {
+      return [];
+    }
+
+    const bucketMap = new Map();
+    const chunkSize = world.getChunkSize();
+    const chunkBaseX = chunkPosition.x * chunkSize;
+    const chunkBaseY = chunkPosition.y * chunkSize;
+    const chunkBaseZ = chunkPosition.z * chunkSize;
+    const faceConfigs = [
+      {
+        faceName: 'right',
+        sliceMax: chunkSize,
+        widthMax: chunkSize,
+        heightMax: chunkSize,
+        toCell: (slice, widthIndex, heightIndex) => ({
+          x: chunkBaseX + slice,
+          y: chunkBaseY + heightIndex,
+          z: chunkBaseZ + widthIndex,
+        }),
+        getVertices: (slice, widthIndex, heightIndex, width, height) => {
+          const planeX = worldOrigin.x + (chunkBaseX + slice + 1) * voxelSize;
+          const minY = worldOrigin.y + (chunkBaseY + heightIndex) * voxelSize;
+          const maxY = minY + height * voxelSize;
+          const minZ = worldOrigin.z + (chunkBaseZ + widthIndex) * voxelSize;
+          const maxZ = minZ + width * voxelSize;
+          return {
+            normal: [1, 0, 0],
+            vertices: [
+              [planeX, minY, minZ],
+              [planeX, maxY, minZ],
+              [planeX, maxY, maxZ],
+              [planeX, minY, maxZ],
+            ],
+          };
+        },
+      },
+      {
+        faceName: 'left',
+        sliceMax: chunkSize,
+        widthMax: chunkSize,
+        heightMax: chunkSize,
+        toCell: (slice, widthIndex, heightIndex) => ({
+          x: chunkBaseX + slice,
+          y: chunkBaseY + heightIndex,
+          z: chunkBaseZ + widthIndex,
+        }),
+        getVertices: (slice, widthIndex, heightIndex, width, height) => {
+          const planeX = worldOrigin.x + (chunkBaseX + slice) * voxelSize;
+          const minY = worldOrigin.y + (chunkBaseY + heightIndex) * voxelSize;
+          const maxY = minY + height * voxelSize;
+          const minZ = worldOrigin.z + (chunkBaseZ + widthIndex) * voxelSize;
+          const maxZ = minZ + width * voxelSize;
+          return {
+            normal: [-1, 0, 0],
+            vertices: [
+              [planeX, minY, maxZ],
+              [planeX, maxY, maxZ],
+              [planeX, maxY, minZ],
+              [planeX, minY, minZ],
+            ],
+          };
+        },
+      },
+      {
+        faceName: 'top',
+        sliceMax: chunkSize,
+        widthMax: chunkSize,
+        heightMax: chunkSize,
+        toCell: (slice, widthIndex, heightIndex) => ({
+          x: chunkBaseX + widthIndex,
+          y: chunkBaseY + slice,
+          z: chunkBaseZ + heightIndex,
+        }),
+        getVertices: (slice, widthIndex, heightIndex, width, height) => {
+          const planeY = worldOrigin.y + (chunkBaseY + slice + 1) * voxelSize;
+          const minX = worldOrigin.x + (chunkBaseX + widthIndex) * voxelSize;
+          const maxX = minX + width * voxelSize;
+          const minZ = worldOrigin.z + (chunkBaseZ + heightIndex) * voxelSize;
+          const maxZ = minZ + height * voxelSize;
+          return {
+            normal: [0, 1, 0],
+            vertices: [
+              [minX, planeY, maxZ],
+              [maxX, planeY, maxZ],
+              [maxX, planeY, minZ],
+              [minX, planeY, minZ],
+            ],
+          };
+        },
+      },
+      {
+        faceName: 'bottom',
+        sliceMax: chunkSize,
+        widthMax: chunkSize,
+        heightMax: chunkSize,
+        toCell: (slice, widthIndex, heightIndex) => ({
+          x: chunkBaseX + widthIndex,
+          y: chunkBaseY + slice,
+          z: chunkBaseZ + heightIndex,
+        }),
+        getVertices: (slice, widthIndex, heightIndex, width, height) => {
+          const planeY = worldOrigin.y + (chunkBaseY + slice) * voxelSize;
+          const minX = worldOrigin.x + (chunkBaseX + widthIndex) * voxelSize;
+          const maxX = minX + width * voxelSize;
+          const minZ = worldOrigin.z + (chunkBaseZ + heightIndex) * voxelSize;
+          const maxZ = minZ + height * voxelSize;
+          return {
+            normal: [0, -1, 0],
+            vertices: [
+              [minX, planeY, minZ],
+              [maxX, planeY, minZ],
+              [maxX, planeY, maxZ],
+              [minX, planeY, maxZ],
+            ],
+          };
+        },
+      },
+      {
+        faceName: 'front',
+        sliceMax: chunkSize,
+        widthMax: chunkSize,
+        heightMax: chunkSize,
+        toCell: (slice, widthIndex, heightIndex) => ({
+          x: chunkBaseX + widthIndex,
+          y: chunkBaseY + heightIndex,
+          z: chunkBaseZ + slice,
+        }),
+        getVertices: (slice, widthIndex, heightIndex, width, height) => {
+          const planeZ = worldOrigin.z + (chunkBaseZ + slice + 1) * voxelSize;
+          const minX = worldOrigin.x + (chunkBaseX + widthIndex) * voxelSize;
+          const maxX = minX + width * voxelSize;
+          const minY = worldOrigin.y + (chunkBaseY + heightIndex) * voxelSize;
+          const maxY = minY + height * voxelSize;
+          return {
+            normal: [0, 0, 1],
+            vertices: [
+              [minX, minY, planeZ],
+              [maxX, minY, planeZ],
+              [maxX, maxY, planeZ],
+              [minX, maxY, planeZ],
+            ],
+          };
+        },
+      },
+      {
+        faceName: 'back',
+        sliceMax: chunkSize,
+        widthMax: chunkSize,
+        heightMax: chunkSize,
+        toCell: (slice, widthIndex, heightIndex) => ({
+          x: chunkBaseX + widthIndex,
+          y: chunkBaseY + heightIndex,
+          z: chunkBaseZ + slice,
+        }),
+        getVertices: (slice, widthIndex, heightIndex, width, height) => {
+          const planeZ = worldOrigin.z + (chunkBaseZ + slice) * voxelSize;
+          const minX = worldOrigin.x + (chunkBaseX + widthIndex) * voxelSize;
+          const maxX = minX + width * voxelSize;
+          const minY = worldOrigin.y + (chunkBaseY + heightIndex) * voxelSize;
+          const maxY = minY + height * voxelSize;
+          return {
+            normal: [0, 0, -1],
+            vertices: [
+              [maxX, minY, planeZ],
+              [minX, minY, planeZ],
+              [minX, maxY, planeZ],
+              [maxX, maxY, planeZ],
+            ],
+          };
+        },
+      },
+    ];
+
+    for (let configIndex = 0; configIndex < faceConfigs.length; configIndex += 1) {
+      const faceConfig = faceConfigs[configIndex];
+      for (let slice = 0; slice < faceConfig.sliceMax; slice += 1) {
+        const mask = new Array(faceConfig.widthMax * faceConfig.heightMax).fill(null);
+
+        for (let heightIndex = 0; heightIndex < faceConfig.heightMax; heightIndex += 1) {
+          for (let widthIndex = 0; widthIndex < faceConfig.widthMax; widthIndex += 1) {
+            const cell = faceConfig.toCell(slice, widthIndex, heightIndex);
+            const voxel = world.getVoxel(cell.x, cell.y, cell.z);
+            if (!isOpaqueCubeVoxel(voxel)) {
+              continue;
+            }
+            if (!shouldRenderVoxelFace(cell.x, cell.y, cell.z, faceConfig.faceName, voxel)) {
+              continue;
+            }
+
+            mask[heightIndex * faceConfig.widthMax + widthIndex] = {
+              signature: getSolidVoxelSignature(voxel),
+              colorHex: new THREE.Color(normalizeColor(voxel?.color)).getHex(),
+              textureKey: getSolidVoxelTextureKey(voxel),
+            };
+          }
         }
-      } else if (faceInstanceRecord?.has(faceName)) {
-        hideVoxelFaceInstance(cellX, cellY, cellZ, faceName);
+
+        for (let heightIndex = 0; heightIndex < faceConfig.heightMax; heightIndex += 1) {
+          for (let widthIndex = 0; widthIndex < faceConfig.widthMax; widthIndex += 1) {
+            const maskIndex = heightIndex * faceConfig.widthMax + widthIndex;
+            const faceEntry = mask[maskIndex];
+            if (!faceEntry) {
+              continue;
+            }
+
+            let width = 1;
+            while (widthIndex + width < faceConfig.widthMax) {
+              const nextEntry = mask[heightIndex * faceConfig.widthMax + widthIndex + width];
+              if (!nextEntry || nextEntry.signature !== faceEntry.signature) {
+                break;
+              }
+              width += 1;
+            }
+
+            let height = 1;
+            let canGrowHeight = true;
+            while (heightIndex + height < faceConfig.heightMax && canGrowHeight) {
+              for (let scanWidth = 0; scanWidth < width; scanWidth += 1) {
+                const nextEntry = mask[(heightIndex + height) * faceConfig.widthMax + widthIndex + scanWidth];
+                if (!nextEntry || nextEntry.signature !== faceEntry.signature) {
+                  canGrowHeight = false;
+                  break;
+                }
+              }
+
+              if (canGrowHeight) {
+                height += 1;
+              }
+            }
+
+            const geometryBucket = ensureGeometryBucket(bucketMap, faceEntry.textureKey);
+            const quad = faceConfig.getVertices(slice, widthIndex, heightIndex, width, height);
+            pushGreedyQuad(
+              geometryBucket,
+              quad.vertices,
+              quad.normal,
+              faceEntry.colorHex,
+              width,
+              height
+            );
+
+            for (let clearHeight = 0; clearHeight < height; clearHeight += 1) {
+              for (let clearWidth = 0; clearWidth < width; clearWidth += 1) {
+                mask[(heightIndex + clearHeight) * faceConfig.widthMax + widthIndex + clearWidth] = null;
+              }
+            }
+          }
+        }
       }
     }
 
+    return Array.from(bucketMap.values()).map(bucket => {
+      const geometry = new THREE.BufferGeometry();
+      geometry.setAttribute('position', new THREE.Float32BufferAttribute(bucket.positions, 3));
+      geometry.setAttribute('normal', new THREE.Float32BufferAttribute(bucket.normals, 3));
+      geometry.setAttribute('color', new THREE.Float32BufferAttribute(bucket.colors, 3));
+      geometry.setAttribute('uv', new THREE.Float32BufferAttribute(bucket.uvs, 2));
+      geometry.setIndex(bucket.indices);
+      geometry.computeBoundingSphere();
+      geometry.computeBoundingBox();
+      return {
+        geometry,
+        textureKey: bucket.textureKey,
+      };
+    });
+  }
+
+  function rebuildSolidChunkMesh(chunkKey = '') {
+    const chunkPosition = typeof world.parseChunkKey === 'function'
+      ? world.parseChunkKey(chunkKey)
+      : null;
+    if (!chunkPosition) {
+      return false;
+    }
+
+    removeSolidChunkMesh(chunkKey);
+
+    if (!world.isChunkActive(chunkPosition.x, chunkPosition.y, chunkPosition.z)) {
+      return true;
+    }
+
+    const chunkEntry = world.getChunkEntry(chunkPosition.x, chunkPosition.y, chunkPosition.z);
+    const chunkGeometries = createSolidChunkGeometry(chunkPosition, chunkEntry);
+    if (chunkGeometries.length === 0) {
+      return true;
+    }
+
+    const chunkGroup = new THREE.Group();
+    chunkGroup.name = `${mapGroup.name} Chunk ${chunkKey}`;
+    chunkGroup.userData.isGreedySolidChunk = true;
+    chunkGroup.userData.chunkKey = chunkKey;
+
+    for (let i = 0; i < chunkGeometries.length; i += 1) {
+      const entry = chunkGeometries[i];
+      const mesh = new THREE.Mesh(
+        entry.geometry,
+        getSolidChunkMaterial(entry.textureKey)
+      );
+      mesh.receiveShadow = true;
+      mesh.castShadow = false;
+      mesh.userData.isGreedySolidChunk = true;
+      mesh.userData.chunkKey = chunkKey;
+      chunkGroup.add(mesh);
+    }
+
+    solidChunkGroup.add(chunkGroup);
+    solidChunkMeshByKey.set(chunkKey, chunkGroup);
     return true;
   }
 
@@ -686,9 +1113,6 @@ export function buildMapFromWorld({
       }
 
       if (!neighborVoxel) {
-        for (const faceName of TEXTURED_FACE_ORDER) {
-          hideVoxelFaceInstance(neighborCellX, neighborCellY, neighborCellZ, faceName);
-        }
         removeColliderForCell(neighborCellX, neighborCellY, neighborCellZ);
         continue;
       }
@@ -707,22 +1131,11 @@ export function buildMapFromWorld({
           planeRaycastMeshByKey.set(neighborKey, planeRaycastMesh);
         }
         addColliderForCell(neighborCellX, neighborCellY, neighborCellZ);
-        for (const faceName of TEXTURED_FACE_ORDER) {
-          hideVoxelFaceInstance(neighborCellX, neighborCellY, neighborCellZ, faceName);
-        }
         continue;
       }
 
-      if (isVoxelFullyOccluded(neighborCellX, neighborCellY, neighborCellZ, neighborVoxel)) {
-        for (const faceName of TEXTURED_FACE_ORDER) {
-          hideVoxelFaceInstance(neighborCellX, neighborCellY, neighborCellZ, faceName);
-        }
-        removeColliderForCell(neighborCellX, neighborCellY, neighborCellZ);
-        continue;
-      }
-
-      syncSolidVoxelFaces(neighborCellX, neighborCellY, neighborCellZ, neighborVoxel);
       addColliderForCell(neighborCellX, neighborCellY, neighborCellZ);
+      scheduleSolidChunkRebuildForCell(neighborCellX, neighborCellY, neighborCellZ);
     }
   }
 
@@ -746,10 +1159,8 @@ export function buildMapFromWorld({
     }
 
     if (!voxel) {
-      for (const faceName of TEXTURED_FACE_ORDER) {
-        hideVoxelFaceInstance(cellX, cellY, cellZ, faceName);
-      }
       removeColliderForCell(cellX, cellY, cellZ);
+      scheduleSolidChunkRebuildForCell(cellX, cellY, cellZ);
       return true;
     }
 
@@ -759,9 +1170,6 @@ export function buildMapFromWorld({
         : createTexturedVoxelMesh(cellX, cellY, cellZ, voxel);
       if (!texturedVoxelMesh) {
         removeColliderForCell(cellX, cellY, cellZ);
-        for (const faceName of TEXTURED_FACE_ORDER) {
-          hideVoxelFaceInstance(cellX, cellY, cellZ, faceName);
-        }
         return true;
       }
       texturedVoxelGroup.add(texturedVoxelMesh);
@@ -772,25 +1180,11 @@ export function buildMapFromWorld({
         planeRaycastMeshByKey.set(key, planeRaycastMesh);
       }
       addColliderForCell(cellX, cellY, cellZ);
-      for (const faceName of TEXTURED_FACE_ORDER) {
-        hideVoxelFaceInstance(cellX, cellY, cellZ, faceName);
-      }
       return true;
-    }
-
-    if (isVoxelFullyOccluded(cellX, cellY, cellZ, voxel)) {
-      for (const faceName of TEXTURED_FACE_ORDER) {
-        hideVoxelFaceInstance(cellX, cellY, cellZ, faceName);
-      }
-      removeColliderForCell(cellX, cellY, cellZ);
-      return true;
-    }
-
-    if (!syncSolidVoxelFaces(cellX, cellY, cellZ, voxel)) {
-      return false;
     }
 
     addColliderForCell(cellX, cellY, cellZ);
+    scheduleSolidChunkRebuildForCell(cellX, cellY, cellZ);
     return true;
   }
 
@@ -811,9 +1205,6 @@ export function buildMapFromWorld({
   }
 
   function syncWorldVoxelRemovedAtCell(cellX, cellY, cellZ, { refreshNeighbors = true } = {}) {
-    for (const faceName of TEXTURED_FACE_ORDER) {
-      hideVoxelFaceInstance(cellX, cellY, cellZ, faceName);
-    }
     const key = createCellKey(cellX, cellY, cellZ);
     const texturedVoxelMesh = texturedVoxelMeshByKey.get(key);
     if (texturedVoxelMesh) {
@@ -826,6 +1217,7 @@ export function buildMapFromWorld({
       planeRaycastMeshByKey.delete(key);
     }
     removeColliderForCell(cellX, cellY, cellZ);
+    scheduleSolidChunkRebuildForCell(cellX, cellY, cellZ, { includeNeighbors: true });
     if (refreshNeighbors) {
       refreshAdjacentVoxelVisuals(cellX, cellY, cellZ);
     }
@@ -887,14 +1279,23 @@ export function buildMapFromWorld({
     const chunkVoxelEntries = chunkEntry.boxel.getVoxelEntries({ activeOnly: true });
     for (let i = 0; i < chunkVoxelEntries.length; i += 1) {
       const entry = chunkVoxelEntries[i];
+      const cellX = chunkPosition.x * world.getChunkSize() + entry.position.x;
+      const cellY = chunkPosition.y * world.getChunkSize() + entry.position.y;
+      const cellZ = chunkPosition.z * world.getChunkSize() + entry.position.z;
+      const voxel = world.getVoxel(cellX, cellY, cellZ);
+      if (isOpaqueCubeVoxel(voxel)) {
+        continue;
+      }
       pendingChunkVisualJobs.push({
         type: action,
-        cellX: chunkPosition.x * world.getChunkSize() + entry.position.x,
-        cellY: chunkPosition.y * world.getChunkSize() + entry.position.y,
-        cellZ: chunkPosition.z * world.getChunkSize() + entry.position.z,
+        cellX,
+        cellY,
+        cellZ,
       });
     }
 
+    scheduleSolidChunkJob(chunkKey, action === 'remove' ? 'remove' : 'rebuild');
+    scheduleSolidChunkNeighbors(chunkKey, 'rebuild');
     refreshChunkBoundaryNeighbors(chunkPosition, chunkVoxelEntries);
     return true;
   }
@@ -903,38 +1304,82 @@ export function buildMapFromWorld({
     const chunkDelta = typeof world.updateActiveChunks === 'function'
       ? world.updateActiveChunks(center)
       : { added: [], removed: [], active: [] };
+    if (center && typeof center === 'object') {
+      centerChunkWorldPosition.x = Number(center.x) || 0;
+      centerChunkWorldPosition.y = Number(center.y) || 0;
+      centerChunkWorldPosition.z = Number(center.z) || 0;
+    }
+    const sortedRemovedChunkKeys = sortChunkKeysByDistance(chunkDelta.removed, center).reverse();
+    const sortedAddedChunkKeys = sortChunkKeysByDistance(chunkDelta.added, center);
 
-    for (let i = 0; i < chunkDelta.removed.length; i += 1) {
-      enqueueChunkVisualJobs(chunkDelta.removed[i], 'remove');
+    for (let i = 0; i < sortedRemovedChunkKeys.length; i += 1) {
+      enqueueChunkVisualJobs(sortedRemovedChunkKeys[i], 'remove');
     }
 
-    for (let i = 0; i < chunkDelta.added.length; i += 1) {
-      enqueueChunkVisualJobs(chunkDelta.added[i], 'add');
+    for (let i = 0; i < sortedAddedChunkKeys.length; i += 1) {
+      enqueueChunkVisualJobs(sortedAddedChunkKeys[i], 'add');
     }
 
     return chunkDelta;
   }
 
   function processPendingChunkVisualUpdates(maxJobs = 120) {
+    const maxFrameTimeMs = 2.5;
+    const maxSolidChunkJobsPerFrame = 1;
+    const frameStartTime = typeof performance?.now === 'function'
+      ? performance.now()
+      : 0;
+    const pendingCenter = centerChunkWorldPosition;
     let processedJobs = 0;
+    let processedSolidChunkJobs = 0;
 
     while (
       processedJobs < maxJobs
-      && (pendingChunkBoundaryJobs.length > 0 || pendingChunkVisualJobs.length > 0)
+      && (
+        pendingChunkBoundaryJobs.length > 0
+        || pendingChunkVisualJobs.length > 0
+        || pendingSolidChunkJobs.size > 0
+      )
     ) {
-      const job = pendingChunkBoundaryJobs.length > 0
-        ? pendingChunkBoundaryJobs.shift()
-        : pendingChunkVisualJobs.shift();
-      if (!job) break;
+      if (
+        processedJobs > 0
+        && frameStartTime > 0
+        && typeof performance?.now === 'function'
+        && performance.now() - frameStartTime >= maxFrameTimeMs
+      ) {
+        break;
+      }
 
-      if (job.type === 'add') {
-        syncWorldVoxelAddedAtCell(job.cellX, job.cellY, job.cellZ, { refreshNeighbors: false });
-      } else if (job.type === 'remove') {
-        syncWorldVoxelRemovedAtCell(job.cellX, job.cellY, job.cellZ, { refreshNeighbors: false });
-      } else if (job.type === 'refresh') {
-        if (world.isVoxelCellActive(job.cellX, job.cellY, job.cellZ)) {
-          refreshVoxelVisual(job.cellX, job.cellY, job.cellZ);
+      if (pendingChunkBoundaryJobs.length > 0 || pendingChunkVisualJobs.length > 0) {
+        const job = pendingChunkBoundaryJobs.length > 0
+          ? pendingChunkBoundaryJobs.shift()
+          : pendingChunkVisualJobs.shift();
+        if (!job) break;
+
+        if (job.type === 'add') {
+          syncWorldVoxelAddedAtCell(job.cellX, job.cellY, job.cellZ, { refreshNeighbors: false });
+        } else if (job.type === 'remove') {
+          syncWorldVoxelRemovedAtCell(job.cellX, job.cellY, job.cellZ, { refreshNeighbors: false });
+        } else if (job.type === 'refresh') {
+          if (world.isVoxelCellActive(job.cellX, job.cellY, job.cellZ)) {
+            refreshVoxelVisual(job.cellX, job.cellY, job.cellZ);
+          }
         }
+      } else {
+        if (processedSolidChunkJobs >= maxSolidChunkJobsPerFrame) {
+          break;
+        }
+
+        const nextChunkJob = takeNearestPendingSolidChunkJob(pendingCenter);
+        if (!nextChunkJob) break;
+
+        const { chunkKey, action } = nextChunkJob;
+        if (action === 'remove') {
+          removeSolidChunkMesh(chunkKey);
+        } else {
+          rebuildSolidChunkMesh(chunkKey);
+        }
+        processedSolidChunkJobs += 1;
       }
 
       processedJobs += 1;
@@ -942,7 +1387,10 @@ export function buildMapFromWorld({
 
     return {
       processedJobs,
-      remainingJobs: pendingChunkBoundaryJobs.length + pendingChunkVisualJobs.length,
+      remainingJobs:
+        pendingChunkBoundaryJobs.length
+        + pendingChunkVisualJobs.length
+        + pendingSolidChunkJobs.size,
     };
   }
 
@@ -956,20 +1404,16 @@ export function buildMapFromWorld({
       };
     }
 
-    const faceName = hit?.object?.userData?.faceName;
-    const faceVoxelCells = faceName ? voxelFaceCellByInstanceIdByName.get(faceName) : null;
-    const cell = faceVoxelCells?.[hit?.instanceId];
-    if (!cell) return null;
-
-    return {
-      cellX: cell.x,
-      cellY: cell.y,
-      cellZ: cell.z,
-    };
+    return getGreedyHitVoxelCell(hit, -1);
   }
 
   function getAdjacentVoxelCellFromRaycastHit(hit) {
     if (!hit?.object || !hit.face) return null;
+
+    const greedyVoxelCell = getGreedyHitVoxelCell(hit, 1);
+    if (greedyVoxelCell) {
+      return greedyVoxelCell;
+    }
 
     hitNormalWorld.copy(hit.face.normal).transformDirection(hit.object.matrixWorld);
     adjacentVoxelPoint.copy(hit.point).addScaledVector(hitNormalWorld, voxelSize * 0.5 + 0.001);
@@ -989,44 +1433,19 @@ export function buildMapFromWorld({
   }
 
   const voxelRaycastGeometry = new THREE.BoxGeometry(voxelSize, voxelSize, voxelSize);
-  const voxelFaceGeometry = new THREE.PlaneGeometry(voxelSize, voxelSize);
-  const hasBorderedTexture = voxelEntries.some(entry => normalizeTexture(entry?.voxel?.texture) === 'bordered');
-  const voxelFaceMaterial = new THREE.MeshStandardMaterial({
-    color: 0xffffff,
-    map: hasBorderedTexture ? createBorderedVoxelTexture() : null,
-    side: THREE.DoubleSide,
-    roughness: 0.95,
-    metalness: 0.0,
-  });
+  const borderedVoxelTexture = createBorderedVoxelTexture();
+  const solidChunkMaterialByTextureKey = new Map();
+  const centerChunkWorldPosition = world.spawnPosition ?? { x: 0, y: 0, z: 0 };
   const planeRaycastMaterial = new THREE.MeshBasicMaterial({
     transparent: true,
     opacity: 0,
     depthWrite: false,
     colorWrite: false,
   });
-  const voxelFaceGridsByName = new Map();
-  const voxelFaceCellByInstanceIdByName = new Map();
-  const nextVoxelFaceInstanceIdByName = new Map();
+  const solidChunkGroup = new THREE.Group();
   const texturedVoxelGroup = new THREE.Group();
   const planeRaycastGroup = new THREE.Group();
-
-  for (const faceName of TEXTURED_FACE_ORDER) {
-    const faceGrid = new THREE.InstancedMesh(
-      voxelFaceGeometry,
-      voxelFaceMaterial,
-      maxVoxelCount
-    );
-    faceGrid.name = `${mapGroup.name} ${faceName} Faces`;
-    faceGrid.receiveShadow = true;
-    faceGrid.count = 0;
-    faceGrid.frustumCulled = false;
-    faceGrid.userData.faceName = faceName;
-    voxelFaceGridsByName.set(faceName, faceGrid);
-    voxelFaceCellByInstanceIdByName.set(faceName, []);
-    nextVoxelFaceInstanceIdByName.set(faceName, 0);
-    freeVoxelFaceIdsByName.set(faceName, []);
-    mapGroup.add(faceGrid);
-  }
+  solidChunkGroup.name = `${mapGroup.name} Solid Chunks`;
   texturedVoxelGroup.name = `${mapGroup.name} Textured Voxels`;
   planeRaycastGroup.name = `${mapGroup.name} Plane Raycast`;
 
@@ -1048,10 +1467,6 @@ export function buildMapFromWorld({
           planeRaycastMeshByKey.set(createCellKey(position.x, position.y, position.z), planeRaycastMesh);
         }
       }
-    } else {
-      if (!isVoxelFullyOccluded(position.x, position.y, position.z, voxel)) {
-        syncSolidVoxelFaces(position.x, position.y, position.z, voxel);
-      }
     }
 
     if (!isVoxelFullyOccluded(position.x, position.y, position.z, voxel)) {
@@ -1059,16 +1474,14 @@ export function buildMapFromWorld({
     }
   }
 
-  for (const faceGrid of voxelFaceGridsByName.values()) {
-    faceGrid.instanceMatrix.needsUpdate = true;
-    if (faceGrid.instanceColor) {
-      faceGrid.instanceColor.needsUpdate = true;
-    }
+  for (const chunkKey of sortChunkKeysByDistance(world.getActiveChunkKeys(), world.spawnPosition)) {
+    scheduleSolidChunkJob(chunkKey, 'rebuild');
   }
 
   const boundaryColliders = createWorldBoundaryColliders();
   buildingColliders.push(...boundaryColliders);
 
+  mapGroup.add(solidChunkGroup);
   mapGroup.add(texturedVoxelGroup);
   mapGroup.add(planeRaycastGroup);
   scene.add(mapGroup);
@@ -1087,18 +1500,37 @@ export function buildMapFromWorld({
     ),
     buildingColliders,
     entities: [],
-    raycastTargets: [...Array.from(voxelFaceGridsByName.values()), texturedVoxelGroup, planeRaycastGroup],
+    raycastTargets: [solidChunkGroup, texturedVoxelGroup, planeRaycastGroup],
     miniMapStaticLayer: {
       type: 'voxel-grid',
       worldMinX: worldOrigin.x,
       worldMinZ: worldOrigin.z,
       worldWidth: world.size.x * voxelSize,
       worldDepth: world.size.z * voxelSize,
-      pixelWidth: world.size.x,
-      pixelHeight: world.size.z,
+      pixelWidth: miniMapPixelWidth,
+      pixelHeight: miniMapPixelHeight,
       sampleColor(cellX, cellZ) {
+        if (staticMiniMapColor) {
+          return cellX >= 0 && cellX < miniMapPixelWidth && cellZ >= 0 && cellZ < miniMapPixelHeight
+            ? staticMiniMapColor
+            : null;
+        }
+
+        const worldCellX = miniMapPixelWidth === world.size.x
+          ? cellX
+          : Math.min(
+            world.size.x - 1,
+            Math.max(0, Math.floor((cellX / Math.max(1, miniMapPixelWidth)) * world.size.x))
+          );
+        const worldCellZ = miniMapPixelHeight === world.size.z
+          ? cellZ
+          : Math.min(
+            world.size.z - 1,
+            Math.max(0, Math.floor((cellZ / Math.max(1, miniMapPixelHeight)) * world.size.z))
+          );
+
         for (let cellY = world.size.y - 1; cellY >= 0; cellY -= 1) {
-          const voxel = world.getVoxel(cellX, cellY, cellZ);
+          const voxel = world.getVoxel(worldCellX, cellY, worldCellZ);
           if (!voxel) continue;
           return voxel.color ?? null;
         }
@@ -1107,16 +1539,9 @@ export function buildMapFromWorld({
     },
     voxelTypes: Array.from(voxelTypesByName.values()),
     resolveRaycastLabel(hit) {
-      const texturedVoxelCell = hit?.object?.userData?.voxelCell;
-      if (texturedVoxelCell) {
-        return world.getVoxel(texturedVoxelCell.x, texturedVoxelCell.y, texturedVoxelCell.z)?.name ?? null;
-      }
-
-      const faceName = hit?.object?.userData?.faceName;
-      const faceVoxelCells = faceName ? voxelFaceCellByInstanceIdByName.get(faceName) : null;
-      const cell = faceVoxelCells?.[hit?.instanceId];
-      if (!cell) return null;
-      return world.getVoxel(cell.x, cell.y, cell.z)?.name ?? null;
+      const voxelCell = getVoxelCellFromRaycastHit(hit);
+      if (!voxelCell) return null;
+      return world.getVoxel(voxelCell.cellX, voxelCell.cellY, voxelCell.cellZ)?.name ?? null;
     },
     getVoxelCellFromRaycastHit,
     getAdjacentVoxelCellFromRaycastHit,

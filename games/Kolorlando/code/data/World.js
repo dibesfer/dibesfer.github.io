@@ -17,12 +17,19 @@ const WORLD_SNAPSHOT_VERSION = 1;
 export class Boxel15DistanceRendering {
   constructor({
     radiusInVoxels = 30,
+    verticalChunkRadius = null,
   } = {}) {
     this.radiusInVoxels = normalizeWorldAxisSize(radiusInVoxels);
+    this.verticalChunkRadius = normalizeWorldOptionalChunkRadius(verticalChunkRadius);
   }
 
   setRadiusInVoxels(radiusInVoxels = 30) {
     this.radiusInVoxels = normalizeWorldAxisSize(radiusInVoxels);
+    return this;
+  }
+
+  setVerticalChunkRadius(verticalChunkRadius = null) {
+    this.verticalChunkRadius = normalizeWorldOptionalChunkRadius(verticalChunkRadius);
     return this;
   }
 
@@ -58,10 +65,13 @@ export class Boxel15DistanceRendering {
   getActiveChunkPositions(world = null, center = null) {
     const centerChunk = this.getCenterChunkPosition(world, center);
     const chunkRadius = this.getChunkRadius(world?.getChunkSize?.() ?? Boxel15.size);
+    const verticalChunkRadius = Number.isInteger(this.verticalChunkRadius)
+      ? this.verticalChunkRadius
+      : chunkRadius;
     const activeChunkPositions = [];
 
     for (let x = centerChunk.x - chunkRadius; x <= centerChunk.x + chunkRadius; x += 1) {
-      for (let y = centerChunk.y - chunkRadius; y <= centerChunk.y + chunkRadius; y += 1) {
+      for (let y = centerChunk.y - verticalChunkRadius; y <= centerChunk.y + verticalChunkRadius; y += 1) {
         for (let z = centerChunk.z - chunkRadius; z <= centerChunk.z + chunkRadius; z += 1) {
           if (world instanceof World && !world.isChunkPositionWithinWorld(x, y, z)) continue;
           activeChunkPositions.push({ x, y, z });
@@ -84,6 +94,7 @@ export class Boxel15DistanceRendering {
   toJSON() {
     return {
       radiusInVoxels: this.radiusInVoxels,
+      verticalChunkRadius: this.verticalChunkRadius,
     };
   }
 }
@@ -98,6 +109,7 @@ export class World {
     voxelTypes = null,
     entities = null,
     chunkBoxel = null,
+    chunkGenerator = null,
     boxels = null,
     voxels = null,
   } = {}) {
@@ -112,6 +124,8 @@ export class World {
     this.boxels = [];
     this.voxelTypes = new Map();
     this.voxelBoxels = new Map();
+    this.generatedChunkKeys = new Set();
+    this.chunkGenerator = typeof chunkGenerator === 'function' ? chunkGenerator : null;
     this.activeChunkKeys = new Set();
     this.activeChunkCenterKey = '';
     this.updateActiveChunks(this.spawnPosition);
@@ -166,6 +180,19 @@ export class World {
 
   setChunkBoxel(chunkBoxel = null) {
     this.chunkBoxel = normalizeWorldChunkBoxel(chunkBoxel);
+    return this;
+  }
+
+  setChunkGenerator(chunkGenerator = null) {
+    this.chunkGenerator = typeof chunkGenerator === 'function' ? chunkGenerator : null;
+    this.generatedChunkKeys = new Set();
+
+    if (this.activeChunkKeys instanceof Set) {
+      for (const chunkKey of this.activeChunkKeys) {
+        this.ensureGeneratedChunkKey(chunkKey);
+      }
+    }
+
     return this;
   }
 
@@ -370,6 +397,7 @@ export class World {
 
   clearVoxels() {
     this.voxelBoxels.clear();
+    this.generatedChunkKeys.clear();
     return this;
   }
 
@@ -398,6 +426,12 @@ export class World {
 
   getVoxelEntries({ activeChunksOnly = false } = {}) {
     const voxelEntries = [];
+
+    if (activeChunksOnly) {
+      for (const chunkKey of this.activeChunkKeys) {
+        this.ensureGeneratedChunkKey(chunkKey);
+      }
+    }
 
     for (const chunkEntry of this.voxelBoxels.values()) {
       if (activeChunksOnly && !this.isChunkActive(chunkEntry.position.x, chunkEntry.position.y, chunkEntry.position.z)) {
@@ -478,7 +512,9 @@ export class World {
   }
 
   getChunkEntry(chunkX = 0, chunkY = 0, chunkZ = 0) {
-    return this.voxelBoxels.get(this.getChunkKey(chunkX, chunkY, chunkZ)) ?? null;
+    const chunkKey = this.getChunkKey(chunkX, chunkY, chunkZ);
+    this.ensureGeneratedChunkKey(chunkKey);
+    return this.voxelBoxels.get(chunkKey) ?? null;
   }
 
   ensureChunkEntry(chunkX = 0, chunkY = 0, chunkZ = 0) {
@@ -557,6 +593,10 @@ export class World {
 
     this.activeChunkKeys = nextActiveChunkKeys;
     this.activeChunkCenterKey = nextCenterChunkKey;
+
+    for (let i = 0; i < added.length; i += 1) {
+      this.ensureGeneratedChunkKey(added[i]);
+    }
 
     return {
       center: normalizedCenter,
@@ -776,7 +816,7 @@ export class World {
   }
 
   clone() {
-    return new World({
+    const clonedWorld = new World({
       name: this.name,
       size: this.size,
       land: this.land,
@@ -788,6 +828,93 @@ export class World {
       boxels: this.boxels,
       voxels: this.getVoxelEntries(),
     });
+
+    if (typeof this.chunkGenerator === 'function') {
+      clonedWorld.setChunkGenerator(this.chunkGenerator);
+    }
+
+    return clonedWorld;
+  }
+
+  ensureGeneratedChunkKey(chunkKey = '') {
+    if (typeof chunkKey !== 'string' || !chunkKey.trim()) {
+      return null;
+    }
+
+    if (this.generatedChunkKeys.has(chunkKey)) {
+      return this.voxelBoxels.get(chunkKey) ?? null;
+    }
+
+    this.generatedChunkKeys.add(chunkKey);
+    if (typeof this.chunkGenerator !== 'function') {
+      return this.voxelBoxels.get(chunkKey) ?? null;
+    }
+
+    const chunkPosition = this.parseChunkKey(chunkKey);
+    if (!chunkPosition || !this.isChunkPositionWithinWorld(chunkPosition.x, chunkPosition.y, chunkPosition.z)) {
+      return null;
+    }
+
+    const generatedChunk = this.chunkGenerator({
+      world: this,
+      chunkPosition: {
+        x: chunkPosition.x,
+        y: chunkPosition.y,
+        z: chunkPosition.z,
+      },
+      chunkSize: this.getChunkSize(),
+    });
+
+    if (!generatedChunk) {
+      return null;
+    }
+
+    if (generatedChunk instanceof Boxel) {
+      const nextChunkEntry = {
+        position: { ...chunkPosition },
+        boxel: generatedChunk.clone(),
+      };
+      this.voxelBoxels.set(chunkKey, nextChunkEntry);
+      return nextChunkEntry;
+    }
+
+    const voxelEntries = Array.isArray(generatedChunk?.voxels)
+      ? generatedChunk.voxels
+      : Array.isArray(generatedChunk)
+        ? generatedChunk
+        : null;
+    if (!voxelEntries || voxelEntries.length === 0) {
+      return null;
+    }
+
+    const nextChunkEntry = {
+      position: { ...chunkPosition },
+      boxel: this.chunkBoxel.clone(),
+    };
+
+    for (let i = 0; i < voxelEntries.length; i += 1) {
+      const entry = voxelEntries[i];
+      const localPosition = normalizeGeneratedChunkVoxelPosition(entry?.position ?? entry);
+      if (!localPosition) continue;
+
+      try {
+        nextChunkEntry.boxel.set(
+          localPosition.x,
+          localPosition.y,
+          localPosition.z,
+          normalizeWorldVoxel(entry?.voxel ?? entry, localPosition)
+        );
+      } catch {
+        continue;
+      }
+    }
+
+    if (nextChunkEntry.boxel.getVoxelEntries({ activeOnly: true }).length === 0) {
+      return null;
+    }
+
+    this.voxelBoxels.set(chunkKey, nextChunkEntry);
+    return nextChunkEntry;
   }
 
   assertVoxelPositionWithinWorld(position = {}) {
@@ -836,6 +963,17 @@ function normalizeWorldBoxel15DistanceRendering(boxel15DistanceRendering = null)
   return new Boxel15DistanceRendering(boxel15DistanceRendering ?? {});
 }
 
+function normalizeWorldOptionalChunkRadius(value = null) {
+  if (value === null || value === undefined || value === '') {
+    return null;
+  }
+
+  const normalizedValue = Math.floor(Number(value));
+  return Number.isFinite(normalizedValue) && normalizedValue >= 0
+    ? normalizedValue
+    : null;
+}
+
 function serializeChunkBoxel(chunkBoxel = null) {
   return {
     name: 'Boxel15',
@@ -861,6 +999,19 @@ function normalizeSnapshotVoxelPosition(position = null) {
   const y = Number(position.y);
   const z = Number(position.z);
   if (!Number.isInteger(x) || !Number.isInteger(y) || !Number.isInteger(z)) {
+    return null;
+  }
+
+  return { x, y, z };
+}
+
+function normalizeGeneratedChunkVoxelPosition(position = null) {
+  if (!position || typeof position !== 'object') return null;
+
+  const x = Math.floor(Number(position.x));
+  const y = Math.floor(Number(position.y));
+  const z = Math.floor(Number(position.z));
+  if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(z)) {
     return null;
   }
 

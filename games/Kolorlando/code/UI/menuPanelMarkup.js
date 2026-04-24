@@ -192,6 +192,10 @@ export function renderKolorlandoMenuPanel(container) {
                 </select>
             </div>
             <div class="settings-toggle">
+                <label for="settingsFogRenderDistance">Render distance</label>
+                <input id="settingsFogRenderDistance" type="number" min="15" max="180" step="5" value="30">
+            </div>
+            <div class="settings-toggle">
                 <input type="checkbox" name="pixelatedUpscale" id="settingsPixelatedUpscale">
                 <label for="settingsPixelatedUpscale">Pixelated upscale</label>
             </div>

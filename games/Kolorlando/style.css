@@ -430,7 +430,8 @@ img {
 }
 
 #menuCentral button,
-#menuCentral select {
+#menuCentral select,
+#menuCentral input[type="number"] {
     border: 2px solid var(--menu-control-border);
     background: var(--menu-control-bg);
     color: var(--menu-control-text);
@@ -457,6 +458,12 @@ img {
 
 .settings-toggle label {
     color: var(--menu-text);
+}
+
+#menuCentral input[type="number"] {
+    width: 6.5rem;
+    padding: 4px 8px;
+    border-radius: 8px;
 }
 
 #menuMapPanelMiniMapHost {

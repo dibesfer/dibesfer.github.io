@@ -17,6 +17,12 @@
         window.KOLORLANDO_MODE = 'singleplayer';
         const selectedWorld = window.localStorage.getItem('KL_Singleplayer_World') || 'Voxelandia';
         document.title = `${selectedWorld}`;
+        window.addEventListener('DOMContentLoaded', () => {
+            const loadingTitle = document.getElementById('loadingTitle');
+            if (loadingTitle) {
+                loadingTitle.textContent = `Loading ${selectedWorld}`;
+            }
+        });
     </script>
 
     <script type="importmap">
@@ -34,7 +40,7 @@
 
     <div id="loadingScreen" role="status" aria-live="polite">
         <div id="loadingContent">
-            <h1>Loading Voxelandia</h1>
+            <h1 id="loadingTitle">Loading world</h1>
             <div id="loadingBarTrack">
                 <div id="loadingBarFill"></div>
             </div>
