@@ -1050,6 +1050,7 @@ function cloneSnapshotVoxelDefinition(voxel = null) {
   if (voxel.texture && typeof voxel.texture === 'object' && !Array.isArray(voxel.texture)) {
     clonedVoxel.texture = cloneSnapshotValue(voxel.texture);
   }
+  if (Number.isFinite(voxel.textureInfluence)) clonedVoxel.textureInfluence = Number(voxel.textureInfluence);
   if (typeof voxel.transparent === 'boolean') clonedVoxel.transparent = voxel.transparent;
   if (typeof voxel.active === 'boolean') clonedVoxel.active = voxel.active;
   if (typeof voxel.planeFace === 'string' && voxel.planeFace.trim()) clonedVoxel.planeFace = voxel.planeFace.trim();

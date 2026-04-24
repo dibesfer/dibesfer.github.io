@@ -69,6 +69,7 @@ export function buildMapFromWorld({
   const pendingSolidChunkJobs = new Map();
   const textureLoader = new THREE.TextureLoader();
   const voxelFaceTextureCache = new Map();
+  const solidChunkTextureCache = new Map();
   const HIDDEN_FACE_MATERIAL = new THREE.MeshStandardMaterial({ visible: false });
   const FACE_NEIGHBOR_OFFSETS = {
     right: { x: 1, y: 0, z: 0 },
@@ -120,6 +121,15 @@ export function buildMapFromWorld({
     return typeof color === 'string' && color.trim() ? color.trim() : '#ffffff';
   }
 
+  function normalizeTextureInfluence(textureInfluence = 1) {
+    const numericInfluence = Number(textureInfluence);
+    if (!Number.isFinite(numericInfluence)) {
+      return 1;
+    }
+
+    return Math.min(1, Math.max(0, numericInfluence));
+  }
+
   function normalizeTexture(texture = '') {
     return typeof texture === 'string' && texture.trim() ? texture.trim().toLowerCase() : '';
   }
@@ -151,6 +161,41 @@ export function buildMapFromWorld({
     return Object.values(resolvedFaces).some(faceTexture => normalizeTexture(faceTexture) !== 'bordered');
   }
 
+  function getSharedOpaqueVoxelTexturePath(voxel = null) {
+    if (!voxel || isVoxelPlane(voxel) || isTransparentVoxel(voxel)) {
+      return '';
+    }
+
+    const resolvedFaces = resolveVoxelTextureFaces(voxel);
+    if (!resolvedFaces) {
+      return '';
+    }
+
+    let sharedTexturePath = '';
+
+    for (const faceName of TEXTURED_FACE_ORDER) {
+      const faceTexture = typeof resolvedFaces?.[faceName] === 'string'
+        ? resolvedFaces[faceName].trim()
+        : '';
+      const normalizedFaceTexture = normalizeTexture(faceTexture);
+
+      if (!normalizedFaceTexture || normalizedFaceTexture === 'bordered') {
+        return '';
+      }
+
+      if (!sharedTexturePath) {
+        sharedTexturePath = faceTexture;
+        continue;
+      }
+
+      if (normalizeTexture(sharedTexturePath) !== normalizedFaceTexture) {
+        return '';
+      }
+    }
+
+    return sharedTexturePath;
+  }
+
   function isVoxelPlane(voxel = null) {
     return voxel instanceof VoxelPlane || voxel?.shape === 'plane';
   }
@@ -177,7 +222,10 @@ export function buildMapFromWorld({
     return Boolean(voxel)
       && !isVoxelPlane(voxel)
       && !isTransparentVoxel(voxel)
-      && !hasImageTextureFaces(voxel);
+      && (
+        !hasImageTextureFaces(voxel)
+        || Boolean(getSharedOpaqueVoxelTexturePath(voxel))
+      );
   }
 
   function getVoxelRotation(voxel = null) {
@@ -328,6 +376,68 @@ export function buildMapFromWorld({
     return texture;
   }
 
+  function getLoadedSolidChunkTexture(texturePath = '') {
+    const normalizedPath = typeof texturePath === 'string' ? texturePath.trim() : '';
+    if (!normalizedPath) return null;
+
+    if (solidChunkTextureCache.has(normalizedPath)) {
+      return solidChunkTextureCache.get(normalizedPath);
+    }
+
+    const baseTexture = getLoadedVoxelFaceTexture(normalizedPath);
+    if (!baseTexture) {
+      return null;
+    }
+
+    const texture = baseTexture.clone();
+    texture.wrapS = THREE.RepeatWrapping;
+    texture.wrapT = THREE.RepeatWrapping;
+    texture.magFilter = THREE.NearestFilter;
+    texture.minFilter = THREE.NearestFilter;
+    texture.needsUpdate = true;
+    solidChunkTextureCache.set(normalizedPath, texture);
+    return texture;
+  }
+
+  function applyTextureInfluenceToMaterial(material = null, textureInfluence = 1) {
+    if (!material?.map) {
+      return material;
+    }
+
+    const normalizedTextureInfluence = normalizeTextureInfluence(textureInfluence);
+    material.userData.textureInfluence = normalizedTextureInfluence;
+
+    if (normalizedTextureInfluence >= 0.999) {
+      material.customProgramCacheKey = function () {
+        return 'textureInfluence:1.000';
+      };
+      return material;
+    }
+
+    material.onBeforeCompile = shader => {
+      shader.uniforms.textureInfluence = { value: normalizedTextureInfluence };
+      shader.fragmentShader = shader.fragmentShader.replace(
+        'uniform float opacity;',
+        'uniform float opacity;\nuniform float textureInfluence;'
+      );
+      shader.fragmentShader = shader.fragmentShader.replace(
+        '#include <map_fragment>',
+        `
+        #ifdef USE_MAP
+          vec4 sampledDiffuseColor = texture2D( map, vMapUv );
+          sampledDiffuseColor.rgb = mix(vec3(1.0), sampledDiffuseColor.rgb, textureInfluence);
+          diffuseColor *= sampledDiffuseColor;
+        #endif
+        `
+      );
+    };
+    material.customProgramCacheKey = function () {
+      return 'textureInfluence:' + normalizedTextureInfluence.toFixed(3);
+    };
+    material.needsUpdate = true;
+    return material;
+  }
+
   function createTexturedVoxelMesh(cellX, cellY, cellZ, voxel = null) {
     const resolvedFaces = resolveVoxelTextureFaces(voxel);
     if (!resolvedFaces) return null;
@@ -339,15 +449,15 @@ export function buildMapFromWorld({
 
       const faceTexture = resolvedFaces[faceName];
       const resolvedTexture = getLoadedVoxelFaceTexture(faceTexture);
-      return new THREE.MeshStandardMaterial({
-        color: 0xffffff,
+      return applyTextureInfluenceToMaterial(new THREE.MeshStandardMaterial({
+        color: normalizeColor(voxel?.color),
         map: resolvedTexture,
         transparent: true,
         alphaTest: 0.5,
         side: isTransparentVoxel(voxel) ? THREE.DoubleSide : THREE.FrontSide,
         roughness: 0.95,
         metalness: 0.0,
-      });
+      }), voxel?.textureInfluence);
     });
     const mesh = new THREE.Mesh(voxelRaycastGeometry, faceMaterials);
     const centerPosition = world.gridToMapCenterPosition(cellX, cellY, cellZ, voxelSize);
@@ -448,7 +558,15 @@ export function buildMapFromWorld({
   }
 
   function getSolidVoxelTextureKey(voxel = null) {
-    return normalizeTexture(voxel?.texture) === 'bordered' ? 'bordered' : '';
+    if (normalizeTexture(voxel?.texture) === 'bordered') {
+      return 'bordered';
+    }
+
+    return getSharedOpaqueVoxelTexturePath(voxel);
+  }
+
+  function getSolidVoxelTextureInfluence(voxel = null) {
+    return normalizeTextureInfluence(voxel?.textureInfluence);
   }
 
   function getSolidVoxelSignature(voxel = null) {
@@ -459,25 +577,29 @@ export function buildMapFromWorld({
     return [
       new THREE.Color(normalizeColor(voxel?.color)).getHexString(),
       getSolidVoxelTextureKey(voxel),
+      getSolidVoxelTextureInfluence(voxel).toFixed(3),
     ].join('|');
   }
 
-  function getSolidChunkMaterial(textureKey = '') {
-    const normalizedTextureKey = textureKey === 'bordered' ? 'bordered' : '';
-    const cacheKey = normalizedTextureKey || 'solid';
+  function getSolidChunkMaterial(textureKey = '', textureInfluence = 1) {
+    const normalizedTextureKey = typeof textureKey === 'string' ? textureKey.trim() : '';
+    const normalizedTextureInfluence = normalizeTextureInfluence(textureInfluence);
+    const cacheKey = `${normalizedTextureKey || 'solid'}|${normalizedTextureInfluence.toFixed(3)}`;
     const existingMaterial = solidChunkMaterialByTextureKey.get(cacheKey);
     if (existingMaterial) {
       return existingMaterial;
     }
 
-    const nextMaterial = new THREE.MeshStandardMaterial({
+    const nextMaterial = applyTextureInfluenceToMaterial(new THREE.MeshStandardMaterial({
       color: 0xffffff,
-      map: normalizedTextureKey === 'bordered' ? borderedVoxelTexture : null,
+      map: normalizedTextureKey === 'bordered'
+        ? borderedVoxelTexture
+        : (normalizedTextureKey ? getLoadedSolidChunkTexture(normalizedTextureKey) : null),
       vertexColors: true,
       side: THREE.FrontSide,
       roughness: 0.95,
       metalness: 0.0,
-    });
+    }), normalizedTextureInfluence);
     solidChunkMaterialByTextureKey.set(cacheKey, nextMaterial);
     return nextMaterial;
   }
@@ -868,6 +990,7 @@ export function buildMapFromWorld({
         : 'colored',
       color: new THREE.Color(normalizeColor(voxel?.color)).getHex(),
       texture: cloneTextureSpec(voxel?.texture),
+      textureInfluence: normalizeTextureInfluence(voxel?.textureInfluence),
       transparent: isTransparentVoxel(voxel),
       rotation: getVoxelRotation(voxel),
       planeFace: typeof voxel?.planeFace === 'string' ? voxel.planeFace : 'front',
@@ -936,9 +1059,10 @@ export function buildMapFromWorld({
     return true;
   }
 
-  function ensureGeometryBucket(bucketMap, textureKey = '') {
-    const normalizedTextureKey = textureKey === 'bordered' ? 'bordered' : '';
-    const cacheKey = normalizedTextureKey || 'solid';
+  function ensureGeometryBucket(bucketMap, textureKey = '', textureInfluence = 1) {
+    const normalizedTextureKey = typeof textureKey === 'string' ? textureKey.trim() : '';
+    const normalizedTextureInfluence = normalizeTextureInfluence(textureInfluence);
+    const cacheKey = `${normalizedTextureKey || 'solid'}|${normalizedTextureInfluence.toFixed(3)}`;
     const existingBucket = bucketMap.get(cacheKey);
     if (existingBucket) {
       return existingBucket;
@@ -946,6 +1070,7 @@ export function buildMapFromWorld({
 
     const nextBucket = {
       textureKey: normalizedTextureKey,
+      textureInfluence: normalizedTextureInfluence,
       positions: [],
       normals: [],
       colors: [],
@@ -1193,6 +1318,7 @@ export function buildMapFromWorld({
               signature: getSolidVoxelMergeSignature(voxel, cell),
               colorHex: new THREE.Color(normalizeColor(voxel?.color)).getHex(),
               textureKey: getSolidVoxelTextureKey(voxel),
+              textureInfluence: getSolidVoxelTextureInfluence(voxel),
             };
           }
         }
@@ -1230,7 +1356,7 @@ export function buildMapFromWorld({
               }
             }
 
-            const geometryBucket = ensureGeometryBucket(bucketMap, faceEntry.textureKey);
+            const geometryBucket = ensureGeometryBucket(bucketMap, faceEntry.textureKey, faceEntry.textureInfluence);
             const quad = faceConfig.getVertices(slice, widthIndex, heightIndex, width, height);
             pushGreedyQuad(
               geometryBucket,
@@ -1263,6 +1389,7 @@ export function buildMapFromWorld({
       return {
         geometry,
         textureKey: bucket.textureKey,
+        textureInfluence: bucket.textureInfluence,
       };
     });
   }
@@ -1296,7 +1423,7 @@ export function buildMapFromWorld({
       const entry = chunkGeometries[i];
       const mesh = new THREE.Mesh(
         entry.geometry,
-        getSolidChunkMaterial(entry.textureKey)
+        getSolidChunkMaterial(entry.textureKey, entry.textureInfluence)
       );
       mesh.receiveShadow = true;
       mesh.castShadow = false;
@@ -1798,6 +1925,7 @@ export function buildMapFromWorld({
             type: voxelType.type,
             color: '#' + voxelType.color.toString(16).padStart(6, '0'),
             texture: cloneTextureSpec(voxelType.texture) || null,
+            textureInfluence: normalizeTextureInfluence(voxelType.textureInfluence),
             transparent: voxelType.transparent === true,
             rotation: getVoxelRotation(voxelType),
             planeFace: voxelType.planeFace || 'front',
@@ -1819,6 +1947,7 @@ export function buildMapFromWorld({
           type: voxelType.type,
           color: '#' + voxelType.color.toString(16).padStart(6, '0'),
           texture: cloneTextureSpec(voxelType.texture) || null,
+          textureInfluence: normalizeTextureInfluence(voxelType.textureInfluence),
           transparent: voxelType.transparent === true,
           rotation: getVoxelRotation(voxelType),
           planeFace: voxelType.planeFace || 'front',
@@ -1832,6 +1961,7 @@ export function buildMapFromWorld({
         type: voxelType.type,
         color: '#' + voxelType.color.toString(16).padStart(6, '0'),
         texture: cloneTextureSpec(voxelType.texture) || null,
+        textureInfluence: normalizeTextureInfluence(voxelType.textureInfluence),
         transparent: voxelType.transparent === true,
         rotation: getVoxelRotation(voxelType),
       });

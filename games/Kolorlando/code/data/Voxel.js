@@ -10,6 +10,7 @@ export class Voxel {
     type = 'colored',
     color = '#ffffff',
     texture = null,
+    textureInfluence = 1,
     transparent = false,
     active = true,
     microxelSize = 0,
@@ -25,6 +26,7 @@ export class Voxel {
     this.type = normalizeVoxelType(type);
     this.color = normalizeText(color, '#ffffff');
     this.texture = normalizeVoxelTexture(texture);
+    this.textureInfluence = normalizeVoxelTextureInfluence(textureInfluence);
     this.transparent = Boolean(transparent);
     this.active = Boolean(active);
     this.name = normalizeText(name, '');
@@ -66,6 +68,11 @@ export class Voxel {
   setTexture(texture = '') {
     this.type = 'textured';
     this.texture = normalizeVoxelTexture(texture);
+    return this;
+  }
+
+  setTextureInfluence(textureInfluence = 1) {
+    this.textureInfluence = normalizeVoxelTextureInfluence(textureInfluence);
     return this;
   }
 
@@ -192,6 +199,7 @@ export class Voxel {
       type: this.type,
       color: this.color,
       texture: cloneVoxelTexture(this.texture),
+      textureInfluence: this.textureInfluence,
       transparent: this.transparent,
       active: this.active,
       microxelSize: this.microxelSize,
@@ -217,6 +225,7 @@ export class Voxel {
       type: this.type,
       color: this.color,
       texture: serializeVoxelTexture(this.texture),
+      textureInfluence: this.textureInfluence,
       transparent: this.transparent,
       active: this.active,
       microxelSize: this.microxelSize,
@@ -265,6 +274,10 @@ export class Voxel {
 
     if ('texture' in data) {
       this.texture = normalizeVoxelTexture(data.texture);
+    }
+
+    if ('textureInfluence' in data) {
+      this.textureInfluence = normalizeVoxelTextureInfluence(data.textureInfluence);
     }
 
     if ('transparent' in data) {
@@ -318,6 +331,7 @@ export class VoxelPlane extends Voxel {
       type: this.type,
       color: this.color,
       texture: cloneVoxelTexture(this.texture),
+      textureInfluence: this.textureInfluence,
       transparent: this.transparent,
       active: this.active,
       name: this.name,
@@ -390,6 +404,7 @@ export class VoxelPlaneText extends VoxelPlane {
       type: this.type,
       color: this.color,
       texture: cloneVoxelTexture(this.texture),
+      textureInfluence: this.textureInfluence,
       transparent: this.transparent,
       active: this.active,
       name: this.name,
@@ -695,4 +710,13 @@ function cloneMicroxelDataGrid(grid, size) {
 function normalizeGridSize(size) {
   const numericSize = Math.floor(Number(size));
   return Number.isFinite(numericSize) && numericSize > 0 ? numericSize : 0;
+}
+
+function normalizeVoxelTextureInfluence(textureInfluence = 1) {
+  const numericInfluence = Number(textureInfluence);
+  if (!Number.isFinite(numericInfluence)) {
+    return 1;
+  }
+
+  return Math.min(1, Math.max(0, numericInfluence));
 }

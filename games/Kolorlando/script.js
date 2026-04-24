@@ -37,6 +37,7 @@ import { buildMapFromWorld } from './maps/MapGenerator.js';
 import { Voxelaar, fillWorldWithVoxel } from './maps/Voxelaar.js';
 import { Voxelandia, fillWorldWithVoxel as fillVoxelandiaWorldWithVoxel } from './maps/Voxelandia.js';
 import { Grandaar, fillWorldWithVoxel as fillGrandaarWorldWithVoxel } from './maps/Grandaar.js';
+import { Colorlandia, fillWorldWithVoxel as fillColorlandiaWorldWithVoxel } from './maps/Colorlandia.js';
 import { createMultiplayerController } from './code/multiplayer/multiplayer.js';
 import { createCommandHandler } from './code/commands.js';
 import { createBoxelId, createStoredBoxel, deserializeStoredBoxel, getBoxelVoxelEntries, readLocalBoxels, writeLocalBoxel } from './code/data/boxelStorage.js';
@@ -78,6 +79,8 @@ function resolveSingleplayerWorldPreset() {
       return 'voxelaar';
     case 'grandaar':
       return 'grandaar';
+    case 'colorlandia':
+      return 'colorlandia';
     case 'voxelandia':
     default:
       return 'voxelandia';
@@ -1926,7 +1929,7 @@ if (settingsRestoreDefaultsButton) {
 // --------------------
 // GROUND
 // --------------------
-const MAP_PRESET = resolveSingleplayerWorldPreset(); // 'simple' | 'city' | 'voxelandia' | 'voxelaar' | 'grandaar'
+const MAP_PRESET = resolveSingleplayerWorldPreset(); // 'simple' | 'city' | 'voxelandia' | 'voxelaar' | 'grandaar' | 'colorlandia'
 const mapBuilders = {
   simple: buildSimpleMap,
   city: buildCityMap,
@@ -1935,6 +1938,7 @@ const worldPresets = {
   voxelaar: () => fillWorldWithVoxel(Voxelaar.clone()),
   voxelandia: () => fillVoxelandiaWorldWithVoxel(Voxelandia.clone()),
   grandaar: () => fillGrandaarWorldWithVoxel(Grandaar.clone()),
+  colorlandia: () => fillColorlandiaWorldWithVoxel(Colorlandia.clone()),
 };
 const isClassWorldPreset = typeof worldPresets[MAP_PRESET] === 'function';
 const localWorldSaveStore = !MULTIPLAYER_ENABLED && isClassWorldPreset

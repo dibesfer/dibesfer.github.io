@@ -44,6 +44,7 @@ function normalizeVoxelIconSpec(voxel = null) {
       color: normalizeHexColor(voxel),
       texture: '',
       textureFaces: null,
+      textureInfluence: 1,
     };
   }
 
@@ -53,7 +54,17 @@ function normalizeVoxelIconSpec(voxel = null) {
     color: normalizeHexColor(voxel?.color),
     texture: normalizeVoxelIconTexture(voxel?.texture),
     textureFaces: resolveVoxelIconTextureFaces(voxel?.texture),
+    textureInfluence: normalizeVoxelIconTextureInfluence(voxel?.textureInfluence),
   };
+}
+
+function normalizeVoxelIconTextureInfluence(textureInfluence = 1) {
+  const numericInfluence = Number(textureInfluence);
+  if (!Number.isFinite(numericInfluence)) {
+    return 1;
+  }
+
+  return Math.min(1, Math.max(0, numericInfluence));
 }
 
 function createSvgPolygon(svgNs, points, fill) {
@@ -312,7 +323,7 @@ export function createIsometricVoxelTextureIcon(voxel = null) {
   icon.appendChild(canvas);
 
   function draw() {
-    drawTexturedVoxelCubeIcon(canvas, textureImages);
+    drawTexturedVoxelCubeIcon(canvas, textureImages, voxel);
   }
 
   const faceNames = Object.keys(faceTextureSources);
@@ -417,7 +428,7 @@ export function createVoxelIcon(hexColor) {
   return icon;
 }
 
-function drawTexturedVoxelCubeIcon(canvas, textureImages) {
+function drawTexturedVoxelCubeIcon(canvas, textureImages, voxel = null) {
   const context = canvas.getContext('2d');
   if (!context || !textureImages) return;
 
@@ -443,9 +454,21 @@ function drawTexturedVoxelCubeIcon(canvas, textureImages) {
     { x: 32, y: 56 },
   ];
 
-  drawTextureOnFace(context, textureImages.top, topFace, { shade: 'rgba(255, 255, 255, 0.08)' });
-  drawTextureOnFace(context, textureImages.left, leftFace, { shade: 'rgba(0, 0, 0, 0.1)' });
-  drawTextureOnFace(context, textureImages.right, rightFace, { shade: 'rgba(0, 0, 0, 0.03)' });
+  drawTextureOnFace(context, textureImages.top, topFace, {
+    textureInfluence: voxel?.textureInfluence,
+    tint: tintHexColor(voxel?.color ?? '#ffffff', 0.22),
+    shade: 'rgba(255, 255, 255, 0.08)',
+  });
+  drawTextureOnFace(context, textureImages.left, leftFace, {
+    textureInfluence: voxel?.textureInfluence,
+    tint: tintHexColor(voxel?.color ?? '#ffffff', 0.06),
+    shade: 'rgba(0, 0, 0, 0.1)',
+  });
+  drawTextureOnFace(context, textureImages.right, rightFace, {
+    textureInfluence: voxel?.textureInfluence,
+    tint: voxel?.color ?? '#ffffff',
+    shade: 'rgba(0, 0, 0, 0.03)',
+  });
 
   context.save();
   context.strokeStyle = 'rgba(15, 23, 42, 0.18)';
@@ -468,7 +491,7 @@ function drawTexturedVoxelCubeIcon(canvas, textureImages) {
   context.restore();
 }
 
-function drawTextureOnFace(context, image, points, { shade = '' } = {}) {
+function drawTextureOnFace(context, image, points, { textureInfluence = 1, tint = '', shade = '' } = {}) {
   if (!context || !image || !Array.isArray(points) || points.length !== 4) return;
 
   const sourceWidth = image.naturalWidth || image.width || 1;
@@ -502,6 +525,35 @@ function drawTextureOnFace(context, image, points, { shade = '' } = {}) {
   );
   context.drawImage(image, 0, 0, sourceWidth, sourceHeight);
   context.restore();
+
+  const normalizedTextureInfluence = normalizeVoxelIconTextureInfluence(textureInfluence);
+  if (normalizedTextureInfluence < 0.999) {
+    context.save();
+    context.globalAlpha = 1 - normalizedTextureInfluence;
+    context.fillStyle = '#ffffff';
+    context.beginPath();
+    context.moveTo(points[0].x, points[0].y);
+    for (let i = 1; i < points.length; i += 1) {
+      context.lineTo(points[i].x, points[i].y);
+    }
+    context.closePath();
+    context.fill();
+    context.restore();
+  }
+
+  if (tint) {
+    context.save();
+    context.fillStyle = tint;
+    context.globalCompositeOperation = 'multiply';
+    context.beginPath();
+    context.moveTo(points[0].x, points[0].y);
+    for (let i = 1; i < points.length; i += 1) {
+      context.lineTo(points[i].x, points[i].y);
+    }
+    context.closePath();
+    context.fill();
+    context.restore();
+  }
 
   if (!shade) return;
 
