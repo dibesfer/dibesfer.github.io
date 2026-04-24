@@ -227,7 +227,7 @@ const gltfLoader = new GLTFLoader();
 // --------------------
 // SCENE
 // --------------------
-const WORLD_SKY_COLOR = 0x00d5ff;
+const WORLD_SKY_COLOR = 0x00c2ff;
 const WORLD_FOG_NEAR = 14;
 const WORLD_FOG_FAR = 25;
 const scene = new THREE.Scene();
@@ -989,6 +989,10 @@ const handleChatCommand = createCommandHandler({
   onToggleFlyMode: () => {
     setFlyMode(!flyMode);
   },
+  onToggleNoclip: () => {
+    setNoclipMode(!noclipMode);
+    chatUI.appendLine(`Noclip ${noclipMode ? 'enabled' : 'disabled'}.`);
+  },
   onSaveBoxel: async (args = []) => {
     try {
       handleSaveBoxelCommand(args);
@@ -1547,6 +1551,7 @@ const maxJumps = 2;
 const PLAYER_MAX_HEALTH = 100;
 const PLAYER_RESPAWN_DELAY = 0;
 let flyMode = false;
+let noclipMode = false;
 
 function updatePlayerHealthUI() {
   playerHud.setHealth(playerState.health);
@@ -1608,10 +1613,19 @@ function getDesktopSprintMultiplier() {
 }
 
 function setFlyMode(nextEnabled) {
-  flyMode = nextEnabled;
+  flyMode = noclipMode ? true : Boolean(nextEnabled);
   playerState.velocity.y = 0;
   playerState.jumpQueued = false;
   if (flyMode) {
+    playerState.onGround = false;
+    playerState.jumpsUsed = 0;
+  }
+}
+
+function setNoclipMode(nextEnabled) {
+  noclipMode = Boolean(nextEnabled);
+  setFlyMode(noclipMode);
+  if (noclipMode) {
     playerState.onGround = false;
     playerState.jumpsUsed = 0;
   }
@@ -1913,6 +1927,9 @@ const syncWorldVoxelRemovedAtCell = typeof mapData.syncWorldVoxelRemovedAtCell =
 const updateWorldActiveChunks = typeof mapData.updateActiveChunks === 'function'
   ? mapData.updateActiveChunks
   : () => null;
+const processPendingChunkVisualUpdates = typeof mapData.processPendingChunkVisualUpdates === 'function'
+  ? mapData.processPendingChunkVisualUpdates
+  : () => null;
 const worldData = mapData.world ?? null;
 const worldVoxelSize = Number(mapData.voxelSize) || 1;
 const useWorldEditorVoxelMode = isClassWorldPreset && worldData !== null;
@@ -2031,6 +2048,16 @@ function orientPlacedVoxelFromHit(hit = null, voxel = null) {
 function scheduleLocalWorldSnapshotSave() {
   if (!localWorldSaveStore || !(worldData instanceof World) || typeof worldData.toSnapshot !== 'function') return;
   localWorldSaveStore.setWorldSnapshot(worldData.toSnapshot());
+}
+
+function recordLocalVoxelRemoved(cellX, cellY, cellZ) {
+  if (!localWorldSaveStore) return;
+  localWorldSaveStore.recordVoxelRemoved(cellX, cellY, cellZ);
+}
+
+function recordLocalVoxelAdded(cellX, cellY, cellZ, voxelType) {
+  if (!localWorldSaveStore) return;
+  localWorldSaveStore.recordVoxelAdded(cellX, cellY, cellZ, voxelType);
 }
 
 function applyLocalSavedWorld() {
@@ -4387,15 +4414,11 @@ function triggerActionForMouseButton(button, options = {}) {
         : removeVoxelAtRaycastHit(currentRaycastState.hit);
       if (removed && removedVoxelType) {
         if (removedVoxelCell && localWorldSaveStore) {
-          if (useWorldEditorVoxelMode) {
-            scheduleLocalWorldSnapshotSave();
-          } else {
-            localWorldSaveStore.recordVoxelRemoved(
-              removedVoxelCell.cellX,
-              removedVoxelCell.cellY,
-              removedVoxelCell.cellZ
-            );
-          }
+          recordLocalVoxelRemoved(
+            removedVoxelCell.cellX,
+            removedVoxelCell.cellY,
+            removedVoxelCell.cellZ
+          );
         }
         if (removedVoxelCell && multiplayerWorldStore) {
           multiplayerWorldStore.recordVoxelRemoved(
@@ -4462,16 +4485,12 @@ function triggerActionForMouseButton(button, options = {}) {
           voxelType: selectedVoxelType,
         });
       if (added && localWorldSaveStore) {
-        if (useWorldEditorVoxelMode) {
-          scheduleLocalWorldSnapshotSave();
-        } else {
-          localWorldSaveStore.recordVoxelAdded(
-            addedVoxelCell.cellX,
-            addedVoxelCell.cellY,
-            addedVoxelCell.cellZ,
-            selectedVoxelType
-          );
-        }
+        recordLocalVoxelAdded(
+          addedVoxelCell.cellX,
+          addedVoxelCell.cellY,
+          addedVoxelCell.cellZ,
+          selectedVoxelType
+        );
       }
       if (added && addedVoxelCell && multiplayerWorldStore) {
         multiplayerWorldStore.recordVoxelAdded(
@@ -4891,6 +4910,8 @@ function updateChaserMeleeAttacks(deltaTime) {
 }
 
 function collidesWithBuildings(box) {
+  if (noclipMode) return null;
+
   const mapCollision = intersectMapColliderBox(box);
   if (mapCollision) return mapCollision;
 
@@ -4906,7 +4927,7 @@ const PLAYER_STEP_HEIGHT = 1.05;
 
 function tryStepUp(axis, delta, blockingHit) {
   if (!blockingHit || delta === 0) return false;
-  if (flyMode || !playerState.onGround || playerState.velocity.y > 0) return false;
+  if (noclipMode || flyMode || !playerState.onGround || playerState.velocity.y > 0) return false;
 
   const currentFootY = playerCollider.min.y;
   const stepHeight = blockingHit.max.y - currentFootY;
@@ -4998,6 +5019,7 @@ function resolveVertical(deltaY) {
 }
 
 function resolveGround() {
+  if (noclipMode) return;
   if (!HAS_INFINITE_GROUND) return;
 
   const minEyeY = GROUND_Y + EYE_HEIGHT;
@@ -5012,6 +5034,8 @@ function resolveGround() {
 }
 
 function isStandingOnSupport() {
+  if (noclipMode) return false;
+
   if (HAS_INFINITE_GROUND && Math.abs(playerCollider.min.y - GROUND_Y) <= SUPPORT_EPSILON) {
     return true;
   }
@@ -5513,6 +5537,7 @@ input.bindHotkeys({
     onKeyF: e => {
       if (mobileMode || e.code !== 'KeyF') return false;
       if (e.repeat) return true;
+      if (noclipMode) return true;
       setFlyMode(!flyMode);
       return true;
     },
@@ -5620,6 +5645,7 @@ renderer.setAnimationLoop(() => {
   }
 
   updatePlayer(delta);
+  processPendingChunkVisualUpdates(180);
   updateRightPunch(delta);
   updateLeftPunch(delta);
   updatePunchHitboxes(delta);

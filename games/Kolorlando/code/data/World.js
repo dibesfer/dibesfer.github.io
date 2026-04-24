@@ -112,7 +112,9 @@ export class World {
     this.boxels = [];
     this.voxelTypes = new Map();
     this.voxelBoxels = new Map();
-    this.activeChunkKeys = new Set(this.boxel15DistanceRendering.getActiveChunkKeys(this, this.spawnPosition));
+    this.activeChunkKeys = new Set();
+    this.activeChunkCenterKey = '';
+    this.updateActiveChunks(this.spawnPosition);
 
     if (voxelTypes instanceof Map || Array.isArray(voxelTypes)) {
       this.setVoxelTypes(voxelTypes);
@@ -518,8 +520,25 @@ export class World {
   }
 
   updateActiveChunks(center = null) {
+    const normalizedCenter = normalizeWorldPosition(center ?? this.spawnPosition);
+    const centerChunkPosition = this.boxel15DistanceRendering.getCenterChunkPosition(this, normalizedCenter);
+    const nextCenterChunkKey = this.getChunkKey(
+      centerChunkPosition.x,
+      centerChunkPosition.y,
+      centerChunkPosition.z
+    );
+
+    if (nextCenterChunkKey === this.activeChunkCenterKey) {
+      return {
+        center: normalizedCenter,
+        active: this.getActiveChunkKeys(),
+        added: [],
+        removed: [],
+      };
+    }
+
     const nextActiveChunkKeys = new Set(
-      this.boxel15DistanceRendering.getActiveChunkKeys(this, center ?? this.spawnPosition)
+      this.boxel15DistanceRendering.getActiveChunkKeys(this, normalizedCenter)
     );
     const added = [];
     const removed = [];
@@ -537,9 +556,10 @@ export class World {
     }
 
     this.activeChunkKeys = nextActiveChunkKeys;
+    this.activeChunkCenterKey = nextCenterChunkKey;
 
     return {
-      center: normalizeWorldPosition(center ?? this.spawnPosition),
+      center: normalizedCenter,
       active: this.getActiveChunkKeys(),
       added,
       removed,

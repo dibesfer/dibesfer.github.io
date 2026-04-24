@@ -6,6 +6,7 @@ actions each command should trigger. */
 export const KOLORLANDO_COMMANDS = {
   debugmode: '/debugmode',
   flymode: '/flymode',
+  noclip: '/noclip',
   saveboxel: '/saveboxel',
   spawn: '/spawn',
 };
@@ -16,6 +17,7 @@ chat, debug consoles, or future admin tools without importing the full game. */
 export function createCommandHandler({
   onToggleDebugMode,
   onToggleFlyMode,
+  onToggleNoclip,
   onSaveBoxel,
   onSpawn,
 } = {}) {
@@ -34,6 +36,11 @@ export function createCommandHandler({
 
     if (normalizedCommand === KOLORLANDO_COMMANDS.flymode) {
       onToggleFlyMode?.();
+      return true;
+    }
+
+    if (normalizedCommand === KOLORLANDO_COMMANDS.noclip) {
+      onToggleNoclip?.();
       return true;
     }
 
