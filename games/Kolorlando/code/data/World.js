@@ -187,12 +187,6 @@ export class World {
     this.chunkGenerator = typeof chunkGenerator === 'function' ? chunkGenerator : null;
     this.generatedChunkKeys = new Set();
 
-    if (this.activeChunkKeys instanceof Set) {
-      for (const chunkKey of this.activeChunkKeys) {
-        this.ensureGeneratedChunkKey(chunkKey);
-      }
-    }
-
     return this;
   }
 
@@ -320,6 +314,12 @@ export class World {
 
   getVoxel(x = 0, y = 0, z = 0) {
     const position = normalizeWorldPosition({ x, y, z });
+    const voxel = this.peekVoxel(position.x, position.y, position.z);
+    return voxel?.active === true ? voxel.clone().setPosition(position.x, position.y, position.z) : null;
+  }
+
+  peekVoxel(x = 0, y = 0, z = 0) {
+    const position = normalizeWorldPosition({ x, y, z });
     const voxelAddress = this.getChunkVoxelAddress(position.x, position.y, position.z);
     if (!voxelAddress) return null;
 
@@ -336,7 +336,7 @@ export class World {
       voxelAddress.local.z
     );
 
-    return voxel?.active === true ? voxel.clone().setPosition(position.x, position.y, position.z) : null;
+    return voxel?.active === true ? voxel : null;
   }
 
   setVoxel(x = 0, y = 0, z = 0, voxel = null) {
@@ -392,7 +392,7 @@ export class World {
 
   hasVoxel(x = 0, y = 0, z = 0) {
     const position = normalizeWorldPosition({ x, y, z });
-    return Boolean(this.getVoxel(position.x, position.y, position.z));
+    return Boolean(this.peekVoxel(position.x, position.y, position.z));
   }
 
   clearVoxels() {
@@ -563,8 +563,14 @@ export class World {
       centerChunkPosition.y,
       centerChunkPosition.z
     );
+    const nextActiveChunkKeys = new Set(
+      this.boxel15DistanceRendering.getActiveChunkKeys(this, normalizedCenter)
+    );
 
-    if (nextCenterChunkKey === this.activeChunkCenterKey) {
+    if (
+      nextCenterChunkKey === this.activeChunkCenterKey
+      && areWorldChunkKeySetsEqual(this.activeChunkKeys, nextActiveChunkKeys)
+    ) {
       return {
         center: normalizedCenter,
         active: this.getActiveChunkKeys(),
@@ -572,10 +578,6 @@ export class World {
         removed: [],
       };
     }
-
-    const nextActiveChunkKeys = new Set(
-      this.boxel15DistanceRendering.getActiveChunkKeys(this, normalizedCenter)
-    );
     const added = [];
     const removed = [];
 
@@ -593,10 +595,6 @@ export class World {
 
     this.activeChunkKeys = nextActiveChunkKeys;
     this.activeChunkCenterKey = nextCenterChunkKey;
-
-    for (let i = 0; i < added.length; i += 1) {
-      this.ensureGeneratedChunkKey(added[i]);
-    }
 
     return {
       center: normalizedCenter,
@@ -972,6 +970,24 @@ function normalizeWorldOptionalChunkRadius(value = null) {
   return Number.isFinite(normalizedValue) && normalizedValue >= 0
     ? normalizedValue
     : null;
+}
+
+function areWorldChunkKeySetsEqual(leftSet = null, rightSet = null) {
+  if (!(leftSet instanceof Set) || !(rightSet instanceof Set)) {
+    return false;
+  }
+
+  if (leftSet.size !== rightSet.size) {
+    return false;
+  }
+
+  for (const value of leftSet) {
+    if (!rightSet.has(value)) {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 function serializeChunkBoxel(chunkBoxel = null) {

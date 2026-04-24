@@ -1716,6 +1716,8 @@ dir.target.position.set(0, 0, 0);
 dir.castShadow = DEFAULT_SHADOWS_ENABLED;
 scene.add(dir);
 scene.add(dir.target);
+const directionalShadowOffset = new THREE.Vector3().copy(dir.position).sub(dir.target.position);
+const directionalShadowTarget = new THREE.Vector3();
 
 function persistShadowsPreference(nextEnabled) {
   try {
@@ -2758,6 +2760,18 @@ dir.shadow.camera.near = 10;
 dir.shadow.camera.far = 600;
 dir.shadow.camera.updateProjectionMatrix();
 
+function syncDirectionalShadowToPlayer() {
+  directionalShadowTarget.set(
+    playerEye.x,
+    Math.max(GROUND_Y, playerBody.position.y + PLAYER_HEIGHT * 0.5),
+    playerEye.z
+  );
+  dir.target.position.copy(directionalShadowTarget);
+  dir.position.copy(directionalShadowTarget).add(directionalShadowOffset);
+  dir.target.updateMatrixWorld();
+  dir.updateMatrixWorld();
+}
+
 const CAMERA_RAYCAST_RANGE = 18;
 const CAMERA_RAYCAST_START_OFFSET = 0.18;
 const LEGO_LOL_RAYCAST_HEIGHT = 1;
@@ -3062,6 +3076,23 @@ function applyHeldItemShadows(root, castShadow, receiveShadow) {
   });
 }
 
+function syncLocalPlayerShadowCasters() {
+  const thirdPersonVisible = currentThirdPersonDistance > 0.001;
+
+  playerHumanoid?.root?.traverse(part => {
+    if (!part?.isMesh) return;
+    part.castShadow = thirdPersonVisible;
+  });
+
+  if (activeHeldItemRoot) {
+    applyHeldItemShadows(activeHeldItemRoot, thirdPersonVisible, false);
+  }
+
+  if (firstPersonHeldItemRoot) {
+    applyHeldItemShadows(firstPersonHeldItemRoot, false, false);
+  }
+}
+
 function centerHeldItemModelOnBounds(root) {
   const bounds = new THREE.Box3().setFromObject(root);
   const center = new THREE.Vector3();
@@ -3232,12 +3263,14 @@ async function mountHeldItem(itemType) {
 
     const heldRoot = buildHeldItemMount(templateRoot, definition);
     worldSlot.add(heldRoot);
+    applyHeldItemShadows(heldRoot, currentThirdPersonDistance > 0.001, false);
 
     let fpHeldRoot = null;
     if (firstPersonSlot) {
       const firstPersonDefinition = getFirstPersonHeldItemDefinition(definition);
       fpHeldRoot = buildHeldItemMount(templateRoot, firstPersonDefinition);
       firstPersonSlot.add(fpHeldRoot);
+      applyHeldItemShadows(fpHeldRoot, false, false);
     }
 
     activeHeldItemType = itemType;
@@ -3905,6 +3938,7 @@ function syncCameraToPlayerView(deltaTime = 0) {
   // Swap first-person arms for the full body mesh once the camera pulls back into third person.
   playerBody.visible = currentThirdPersonDistance > 0.001;
   firstPersonArmsRig.root.visible = currentThirdPersonDistance <= 0.001 && !isLegoLolCameraMode();
+  syncLocalPlayerShadowCasters();
 
   if (isLegoLolCameraMode() && currentThirdPersonDistance > 0.001) {
     const horizontalDistance = currentThirdPersonDistance * Math.cos(LEGO_LOL_FIXED_ORBIT_ANGLE);
@@ -5777,6 +5811,7 @@ renderer.setAnimationLoop(() => {
     characterPreviewRenderer.render(characterPreviewScene, characterPreviewCamera);
   }
 
+  syncDirectionalShadowToPlayer();
   renderer.render(scene, camera);
   // Passing delta lets the minimap apply its own capped refresh rate instead
   // of doing a second full scene render on every animation frame.

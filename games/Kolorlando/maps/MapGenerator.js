@@ -44,8 +44,12 @@ export function buildMapFromWorld({
   const texturedVoxelMeshByKey = new Map();
   const planeRaycastMeshByKey = new Map();
   const solidChunkMeshByKey = new Map();
+  const chunkRenderStateByKey = new Map();
   const worldOrigin = world.getMapOrigin(voxelSize);
   const usesLazyChunkGeneration = typeof world.chunkGenerator === 'function';
+  const readWorldVoxel = typeof world.peekVoxel === 'function'
+    ? world.peekVoxel.bind(world)
+    : world.getVoxel.bind(world);
   const staticMiniMapColor = typeof world.staticMiniMapColor === 'string' && world.staticMiniMapColor.trim()
     ? world.staticMiniMapColor.trim()
     : null;
@@ -58,8 +62,10 @@ export function buildMapFromWorld({
   const voxelEntries = usesLazyChunkGeneration
     ? []
     : world.getVoxelEntries({ activeChunksOnly: true });
+  const pendingChunkActivationJobs = new Set();
   const pendingChunkVisualJobs = [];
   const pendingChunkBoundaryJobs = [];
+  const pendingPrioritySolidChunkJobs = new Map();
   const pendingSolidChunkJobs = new Map();
   const textureLoader = new THREE.TextureLoader();
   const voxelFaceTextureCache = new Map();
@@ -75,6 +81,15 @@ export function buildMapFromWorld({
   const TEXTURED_FACE_ORDER = ['right', 'left', 'top', 'bottom', 'front', 'back'];
 
   mapGroup.name = world.name || 'World';
+
+  function resolveWorldShadowRange() {
+    const authoredRadiusInVoxels = Number(world.boxel15DistanceRendering?.radiusInVoxels);
+    if (Number.isFinite(authoredRadiusInVoxels) && authoredRadiusInVoxels > 0) {
+      return Math.max(36, Math.min(120, authoredRadiusInVoxels + world.getChunkSize()));
+    }
+
+    return Math.max(40, Math.min(Math.max(world.size.x, world.size.z), 120));
+  }
 
   function createBorderedVoxelTexture() {
     const size = 64;
@@ -198,7 +213,7 @@ export function buildMapFromWorld({
       return true;
     }
 
-    const neighborVoxel = world.getVoxel(
+    const neighborVoxel = readWorldVoxel(
       neighborCellX,
       neighborCellY,
       neighborCellZ
@@ -268,7 +283,7 @@ export function buildMapFromWorld({
       return null;
     }
 
-    return world.getVoxel(neighborCellX, neighborCellY, neighborCellZ);
+    return readWorldVoxel(neighborCellX, neighborCellY, neighborCellZ);
   }
 
   function isVoxelFullyOccluded(cellX, cellY, cellZ, voxel = null) {
@@ -459,7 +474,7 @@ export function buildMapFromWorld({
       color: 0xffffff,
       map: normalizedTextureKey === 'bordered' ? borderedVoxelTexture : null,
       vertexColors: true,
-      side: THREE.DoubleSide,
+      side: THREE.FrontSide,
       roughness: 0.95,
       metalness: 0.0,
     });
@@ -480,16 +495,120 @@ export function buildMapFromWorld({
     );
   }
 
-  function scheduleSolidChunkJob(chunkKey = '', action = 'rebuild') {
+  function invalidateChunkRenderState(chunkKey = '') {
     if (typeof chunkKey !== 'string' || !chunkKey.trim()) {
       return false;
     }
 
-    pendingSolidChunkJobs.set(chunkKey, action === 'remove' ? 'remove' : 'rebuild');
+    return chunkRenderStateByKey.delete(chunkKey);
+  }
+
+  function invalidateChunkRenderStateForCell(cellX, cellY, cellZ, { includeNeighbors = false } = {}) {
+    const chunkKey = createChunkKeyFromCell(cellX, cellY, cellZ);
+    if (!chunkKey) {
+      return false;
+    }
+
+    invalidateChunkRenderState(chunkKey);
+
+    if (!includeNeighbors) {
+      return true;
+    }
+
+    const chunkPosition = typeof world.parseChunkKey === 'function'
+      ? world.parseChunkKey(chunkKey)
+      : null;
+    if (!chunkPosition) {
+      return true;
+    }
+
+    for (const offset of Object.values(FACE_NEIGHBOR_OFFSETS)) {
+      const neighborChunkX = chunkPosition.x + offset.x;
+      const neighborChunkY = chunkPosition.y + offset.y;
+      const neighborChunkZ = chunkPosition.z + offset.z;
+      if (!world.isChunkPositionWithinWorld(neighborChunkX, neighborChunkY, neighborChunkZ)) {
+        continue;
+      }
+
+      invalidateChunkRenderState(world.getChunkKey(neighborChunkX, neighborChunkY, neighborChunkZ));
+    }
+
     return true;
   }
 
-  function scheduleSolidChunkNeighbors(chunkKey = '', action = 'rebuild') {
+  function buildChunkRenderState(chunkKey = '', chunkPosition = null, chunkEntry = null) {
+    if (!chunkEntry?.boxel || !chunkPosition) {
+      return null;
+    }
+
+    const chunkVoxelEntries = chunkEntry.boxel.getVoxelEntries({ activeOnly: true });
+    const nonOpaqueCells = [];
+    const boundarySensitiveEntries = [];
+    const chunkSize = world.getChunkSize();
+
+    for (let i = 0; i < chunkVoxelEntries.length; i += 1) {
+      const entry = chunkVoxelEntries[i];
+      const cellX = chunkPosition.x * chunkSize + entry.position.x;
+      const cellY = chunkPosition.y * chunkSize + entry.position.y;
+      const cellZ = chunkPosition.z * chunkSize + entry.position.z;
+      const voxel = readWorldVoxel(cellX, cellY, cellZ);
+      if (isOpaqueCubeVoxel(voxel)) {
+        continue;
+      }
+
+      nonOpaqueCells.push({ cellX, cellY, cellZ });
+
+      const localPosition = entry.position;
+      if (
+        localPosition.x === 0
+        || localPosition.x === chunkSize - 1
+        || localPosition.y === 0
+        || localPosition.y === chunkSize - 1
+        || localPosition.z === 0
+        || localPosition.z === chunkSize - 1
+      ) {
+        boundarySensitiveEntries.push(entry);
+      }
+    }
+
+    return {
+      chunkVoxelEntryCount: chunkVoxelEntries.length,
+      nonOpaqueCells,
+      boundarySensitiveEntries,
+    };
+  }
+
+  function getChunkRenderState(chunkKey = '', chunkPosition = null, chunkEntry = null) {
+    const existingState = chunkRenderStateByKey.get(chunkKey);
+    if (existingState) {
+      return existingState;
+    }
+
+    const nextState = buildChunkRenderState(chunkKey, chunkPosition, chunkEntry);
+    if (!nextState) {
+      return null;
+    }
+
+    chunkRenderStateByKey.set(chunkKey, nextState);
+    return nextState;
+  }
+
+  function scheduleSolidChunkJob(chunkKey = '', action = 'rebuild', { priority = false } = {}) {
+    if (typeof chunkKey !== 'string' || !chunkKey.trim()) {
+      return false;
+    }
+
+    const normalizedAction = action === 'remove' ? 'remove' : 'rebuild';
+    const targetQueue = priority ? pendingPrioritySolidChunkJobs : pendingSolidChunkJobs;
+    targetQueue.set(chunkKey, normalizedAction);
+
+    if (priority) {
+      pendingSolidChunkJobs.delete(chunkKey);
+    }
+    return true;
+  }
+
+  function scheduleSolidChunkNeighbors(chunkKey = '', action = 'rebuild', options = {}) {
     const chunkPosition = typeof world.parseChunkKey === 'function'
       ? world.parseChunkKey(chunkKey)
       : null;
@@ -510,22 +629,23 @@ export function buildMapFromWorld({
 
       scheduleSolidChunkJob(
         world.getChunkKey(neighborChunkX, neighborChunkY, neighborChunkZ),
-        action
+        action,
+        options
       );
     }
 
     return true;
   }
 
-  function scheduleSolidChunkRebuildForCell(cellX, cellY, cellZ, { includeNeighbors = false } = {}) {
+  function scheduleSolidChunkRebuildForCell(cellX, cellY, cellZ, { includeNeighbors = false, priority = false } = {}) {
     const chunkKey = createChunkKeyFromCell(cellX, cellY, cellZ);
     if (!chunkKey) {
       return false;
     }
 
-    scheduleSolidChunkJob(chunkKey, 'rebuild');
+    scheduleSolidChunkJob(chunkKey, 'rebuild', { priority });
     if (includeNeighbors) {
-      scheduleSolidChunkNeighbors(chunkKey, 'rebuild');
+      scheduleSolidChunkNeighbors(chunkKey, 'rebuild', { priority });
     }
     return true;
   }
@@ -584,6 +704,94 @@ export function buildMapFromWorld({
       chunkKey: nearestChunkKey,
       action: nearestAction,
     };
+  }
+
+  function takeNearestPendingPrioritySolidChunkJob(center = null) {
+    let nearestChunkKey = '';
+    let nearestAction = '';
+    let nearestDistance = Number.POSITIVE_INFINITY;
+
+    for (const [chunkKey, action] of pendingPrioritySolidChunkJobs.entries()) {
+      const chunkDistance = getChunkDistanceToCenterSq(chunkKey, center);
+      if (chunkDistance >= nearestDistance) {
+        continue;
+      }
+
+      nearestChunkKey = chunkKey;
+      nearestAction = action;
+      nearestDistance = chunkDistance;
+    }
+
+    if (!nearestChunkKey) {
+      return null;
+    }
+
+    pendingPrioritySolidChunkJobs.delete(nearestChunkKey);
+    return {
+      chunkKey: nearestChunkKey,
+      action: nearestAction,
+    };
+  }
+
+  function flushPrioritySolidChunkJobs(center = null, maxJobs = 8) {
+    let processedJobs = 0;
+
+    while (processedJobs < maxJobs && pendingPrioritySolidChunkJobs.size > 0) {
+      const nextChunkJob = takeNearestPendingPrioritySolidChunkJob(center);
+      if (!nextChunkJob) {
+        break;
+      }
+
+      const { chunkKey, action } = nextChunkJob;
+      if (action === 'remove') {
+        removeSolidChunkMesh(chunkKey);
+      } else {
+        rebuildSolidChunkMesh(chunkKey);
+      }
+
+      processedJobs += 1;
+    }
+
+    return processedJobs;
+  }
+
+  function queueChunkActivation(chunkKey = '') {
+    if (typeof chunkKey !== 'string' || !chunkKey.trim()) {
+      return false;
+    }
+
+    pendingChunkActivationJobs.add(chunkKey);
+    return true;
+  }
+
+  function dropPendingChunkActivation(chunkKey = '') {
+    if (typeof chunkKey !== 'string' || !chunkKey.trim()) {
+      return false;
+    }
+
+    return pendingChunkActivationJobs.delete(chunkKey);
+  }
+
+  function takeNearestPendingChunkActivation(center = null) {
+    let nearestChunkKey = '';
+    let nearestDistance = Number.POSITIVE_INFINITY;
+
+    for (const chunkKey of pendingChunkActivationJobs.values()) {
+      const chunkDistance = getChunkDistanceToCenterSq(chunkKey, center);
+      if (chunkDistance >= nearestDistance) {
+        continue;
+      }
+
+      nearestChunkKey = chunkKey;
+      nearestDistance = chunkDistance;
+    }
+
+    if (!nearestChunkKey) {
+      return null;
+    }
+
+    pendingChunkActivationJobs.delete(nearestChunkKey);
+    return nearestChunkKey;
   }
 
   function getGreedyHitVoxelCell(hit = null, directionMultiplier = -1) {
@@ -777,6 +985,19 @@ export function buildMapFromWorld({
     bucket.vertexCount += 4;
   }
 
+  function getSolidVoxelMergeSignature(voxel = null, cell = null) {
+    const baseSignature = getSolidVoxelSignature(voxel);
+    if (!baseSignature) {
+      return '';
+    }
+
+    if (getSolidVoxelTextureKey(voxel) === 'bordered') {
+      return `${baseSignature}|cell:${cell?.x ?? 0}|${cell?.y ?? 0}|${cell?.z ?? 0}`;
+    }
+
+    return baseSignature;
+  }
+
   function createSolidChunkGeometry(chunkPosition, chunkEntry) {
     if (!chunkEntry?.boxel) {
       return [];
@@ -960,7 +1181,7 @@ export function buildMapFromWorld({
         for (let heightIndex = 0; heightIndex < faceConfig.heightMax; heightIndex += 1) {
           for (let widthIndex = 0; widthIndex < faceConfig.widthMax; widthIndex += 1) {
             const cell = faceConfig.toCell(slice, widthIndex, heightIndex);
-            const voxel = world.getVoxel(cell.x, cell.y, cell.z);
+            const voxel = readWorldVoxel(cell.x, cell.y, cell.z);
             if (!isOpaqueCubeVoxel(voxel)) {
               continue;
             }
@@ -969,7 +1190,7 @@ export function buildMapFromWorld({
             }
 
             mask[heightIndex * faceConfig.widthMax + widthIndex] = {
-              signature: getSolidVoxelSignature(voxel),
+              signature: getSolidVoxelMergeSignature(voxel, cell),
               colorHex: new THREE.Color(normalizeColor(voxel?.color)).getHex(),
               textureKey: getSolidVoxelTextureKey(voxel),
             };
@@ -1098,7 +1319,7 @@ export function buildMapFromWorld({
       const neighborCellY = cellY + offset.y;
       const neighborCellZ = cellZ + offset.z;
       if (!world.isVoxelCellActive(neighborCellX, neighborCellY, neighborCellZ)) continue;
-      const neighborVoxel = world.getVoxel(neighborCellX, neighborCellY, neighborCellZ);
+      const neighborVoxel = readWorldVoxel(neighborCellX, neighborCellY, neighborCellZ);
       const neighborKey = createCellKey(neighborCellX, neighborCellY, neighborCellZ);
       const existingMesh = texturedVoxelMeshByKey.get(neighborKey);
       if (existingMesh) {
@@ -1135,7 +1356,7 @@ export function buildMapFromWorld({
       }
 
       addColliderForCell(neighborCellX, neighborCellY, neighborCellZ);
-      scheduleSolidChunkRebuildForCell(neighborCellX, neighborCellY, neighborCellZ);
+      scheduleSolidChunkRebuildForCell(neighborCellX, neighborCellY, neighborCellZ, { priority: true });
     }
   }
 
@@ -1144,7 +1365,7 @@ export function buildMapFromWorld({
       return false;
     }
 
-    const voxel = world.getVoxel(cellX, cellY, cellZ);
+    const voxel = readWorldVoxel(cellX, cellY, cellZ);
     const key = createCellKey(cellX, cellY, cellZ);
     const existingMesh = texturedVoxelMeshByKey.get(key);
     if (existingMesh) {
@@ -1160,7 +1381,8 @@ export function buildMapFromWorld({
 
     if (!voxel) {
       removeColliderForCell(cellX, cellY, cellZ);
-      scheduleSolidChunkRebuildForCell(cellX, cellY, cellZ);
+      invalidateChunkRenderStateForCell(cellX, cellY, cellZ, { includeNeighbors: true });
+      scheduleSolidChunkRebuildForCell(cellX, cellY, cellZ, { priority: true });
       return true;
     }
 
@@ -1180,16 +1402,18 @@ export function buildMapFromWorld({
         planeRaycastMeshByKey.set(key, planeRaycastMesh);
       }
       addColliderForCell(cellX, cellY, cellZ);
+      invalidateChunkRenderStateForCell(cellX, cellY, cellZ, { includeNeighbors: true });
       return true;
     }
 
     addColliderForCell(cellX, cellY, cellZ);
-    scheduleSolidChunkRebuildForCell(cellX, cellY, cellZ);
+    invalidateChunkRenderStateForCell(cellX, cellY, cellZ, { includeNeighbors: true });
+    scheduleSolidChunkRebuildForCell(cellX, cellY, cellZ, { priority: true });
     return true;
   }
 
   function syncWorldVoxelAddedAtCell(cellX, cellY, cellZ, { refreshNeighbors = true } = {}) {
-    const voxel = world.getVoxel(cellX, cellY, cellZ);
+    const voxel = readWorldVoxel(cellX, cellY, cellZ);
     if (!voxel) return false;
 
     if (!world.isVoxelCellActive(cellX, cellY, cellZ)) {
@@ -1201,6 +1425,7 @@ export function buildMapFromWorld({
     if (refreshNeighbors) {
       refreshAdjacentVoxelVisuals(cellX, cellY, cellZ);
     }
+    flushPrioritySolidChunkJobs({ x: cellX, y: cellY, z: cellZ });
     return true;
   }
 
@@ -1217,10 +1442,12 @@ export function buildMapFromWorld({
       planeRaycastMeshByKey.delete(key);
     }
     removeColliderForCell(cellX, cellY, cellZ);
-    scheduleSolidChunkRebuildForCell(cellX, cellY, cellZ, { includeNeighbors: true });
+    invalidateChunkRenderStateForCell(cellX, cellY, cellZ, { includeNeighbors: true });
+    scheduleSolidChunkRebuildForCell(cellX, cellY, cellZ, { includeNeighbors: true, priority: true });
     if (refreshNeighbors) {
       refreshAdjacentVoxelVisuals(cellX, cellY, cellZ);
     }
+    flushPrioritySolidChunkJobs({ x: cellX, y: cellY, z: cellZ });
     return true;
   }
 
@@ -1276,27 +1503,25 @@ export function buildMapFromWorld({
       : null;
     if (!chunkEntry?.boxel) return false;
 
-    const chunkVoxelEntries = chunkEntry.boxel.getVoxelEntries({ activeOnly: true });
-    for (let i = 0; i < chunkVoxelEntries.length; i += 1) {
-      const entry = chunkVoxelEntries[i];
-      const cellX = chunkPosition.x * world.getChunkSize() + entry.position.x;
-      const cellY = chunkPosition.y * world.getChunkSize() + entry.position.y;
-      const cellZ = chunkPosition.z * world.getChunkSize() + entry.position.z;
-      const voxel = world.getVoxel(cellX, cellY, cellZ);
-      if (isOpaqueCubeVoxel(voxel)) {
-        continue;
-      }
+    const chunkRenderState = getChunkRenderState(chunkKey, chunkPosition, chunkEntry);
+    if (!chunkRenderState) {
+      return false;
+    }
+
+    for (let i = 0; i < chunkRenderState.nonOpaqueCells.length; i += 1) {
+      const cell = chunkRenderState.nonOpaqueCells[i];
       pendingChunkVisualJobs.push({
         type: action,
-        cellX,
-        cellY,
-        cellZ,
+        cellX: cell.cellX,
+        cellY: cell.cellY,
+        cellZ: cell.cellZ,
       });
     }
 
     scheduleSolidChunkJob(chunkKey, action === 'remove' ? 'remove' : 'rebuild');
     scheduleSolidChunkNeighbors(chunkKey, 'rebuild');
-    refreshChunkBoundaryNeighbors(chunkPosition, chunkVoxelEntries);
+    refreshChunkBoundaryNeighbors(chunkPosition, chunkRenderState.boundarySensitiveEntries);
+
     return true;
   }
 
@@ -1313,11 +1538,12 @@ export function buildMapFromWorld({
     const sortedAddedChunkKeys = sortChunkKeysByDistance(chunkDelta.added, center);
 
     for (let i = 0; i < sortedRemovedChunkKeys.length; i += 1) {
+      dropPendingChunkActivation(sortedRemovedChunkKeys[i]);
       enqueueChunkVisualJobs(sortedRemovedChunkKeys[i], 'remove');
     }
 
     for (let i = 0; i < sortedAddedChunkKeys.length; i += 1) {
-      enqueueChunkVisualJobs(sortedAddedChunkKeys[i], 'add');
+      queueChunkActivation(sortedAddedChunkKeys[i]);
     }
 
     return chunkDelta;
@@ -1325,19 +1551,23 @@ export function buildMapFromWorld({
 
   function processPendingChunkVisualUpdates(maxJobs = 120) {
     const maxFrameTimeMs = 2.5;
+    const maxChunkActivationsPerFrame = 2;
     const maxSolidChunkJobsPerFrame = 1;
     const frameStartTime = typeof performance?.now === 'function'
       ? performance.now()
       : 0;
     const pendingCenter = centerChunkWorldPosition;
+    let processedChunkActivations = 0;
     let processedJobs = 0;
     let processedSolidChunkJobs = 0;
 
     while (
       processedJobs < maxJobs
       && (
-        pendingChunkBoundaryJobs.length > 0
+        pendingChunkActivationJobs.size > 0
+        || pendingChunkBoundaryJobs.length > 0
         || pendingChunkVisualJobs.length > 0
+        || pendingPrioritySolidChunkJobs.size > 0
         || pendingSolidChunkJobs.size > 0
       )
     ) {
@@ -1350,7 +1580,12 @@ export function buildMapFromWorld({
         break;
       }
 
-      if (pendingChunkBoundaryJobs.length > 0 || pendingChunkVisualJobs.length > 0) {
+      if (pendingChunkActivationJobs.size > 0 && processedChunkActivations < maxChunkActivationsPerFrame) {
+        const nextActivationChunkKey = takeNearestPendingChunkActivation(pendingCenter);
+        if (!nextActivationChunkKey) break;
+        enqueueChunkVisualJobs(nextActivationChunkKey, 'add');
+        processedChunkActivations += 1;
+      } else if (pendingChunkBoundaryJobs.length > 0 || pendingChunkVisualJobs.length > 0) {
         const job = pendingChunkBoundaryJobs.length > 0
           ? pendingChunkBoundaryJobs.shift()
           : pendingChunkVisualJobs.shift();
@@ -1370,7 +1605,8 @@ export function buildMapFromWorld({
           break;
         }
 
-        const nextChunkJob = takeNearestPendingSolidChunkJob(pendingCenter);
+        const nextChunkJob = takeNearestPendingPrioritySolidChunkJob(pendingCenter)
+          ?? takeNearestPendingSolidChunkJob(pendingCenter);
         if (!nextChunkJob) break;
 
         const { chunkKey, action } = nextChunkJob;
@@ -1385,12 +1621,16 @@ export function buildMapFromWorld({
       processedJobs += 1;
     }
 
+    const remainingJobs =
+      pendingChunkActivationJobs.size
+      + pendingChunkBoundaryJobs.length
+      + pendingChunkVisualJobs.length
+      + pendingPrioritySolidChunkJobs.size
+      + pendingSolidChunkJobs.size;
+
     return {
       processedJobs,
-      remainingJobs:
-        pendingChunkBoundaryJobs.length
-        + pendingChunkVisualJobs.length
-        + pendingSolidChunkJobs.size,
+      remainingJobs,
     };
   }
 
@@ -1477,7 +1717,6 @@ export function buildMapFromWorld({
   for (const chunkKey of sortChunkKeysByDistance(world.getActiveChunkKeys(), world.spawnPosition)) {
     scheduleSolidChunkJob(chunkKey, 'rebuild');
   }
-
   const boundaryColliders = createWorldBoundaryColliders();
   buildingColliders.push(...boundaryColliders);
 
@@ -1530,7 +1769,7 @@ export function buildMapFromWorld({
           );
 
         for (let cellY = world.size.y - 1; cellY >= 0; cellY -= 1) {
-          const voxel = world.getVoxel(worldCellX, cellY, worldCellZ);
+          const voxel = readWorldVoxel(worldCellX, cellY, worldCellZ);
           if (!voxel) continue;
           return voxel.color ?? null;
         }
@@ -1541,7 +1780,7 @@ export function buildMapFromWorld({
     resolveRaycastLabel(hit) {
       const voxelCell = getVoxelCellFromRaycastHit(hit);
       if (!voxelCell) return null;
-      return world.getVoxel(voxelCell.cellX, voxelCell.cellY, voxelCell.cellZ)?.name ?? null;
+      return readWorldVoxel(voxelCell.cellX, voxelCell.cellY, voxelCell.cellZ)?.name ?? null;
     },
     getVoxelCellFromRaycastHit,
     getAdjacentVoxelCellFromRaycastHit,
@@ -1623,7 +1862,7 @@ export function buildMapFromWorld({
         for (let cellX = minCellX; cellX <= maxCellX; cellX++) {
           for (let cellZ = minCellZ; cellZ <= maxCellZ; cellZ++) {
             if (!world.isVoxelCellActive(cellX, cellY, cellZ)) continue;
-            if (!isCollidableVoxel(world.getVoxel(cellX, cellY, cellZ))) continue;
+            if (!isCollidableVoxel(readWorldVoxel(cellX, cellY, cellZ))) continue;
 
             setBoxFromCell(cellX, cellY, cellZ, tempCollisionBox);
             if (tempCollisionBox.intersectsBox(box)) {
@@ -1653,7 +1892,7 @@ export function buildMapFromWorld({
         for (let cellX = minCellX; cellX <= maxCellX; cellX++) {
           for (let cellZ = minCellZ; cellZ <= maxCellZ; cellZ++) {
             if (!world.isVoxelCellActive(cellX, cellY, cellZ)) continue;
-            if (isCollidableVoxel(world.getVoxel(cellX, cellY, cellZ))) {
+            if (isCollidableVoxel(readWorldVoxel(cellX, cellY, cellZ))) {
               return true;
             }
           }
@@ -1705,7 +1944,7 @@ export function buildMapFromWorld({
         for (let cellX = minCellX; cellX <= maxCellX; cellX++) {
           for (let cellZ = minCellZ; cellZ <= maxCellZ; cellZ++) {
             if (!world.isVoxelCellActive(cellX, cellY, cellZ)) continue;
-            if (!isCollidableVoxel(world.getVoxel(cellX, cellY, cellZ))) continue;
+            if (!isCollidableVoxel(readWorldVoxel(cellX, cellY, cellZ))) continue;
             targetBoxes.push(setBoxFromCell(cellX, cellY, cellZ).clone());
           }
         }
@@ -1713,7 +1952,7 @@ export function buildMapFromWorld({
 
       return targetBoxes;
     },
-    shadowRange: Math.max(world.size.x, world.size.z),
+    shadowRange: resolveWorldShadowRange(),
     miniMapViewSize: Math.max(world.size.x, world.size.z),
     miniMapHeight: Math.max(world.size.y + 20, 60),
   };

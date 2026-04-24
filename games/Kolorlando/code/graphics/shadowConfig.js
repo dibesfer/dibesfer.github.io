@@ -8,8 +8,8 @@ export const SHADOW_PRESETS = {
     label: 'Default',
     rendererShadowMapType: THREE.PCFShadowMap,
     mapSize: 512,
-    bias: 0,
-    normalBias: 0,
+    bias: -0.0001,
+    normalBias: 0.01,
   },
   crisp: {
     name: 'crisp',
