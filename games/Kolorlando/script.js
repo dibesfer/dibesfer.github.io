@@ -18,10 +18,10 @@ import { createMenuUI } from './code/UI/menu.js';
 import { createCameraModeController } from './code/graphics/camera.js';
 import { createScreenController } from './code/graphics/screen.js';
 import {
-  applyShadowPreset,
-  DEFAULT_SHADOW_PRESET,
-  resolveShadowPresetName,
-} from './code/graphics/shadowConfig.js';
+  createRenderSettings,
+  DEFAULT_SHADOWS_ENABLED,
+  DEFAULT_FOG_RENDER_DISTANCE,
+} from './code/graphics/renderSettings.js';
 import {
   createInventoryUI,
   GAME_MODE_SURVIVAL,
@@ -41,15 +41,14 @@ import { Colorlandia, fillWorldWithVoxel as fillColorlandiaWorldWithVoxel } from
 import { Datatest, fillWorldWithVoxel as fillDatatestWorldWithVoxel } from './maps/Datatest.js';
 import { createMultiplayerController } from './code/multiplayer/multiplayer.js';
 import { createCommandHandler } from './code/commands.js';
-import { createBoxelId, createStoredBoxel, deserializeStoredBoxel, getBoxelVoxelEntries, readLocalBoxels, writeLocalBoxel } from './code/data/boxelStorage.js';
+import { createBoxelId } from './code/data/boxelStorage.js';
+import { createBoxelManager } from './code/data/boxelManager.js';
 import { createLocalWorldSaveStore } from './code/data/worldSaving.js';
 import { loadPlayerFaceData } from './code/data/playerSaving.js';
 import { World } from './code/data/World.js';
 import { WorldEditor } from './code/data/WorldEditor.js';
 import { SpaceShipVehicle } from './code/entities/vehicle.js';
 import { Input } from './code/Input.js';
-import { Boxel } from './code/data/Boxel.js';
-import { Voxel } from './code/data/Voxel.js';
 import { KLRaycast } from './code/KL_Raycast.js';
 
 const KOLORLANDO_MODE = window.KOLORLANDO_MODE === 'multiplayer' ? 'multiplayer' : 'singleplayer';
@@ -356,177 +355,38 @@ updateCharacterMenuIdentity(resolveLocalPlayerDisplayName());
 let miniMapUI = null;
 const miniMapHomeAnchor = document.createComment('miniMap-home-anchor');
 let isMiniMapDockedInMenu = false;
-const SHADOWS_STORAGE_KEY = 'kolorlando.settings.shadows';
-const SHADOW_PRESET_STORAGE_KEY = 'kolorlando.settings.shadowPreset';
-const RENDER_SCALE_STORAGE_KEY = 'kolorlando.settings.renderScale';
-const PIXELATED_UPSCALE_STORAGE_KEY = 'kolorlando.settings.pixelatedUpscale';
-const FOG_RENDER_DISTANCE_STORAGE_KEY = 'kolorlando.settings.fogRenderDistance';
 const CAMERA_MODE_STORAGE_KEY = 'kolorlando.cameraMode';
-const DEFAULT_RENDER_SCALE = 1;
-const DEFAULT_MOBILE_RENDER_SCALE = 0.5;
-const DEFAULT_SHADOWS_ENABLED = false;
-const DEFAULT_PIXELATED_UPSCALE = false;
-const DEFAULT_FOG_RENDER_DISTANCE = 30;
-const MIN_FOG_RENDER_DISTANCE = 15;
-const MAX_FOG_RENDER_DISTANCE = 180;
-const FOG_NEAR_DISTANCE_RATIO = 14 / 30;
-const FOG_FAR_DISTANCE_RATIO = 25 / 30;
-const MIN_RENDER_SCALE = 0.25;
-const VALID_RENDER_SCALE_VALUES = new Set(['1', '0.75', '0.5', '0.33', '0.25']);
 const POINTER_LOCK_RETRY_COOLDOWN_MS = 350;
-let rendererPixelRatioBase = Math.min(window.devicePixelRatio, 2);
-let renderScaleMultiplier = DEFAULT_RENDER_SCALE;
-let pixelatedUpscaleEnabled = DEFAULT_PIXELATED_UPSCALE;
-let shadowPresetName = DEFAULT_SHADOW_PRESET;
-let fogRenderDistance = DEFAULT_FOG_RENDER_DISTANCE;
 const cameraForwardDirection = new THREE.Vector3();
 let yaw = 0;
 let pitch = 0;
 
-function getEffectiveRenderPixelRatio() {
-  /* The renderer already caps device pixel ratio for sanity on dense screens.
-  Multiplying that capped base by the user-selected scale gives us a compact
-  "undersampling" control that behaves like a lighter-weight render resolution
-  slider without changing canvas CSS size or camera math. */
-  return Math.max(MIN_RENDER_SCALE, rendererPixelRatioBase * renderScaleMultiplier);
-}
-
-function syncRenderScaleSetting() {
-  if (!settingsUndersampling) return;
-  settingsUndersampling.value = String(renderScaleMultiplier);
-}
-
-function syncPixelatedUpscaleSetting() {
-  if (!settingsPixelatedUpscale) return;
-  settingsPixelatedUpscale.checked = pixelatedUpscaleEnabled;
-}
-
-function syncFogRenderDistanceSetting() {
-  if (!settingsFogRenderDistance) return;
-  settingsFogRenderDistance.value = String(fogRenderDistance);
-}
-
-function persistRenderScalePreference(nextScale) {
-  try {
-    window.localStorage.setItem(RENDER_SCALE_STORAGE_KEY, String(nextScale));
-  } catch (error) {
-    console.warn('Failed to persist the Kolorlando render scale setting.', error);
-  }
-}
-
-function readSavedRenderScalePreference() {
-  try {
-    return window.localStorage.getItem(RENDER_SCALE_STORAGE_KEY);
-  } catch (error) {
-    return null;
-  }
-}
-
-function persistPixelatedUpscalePreference(nextEnabled) {
-  try {
-    window.localStorage.setItem(PIXELATED_UPSCALE_STORAGE_KEY, String(nextEnabled));
-  } catch (error) {
-    console.warn('Failed to persist the Kolorlando pixelated upscale setting.', error);
-  }
-}
-
-function readSavedPixelatedUpscalePreference() {
-  try {
-    return window.localStorage.getItem(PIXELATED_UPSCALE_STORAGE_KEY);
-  } catch (error) {
-    return null;
-  }
-}
-
-function persistFogRenderDistancePreference(nextDistance) {
-  try {
-    window.localStorage.setItem(FOG_RENDER_DISTANCE_STORAGE_KEY, String(nextDistance));
-  } catch (error) {
-    console.warn('Failed to persist the Kolorlando fog render distance setting.', error);
-  }
-}
-
-function readSavedFogRenderDistancePreference() {
-  try {
-    return window.localStorage.getItem(FOG_RENDER_DISTANCE_STORAGE_KEY);
-  } catch (error) {
-    return null;
-  }
-}
-
-function resolvePixelatedUpscalePreference(rawValue) {
-  return rawValue === 'true';
-}
-
-function normalizeFogRenderDistance(rawValue) {
-  const parsedDistance = Math.round(Number(rawValue));
-  if (!Number.isFinite(parsedDistance)) {
-    return DEFAULT_FOG_RENDER_DISTANCE;
-  }
-
-  return THREE.MathUtils.clamp(
-    parsedDistance,
-    MIN_FOG_RENDER_DISTANCE,
-    MAX_FOG_RENDER_DISTANCE
-  );
-}
-
-function applyFogRenderDistanceToScene(nextDistance) {
-  const resolvedDistance = normalizeFogRenderDistance(nextDistance);
-  const nextFogNear = Math.max(4, Math.round(resolvedDistance * FOG_NEAR_DISTANCE_RATIO));
-  const nextFogFar = Math.max(nextFogNear + 1, Math.round(resolvedDistance * FOG_FAR_DISTANCE_RATIO));
-
-  scene.fog.near = nextFogNear;
-  scene.fog.far = nextFogFar;
-}
-
-function setFogRenderDistance(nextDistance, options = {}) {
-  const shouldPersist = options.persist !== false;
-  fogRenderDistance = normalizeFogRenderDistance(nextDistance);
-
-  syncFogRenderDistanceSetting();
-  applyFogRenderDistanceToScene(fogRenderDistance);
-
-  if (worldData?.boxel15DistanceRendering?.setRadiusInVoxels) {
-    worldData.boxel15DistanceRendering.setRadiusInVoxels(fogRenderDistance);
-    updateWorldActiveChunks(playerEye);
-  }
-
-  if (shouldPersist) {
-    persistFogRenderDistancePreference(fogRenderDistance);
-  }
-}
-
-function applyCanvasUpscaleMode(canvas) {
-  if (!canvas) return;
-  canvas.style.imageRendering = pixelatedUpscaleEnabled ? 'pixelated' : 'auto';
-}
-
-function resolveRenderScalePreference(rawValue) {
-  const normalizedValue = typeof rawValue === 'string' ? rawValue.trim() : '';
-  if (VALID_RENDER_SCALE_VALUES.has(normalizedValue)) {
-    return Number(normalizedValue);
-  }
-  return DEFAULT_RENDER_SCALE;
-}
-
-function applyRenderScaleForCurrentMode() {
-  /* Mobile mode gets a stronger default undersampling baseline so both touch
-  layouts start from the same lighter GPU profile without changing desktop. */
-  if (mobileMode) {
-    setRenderScale(DEFAULT_MOBILE_RENDER_SCALE, {
-      persist: false,
-      resize: false,
-    });
-    return;
-  }
-
-  const savedRenderScalePreference = readSavedRenderScalePreference();
-  setRenderScale(resolveRenderScalePreference(savedRenderScalePreference), {
-    persist: false,
-    resize: false,
-  });
-}
+const renderSettings = createRenderSettings({
+  scene,
+  getRenderer: () => renderer,
+  getMiniMapUI: () => miniMapUI,
+  getCharacterPreviewRenderer: () => characterPreviewRenderer,
+  markCharacterPreviewSizeDirty,
+  updateCharacterPreviewSize,
+  updateSceneViewSize,
+  getDirectionalLight: () => dir,
+  getIsMobileMode: () => mobileMode,
+  getWorldDistanceTarget: () => ({
+    boxel15DistanceRendering: worldData?.boxel15DistanceRendering,
+    updateActiveChunks: () => updateWorldActiveChunks(playerEye),
+  }),
+  getPlayerEye: () => playerEye,
+  settingsShadows,
+  settingsShadowPreset,
+  settingsUndersampling,
+  settingsPixelatedUpscale,
+  settingsFogRenderDistance,
+});
+const getEffectiveRenderPixelRatio = renderSettings.getEffectiveRenderPixelRatio;
+const applyCanvasUpscaleMode = renderSettings.applyCanvasUpscaleMode;
+const applyRenderScaleForCurrentMode = renderSettings.applyRenderScaleForCurrentMode;
+const readSavedFogRenderDistancePreference = renderSettings.readSavedFogRenderDistancePreference;
+const setFogRenderDistance = renderSettings.setFogRenderDistance;
 
 function isLegoLolCameraMode() {
   return cameraModeController ? cameraModeController.isLegoLolCameraMode() : false;
@@ -599,20 +459,9 @@ async function restoreDefaultSettings() {
   menuUI.setThemePreference('system');
   await menuUI.setFullScreenEnabled(false);
   setCurrentCameraMode('skyrim');
-  setShadowsEnabled(DEFAULT_SHADOWS_ENABLED, { persist: false });
-  setShadowPreset(DEFAULT_SHADOW_PRESET, { persist: false });
-  setRenderScale(mobileMode ? DEFAULT_MOBILE_RENDER_SCALE : DEFAULT_RENDER_SCALE, {
-    persist: false,
-  });
-  setPixelatedUpscaleEnabled(DEFAULT_PIXELATED_UPSCALE, { persist: false });
-  setFogRenderDistance(DEFAULT_FOG_RENDER_DISTANCE, { persist: false });
+  renderSettings.restoreGraphicsDefaults();
 
   clearPersistedSetting(CAMERA_MODE_STORAGE_KEY);
-  clearPersistedSetting(SHADOWS_STORAGE_KEY);
-  clearPersistedSetting(SHADOW_PRESET_STORAGE_KEY);
-  clearPersistedSetting(RENDER_SCALE_STORAGE_KEY);
-  clearPersistedSetting(PIXELATED_UPSCALE_STORAGE_KEY);
-  clearPersistedSetting(FOG_RENDER_DISTANCE_STORAGE_KEY);
 }
 
 function shouldWantGameplayPointerLock() {
@@ -776,51 +625,6 @@ function setElementHidden(element, hidden) {
   element.hidden = hidden;
 }
 
-async function loadStructureAssetByName(assetName) {
-  const normalizedAssetName = typeof assetName === 'string' ? assetName.trim().toLowerCase() : '';
-  const assetUrl = STRUCTURE_ASSET_URLS[normalizedAssetName];
-
-  if (assetUrl) {
-    const response = await fetch(assetUrl);
-    if (!response.ok) {
-      throw new Error(`Failed to load structure "${assetName}".`);
-    }
-
-    return deserializeStoredBoxel(JSON.parse(await response.text()));
-  }
-
-  const normalizedBoxelId = createBoxelId(assetName);
-  const localBoxel = readLocalBoxels().find(boxel => (
-    createBoxelId(boxel?.assetId) === normalizedBoxelId
-    || createBoxelId(boxel?.displayName) === normalizedBoxelId
-  ));
-
-  if (localBoxel) {
-    console.log(`[Boxel Save] spawn local Boxel: ${localBoxel.displayName || localBoxel.assetId}`);
-    return localBoxel;
-  }
-
-  throw new Error(`Unknown structure "${assetName}".`);
-}
-
-function normalizeQuarterTurnRotation(rotationY) {
-  const normalizedRotation = Number.isFinite(rotationY) ? rotationY : 0;
-  return ((Math.round(normalizedRotation / 90) % 4) + 4) % 4;
-}
-
-function rotateLocalVoxelOffset(x, z, quarterTurns) {
-  switch (quarterTurns) {
-    case 1:
-      return { x: -z, z: x };
-    case 2:
-      return { x: -x, z: -z };
-    case 3:
-      return { x: z, z: -x };
-    default:
-      return { x, z };
-  }
-}
-
 function computeBoxIntersectionVolume(a, b) {
   if (!a || !b || !a.intersectsBox(b)) return 0;
 
@@ -840,224 +644,28 @@ function isEscapeMoveFromBlockingHit(currentBox, nextBox, blockingHit) {
   return currentOverlap > 0 && nextOverlap > 0 && nextOverlap < currentOverlap;
 }
 
-function isKnownVoxelTypeId(voxelTypeId) {
-  return voxelTypes.some(voxelType => voxelType?.name === voxelTypeId);
-}
-
-function persistPlacedVoxel(cellX, cellY, cellZ, voxelTypeId) {
-  if (localWorldSaveStore) {
-    localWorldSaveStore.recordVoxelAdded(cellX, cellY, cellZ, voxelTypeId);
-  }
-
-  if (multiplayerWorldStore) {
-    multiplayerWorldStore.recordVoxelAdded(
-      cellX,
-      cellY,
-      cellZ,
-      voxelTypeId
-    ).catch(error => {
-      console.error('Failed to persist the Kolorlando multiplayer voxel addition.', error);
-    });
-  }
-}
-
-function placeStructureAssetAtPlayer(structureAsset) {
-  if (!canEditCurrentVoxelWorld()) {
-    throw new Error('Voxel editing is not available in this world.');
-  }
-
-  const voxelEntries = getBoxelVoxelEntries(structureAsset);
-  if (voxelEntries.length === 0) {
-    throw new Error('This structure has no voxels to place.');
-  }
-
-  const placementAnchor = structureAsset?.placement?.anchor ?? { x: 0, y: 0, z: 0 };
-  const quarterTurns = normalizeQuarterTurnRotation(structureAsset?.placement?.rotationY);
-  const baseCellX = Math.floor(playerFoot.x) - Math.floor(Number(placementAnchor.x) || 0);
-  const baseCellY = Math.floor(playerFoot.y) - Math.floor(Number(placementAnchor.y) || 0);
-  const baseCellZ = Math.floor(playerFoot.z) - Math.floor(Number(placementAnchor.z) || 0);
-  let placedCount = 0;
-  let skippedCount = 0;
-
-  for (let i = 0; i < voxelEntries.length; i += 1) {
-    const voxelEntry = voxelEntries[i];
-    const voxel = voxelEntry?.voxel;
-    const voxelTypeId = typeof voxel?.name === 'string' ? voxel.name.trim() : '';
-    const localX = Math.round(Number(voxelEntry?.position?.x) || 0);
-    const localY = Math.round(Number(voxelEntry?.position?.y) || 0);
-    const localZ = Math.round(Number(voxelEntry?.position?.z) || 0);
-
-    if (!voxelTypeId || !isKnownVoxelTypeId(voxelTypeId)) {
-      skippedCount += 1;
-      continue;
-    }
-
-    const rotatedOffset = rotateLocalVoxelOffset(localX, localZ, quarterTurns);
-    const targetCellX = baseCellX + rotatedOffset.x;
-    const targetCellY = baseCellY + localY;
-    const targetCellZ = baseCellZ + rotatedOffset.z;
-    const added = addVoxelAtCell(targetCellX, targetCellY, targetCellZ, {
-      voxelType: voxelTypeId,
-    });
-
-    if (!added) {
-      skippedCount += 1;
-      continue;
-    }
-
-    persistPlacedVoxel(targetCellX, targetCellY, targetCellZ, voxelTypeId);
-    placedCount += 1;
-  }
-
-  invalidateVoxelRaycast();
-  return { placedCount, skippedCount };
-}
-
-async function handleSpawnCommand(args = []) {
-  const assetName = typeof args[0] === 'string' ? args[0].trim() : '';
-
-  if (!assetName) {
-    /* Reusing the existing spawn helper keeps manual respawns identical to
-    death/fall respawns, including velocity cleanup and collider reset. */
-    respawnPlayerAtSpawn();
-    syncPlayerBody();
-    return;
-  }
-
-  const structureAsset = await loadStructureAssetByName(assetName);
-  const { placedCount, skippedCount } = placeStructureAssetAtPlayer(structureAsset);
-  chatUI.appendLine(
-    `Spawned ${assetName}: ${placedCount} placed${skippedCount ? `, ${skippedCount} skipped` : ''}.`
-  );
-}
-
-function getCurrentBoxelSelectionCellBounds() {
-  const sourceBox = boxelSelectionCombinedBox.isEmpty()
-    ? boxelSelectionAnchorBox
-    : boxelSelectionCombinedBox;
-
-  if (!sourceBox || sourceBox.isEmpty()) {
-    return null;
-  }
-
-  if (useWorldEditorVoxelMode && worldData) {
-    const minGridPosition = worldData.mapToGridPosition(
-      sourceBox.min.x + 0.001,
-      sourceBox.min.y + 0.001,
-      sourceBox.min.z + 0.001,
-      worldVoxelSize,
-    );
-    const maxGridPosition = worldData.mapToGridPosition(
-      sourceBox.max.x - 0.001,
-      sourceBox.max.y - 0.001,
-      sourceBox.max.z - 0.001,
-      worldVoxelSize,
-    );
-
-    return {
-      minCellX: Math.floor(minGridPosition.x),
-      minCellY: Math.floor(minGridPosition.y),
-      minCellZ: Math.floor(minGridPosition.z),
-      maxCellX: Math.floor(maxGridPosition.x),
-      maxCellY: Math.floor(maxGridPosition.y),
-      maxCellZ: Math.floor(maxGridPosition.z),
-    };
-  }
-
-  return {
-    minCellX: Math.floor(sourceBox.min.x + 0.001),
-    minCellY: Math.floor(sourceBox.min.y + 0.001),
-    minCellZ: Math.floor(sourceBox.min.z + 0.001),
-    maxCellX: Math.ceil(sourceBox.max.x - 0.001) - 1,
-    maxCellY: Math.ceil(sourceBox.max.y - 0.001) - 1,
-    maxCellZ: Math.ceil(sourceBox.max.z - 0.001) - 1,
-  };
-}
-
-function createBoxelFromSelection(displayName) {
-  const cellBounds = getCurrentBoxelSelectionCellBounds();
-  if (!cellBounds) {
-    throw new Error('Select voxels with the Boxel Tool first.');
-  }
-
-  console.log('[Boxel Save] exporting selection bounds:', cellBounds);
-
-  const assetId = createBoxelId(displayName);
-  const boxelSize = Math.max(
-    cellBounds.maxCellX - cellBounds.minCellX + 1,
-    cellBounds.maxCellY - cellBounds.minCellY + 1,
-    cellBounds.maxCellZ - cellBounds.minCellZ + 1,
-    1,
-  );
-  const voxelEntries = [];
-
-  for (let cellY = cellBounds.minCellY; cellY <= cellBounds.maxCellY; cellY += 1) {
-    for (let cellX = cellBounds.minCellX; cellX <= cellBounds.maxCellX; cellX += 1) {
-      for (let cellZ = cellBounds.minCellZ; cellZ <= cellBounds.maxCellZ; cellZ += 1) {
-        const voxel = getVoxelAtCell(cellX, cellY, cellZ);
-        if (!voxel) continue;
-
-        const voxelName = typeof voxel?.name === 'string' && voxel.name.trim()
-          ? voxel.name.trim()
-          : (typeof voxel?.voxelTypeId === 'string' && voxel.voxelTypeId.trim()
-            ? voxel.voxelTypeId.trim()
-            : '');
-        const voxelColor = typeof voxel?.color === 'string' && voxel.color.trim()
-          ? voxel.color.trim()
-          : '#ffffff';
-        if (!voxelName) continue;
-
-        voxelEntries.push({
-          position: {
-            x: cellX - cellBounds.minCellX,
-            y: cellY - cellBounds.minCellY,
-            z: cellZ - cellBounds.minCellZ,
-          },
-          voxel: new Voxel({
-            name: voxelName,
-            color: voxelColor,
-            active: true,
-          }),
-        });
-      }
-    }
-  }
-
-  if (voxelEntries.length === 0) {
-    throw new Error('The selected Boxel area has no voxels to save.');
-  }
-
-  const boxel = new Boxel({
-    size: boxelSize,
-    name: displayName,
-  }).setVoxelEntries(voxelEntries);
-
-  return createStoredBoxel({
-    assetId,
-    displayName,
-    boxel,
-    placement: {
-      /* Saved Boxels spawn centered on the player footprint by default. */
-      anchor: {
-        x: Math.floor((cellBounds.maxCellX - cellBounds.minCellX) / 2),
-        y: 0,
-        z: Math.floor((cellBounds.maxCellZ - cellBounds.minCellZ) / 2),
-      },
-      rotationY: 0,
-    },
-  });
-}
-
-function handleSaveBoxelCommand(args = []) {
-  const displayName = args.join(' ').trim();
-  if (!displayName) {
-    throw new Error('Use /saveBoxel nameoftheboxel.');
-  }
-
-  console.log(`[Boxel Save] command: /saveBoxel ${displayName}`);
-  const savedBoxel = writeLocalBoxel(createBoxelFromSelection(displayName));
-  chatUI.appendLine(`Saved Boxel ${savedBoxel.displayName}: ${getBoxelVoxelEntries(savedBoxel).length} voxels.`);
-}
+const boxelManager = createBoxelManager({
+  structureAssetUrls: STRUCTURE_ASSET_URLS,
+  getPlayerFoot: () => playerFoot,
+  getSelectionSourceBox: () => (
+    boxelSelectionCombinedBox.isEmpty()
+      ? boxelSelectionAnchorBox
+      : boxelSelectionCombinedBox
+  ),
+  getUseWorldEditorVoxelMode: () => useWorldEditorVoxelMode,
+  getWorldData: () => worldData,
+  getWorldVoxelSize: () => worldVoxelSize,
+  getVoxelTypes: () => voxelTypes,
+  getVoxelAtCell: (...args) => getVoxelAtCell(...args),
+  addVoxelAtCell: (...args) => addVoxelAtCell(...args),
+  getCanEditCurrentVoxelWorld: canEditCurrentVoxelWorld,
+  getLocalWorldSaveStore: () => localWorldSaveStore,
+  getMultiplayerWorldStore: () => multiplayerWorldStore,
+  invalidateVoxelRaycast: () => invalidateVoxelRaycast(),
+  appendChatLine: line => chatUI.appendLine(line),
+  respawnPlayerAtSpawn: () => respawnPlayerAtSpawn(),
+  syncPlayerBody: () => syncPlayerBody(),
+});
 
 const handleChatCommand = createCommandHandler({
   /* The command module owns the text commands themselves, while script.js
@@ -1074,14 +682,14 @@ const handleChatCommand = createCommandHandler({
   },
   onSaveBoxel: async (args = []) => {
     try {
-      handleSaveBoxelCommand(args);
+      boxelManager.handleSaveBoxelCommand(args);
     } catch (error) {
       chatUI.appendLine(String(error?.message || 'Failed to run /saveBoxel.'));
     }
   },
   onSpawn: async (args = []) => {
     try {
-      await handleSpawnCommand(args);
+      await boxelManager.handleSpawnCommand(args);
     } catch (error) {
       chatUI.appendLine(String(error?.message || 'Failed to run /spawn.'));
     }
@@ -1725,201 +1333,8 @@ scene.add(dir.target);
 const directionalShadowOffset = new THREE.Vector3().copy(dir.position).sub(dir.target.position);
 const directionalShadowTarget = new THREE.Vector3();
 
-function persistShadowsPreference(nextEnabled) {
-  try {
-    window.localStorage.setItem(SHADOWS_STORAGE_KEY, nextEnabled ? 'true' : 'false');
-  } catch (error) {
-    // Ignore persistence failures so the setting still works for the session.
-  }
-}
-
-function readSavedShadowsPreference() {
-  try {
-    return window.localStorage.getItem(SHADOWS_STORAGE_KEY);
-  } catch (error) {
-    return null;
-  }
-}
-
-function syncShadowPresetSetting() {
-  if (!settingsShadowPreset) return;
-  settingsShadowPreset.value = shadowPresetName;
-}
-
-function persistShadowPresetPreference(nextPresetName) {
-  try {
-    window.localStorage.setItem(
-      SHADOW_PRESET_STORAGE_KEY,
-      resolveShadowPresetName(nextPresetName),
-    );
-  } catch (error) {
-    // Ignore persistence failures so the setting still works for the session.
-  }
-}
-
-function readSavedShadowPresetPreference() {
-  try {
-    return window.localStorage.getItem(SHADOW_PRESET_STORAGE_KEY);
-  } catch (error) {
-    return null;
-  }
-}
-
-function applyRenderScale(options = {}) {
-  const shouldResize = options.resize !== false;
-  const effectivePixelRatio = getEffectiveRenderPixelRatio();
-
-  /* All Three.js renderers that draw every frame or sit prominently in the UI
-  share the same scale so the setting behaves predictably and the GPU savings
-  are not partially cancelled by secondary canvases staying at full density. */
-  renderer.setPixelRatio(effectivePixelRatio);
-  miniMapUI?.setPixelRatio(effectivePixelRatio);
-
-  if (characterPreviewRenderer) {
-    characterPreviewRenderer.setPixelRatio(effectivePixelRatio);
-    markCharacterPreviewSizeDirty();
-  }
-
-  syncRenderScaleSetting();
-
-  if (!shouldResize) return;
-
-  updateSceneViewSize();
-  miniMapUI?.updateMiniMapSize();
-  if (characterPreviewRenderer) {
-    markCharacterPreviewSizeDirty();
-    updateCharacterPreviewSize();
-  }
-}
-
-function applyPixelatedUpscale() {
-  applyCanvasUpscaleMode(renderer?.domElement);
-  applyCanvasUpscaleMode(characterPreviewRenderer?.domElement);
-  syncPixelatedUpscaleSetting();
-}
-
-function setRenderScale(nextScale, options = {}) {
-  const shouldPersist = options.persist !== false;
-  renderScaleMultiplier = resolveRenderScalePreference(String(nextScale));
-  applyRenderScale({ resize: options.resize !== false });
-
-  if (shouldPersist) {
-    persistRenderScalePreference(renderScaleMultiplier);
-  }
-}
-
-function setPixelatedUpscaleEnabled(nextEnabled, options = {}) {
-  const shouldPersist = options.persist !== false;
-  pixelatedUpscaleEnabled = nextEnabled === true;
-  applyPixelatedUpscale();
-
-  if (shouldPersist) {
-    persistPixelatedUpscalePreference(pixelatedUpscaleEnabled);
-  }
-}
-
-function setShadowsEnabled(nextEnabled, options = {}) {
-  const shouldPersist = options.persist !== false;
-  const enabled = nextEnabled !== false;
-
-  // Toggling both the renderer shadow map and the sun light shadow casting is
-  // enough to disable the expensive shadow pass while keeping the rest of the
-  // lighting and scene setup intact.
-  renderer.shadowMap.enabled = enabled;
-  dir.castShadow = enabled;
-
-  // Some Three.js shadow-map state is cached internally, so marking materials
-  // for update helps the scene react immediately after the checkbox changes.
-  scene.traverse(part => {
-    if (!part?.isMesh) return;
-    if (part.material) {
-      part.material.needsUpdate = true;
-    }
-  });
-
-  if (settingsShadows) {
-    settingsShadows.checked = enabled;
-  }
-
-  if (shouldPersist) {
-    persistShadowsPreference(enabled);
-  }
-}
-
-function setShadowPreset(nextPresetName, options = {}) {
-  const shouldPersist = options.persist !== false;
-  shadowPresetName = applyShadowPreset({
-    renderer,
-    directionalLight: dir,
-    presetName: nextPresetName,
-  });
-
-  syncShadowPresetSetting();
-
-  /* Shadow shader variants and map allocations can stay cached after preset
-  swaps, so scene materials get nudged to rebuild against the fresh setup. */
-  scene.traverse(part => {
-    if (!part?.isMesh) return;
-    if (part.material) {
-      part.material.needsUpdate = true;
-    }
-  });
-
-  if (shouldPersist) {
-    persistShadowPresetPreference(shadowPresetName);
-  }
-}
-
-const savedShadowPresetPreference = readSavedShadowPresetPreference();
-setShadowPreset(resolveShadowPresetName(savedShadowPresetPreference), {
-  persist: false,
-});
-
-const savedShadowsPreference = readSavedShadowsPreference();
-if (savedShadowsPreference === 'true' || savedShadowsPreference === 'false') {
-  setShadowsEnabled(savedShadowsPreference === 'true', { persist: false });
-} else {
-  setShadowsEnabled(DEFAULT_SHADOWS_ENABLED, { persist: false });
-}
-
-if (settingsShadows) {
-  settingsShadows.addEventListener('change', function () {
-    setShadowsEnabled(settingsShadows.checked);
-  });
-}
-
-if (settingsShadowPreset) {
-  settingsShadowPreset.addEventListener('change', function () {
-    setShadowPreset(settingsShadowPreset.value);
-  });
-}
-
-if (settingsUndersampling) {
-  settingsUndersampling.addEventListener('change', function () {
-    setRenderScale(settingsUndersampling.value);
-  });
-}
-
-const savedPixelatedUpscalePreference = readSavedPixelatedUpscalePreference();
-setPixelatedUpscaleEnabled(
-  resolvePixelatedUpscalePreference(savedPixelatedUpscalePreference),
-  { persist: false }
-);
-
-if (settingsPixelatedUpscale) {
-  settingsPixelatedUpscale.addEventListener('change', function () {
-    setPixelatedUpscaleEnabled(settingsPixelatedUpscale.checked);
-  });
-}
-
-if (settingsFogRenderDistance) {
-  const applySettingsFogRenderDistance = () => {
-    setFogRenderDistance(settingsFogRenderDistance.value);
-  };
-
-  settingsFogRenderDistance.addEventListener('change', applySettingsFogRenderDistance);
-  settingsFogRenderDistance.addEventListener('input', applySettingsFogRenderDistance);
-}
+renderSettings.init();
+renderSettings.bindControls();
 
 if (settingsRestoreDefaultsButton) {
   settingsRestoreDefaultsButton.addEventListener('click', () => {
@@ -2949,8 +2364,7 @@ screenController = createScreenController({
   onPixelRatioChange: pixelRatio => {
     /* Viewport and device-pixel-ratio changes update the capped native base,
     then the user-selected undersampling multiplier is reapplied on top. */
-    rendererPixelRatioBase = pixelRatio;
-    applyRenderScale();
+    renderSettings.setPixelRatioBase(pixelRatio);
   },
   onResizeLayout: () => {
     updateSceneViewSize();
