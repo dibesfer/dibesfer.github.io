@@ -53,12 +53,23 @@ hr {
   border: solid 1px white;
 }
 
-.ad {
+/* .ad {
   margin: auto;
   width: 800px;
   max-width: 100%;
+ 
+} */
+
+.ad {
   border: solid 1px white;
-  overflow: auto;
+
+  width: min(800px, calc(100vw - 16px));
+  margin: 0 auto;
+}
+
+.ad ins {
+  width: 100% !important;
+  display: block !important;
 }
 
 .ad>p {
