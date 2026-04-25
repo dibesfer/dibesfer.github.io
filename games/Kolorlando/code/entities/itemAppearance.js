@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { WorldEntity } from './entity.js';
+import { Entity } from './Entity.js';
 
 const gltfLoader = new GLTFLoader();
 
@@ -529,7 +529,7 @@ function createColorTabardItemModel({
   };
 }
 
-export class ItemAppearance extends WorldEntity {
+export class ItemAppearance extends Entity {
   constructor({
     scene,
     position,

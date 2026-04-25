@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { Entity, HunterEntity, TalkerEntity } from './code/entities/entity.js';
+import { Walker, Chaser, Talker } from './code/entities/humanoid.js';
 import {
   applyHumanoidEquipment,
   createHumanoidModel,
@@ -2108,7 +2108,7 @@ function spawnWorldEntity(worldEntity) {
       spawnWorldItemAppearance(worldEntity, resolvedPosition);
       return;
     case 'talker':
-      entities.push(new TalkerEntity({
+      entities.push(new Talker({
         scene,
         position: resolvedPosition,
         groundY: GROUND_Y,
@@ -2126,14 +2126,14 @@ function spawnWorldEntity(worldEntity) {
       }
       return;
     case 'chaser':
-      entities.push(new HunterEntity({
+      entities.push(new Chaser({
         scene,
         position: resolvedPosition,
         groundY: GROUND_Y,
       }));
       return;
     case 'walker':
-      entities.push(new Entity({
+      entities.push(new Walker({
         scene,
         position: resolvedPosition,
         groundY: GROUND_Y,
@@ -4401,7 +4401,7 @@ function updateChaserPunchHitboxes(deltaTime) {
 function updateChaserMeleeAttacks(deltaTime) {
   for (let i = 0; i < entities.length; i++) {
     const entity = entities[i];
-    if (!(entity instanceof HunterEntity)) continue;
+    if (!(entity instanceof Chaser)) continue;
 
     let cooldown = chaserAttackCooldowns.get(entity) ?? 0;
     cooldown = Math.max(0, cooldown - deltaTime);

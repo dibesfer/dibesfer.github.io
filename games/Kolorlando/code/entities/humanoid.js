@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { createHumanoidModel, applyHumanoidIdleAnimation, applyHumanoidWalkAnimation } from './entityModel.js';
+import { Entity } from './Entity.js';
 
 const ENTITY_NAME_PARTS_A = ['Neo', 'Rex', 'Kira', 'Nova', 'Axel', 'Iris', 'Vex', 'Luna', 'Zed', 'Milo'];
 const ENTITY_NAME_PARTS_B = ['Stone', 'Blade', 'Runner', 'Flux', 'Byte', 'Echo', 'Volt', 'Shade', 'Forge', 'Drift'];
@@ -156,36 +157,7 @@ export function drawHealthBarSprite(sprite, healthRatio) {
   texture.needsUpdate = true;
 }
 
-export class WorldEntity {
-  constructor({
-    scene,
-    position,
-    groundY = 0,
-    name = 'Entity',
-    typeLabel = 'Entity',
-    miniMapType = 'entity',
-  } = {}) {
-    this.scene = scene;
-    this.position = position?.clone ? position.clone() : new THREE.Vector3();
-    this.groundY = groundY;
-    this.name = name;
-    this.typeLabel = typeLabel;
-    this.miniMapType = miniMapType;
-    this.collider = null;
-    this.raycastShape = null;
-    this.group = new THREE.Group();
-    this.group.position.copy(this.position);
-    this.scene?.add?.(this.group);
-  }
-
-  update() {}
-
-  getRaycastShape() {
-    return this.raycastShape;
-  }
-}
-
-export class Entity extends WorldEntity {
+export class Humanoid extends Entity {
   constructor({
     scene,
     position,
@@ -406,7 +378,9 @@ export class Entity extends WorldEntity {
   }
 }
 
-export class HunterEntity extends Entity {
+export class Walker extends Humanoid {}
+
+export class Chaser extends Humanoid {
   constructor(options = {}) {
     super({
       ...options,
@@ -490,7 +464,7 @@ export class HunterEntity extends Entity {
   }
 }
 
-export class TalkerEntity extends Entity {
+export class Talker extends Humanoid {
   constructor(options = {}) {
     super({
       ...options,

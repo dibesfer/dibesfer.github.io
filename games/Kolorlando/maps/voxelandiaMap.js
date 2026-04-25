@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { Entity, HunterEntity } from '../code/entities/entity.js';
+import { Walker, Chaser } from '../code/entities/humanoid.js';
 
 const VOXEL_TYPES = [
   { name: 'red', color: 0xff4040 },
@@ -436,7 +436,7 @@ export function buildVoxelandiaMap({
       if (tooClose) continue;
 
       if (entities.length < WALKER_COUNT) {
-        entities.push(new Entity({
+        entities.push(new Walker({
           scene,
           position: entitySpawnPos,
           groundY,
@@ -445,7 +445,7 @@ export function buildVoxelandiaMap({
           clearance: 1.0,
         }));
       } else {
-        entities.push(new HunterEntity({
+        entities.push(new Chaser({
           scene,
           position: entitySpawnPos,
           groundY,

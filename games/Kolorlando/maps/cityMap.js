@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { Entity, HunterEntity, TalkerEntity } from '../code/entities/entity.js';
+import { Walker, Chaser, Talker } from '../code/entities/humanoid.js';
 
 const ENTITY_MIN_SPAWN_DIST_SQ = 6.25;
 
@@ -262,7 +262,7 @@ export function buildCityMap({
 
     entitySpawnPos.set(x, groundY, z);
     if (entities.length < ENTITY_COUNT) {
-      entities.push(new Entity({
+      entities.push(new Walker({
         scene,
         position: entitySpawnPos,
         groundY,
@@ -271,7 +271,7 @@ export function buildCityMap({
         clearance: 1.0,
       }));
     } else {
-      entities.push(new HunterEntity({
+      entities.push(new Chaser({
         scene,
         position: entitySpawnPos,
         groundY,
@@ -297,7 +297,7 @@ export function buildCityMap({
     groundY,
     SPAWN_CENTER.y + spawnForwardDir.z * 4
   );
-  entities.push(new TalkerEntity({
+  entities.push(new Talker({
     scene,
     position: talkerPos,
     groundY,

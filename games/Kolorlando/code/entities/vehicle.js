@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { WorldEntity } from './entity.js';
+import { Entity } from './Entity.js';
 
 const gltfLoader = new GLTFLoader();
 
@@ -15,7 +15,7 @@ function applyShadows(root, castShadow, receiveShadow) {
   });
 }
 
-export class Vehicle extends WorldEntity {
+export class Vehicle extends Entity {
   constructor({
     scene,
     position,

@@ -6,7 +6,7 @@ import {
   createPlayerNameSprite,
   updatePlayerNameSprite,
 } from '../entities/entityModel.js';
-import { createHealthBarSprite, drawHealthBarSprite } from '../entities/entity.js';
+import { createHealthBarSprite, drawHealthBarSprite } from '../entities/humanoid.js';
 import {
   PLAYER_STATE_BROADCAST_EVENT,
   PLAYER_DAMAGE_ATTEMPT_EVENT,

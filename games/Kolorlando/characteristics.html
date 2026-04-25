@@ -428,7 +428,7 @@
                 { id: 'game-icon', parent: 'game-ui', label: 'Icon<div class="implemented-in">icon.js</div>', tooltip: 'Shared UI icon helpers' },
                 { id: 'game-maps', parent: 'game-world', label: 'Maps<div class="implemented-in">city / simple / voxelandia</div>', tooltip: 'Base world templates' },
                 { id: 'game-saving', parent: 'game-world', label: 'World Saving<div class="implemented-in">worldSaving.js</div>', tooltip: 'Local voxel edit saves' },
-                { id: 'game-entity-core', parent: 'game-entities', label: 'Entity Core<div class="implemented-in">entity.js</div>', tooltip: 'NPC logic' },
+                { id: 'game-entity-core', parent: 'game-entities', label: 'Humanoid Core<div class="implemented-in">humanoid.js</div>', tooltip: 'NPC logic' },
                 { id: 'game-entity-model', parent: 'game-entities', label: 'Entity Model<div class="implemented-in">entityModel.js</div>', tooltip: 'Humanoid rigs and animation helpers' },
                 { id: 'game-items', parent: 'game-entities', label: 'Item Appearance<div class="implemented-in">itemAppearance.js</div>', tooltip: 'Item and pickup visuals' },
                 { id: 'game-vehicle', parent: 'game-entities', label: 'Vehicle<div class="implemented-in">vehicle.js</div>', tooltip: 'Vehicle support' }
@@ -668,6 +668,14 @@
     </details>
 
     <details>
+        <summary>🦠 Entity</summary>
+        <p>Entity is something that has a shape and moves.</p>
+        <p>From it they derive the Humanoid, the Vehicles and the Item-appearences</p>
+        <p>From the Humanoid, which has life (health points), humanoid model and animations, movement, etc. they derive the Player and the NPCs</p>
+        
+    </details>
+
+    <details>
         <summary>🧠 Memory</summary>
         <ol>
             <li class="done">Anonymous Localhost</li>
@@ -686,7 +694,7 @@
                 <a href="/games/Kolorlando/code/UI/worldMenu2.html">code/UI/worldMenu2.html</a></p>
             <li class="done">Save / Load world data locally</li>
             <li class="done">NPCs (walker, chaser, talker)</li>
-            <p><span class="implemented-in">code/entities/entity.js, maps/voxelandiaMap.js, maps/cityMap.js,
+            <p><span class="implemented-in">code/entities/humanoid.js, maps/voxelandiaMap.js, maps/cityMap.js,
                     script.js</span></p>
             <li class="not-done">Animals</li>
             <p><span class="implemented-in">No implementation file yet.</span></p>
@@ -806,7 +814,7 @@ We will asign a custom texture painting pixels on each face
     </details>
 
     <details>
-        <summary>🌐 Multiplayer</summary>
+        <summary class="to-improve">🌐 Multiplayer</summary>
         <ol>
             <li class="done">Presence</li>
             <p>Remote sessions detection <span class="implemented-in">code/multiplayer/multiplayer.js, multiplayer.html,
@@ -946,13 +954,27 @@ later, if needed, back it with a DB active_session
     <details>
         <summary>⚙️ Settings</summary>
         <ol>
-            <li class="done">dark / light theme</li>
+            <li class="done">Game mode</li>
+            <p>Creative / Survival mode <span class="implemented-in">code/UI/menuPanelMarkup.js, script.js,
+                    code/UI/inventory.js</span></p>
+            <li class="done">Camera mode picker</li>
+            <p>Skyrim, WoW and Lego LoL camera modes <span class="implemented-in">code/UI/menuPanelMarkup.js,
+                    script.js, code/graphics/camera.js</span></p>
+            <li class="done">Dark / light menu theme</li>
             <p><span class="implemented-in">code/UI/menu.js, code/UI/menuPanelMarkup.js, style.css</span></p>
-            <li class="done">fullscreen</li>
+            <li class="done">Fullscreen</li>
             <p><span class="implemented-in">code/UI/menu.js, code/UI/menuPanelMarkup.js, singleplayer.html,
                     multiplayer.html</span></p>
-            <li class="to-improve">shadows</li>
-            <p><span class="implemented-in">code/UI/menuPanelMarkup.js, script.js</span></p>
+            <li class="done">Graphics settings</li>
+            <p>Shadows, shadow preset, undersampling, render distance and pixelated upscale <span
+                    class="implemented-in">code/graphics/renderSettings.js, code/graphics/shadowConfig.js, script.js,
+                    code/UI/menuPanelMarkup.js</span></p>
+            <li class="done">World actions</li>
+            <p>Download World and Reload World <span class="implemented-in">script.js, code/data/worldSaving.js,
+                    code/data/World.js</span></p>
+            <li class="done">Restore default settings</li>
+            <p>Restores graphics, camera, theme and fullscreen defaults <span class="implemented-in">script.js,
+                    code/graphics/renderSettings.js, code/UI/menu.js</span></p>
             <li class="not-done">Background music</li>
             <p><span class="implemented-in">code/UI/menuPanelMarkup.js, singleplayer.html, multiplayer.html</span></p>
             <p>UI only for now.</p>
