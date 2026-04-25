@@ -20,6 +20,7 @@ export const Boxel15 = new Boxel({
 const WORLD_SNAPSHOT_FORMAT = 'kolorlando.worldSnapshot.compact';
 const WORLD_SNAPSHOT_VERSION = 1;
 const DEFAULT_WORLD_SPAWN_HEIGHT_ABOVE_LAND = 3;
+export const DEFAULT_WORLD_SKY_COLOR = '#00c2ff';
 
 export class Boxel15DistanceRendering {
   constructor({
@@ -112,6 +113,7 @@ export class World {
     size = { x: 100, y: 100, z: 100 },
     land = { x: 1, y: 1, z: 1 },
     spawnPosition = null,
+    skyColor = DEFAULT_WORLD_SKY_COLOR,
     boxel15DistanceRendering = null,
     voxelTypes = null,
     entities = null,
@@ -126,6 +128,7 @@ export class World {
     this.size = normalizeWorldSize(size);
     this.land = normalizeWorldSize(land);
     this.spawnPosition = normalizeWorldSpawnPosition(spawnPosition, this.land);
+    this.skyColor = normalizeWorldColor(skyColor, DEFAULT_WORLD_SKY_COLOR);
     this.boxel15DistanceRendering = normalizeWorldBoxel15DistanceRendering(boxel15DistanceRendering);
     this.entities = createDefaultWorldEntities();
     this.savedBoxels = [];
@@ -180,6 +183,11 @@ export class World {
     if (this.activeChunkKeys instanceof Set) {
       this.updateActiveChunks(this.spawnPosition);
     }
+    return this;
+  }
+
+  setSkyColor(skyColor = DEFAULT_WORLD_SKY_COLOR) {
+    this.skyColor = normalizeWorldColor(skyColor, DEFAULT_WORLD_SKY_COLOR);
     return this;
   }
 
@@ -422,7 +430,10 @@ export class World {
       voxelAddress.chunk.y,
       voxelAddress.chunk.z
     );
-    const chunkEntry = this.voxelBoxels.get(chunkKey);
+    const chunkEntry = this.voxelBoxels.get(chunkKey)
+      ?? (typeof this.chunkGenerator === 'function'
+        ? this.ensureGeneratedChunkKey(chunkKey)
+        : null);
     if (!chunkEntry) return false;
 
     const currentVoxel = chunkEntry.boxel.get(
@@ -708,6 +719,7 @@ export class World {
         y: this.spawnPosition.y,
         z: this.spawnPosition.z,
       },
+      skyColor: this.skyColor,
       boxel15DistanceRendering: this.boxel15DistanceRendering.toJSON(),
       chunkBoxel: serializeChunkBoxel(this.chunkBoxel),
       voxelTypes: this.getVoxelTypes().map(voxel => voxel.toJSON()),
@@ -763,6 +775,7 @@ export class World {
       size: cloneSnapshotValue(worldJson.size) ?? null,
       land: cloneSnapshotValue(worldJson.land) ?? null,
       spawnPosition: cloneSnapshotValue(worldJson.spawnPosition) ?? null,
+      skyColor: worldJson.skyColor,
       voxelTypes: cloneSnapshotValue(worldJson.voxelTypes) ?? [],
       entities: cloneSnapshotValue(worldJson.entities) ?? [],
       savedBoxels: cloneSnapshotValue(worldJson.savedBoxels) ?? [],
@@ -787,6 +800,10 @@ export class World {
 
     if ('spawnPosition' in data) {
       this.setSpawnPosition(data.spawnPosition);
+    }
+
+    if ('skyColor' in data) {
+      this.setSkyColor(data.skyColor);
     }
 
     if ('boxel15DistanceRendering' in data) {
@@ -842,6 +859,7 @@ export class World {
       size: cloneSnapshotValue(normalizedSnapshot.size) ?? null,
       land: cloneSnapshotValue(normalizedSnapshot.land) ?? null,
       spawnPosition: cloneSnapshotValue(normalizedSnapshot.spawnPosition) ?? null,
+      skyColor: normalizedSnapshot.skyColor ?? DEFAULT_WORLD_SKY_COLOR,
       entities: cloneSnapshotValue(normalizedSnapshot.entities) ?? [],
       savedBoxels: cloneSnapshotValue(normalizedSnapshot.savedBoxels) ?? [],
       boxels: cloneSnapshotValue(normalizedSnapshot.boxels) ?? [],
@@ -877,6 +895,7 @@ export class World {
       size: this.size,
       land: this.land,
       spawnPosition: this.spawnPosition,
+      skyColor: this.skyColor,
       boxel15DistanceRendering: this.boxel15DistanceRendering,
       chunkBoxel: this.chunkBoxel,
       voxelTypes: this.getVoxelTypes(),
@@ -1202,6 +1221,23 @@ function normalizeText(value, fallback = '') {
 
   const trimmedValue = value.trim();
   return trimmedValue || fallback;
+}
+
+function normalizeWorldColor(value, fallback = DEFAULT_WORLD_SKY_COLOR) {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return `#${Math.max(0, Math.floor(value)).toString(16).padStart(6, '0').slice(-6)}`;
+  }
+
+  if (typeof value !== 'string') {
+    return fallback;
+  }
+
+  const trimmedValue = value.trim();
+  if (/^#[0-9a-f]{6}$/i.test(trimmedValue)) {
+    return trimmedValue;
+  }
+
+  return fallback;
 }
 
 function toFiniteNumber(value, fallback = 0) {

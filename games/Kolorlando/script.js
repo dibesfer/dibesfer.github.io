@@ -46,7 +46,7 @@ import { createBoxelId } from './code/data/boxelStorage.js';
 import { createBoxelManager } from './code/data/boxelManager.js';
 import { createLocalWorldSaveStore } from './code/data/worldSaving.js';
 import { loadPlayerFaceData } from './code/data/playerSaving.js';
-import { World } from './code/data/World.js';
+import { World, DEFAULT_WORLD_SKY_COLOR } from './code/data/World.js';
 import { WorldEditor } from './code/data/WorldEditor.js';
 import { SpaceShipVehicle } from './code/entities/vehicle.js';
 import { Input } from './code/Input.js';
@@ -236,12 +236,19 @@ const gltfLoader = new GLTFLoader();
 // --------------------
 // SCENE
 // --------------------
-const WORLD_SKY_COLOR = 0x00c2ff;
 const WORLD_FOG_NEAR = 14;
 const WORLD_FOG_FAR = 25;
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(WORLD_SKY_COLOR);
-scene.fog = new THREE.Fog(WORLD_SKY_COLOR, WORLD_FOG_NEAR, WORLD_FOG_FAR);
+scene.background = new THREE.Color(DEFAULT_WORLD_SKY_COLOR);
+scene.fog = new THREE.Fog(DEFAULT_WORLD_SKY_COLOR, WORLD_FOG_NEAR, WORLD_FOG_FAR);
+
+function applyWorldSkyColor(world = null) {
+  const skyColor = typeof world?.skyColor === 'string' && world.skyColor.trim()
+    ? world.skyColor
+    : DEFAULT_WORLD_SKY_COLOR;
+  scene.background = new THREE.Color(skyColor);
+  scene.fog.color.set(skyColor);
+}
 
 // --------------------
 // CAMERA
@@ -1464,6 +1471,7 @@ const processPendingChunkVisualUpdates = typeof mapData.processPendingChunkVisua
   ? mapData.processPendingChunkVisualUpdates
   : () => null;
 const worldData = mapData.world ?? null;
+applyWorldSkyColor(worldData);
 if (worldData instanceof World && savedLocalWorldSavedBoxels.length > 0) {
   worldData.setSavedBoxels(savedLocalWorldSavedBoxels);
 }
@@ -1614,7 +1622,7 @@ function applyLocalSavedWorld() {
   persistence scoped to player edits while letting the authored base map remain
   the single source of truth for untouched terrain. */
   if (!localWorldSaveStore) return;
-  if (savedLocalWorldSnapshot || !useWorldEditorVoxelMode || !worldData) return;
+  if (!useWorldEditorVoxelMode || !worldData) return;
 
   const voxelEdits = localWorldSaveStore.getVoxelEditsList();
   let migratedLegacyEdits = false;
@@ -4513,6 +4521,7 @@ function collidesWithBuildings(box) {
 
 const axisTestPos = new THREE.Vector3();
 const stepTestPos = new THREE.Vector3();
+const currentColliderBox = new THREE.Box3();
 const PLAYER_STEP_HEIGHT = 1.05;
 
 function tryStepUp(axis, delta, blockingHit) {
@@ -4548,7 +4557,7 @@ function tryMoveAxis(axis, delta) {
   axisTestPos.copy(playerEye);
   axisTestPos[axis] += delta;
 
-  const currentColliderBox = playerCollider.clone();
+  currentColliderBox.copy(playerCollider);
   updatePlayerCollider(axisTestPos);
   testBox.copy(playerCollider);
 

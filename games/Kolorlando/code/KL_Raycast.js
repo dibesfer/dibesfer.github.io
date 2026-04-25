@@ -341,6 +341,7 @@ export class KLRaycast {
     const debugVisible = this.debugModeEnabled();
     this.cameraRayLine.visible = debugVisible;
     this.cameraRayTip.visible = debugVisible;
+    if (!debugVisible) return;
 
     const linePosition = this.cameraRayLineGeometry.attributes.position;
     linePosition.setXYZ(0, this.rayOrigin.x, this.rayOrigin.y, this.rayOrigin.z);
