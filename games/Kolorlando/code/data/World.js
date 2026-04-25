@@ -1,5 +1,11 @@
 import { Boxel } from './Boxel.js';
 import { Voxel, VoxelPlane, VoxelPlaneText } from './Voxel.js';
+import {
+  createBoxelId,
+  createStoredBoxel,
+  deserializeStoredBoxel,
+  serializeStoredBoxel,
+} from './boxelStorage.js';
 
 export const Boxel10 = new Boxel({
   name: 'Boxel10',
@@ -13,6 +19,7 @@ export const Boxel15 = new Boxel({
 
 const WORLD_SNAPSHOT_FORMAT = 'kolorlando.worldSnapshot.compact';
 const WORLD_SNAPSHOT_VERSION = 1;
+const DEFAULT_WORLD_SPAWN_HEIGHT_ABOVE_LAND = 3;
 
 export class Boxel15DistanceRendering {
   constructor({
@@ -104,10 +111,11 @@ export class World {
     name = 'Default World',
     size = { x: 100, y: 100, z: 100 },
     land = { x: 1, y: 1, z: 1 },
-    spawnPosition = { x: 0, y: 0, z: 0 },
+    spawnPosition = null,
     boxel15DistanceRendering = null,
     voxelTypes = null,
     entities = null,
+    savedBoxels = null,
     chunkBoxel = null,
     chunkGenerator = null,
     boxels = null,
@@ -117,9 +125,10 @@ export class World {
     this.name = normalizeText(name, '');
     this.size = normalizeWorldSize(size);
     this.land = normalizeWorldSize(land);
-    this.spawnPosition = normalizeWorldPosition(spawnPosition);
+    this.spawnPosition = normalizeWorldSpawnPosition(spawnPosition, this.land);
     this.boxel15DistanceRendering = normalizeWorldBoxel15DistanceRendering(boxel15DistanceRendering);
     this.entities = createDefaultWorldEntities();
+    this.savedBoxels = [];
     this.chunkBoxel = normalizeWorldChunkBoxel(chunkBoxel);
     this.boxels = [];
     this.voxelTypes = new Map();
@@ -136,6 +145,10 @@ export class World {
 
     if (Array.isArray(entities)) {
       this.setEntities(entities);
+    }
+
+    if (Array.isArray(savedBoxels)) {
+      this.setSavedBoxels(savedBoxels);
     }
 
     if (Array.isArray(boxels)) {
@@ -162,8 +175,8 @@ export class World {
     return this;
   }
 
-  setSpawnPosition(position = { x: 0, y: 0, z: 0 }) {
-    this.spawnPosition = normalizeWorldPosition(position);
+  setSpawnPosition(position = null) {
+    this.spawnPosition = normalizeWorldSpawnPosition(position, this.land);
     if (this.activeChunkKeys instanceof Set) {
       this.updateActiveChunks(this.spawnPosition);
     }
@@ -232,6 +245,44 @@ export class World {
   addEntity(entity = {}) {
     this.entities.push(normalizeWorldEntitySpec(entity));
     return this;
+  }
+
+  setSavedBoxels(savedBoxelsArray = []) {
+    this.savedBoxels = Array.isArray(savedBoxelsArray)
+      ? savedBoxelsArray.map(normalizeWorldSavedBoxel).filter(Boolean)
+      : [];
+    return this;
+  }
+
+  addSavedBoxel(savedBoxel = null) {
+    const normalizedSavedBoxel = normalizeWorldSavedBoxel(savedBoxel);
+    if (!normalizedSavedBoxel) return this;
+
+    this.savedBoxels = [
+      normalizedSavedBoxel,
+      ...this.savedBoxels.filter(boxel => (
+        createBoxelId(boxel?.assetId) !== createBoxelId(normalizedSavedBoxel.assetId)
+      )),
+    ];
+    return this;
+  }
+
+  findSavedBoxel(assetId = '') {
+    const normalizedAssetId = createBoxelId(assetId);
+    return this.savedBoxels.find(boxel => (
+      createBoxelId(boxel?.assetId) === normalizedAssetId
+      || createBoxelId(boxel?.displayName) === normalizedAssetId
+    )) ?? null;
+  }
+
+  deleteSavedBoxel(assetId = '') {
+    const normalizedAssetId = createBoxelId(assetId);
+    const previousCount = this.savedBoxels.length;
+    this.savedBoxels = this.savedBoxels.filter(boxel => (
+      createBoxelId(boxel?.assetId) !== normalizedAssetId
+      && createBoxelId(boxel?.displayName) !== normalizedAssetId
+    ));
+    return this.savedBoxels.length !== previousCount;
   }
 
   getMapOrigin(unitSize = 1) {
@@ -661,6 +712,7 @@ export class World {
       chunkBoxel: serializeChunkBoxel(this.chunkBoxel),
       voxelTypes: this.getVoxelTypes().map(voxel => voxel.toJSON()),
       entities: this.entities.map(entity => cloneWorldEntityValue(entity)),
+      savedBoxels: this.savedBoxels.map(serializeStoredBoxel),
       voxels: this.getVoxelEntries().map(entry => ({
         position: {
           x: entry.position.x,
@@ -713,6 +765,7 @@ export class World {
       spawnPosition: cloneSnapshotValue(worldJson.spawnPosition) ?? null,
       voxelTypes: cloneSnapshotValue(worldJson.voxelTypes) ?? [],
       entities: cloneSnapshotValue(worldJson.entities) ?? [],
+      savedBoxels: cloneSnapshotValue(worldJson.savedBoxels) ?? [],
       boxels: cloneSnapshotValue(worldJson.boxels) ?? [],
       voxelPalette,
       voxels: encodedVoxels,
@@ -752,6 +805,10 @@ export class World {
       this.setEntities(data.entities);
     }
 
+    if (Array.isArray(data?.savedBoxels)) {
+      this.setSavedBoxels(data.savedBoxels);
+    }
+
     if (data?.voxels instanceof Map || Array.isArray(data?.voxels)) {
       this.setVoxels(data.voxels);
     }
@@ -786,6 +843,7 @@ export class World {
       land: cloneSnapshotValue(normalizedSnapshot.land) ?? null,
       spawnPosition: cloneSnapshotValue(normalizedSnapshot.spawnPosition) ?? null,
       entities: cloneSnapshotValue(normalizedSnapshot.entities) ?? [],
+      savedBoxels: cloneSnapshotValue(normalizedSnapshot.savedBoxels) ?? [],
       boxels: cloneSnapshotValue(normalizedSnapshot.boxels) ?? [],
       voxels: encodedVoxels.map(entry => {
         const position = normalizeSnapshotVoxelPosition({
@@ -823,6 +881,7 @@ export class World {
       chunkBoxel: this.chunkBoxel,
       voxelTypes: this.getVoxelTypes(),
       entities: this.entities,
+      savedBoxels: this.savedBoxels,
       boxels: this.boxels,
       voxels: this.getVoxelEntries(),
     });
@@ -943,6 +1002,14 @@ function normalizePlacedBoxel(boxel, position = {}) {
     },
     boxel: normalizedBoxel,
   };
+}
+
+function normalizeWorldSavedBoxel(savedBoxel = null) {
+  if (!savedBoxel || typeof savedBoxel !== 'object') return null;
+
+  const normalizedSavedBoxel = deserializeStoredBoxel(savedBoxel)
+    ?? createStoredBoxel(savedBoxel);
+  return normalizedSavedBoxel ? createStoredBoxel(normalizedSavedBoxel) : null;
 }
 
 function normalizeWorldChunkBoxel(chunkBoxel = null) {
@@ -1107,7 +1174,7 @@ function createDefaultWorldEntities() {
       appearanceType: 'spawn-point',
       itemId: 'spawn-point',
       positionMode: 'spawn-relative',
-      position: { x: 0, y: 2, z: 0 },
+      position: { x: 0, y: 0, z: 0 },
       groundYMode: 'position',
       runtime: 'all',
     },
@@ -1155,6 +1222,18 @@ function normalizeWorldPosition(position = {}) {
     x: toFiniteNumber(position?.x, 0),
     y: toFiniteNumber(position?.y, 0),
     z: toFiniteNumber(position?.z, 0),
+  };
+}
+
+function normalizeWorldSpawnPosition(spawnPosition = null, land = null) {
+  if (spawnPosition && typeof spawnPosition === 'object') {
+    return normalizeWorldPosition(spawnPosition);
+  }
+
+  return {
+    x: 0,
+    y: toFiniteNumber(land?.y, 0) + DEFAULT_WORLD_SPAWN_HEIGHT_ABOVE_LAND,
+    z: 0,
   };
 }
 

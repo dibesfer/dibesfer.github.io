@@ -13,7 +13,6 @@ let Datatest = new World({
   name: 'Datatest',
   size: { x: 1000, y: 1000, z: 1000 },
   land: { x: 1000, y: 100, z: 1000 },
-  spawnPosition: { x: 0, y: 105, z: 0 },
   boxel15DistanceRendering: { radiusInVoxels: 30, verticalChunkRadius: 1 },
 });
 

@@ -658,7 +658,9 @@ const boxelManager = createBoxelManager({
   getWorldVoxelSize: () => worldVoxelSize,
   getVoxelTypes: () => voxelTypes,
   getVoxelAtCell: (...args) => getVoxelAtCell(...args),
+  createVoxelFromType: (...args) => createVoxelFromType(...args),
   addVoxelAtCell: (...args) => addVoxelAtCell(...args),
+  syncWorldVoxelAddedAtCell: (...args) => syncWorldVoxelAddedAtCell(...args),
   getCanEditCurrentVoxelWorld: canEditCurrentVoxelWorld,
   getLocalWorldSaveStore: () => localWorldSaveStore,
   getMultiplayerWorldStore: () => multiplayerWorldStore,
@@ -1367,7 +1369,29 @@ const localWorldSaveStore = !MULTIPLAYER_ENABLED && isClassWorldPreset
   })
   : null;
 const savedLocalWorldSnapshot = localWorldSaveStore?.loadWorldSnapshot?.() ?? null;
+const savedLocalWorldSavedBoxels = localWorldSaveStore?.loadSavedBoxels?.() ?? [];
 const selectedMapBuilder = mapBuilders[MAP_PRESET] ?? buildSimpleMap;
+
+function hasSameWorldVector(left = null, right = null) {
+  return (
+    Number(left?.x) === Number(right?.x)
+    && Number(left?.y) === Number(right?.y)
+    && Number(left?.z) === Number(right?.z)
+  );
+}
+
+function canApplyLocalWorldSnapshot(snapshot = null, presetWorld = null) {
+  if (!snapshot || !presetWorld) return false;
+  if (typeof snapshot.name === 'string' && snapshot.name && snapshot.name !== presetWorld.name) {
+    return false;
+  }
+  return (
+    hasSameWorldVector(snapshot.size, presetWorld.size)
+    && hasSameWorldVector(snapshot.land, presetWorld.land)
+    && hasSameWorldVector(snapshot.spawnPosition, presetWorld.spawnPosition)
+  );
+}
+
 function resolveInitialVoxelWorld() {
   const buildPresetWorld = worldPresets[MAP_PRESET];
   if (typeof buildPresetWorld !== 'function') {
@@ -1375,7 +1399,7 @@ function resolveInitialVoxelWorld() {
   }
 
   const nextWorld = buildPresetWorld();
-  if (!savedLocalWorldSnapshot) {
+  if (!canApplyLocalWorldSnapshot(savedLocalWorldSnapshot, nextWorld)) {
     return nextWorld;
   }
 
@@ -1440,6 +1464,9 @@ const processPendingChunkVisualUpdates = typeof mapData.processPendingChunkVisua
   ? mapData.processPendingChunkVisualUpdates
   : () => null;
 const worldData = mapData.world ?? null;
+if (worldData instanceof World && savedLocalWorldSavedBoxels.length > 0) {
+  worldData.setSavedBoxels(savedLocalWorldSavedBoxels);
+}
 const worldVoxelSize = Number(mapData.voxelSize) || 1;
 const savedFogRenderDistancePreference = readSavedFogRenderDistancePreference();
 const useWorldEditorVoxelMode = isClassWorldPreset && worldData !== null;
@@ -1563,6 +1590,14 @@ function scheduleLocalWorldSnapshotSave() {
   if (!localWorldSaveStore || !(worldData instanceof World) || typeof worldData.toSnapshot !== 'function') return;
   localWorldSaveStore.setWorldSnapshot(worldData.toSnapshot());
 }
+
+window.KOLORLANDO_BOXEL_SAVE_CONTEXT = {
+  getWorld: () => worldData,
+  persistWorldSnapshot: () => {
+    localWorldSaveStore?.setSavedBoxels?.(worldData?.savedBoxels ?? []);
+    window.dispatchEvent(new CustomEvent('kolorlando:saved-boxels-change'));
+  },
+};
 
 function recordLocalVoxelRemoved(cellX, cellY, cellZ) {
   if (!localWorldSaveStore) return;
@@ -1937,7 +1972,6 @@ miniMapUI.setPixelRatio(getEffectiveRenderPixelRatio());
 syncMiniMapDock();
 const FALL_RESPAWN_Y = -100;
 const playerSpawnPoint = mapData.spawnPoint.clone();
-playerSpawnPoint.y += 1;
 
 playerEye.copy(playerSpawnPoint);
 updateWorldActiveChunks(playerEye);
@@ -2094,6 +2128,13 @@ function spawnWorldItemAppearance(worldEntity, resolvedPosition) {
       }));
       return;
     case 'spawn-point':
+      itemAppearances.push(new ItemAppearance({
+        ...itemAppearanceOptions,
+        anchorToPosition: true,
+        floatHeight: 0,
+        placementHeight: 0,
+      }));
+      return;
     default:
       itemAppearances.push(new ItemAppearance(itemAppearanceOptions));
   }

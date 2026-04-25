@@ -6,7 +6,6 @@ let Voxelandia = new World({
   name: 'Voxelandia',
   size: { x: 100, y: 100, z: 100 },
   land: { x: 100, y: 3, z: 100 },
-  spawnPosition: { x: 0, y: 5, z: 0 },
 });
 
 /* Keep the authored voxel catalog close to the world definition. */

@@ -6,7 +6,6 @@ import {
   deserializeStoredBoxel,
   getBoxelVoxelEntries,
   readLocalBoxels,
-  writeLocalBoxel,
 } from './boxelStorage.js';
 
 function normalizeQuarterTurnRotation(rotationY) {
@@ -36,7 +35,9 @@ export function createBoxelManager({
   getWorldVoxelSize,
   getVoxelTypes,
   getVoxelAtCell,
+  createVoxelFromType,
   addVoxelAtCell,
+  syncWorldVoxelAddedAtCell,
   getCanEditCurrentVoxelWorld,
   getLocalWorldSaveStore,
   getMultiplayerWorldStore,
@@ -59,6 +60,13 @@ export function createBoxelManager({
     }
 
     const normalizedBoxelId = createBoxelId(assetName);
+    const worldSavedBoxel = getWorldData?.()?.findSavedBoxel?.(normalizedBoxelId);
+
+    if (worldSavedBoxel) {
+      console.log(`[Boxel Save] spawn world Boxel: ${worldSavedBoxel.displayName || worldSavedBoxel.assetId}`);
+      return worldSavedBoxel;
+    }
+
     const localBoxel = readLocalBoxels().find(boxel => (
       createBoxelId(boxel?.assetId) === normalizedBoxelId
       || createBoxelId(boxel?.displayName) === normalizedBoxelId
@@ -76,23 +84,88 @@ export function createBoxelManager({
     return (getVoxelTypes?.() ?? []).some(voxelType => voxelType?.name === voxelTypeId);
   }
 
-  function persistPlacedVoxel(cellX, cellY, cellZ, voxelTypeId) {
+  function persistPlacedVoxels(records = []) {
+    if (records.length === 0) return;
+
     const localWorldSaveStore = getLocalWorldSaveStore?.();
-    if (localWorldSaveStore) {
-      localWorldSaveStore.recordVoxelAdded(cellX, cellY, cellZ, voxelTypeId);
+    if (typeof localWorldSaveStore?.recordVoxelsAdded === 'function') {
+      localWorldSaveStore.recordVoxelsAdded(records);
+    } else {
+      for (let i = 0; i < records.length; i += 1) {
+        const record = records[i];
+        localWorldSaveStore?.recordVoxelAdded?.(
+          record.cellX,
+          record.cellY,
+          record.cellZ,
+          record.voxelType,
+        );
+      }
     }
 
     const multiplayerWorldStore = getMultiplayerWorldStore?.();
-    if (multiplayerWorldStore) {
+    if (!multiplayerWorldStore) return;
+
+    for (let i = 0; i < records.length; i += 1) {
+      const record = records[i];
       multiplayerWorldStore.recordVoxelAdded(
-        cellX,
-        cellY,
-        cellZ,
-        voxelTypeId
+        record.cellX,
+        record.cellY,
+        record.cellZ,
+        record.voxelType,
       ).catch(error => {
         console.error('Failed to persist the Kolorlando multiplayer voxel addition.', error);
       });
     }
+  }
+
+  function getPlayerFootCell() {
+    const playerFoot = getPlayerFoot?.();
+    const worldData = getWorldData?.();
+
+    if (getUseWorldEditorVoxelMode?.() && worldData && typeof worldData.mapToGridPosition === 'function') {
+      const worldVoxelSize = getWorldVoxelSize?.() ?? 1;
+      const gridPosition = worldData.mapToGridPosition(
+        playerFoot?.x ?? 0,
+        playerFoot?.y ?? 0,
+        playerFoot?.z ?? 0,
+        worldVoxelSize,
+      );
+
+      return {
+        cellX: Math.floor(gridPosition.x),
+        cellY: Math.floor(gridPosition.y),
+        cellZ: Math.floor(gridPosition.z),
+      };
+    }
+
+    return {
+      cellX: Math.floor(playerFoot?.x ?? 0),
+      cellY: Math.floor(playerFoot?.y ?? 0),
+      cellZ: Math.floor(playerFoot?.z ?? 0),
+    };
+  }
+
+  function placeVoxelAtCell(cellX, cellY, cellZ, voxelTypeId) {
+    if (getUseWorldEditorVoxelMode?.()) {
+      const worldData = getWorldData?.();
+      const voxel = createVoxelFromType?.(voxelTypeId);
+      if (!worldData || !voxel) return false;
+
+      try {
+        worldData.setVoxel(cellX, cellY, cellZ, voxel);
+      } catch {
+        return false;
+      }
+
+      return Boolean(syncWorldVoxelAddedAtCell?.(cellX, cellY, cellZ, {
+        refreshNeighbors: false,
+        immediateSolidChunkJobs: false,
+      }));
+    }
+
+    return Boolean(addVoxelAtCell?.(cellX, cellY, cellZ, {
+      voxelType: voxelTypeId,
+    }));
   }
 
   function placeStructureAssetAtPlayer(structureAsset) {
@@ -105,14 +178,15 @@ export function createBoxelManager({
       throw new Error('This structure has no voxels to place.');
     }
 
-    const playerFoot = getPlayerFoot?.();
+    const playerFootCell = getPlayerFootCell();
     const placementAnchor = structureAsset?.placement?.anchor ?? { x: 0, y: 0, z: 0 };
     const quarterTurns = normalizeQuarterTurnRotation(structureAsset?.placement?.rotationY);
-    const baseCellX = Math.floor(playerFoot?.x ?? 0) - Math.floor(Number(placementAnchor.x) || 0);
-    const baseCellY = Math.floor(playerFoot?.y ?? 0) - Math.floor(Number(placementAnchor.y) || 0);
-    const baseCellZ = Math.floor(playerFoot?.z ?? 0) - Math.floor(Number(placementAnchor.z) || 0);
+    const baseCellX = playerFootCell.cellX - Math.floor(Number(placementAnchor.x) || 0);
+    const baseCellY = playerFootCell.cellY - Math.floor(Number(placementAnchor.y) || 0);
+    const baseCellZ = playerFootCell.cellZ - Math.floor(Number(placementAnchor.z) || 0);
     let placedCount = 0;
     let skippedCount = 0;
+    const placedRecords = [];
 
     for (let i = 0; i < voxelEntries.length; i += 1) {
       const voxelEntry = voxelEntries[i];
@@ -131,19 +205,23 @@ export function createBoxelManager({
       const targetCellX = baseCellX + rotatedOffset.x;
       const targetCellY = baseCellY + localY;
       const targetCellZ = baseCellZ + rotatedOffset.z;
-      const added = addVoxelAtCell?.(targetCellX, targetCellY, targetCellZ, {
-        voxelType: voxelTypeId,
-      });
+      const added = placeVoxelAtCell(targetCellX, targetCellY, targetCellZ, voxelTypeId);
 
       if (!added) {
         skippedCount += 1;
         continue;
       }
 
-      persistPlacedVoxel(targetCellX, targetCellY, targetCellZ, voxelTypeId);
+      placedRecords.push({
+        cellX: targetCellX,
+        cellY: targetCellY,
+        cellZ: targetCellZ,
+        voxelType: voxelTypeId,
+      });
       placedCount += 1;
     }
 
+    persistPlacedVoxels(placedRecords);
     invalidateVoxelRaycast?.();
     return { placedCount, skippedCount };
   }
@@ -280,6 +358,17 @@ export function createBoxelManager({
     });
   }
 
+  function persistCurrentWorldSavedBoxels() {
+    const worldData = getWorldData?.();
+    const localWorldSaveStore = getLocalWorldSaveStore?.();
+
+    if (!worldData || !localWorldSaveStore || typeof localWorldSaveStore.setSavedBoxels !== 'function') {
+      return;
+    }
+
+    localWorldSaveStore.setSavedBoxels(worldData.savedBoxels);
+  }
+
   function handleSaveBoxelCommand(args = []) {
     const displayName = args.join(' ').trim();
     if (!displayName) {
@@ -287,7 +376,16 @@ export function createBoxelManager({
     }
 
     console.log(`[Boxel Save] command: /saveBoxel ${displayName}`);
-    const savedBoxel = writeLocalBoxel(createBoxelFromSelection(displayName));
+    const savedBoxel = createBoxelFromSelection(displayName);
+    const worldData = getWorldData?.();
+
+    if (!worldData || typeof worldData.addSavedBoxel !== 'function') {
+      throw new Error('This world cannot store saved Boxels yet.');
+    }
+
+    worldData.addSavedBoxel(savedBoxel);
+    persistCurrentWorldSavedBoxels();
+    window.dispatchEvent(new CustomEvent('kolorlando:saved-boxels-change'));
     appendChatLine?.(`Saved Boxel ${savedBoxel.displayName}: ${getBoxelVoxelEntries(savedBoxel).length} voxels.`);
   }
 

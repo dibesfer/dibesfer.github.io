@@ -548,6 +548,7 @@ export class ItemAppearance extends Entity {
     modelScale = 1,
     placementHeight = DEFAULT_ITEM_PLACEMENT_HEIGHT,
     centerModel = false,
+    anchorToPosition = false,
   }) {
     super({
       scene,
@@ -572,6 +573,7 @@ export class ItemAppearance extends Entity {
     this.modelScale = modelScale;
     this.placementHeight = placementHeight;
     this.centerModel = centerModel;
+    this.anchorToPosition = Boolean(anchorToPosition);
 
     const resolvedModel = model ?? (modelUrl
       ? createLoadingPlaceholder({ castShadow, receiveShadow })
@@ -608,6 +610,12 @@ export class ItemAppearance extends Entity {
 
   syncPosition() {
     this.group.position.copy(this.position);
+    if (this.anchorToPosition) {
+      this.raycastSphere.center.copy(this.group.position);
+      this.raycastSphere.radius = this.collected ? 0 : this.raycastSphereRadius;
+      return;
+    }
+
     const placementHeight = this.placementHeight > 0 ? this.placementHeight : this.modelHeight;
     this.group.position.y = this.groundY + this.floatHeight + placementHeight * 0.5;
     this.raycastSphere.center.copy(this.group.position);

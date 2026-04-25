@@ -6,7 +6,6 @@ Inner content layers will be authored later. */
 let Voxelaar = new World({
   size: { x: 100, y: 100, z: 100 },
   land: { x: 100, y: 3, z: 100 },
-  spawnPosition: { x: 0, y: 5, z: 0 },
 });
 
 /* These mirror the 12 standard color voxels currently authored in Voxelandia. */

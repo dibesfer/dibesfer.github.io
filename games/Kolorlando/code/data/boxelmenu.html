@@ -291,10 +291,10 @@
 
     <h2 id="learnMore">.boxel</h2>
     <p>.boxel is a file format in JSON to store voxel structures.</p>
-    <p>You can select an area with <b>Boxel Selection Tool</b> and write <code>/saveBoxel myBoxelName</code> in the chat to store your boxel locally and access it from this panel.</p>
+    <p>You can select an area with <b>Boxel Selection Tool</b> and write <code>/saveBoxel myBoxelName</code> in the chat to store your boxel in the current world and access it from this panel.</p>
     <script type="module">
         import { drawBoxelIsometric, loadBoxel } from './boxelPainter.js';
-        import { KOLORLANDO_BOXEL_FORMAT, KOLORLANDO_LOCAL_BOXELS_STORAGE_KEY, deleteLocalBoxel, deserializeStoredBoxel, findLocalBoxel, readLocalBoxels, serializeStoredBoxel, writeLocalBoxel } from './boxelStorage.js';
+        import { KOLORLANDO_BOXEL_FORMAT, createBoxelId, deserializeStoredBoxel, serializeStoredBoxel } from './boxelStorage.js';
 
         const boxelImportButton = document.getElementById('boxelImportButton');
         const boxelImportInput = document.getElementById('boxelImportInput');
@@ -329,8 +329,38 @@
             boxelActionMenu.hidden = false;
         }
 
-        function downloadLocalBoxel(assetId) {
-            const boxelData = findLocalBoxel(assetId);
+        function getWorldBoxelContext() {
+            return window.parent?.KOLORLANDO_BOXEL_SAVE_CONTEXT ?? null;
+        }
+
+        function getCurrentWorld() {
+            return getWorldBoxelContext()?.getWorld?.() ?? null;
+        }
+
+        function persistCurrentWorldSavedBoxels() {
+            getWorldBoxelContext()?.persistWorldSnapshot?.();
+        }
+
+        function getCurrentWorldSavedBoxels() {
+            const world = getCurrentWorld();
+            return Array.isArray(world?.savedBoxels) ? world.savedBoxels : [];
+        }
+
+        function findWorldSavedBoxel(assetId) {
+            const world = getCurrentWorld();
+            if (typeof world?.findSavedBoxel === 'function') {
+                return world.findSavedBoxel(assetId);
+            }
+
+            const normalizedAssetId = createBoxelId(assetId);
+            return getCurrentWorldSavedBoxels().find(boxel => (
+                createBoxelId(boxel?.assetId) === normalizedAssetId
+                || createBoxelId(boxel?.displayName) === normalizedAssetId
+            )) ?? null;
+        }
+
+        function downloadWorldBoxel(assetId) {
+            const boxelData = findWorldSavedBoxel(assetId);
             if (!boxelData) return;
 
             const blob = new Blob([JSON.stringify(serializeStoredBoxel(boxelData), null, 2)], { type: 'application/json' });
@@ -368,10 +398,10 @@
             return outer;
         }
 
-        function renderLocalBoxels() {
-            console.log('[Boxel Save] iframe render: refreshing local Boxel gallery.');
+        function renderWorldBoxels() {
+            console.log('[Boxel Save] iframe render: refreshing world Boxel gallery.');
             localBoxelGallery.replaceChildren(
-                ...readLocalBoxels().map(createBoxelGalleryItem)
+                ...getCurrentWorldSavedBoxels().map(createBoxelGalleryItem)
             );
             hideBoxelActionMenu();
         }
@@ -399,9 +429,14 @@
                     throw new Error('Invalid Boxel file.');
                 }
 
-                // Reuse local save flow so imported Boxels keep normalized ids.
-                writeLocalBoxel(boxelData);
-                renderLocalBoxels();
+                const world = getCurrentWorld();
+                if (typeof world?.addSavedBoxel !== 'function') {
+                    throw new Error('Current world cannot store Boxels.');
+                }
+
+                world.addSavedBoxel(boxelData);
+                persistCurrentWorldSavedBoxels();
+                renderWorldBoxels();
                 closeImportModal();
                 console.log(`[Boxel Save] imported: ${sourceLabel}`);
                 return true;
@@ -426,14 +461,18 @@
         const treeExampleCanvas = document.getElementById('treeExampleBoxelCanvas');
         const treeExampleBoxel = await loadBoxel('./TreeExample.boxel');
         drawBoxelIsometric(treeExampleCanvas, treeExampleBoxel);
-        renderLocalBoxels();
+        renderWorldBoxels();
 
-        window.addEventListener('storage', event => {
-            if (event.key === KOLORLANDO_LOCAL_BOXELS_STORAGE_KEY) {
-                console.log('[Boxel Save] iframe storage event received.');
-                renderLocalBoxels();
+        let worldContextRefreshAttempts = 0;
+        const worldContextRefreshTimer = window.setInterval(() => {
+            worldContextRefreshAttempts += 1;
+            renderWorldBoxels();
+            if (getWorldBoxelContext() || worldContextRefreshAttempts >= 20) {
+                window.clearInterval(worldContextRefreshTimer);
             }
-        });
+        }, 250);
+
+        window.parent?.addEventListener('kolorlando:saved-boxels-change', renderWorldBoxels);
 
         boxelImportButton.addEventListener('click', () => {
             openImportModal();
@@ -471,14 +510,17 @@
             if (!selectedLocalBoxelId) return;
 
             if (event.target?.dataset?.boxelAction === 'download') {
-                downloadLocalBoxel(selectedLocalBoxelId);
+                downloadWorldBoxel(selectedLocalBoxelId);
                 return;
             }
 
             if (event.target?.dataset?.boxelAction !== 'delete') return;
 
-            deleteLocalBoxel(selectedLocalBoxelId);
-            renderLocalBoxels();
+            const world = getCurrentWorld();
+            if (typeof world?.deleteSavedBoxel === 'function' && world.deleteSavedBoxel(selectedLocalBoxelId)) {
+                persistCurrentWorldSavedBoxels();
+            }
+            renderWorldBoxels();
         });
 
         document.addEventListener('click', hideBoxelActionMenu);

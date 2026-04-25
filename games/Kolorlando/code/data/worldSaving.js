@@ -63,6 +63,16 @@ function cloneWorldSnapshot(snapshot) {
   }
 }
 
+function cloneSavedBoxels(savedBoxels) {
+  if (!Array.isArray(savedBoxels)) return [];
+
+  try {
+    return JSON.parse(JSON.stringify(savedBoxels));
+  } catch {
+    return [];
+  }
+}
+
 function createEmptyWorldSave(worldId = 'default') {
   /* The save format intentionally stores only player-authored mutations instead
   of the whole generated world. The base map remains code-driven, while this
@@ -73,6 +83,7 @@ function createEmptyWorldSave(worldId = 'default') {
     savedAt: null,
     player: null,
     worldSnapshot: null,
+    savedBoxels: [],
     voxelEdits: {},
   };
 }
@@ -84,6 +95,7 @@ function cloneWorldSave(saveData) {
     savedAt: saveData.savedAt,
     player: saveData.player ? { ...saveData.player } : null,
     worldSnapshot: cloneWorldSnapshot(saveData.worldSnapshot),
+    savedBoxels: cloneSavedBoxels(saveData.savedBoxels),
     voxelEdits: { ...saveData.voxelEdits },
   };
 }
@@ -114,6 +126,11 @@ function normalizeWorldSave(rawSave, fallbackWorldId = 'default') {
   normalized.savedAt = typeof rawSave.savedAt === 'string' ? rawSave.savedAt : null;
   normalized.player = clonePlayerState(rawSave.player);
   normalized.worldSnapshot = cloneWorldSnapshot(rawSave.worldSnapshot);
+  normalized.savedBoxels = cloneSavedBoxels(rawSave.savedBoxels);
+
+  if (normalized.savedBoxels.length === 0 && Array.isArray(normalized.worldSnapshot?.savedBoxels)) {
+    normalized.savedBoxels = cloneSavedBoxels(normalized.worldSnapshot.savedBoxels);
+  }
 
   if (rawSave.voxelEdits && typeof rawSave.voxelEdits === 'object') {
     Object.entries(rawSave.voxelEdits).forEach(([key, record]) => {
@@ -239,6 +256,11 @@ export function createLocalWorldSaveStore({
     return worldSnapshot;
   }
 
+  function loadSavedBoxels() {
+    const saveData = ensureLoadedSave();
+    return cloneSavedBoxels(saveData.savedBoxels);
+  }
+
   function replaceWorldSave(nextSave) {
     currentSave = normalizeWorldSave(nextSave, normalizedWorldId);
     return persistCurrentSave();
@@ -265,6 +287,16 @@ export function createLocalWorldSaveStore({
   function setWorldSnapshot(worldSnapshot) {
     const saveData = ensureLoadedSave();
     saveData.worldSnapshot = cloneWorldSnapshot(worldSnapshot);
+    if (Array.isArray(worldSnapshot?.savedBoxels)) {
+      saveData.savedBoxels = cloneSavedBoxels(worldSnapshot.savedBoxels);
+    }
+    return schedulePersistCurrentSave();
+  }
+
+  function setSavedBoxels(savedBoxels) {
+    const saveData = ensureLoadedSave();
+    saveData.savedBoxels = cloneSavedBoxels(savedBoxels);
+    saveData.worldSnapshot = null;
     return schedulePersistCurrentSave();
   }
 
@@ -287,6 +319,32 @@ export function createLocalWorldSaveStore({
       voxelType: normalizedVoxelType,
     };
     return schedulePersistCurrentSave();
+  }
+
+  function recordVoxelsAdded(records = []) {
+    const saveData = ensureLoadedSave();
+    let changed = false;
+
+    for (let i = 0; i < records.length; i += 1) {
+      const record = records[i];
+      const cellX = Number(record?.cellX);
+      const cellY = Number(record?.cellY);
+      const cellZ = Number(record?.cellZ);
+      const voxelType = String(record?.voxelType ?? '').trim();
+      if (!isFiniteInteger(cellX) || !isFiniteInteger(cellY) || !isFiniteInteger(cellZ) || !voxelType) {
+        continue;
+      }
+
+      saveData.voxelEdits[buildVoxelEditKey(cellX, cellY, cellZ)] = {
+        action: 'add',
+        voxelType,
+      };
+      changed = true;
+    }
+
+    return changed
+      ? schedulePersistCurrentSave()
+      : cloneWorldSave(saveData);
   }
 
   function recordVoxelRemoved(cellX, cellY, cellZ) {
@@ -321,11 +379,14 @@ export function createLocalWorldSaveStore({
     storageKey,
     loadWorldSave,
     loadWorldSnapshot,
+    loadSavedBoxels,
     replaceWorldSave,
     clearWorldSave,
     setPlayerState,
     setWorldSnapshot,
+    setSavedBoxels,
     recordVoxelAdded,
+    recordVoxelsAdded,
     recordVoxelRemoved,
     flushPendingSave,
     getVoxelEditsList,

@@ -7,7 +7,6 @@ let Colorlandia = new World({
   name: 'Colorlandia',
   size: { x: 2000, y: 2000, z: 2000 },
   land: { x: 2000, y: 100, z: 2000 },
-  spawnPosition: { x: 0, y: 105, z: 0 },
   boxel15DistanceRendering: { radiusInVoxels: 30, verticalChunkRadius: 1 },
 });
 
