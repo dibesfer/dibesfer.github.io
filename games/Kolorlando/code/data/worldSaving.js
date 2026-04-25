@@ -217,9 +217,9 @@ export function createLocalWorldSaveStore({
     const saveToPersist = ensureLoadedSave();
     saveToPersist.savedAt = new Date().toISOString();
     writeStorage(storage, storageKey, JSON.stringify(saveToPersist));
-    if (saveToPersist.worldSnapshot) {
+    /*if (saveToPersist.worldSnapshot) {
       console.log('[World Save] Saved local world snapshot:', saveToPersist.worldSnapshot);
-    }
+    }*/
     return cloneWorldSave(saveToPersist);
   }
 
@@ -250,9 +250,9 @@ export function createLocalWorldSaveStore({
   function loadWorldSnapshot() {
     const saveData = ensureLoadedSave();
     const worldSnapshot = cloneWorldSnapshot(saveData.worldSnapshot);
-    if (worldSnapshot) {
+    /*if (worldSnapshot) {
       console.log('[World Save] Loaded local world snapshot:', worldSnapshot);
-    }
+    }*/
     return worldSnapshot;
   }
 

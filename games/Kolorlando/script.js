@@ -17,6 +17,7 @@ import { createGameAudio } from './code/audio/audio.js';
 import { createMiniMapUI } from './code/UI/minimap.js';
 import { createMenuUI } from './code/UI/menu.js';
 import { createCameraModeController } from './code/graphics/camera.js';
+import { createCameraRigController } from './code/graphics/cameraRig.js';
 import { createScreenController } from './code/graphics/screen.js';
 import {
   createRenderSettings,
@@ -32,63 +33,27 @@ import { createPlayerHud } from './playerHud.js';
 import { BoxelSelectionToolItemAppearance, CoinItemAppearance, ColorBootsItemAppearance, ColorCapeItemAppearance, ColorChestItemAppearance, ColorGlovesItemAppearance, ColorHelmetItemAppearance, ColorPantsItemAppearance, ColorShouldersItemAppearance, ColorTabardItemAppearance, GoxelItemAppearance, ItemAppearance } from './code/entities/itemAppearance.js';
 import { BOXEL_SELECTION_TOOL_ITEM, COLOR_BOOTS_ITEM, COLOR_CAPE_ITEM, COLOR_CHEST_ITEM, COLOR_GLOVES_ITEM, COLOR_HELMET_ITEM, COLOR_PANTS_ITEM, COLOR_SHOULDERS_ITEM, COLOR_TABARD_ITEM, COIN_ITEM, GUN_ITEM, ITEM_DEFINITIONS, SWORD_ITEM } from './code/item.js';
 import { createEquipment } from './code/entities/equipment.js';
-import { buildSimpleMap } from './maps/simpleMap.js';
-import { buildCityMap } from './maps/cityMap.js';
-import { buildMapFromWorld } from './maps/MapGenerator.js';
-import { Voxelaar, fillWorldWithVoxel } from './maps/Voxelaar.js';
-import { Voxelandia, fillWorldWithVoxel as fillVoxelandiaWorldWithVoxel } from './maps/Voxelandia.js';
-import { Grandaar, fillWorldWithVoxel as fillGrandaarWorldWithVoxel } from './maps/Grandaar.js';
-import { Colorlandia, fillWorldWithVoxel as fillColorlandiaWorldWithVoxel } from './maps/Colorlandia.js';
-import { Datatest, fillWorldWithVoxel as fillDatatestWorldWithVoxel } from './maps/Datatest.js';
 import { createMultiplayerController } from './code/multiplayer/multiplayer.js';
 import { createCommandHandler } from './code/commands.js';
 import { createBoxelId } from './code/data/boxelStorage.js';
 import { createBoxelManager } from './code/data/boxelManager.js';
-import { createLocalWorldSaveStore } from './code/data/worldSaving.js';
+import { createBoxelSelectionController } from './code/data/boxelSelectionController.js';
+import { createVoxelEditingController } from './code/data/voxelEditingController.js';
+import { createWorldRuntime } from './code/data/worldRuntime.js';
 import { loadPlayerFaceData } from './code/data/playerSaving.js';
 import { World, DEFAULT_WORLD_SKY_COLOR } from './code/data/World.js';
 import { WorldEditor } from './code/data/WorldEditor.js';
 import { SpaceShipVehicle } from './code/entities/vehicle.js';
 import { Input } from './code/Input.js';
+import { createPointerLockController } from './code/input/pointerLockController.js';
 import { KLRaycast } from './code/KL_Raycast.js';
 
 const KOLORLANDO_MODE = window.KOLORLANDO_MODE === 'multiplayer' ? 'multiplayer' : 'singleplayer';
 const MULTIPLAYER_ENABLED = KOLORLANDO_MODE === 'multiplayer';
-const KL_SINGLEPLAYER_WORLD_STORAGE_KEY = 'KL_Singleplayer_World';
-const DEFAULT_SINGLEPLAYER_WORLD = 'Voxelandia';
 const KOLORLANDO_PLAYER_NAME_STORAGE_KEY = 'kolorlando.playerName';
 const KOLORLANDO_ACCOUNT_CLAIMED_STORAGE_KEY = 'kolorlando.accountClaimed';
 const KOLORLANDO_DEBUG_MODE_EVENT = 'kolorlando:debug-mode-change';
 const playerFaceDataResult = await loadPlayerFaceData();
-
-function resolveSingleplayerWorldPreset() {
-  const storedWorld = window.localStorage.getItem(KL_SINGLEPLAYER_WORLD_STORAGE_KEY);
-  const normalizedWorld = typeof storedWorld === 'string' ? storedWorld.trim() : '';
-  const selectedWorld = normalizedWorld || DEFAULT_SINGLEPLAYER_WORLD;
-
-  // Keep a stable local selection so future world loaders can reuse the same key.
-  if (!normalizedWorld) {
-    window.localStorage.setItem(KL_SINGLEPLAYER_WORLD_STORAGE_KEY, DEFAULT_SINGLEPLAYER_WORLD);
-  }
-
-  switch (selectedWorld.toLowerCase()) {
-    case 'simple':
-      return 'simple';
-    case 'city':
-      return 'city';
-    case 'voxelaar':
-      return 'voxelaar';
-    case 'grandaar':
-      return 'grandaar';
-    case 'colorlandia':
-      return 'colorlandia';
-    case 'datatest':
-      return 'datatest';
-    case 'voxelandia':
-    default:
-      return 'voxelandia';
-  }
-}
 
 function canEditCurrentVoxelWorld() {
   /* Shared multiplayer voxel edits should only run for authenticated tabs
@@ -226,9 +191,6 @@ async function syncLocalPlayerDisplayNameFromAuth(sprite) {
 
 let mobileMode = false;
 const touchQuery = window.matchMedia('(hover: none) and (pointer: coarse)');
-const THIRD_PERSON_MAX_DISTANCE = 8;
-const LEGO_LOL_MIN_THIRD_PERSON_DISTANCE = 3;
-const THIRD_PERSON_DISTANCE_INPUT_SCALE = 0.01;
 const JOYSTICK_MAX_OFFSET = 50;
 const SUPPORT_EPSILON = 0.03;
 const gltfLoader = new GLTFLoader();
@@ -337,7 +299,6 @@ const playerEquipment = createEquipment({
       : null;
   },
 });
-let openingChatFromPointerLock = false;
 let suppressNextDesktopAttack = false;
 let suppressNextDesktopAttackUntil = 0;
 let suppressNextDesktopAttackButton = null;
@@ -364,7 +325,7 @@ let miniMapUI = null;
 const miniMapHomeAnchor = document.createComment('miniMap-home-anchor');
 let isMiniMapDockedInMenu = false;
 const CAMERA_MODE_STORAGE_KEY = 'kolorlando.cameraMode';
-const POINTER_LOCK_RETRY_COOLDOWN_MS = 350;
+let pointerLockController = null;
 const cameraForwardDirection = new THREE.Vector3();
 let yaw = 0;
 let pitch = 0;
@@ -414,7 +375,7 @@ function isScreenDragCameraActive() {
 
 function isDesktopGameplayActive() {
   return !mobileMode && (
-    controls.isLocked
+    pointerLockController?.isLocked?.()
     || isScreenDragCameraActive()
     || (isLegoLolCameraMode() && !isMenuCentralVisible())
   );
@@ -473,87 +434,27 @@ async function restoreDefaultSettings() {
 }
 
 function shouldWantGameplayPointerLock() {
-  return (
-    !mobileMode
-    && shouldUsePointerLock()
-    && typeof controls !== 'undefined'
-    && !controls.isLocked
-    && !isMenuCentralVisible()
-    && !chatUI.isInputOpen()
-  );
-}
-
-function canRetryPointerLockNow() {
-  /* Browsers impose a short grace period after exiting pointer lock. Waiting
-  out that cooldown avoids immediate SecurityError rejections on relock. */
-  return input.canRetryPointerLock();
+  return pointerLockController?.shouldWantGameplayPointerLock?.() ?? false;
 }
 
 function disarmPointerLockRetry() {
-  input.disarmPointerLockRetry();
+  pointerLockController?.disarmRetry?.();
 }
 
 function armPointerLockRetry() {
-  /* Browsers often reject Pointer Lock unless the request happens inside a
-  fresh trusted user gesture. When UI code closes chat or menus first and only
-  then tries to relock, that request can land outside the allowed gesture
-  window. Arming a retry lets the next click or key press re-enter gameplay
-  cleanly instead of leaving desktop look stuck half-disabled. */
-  if (!shouldWantGameplayPointerLock()) return;
-  input.armPointerLockRetry();
+  pointerLockController?.armRetry?.();
 }
 
 function requestGameplayPointerLock() {
-  /* This helper centralizes every desktop relock request so we can keep the
-  browser's gesture requirements in one place and avoid scattered direct
-  controls.lock() calls that are hard to reason about. */
-  if (!shouldWantGameplayPointerLock()) {
-    disarmPointerLockRetry();
-    return;
-  }
-
-  if (!canRetryPointerLockNow()) {
-    armPointerLockRetry();
-    return;
-  }
-
-  try {
-    disarmPointerLockRetry();
-    const lockRequest = controls.lock();
-
-    /* Some PointerLockControls builds surface browser denials as promise
-    rejections instead of synchronous throws, so we catch both shapes here. */
-    if (lockRequest && typeof lockRequest.catch === 'function') {
-      lockRequest.catch(error => {
-        console.warn('Failed to request pointer lock immediately.', error);
-        armPointerLockRetry();
-      });
-    }
-  } catch (error) {
-    console.warn('Failed to request pointer lock immediately.', error);
-    armPointerLockRetry();
-    return;
-  }
-
-  /* PointerLockControls reports many failures asynchronously instead of
-  throwing. Re-arming on a zero-delay timer avoids a duplicate request during
-  the same click while still preserving a recovery attempt on the next trusted
-  interaction if the browser declines the lock. */
-  window.setTimeout(() => {
-    if (!controls.isLocked) {
-      armPointerLockRetry();
-    }
-  }, 0);
+  pointerLockController?.request?.();
 }
 
 function retryPointerLockFromUserGesture() {
-  if (!input.pointerLockRetryArmed) return;
-  requestGameplayPointerLock();
+  pointerLockController?.retryFromUserGesture?.();
 }
 
 function handlePointerLockRetryHotkey(event) {
-  if (event.repeat || isTypingTarget(event.target) || chatUI.isInputOpen()) return;
-  retryPointerLockFromUserGesture();
+  pointerLockController?.handleRetryHotkey?.(event);
 }
 
 function closeDesktopMenuAndArmGameplayResume(event = null) {
@@ -593,7 +494,7 @@ function activateDesktopScreenActivity() {
     setWowCameraScreenActive(true);
     return;
   }
-  if (!controls.isLocked) {
+  if (!pointerLockController?.isLocked?.()) {
     requestGameplayPointerLock();
   }
 }
@@ -608,8 +509,8 @@ function deactivateDesktopScreenActivity(tabName = getActiveMenuCentralTab() || 
     showMenuCentral(tabName, { force: true });
     return;
   }
-  if (controls.isLocked) {
-    controls.unlock();
+  if (pointerLockController?.isLocked?.()) {
+    pointerLockController.unlock();
     return;
   }
   showMenuCentral(tabName, { force: true });
@@ -655,11 +556,7 @@ function isEscapeMoveFromBlockingHit(currentBox, nextBox, blockingHit) {
 const boxelManager = createBoxelManager({
   structureAssetUrls: STRUCTURE_ASSET_URLS,
   getPlayerFoot: () => playerFoot,
-  getSelectionSourceBox: () => (
-    boxelSelectionCombinedBox.isEmpty()
-      ? boxelSelectionAnchorBox
-      : boxelSelectionCombinedBox
-  ),
+  getSelectionSourceBox: () => boxelSelectionController.getSelectionSourceBox(),
   getUseWorldEditorVoxelMode: () => useWorldEditorVoxelMode,
   getWorldData: () => worldData,
   getWorldVoxelSize: () => worldVoxelSize,
@@ -716,19 +613,14 @@ const chatUI = createChatUI({
     continuing if the player was holding WASD right before focusing the input. */
     clearTrackedKeys();
     setMobileChatToggleState(true);
-    if (!mobileMode && typeof controls !== 'undefined' && controls.isLocked) {
-      openingChatFromPointerLock = true;
-      controls.unlock();
+    if (!mobileMode && pointerLockController?.isLocked?.()) {
+      pointerLockController.markOpeningChatFromPointerLock();
+      pointerLockController.unlock();
     }
   },
   onHide: () => {
     setMobileChatToggleState(false);
-    if (shouldUsePointerLock() && typeof controls !== 'undefined' && !controls.isLocked && !isMenuCentralVisible()) {
-      /* Browsers can treat the same Escape/Enter gesture that closed chat as
-      ineligible for an immediate pointer-lock reacquire. Arming the retry
-      keeps the next click/key available for relock without throwing errors. */
-      armPointerLockRetry();
-    }
+    armPointerLockRetry();
   },
 });
 
@@ -985,7 +877,7 @@ function setMenuCentralTab(tabName) {
 
 function showMenuCentral(tabName = getActiveMenuCentralTab(), { force = false } = {}) {
   setMobileInventoryToggleState(true);
-  if (!force && !mobileMode && typeof controls !== 'undefined' && controls.isLocked) {
+  if (!force && !mobileMode && pointerLockController?.isLocked?.()) {
     hideMenuCentral();
     return;
   }
@@ -1120,25 +1012,24 @@ spawnPadTexture.anisotropy = maxAnisotropy;
 // CONTROLS
 // --------------------
 const controls = new PointerLockControls(camera, document.body);
+pointerLockController = createPointerLockController({
+  input,
+  controls,
+  getMobileMode: () => mobileMode,
+  shouldUsePointerLock,
+  isMenuCentralVisible,
+  isChatInputOpen: () => chatUI.isInputOpen(),
+  isTypingTarget,
+  hideMenuCentral,
+  showMenuCentral,
+  getActiveMenuCentralTab,
+});
 controls.addEventListener('lock', () => {
-  input.setPointerLockRetryBlockedUntil(0);
-  disarmPointerLockRetry();
-  hideMenuCentral();
+  pointerLockController.handleLock();
 });
 controls.addEventListener('unlock', () => {
-  /* The browser rejects pointer-lock re-entry for a brief period after any
-  unlock, including the same Escape/Enter gesture that just closed chat. */
-  input.setPointerLockRetryBlockedUntil(performance.now() + POINTER_LOCK_RETRY_COOLDOWN_MS);
-  if (openingChatFromPointerLock) {
-    openingChatFromPointerLock = false;
-    return;
-  }
-  if (chatUI.isInputOpen()) {
+  if (pointerLockController.handleUnlock() === 'hide-chat') {
     chatUI.hideInput();
-    return;
-  }
-  if (!mobileMode) {
-    showMenuCentral(getActiveMenuCentralTab() || 'settings', { force: true });
   }
 });
 
@@ -1192,8 +1083,8 @@ function setInventoryPanelOpen(nextOpen, { allowMobile = false } = {}) {
   }
 
   if (!nextOpen) return;
-  if (controls.isLocked) {
-    controls.unlock();
+  if (pointerLockController?.isLocked?.()) {
+    pointerLockController.unlock();
   }
   showMenuCentral('creative');
 }
@@ -1203,15 +1094,15 @@ cameraModeController = createCameraModeController({
   cameraModeWowInput,
   cameraModeLegoLolInput,
   getIsMobile: () => mobileMode,
-  isPointerLocked: () => typeof controls !== 'undefined' && controls.isLocked,
+  isPointerLocked: () => pointerLockController?.isLocked?.() ?? false,
   onSyncDesktopLookAngles: syncDesktopLookAnglesFromCamera,
   onDeactivateScreenDrag: () => {
     input.clearScenePointerDrag();
     clearWowCursorRaycastPointer();
   },
   onRequestUnlock: () => {
-    if (typeof controls !== 'undefined' && controls.isLocked) {
-      controls.unlock();
+    if (pointerLockController?.isLocked?.()) {
+      pointerLockController.unlock();
     }
   },
 });
@@ -1357,79 +1248,22 @@ if (settingsRestoreDefaultsButton) {
 // --------------------
 // GROUND
 // --------------------
-const MAP_PRESET = resolveSingleplayerWorldPreset(); // 'simple' | 'city' | class-world preset
-const mapBuilders = {
-  simple: buildSimpleMap,
-  city: buildCityMap,
-};
-const worldPresets = {
-  voxelaar: () => fillWorldWithVoxel(Voxelaar.clone()),
-  voxelandia: () => fillVoxelandiaWorldWithVoxel(Voxelandia.clone()),
-  grandaar: () => fillGrandaarWorldWithVoxel(Grandaar.clone()),
-  colorlandia: () => fillColorlandiaWorldWithVoxel(Colorlandia.clone()),
-  datatest: () => fillDatatestWorldWithVoxel(Datatest.clone()),
-};
-const isClassWorldPreset = typeof worldPresets[MAP_PRESET] === 'function';
-const localWorldSaveStore = !MULTIPLAYER_ENABLED && isClassWorldPreset
-  ? createLocalWorldSaveStore({
-    worldId: `${KOLORLANDO_MODE}-${MAP_PRESET}`,
-  })
-  : null;
-const savedLocalWorldSnapshot = localWorldSaveStore?.loadWorldSnapshot?.() ?? null;
-const savedLocalWorldSavedBoxels = localWorldSaveStore?.loadSavedBoxels?.() ?? [];
-const selectedMapBuilder = mapBuilders[MAP_PRESET] ?? buildSimpleMap;
-
-function hasSameWorldVector(left = null, right = null) {
-  return (
-    Number(left?.x) === Number(right?.x)
-    && Number(left?.y) === Number(right?.y)
-    && Number(left?.z) === Number(right?.z)
-  );
-}
-
-function canApplyLocalWorldSnapshot(snapshot = null, presetWorld = null) {
-  if (!snapshot || !presetWorld) return false;
-  if (typeof snapshot.name === 'string' && snapshot.name && snapshot.name !== presetWorld.name) {
-    return false;
-  }
-  return (
-    hasSameWorldVector(snapshot.size, presetWorld.size)
-    && hasSameWorldVector(snapshot.land, presetWorld.land)
-    && hasSameWorldVector(snapshot.spawnPosition, presetWorld.spawnPosition)
-  );
-}
-
-function resolveInitialVoxelWorld() {
-  const buildPresetWorld = worldPresets[MAP_PRESET];
-  if (typeof buildPresetWorld !== 'function') {
-    return null;
-  }
-
-  const nextWorld = buildPresetWorld();
-  if (!canApplyLocalWorldSnapshot(savedLocalWorldSnapshot, nextWorld)) {
-    return nextWorld;
-  }
-
-  nextWorld.fromSnapshot(savedLocalWorldSnapshot);
-  return nextWorld;
-}
-const mapData = isClassWorldPreset
-  ? buildMapFromWorld({
-    scene,
-    world: resolveInitialVoxelWorld(),
-  })
-  : selectedMapBuilder({
-    scene,
-    camera,
-    playerEye,
-    groundTexture,
-    brickTexture,
-    spawnPadTexture,
-    brickTileSize: BRICK_TILE_SIZE,
-    /* Multiplayer should not synthesize extra authored NPCs locally; dynamic
-    shared instances will move behind the shared-world bootstrap instead. */
-    spawnDynamicEntities: !MULTIPLAYER_ENABLED,
-  });
+const worldRuntime = createWorldRuntime({
+  mode: KOLORLANDO_MODE,
+  multiplayerEnabled: MULTIPLAYER_ENABLED,
+  scene,
+  camera,
+  playerEye,
+  groundTexture,
+  brickTexture,
+  spawnPadTexture,
+  brickTileSize: BRICK_TILE_SIZE,
+});
+const MAP_PRESET = worldRuntime.mapPreset;
+const mapData = worldRuntime.mapData;
+const isClassWorldPreset = worldRuntime.isClassWorldPreset;
+const localWorldSaveStore = worldRuntime.localWorldSaveStore;
+const savedLocalWorldSavedBoxels = worldRuntime.savedLocalWorldSavedBoxels;
 const GROUND_Y = mapData.groundY;
 const buildingColliders = mapData.buildingColliders;
 const entities = mapData.entities;
@@ -2342,13 +2176,14 @@ const boxelRangeHighlightMesh = new THREE.Mesh(
 boxelRangeHighlightMesh.visible = false;
 boxelRangeHighlightMesh.renderOrder = 996;
 scene.add(boxelRangeHighlightMesh);
-const boxelSelectionAnchorBox = new THREE.Box3();
-const boxelSelectionRangeBox = new THREE.Box3();
-const boxelSelectionCombinedBox = new THREE.Box3();
-const boxelSelectionCombinedSize = new THREE.Vector3();
-const boxelSelectionCombinedCenter = new THREE.Vector3();
-const boxelSelectionInputBox = new THREE.Box3();
-const boxelSelectionInputSize = new THREE.Vector3();
+const boxelSelectionController = createBoxelSelectionController({
+  anchorMesh: boxelSelectedHighlightMesh,
+  rangeMesh: boxelRangeHighlightMesh,
+  rangePadding: BOXEL_RANGE_HIGHLIGHT_PADDING,
+  isSelectionToolSelected: () => isBoxelSelectionToolSelected(),
+  getVoxelBoxFromRaycastHit: (...args) => getVoxelBoxFromRaycastHit(...args),
+  getAdjacentVoxelBoxFromRaycastHit: (...args) => worldEditor.getAdjacentTargetVoxelBox(...args),
+});
 
 // --------------------
 // PLAYER BODY + COLLIDER
@@ -2384,8 +2219,8 @@ screenController = createScreenController({
     syncCameraModeAvailability();
   },
   onEnterMobileMode: () => {
-    if (controls.isLocked) {
-      controls.unlock();
+    if (pointerLockController?.isLocked?.()) {
+      pointerLockController.unlock();
     }
     hideMenuCentral();
     setElementHidden(menuInferior, false);
@@ -2393,7 +2228,7 @@ screenController = createScreenController({
   },
   onEnterDesktopMode: () => {
     setMenuCentralTab(getActiveMenuCentralTab() || 'settings');
-    if (controls.isLocked) {
+    if (pointerLockController?.isLocked?.()) {
       hideMenuCentral();
     } else {
       showMenuCentral(getActiveMenuCentralTab() || 'settings');
@@ -2549,7 +2384,7 @@ function applyHeldItemShadows(root, castShadow, receiveShadow) {
 }
 
 function syncLocalPlayerShadowCasters() {
-  const thirdPersonVisible = currentThirdPersonDistance > 0.001;
+  const thirdPersonVisible = getCurrentThirdPersonDistance() > 0.001;
 
   player?.root?.traverse(part => {
     if (!part?.isMesh) return;
@@ -2735,7 +2570,7 @@ async function mountHeldItem(itemType) {
 
     const heldRoot = buildHeldItemMount(templateRoot, definition);
     worldSlot.add(heldRoot);
-    applyHeldItemShadows(heldRoot, currentThirdPersonDistance > 0.001, false);
+    applyHeldItemShadows(heldRoot, getCurrentThirdPersonDistance() > 0.001, false);
 
     let fpHeldRoot = null;
     if (firstPersonSlot) {
@@ -3237,7 +3072,7 @@ function applyInitialSavedMultiplayerPlayerTransform() {
 
 function syncFirstPersonPlayerFacing() {
   if (isLegoLolCameraMode()) return;
-  if (currentThirdPersonDistance > 0.001) return;
+  if (getCurrentThirdPersonDistance() > 0.001) return;
 
   /* First-person camera yaw should still own the player body facing so every
   downstream system that reads body rotation stays aligned while standing still. */
@@ -3259,201 +3094,30 @@ function animatePlayerBody(deltaTime, isMoving) {
   applyHumanoidIdleAnimation(player.joints, playerIdleCycle, 1);
 }
 
-const thirdPersonOffsetDir = new THREE.Vector3();
-const thirdPersonRightDir = new THREE.Vector3();
-const thirdPersonTargetPos = new THREE.Vector3();
-const thirdPersonWorldUp = new THREE.Vector3(0, 1, 0);
-const legoLolFocusPos = new THREE.Vector3();
-const LEGO_LOL_FIXED_ORBIT_ANGLE = THREE.MathUtils.degToRad(35);
-let thirdPersonDistance = 0;
-let currentThirdPersonDistance = 0;
-let currentShoulderOffset = 0;
-const THIRD_PERSON_DISTANCE_LERP = 8;
-const THIRD_PERSON_SHOULDER_LERP = 8;
-const THIRD_PERSON_MAX_SHOULDER_OFFSET = 0.5;
+const cameraRigController = createCameraRigController({
+  camera,
+  playerEye,
+  playerBody,
+  firstPersonArmsRig,
+  sceneView,
+  playerHeight: PLAYER_HEIGHT,
+  getMobileMode: () => mobileMode,
+  isMenuCentralVisible,
+  isLegoLolCameraMode,
+  usesCenteredThirdPersonCamera,
+  isScreenDragCameraActive,
+  isTypingTarget,
+  isChatInputOpen: () => chatUI.isInputOpen(),
+  isPointerLocked: () => pointerLockController?.isLocked?.() ?? false,
+  syncLocalPlayerShadowCasters,
+});
 
-let pinchZoomTouchIds = [];
-let pinchStartDistance = 0;
-let pinchStartThirdPersonDistance = 0;
-const MOBILE_PINCH_BLOCK_SELECTOR = [
-  '#menuCentral',
-  '#chatBox',
-  '#miniMap',
-  '#hotbar',
-  '#inventorySlots',
-  '#playerInventorySlots',
-  '.button',
-  '.joystick',
-  '.pad',
-  'input',
-  'select',
-  'textarea',
-  'button',
-  'a',
-].join(', ');
-
-function getMinThirdPersonDistance() {
-  return isLegoLolCameraMode() ? LEGO_LOL_MIN_THIRD_PERSON_DISTANCE : 0;
-}
-
-function setThirdPersonDistance(nextDistance) {
-  thirdPersonDistance = THREE.MathUtils.clamp(nextDistance, getMinThirdPersonDistance(), THIRD_PERSON_MAX_DISTANCE);
-}
-
-function getTouchDistance(firstTouch, secondTouch) {
-  return Math.hypot(secondTouch.clientX - firstTouch.clientX, secondTouch.clientY - firstTouch.clientY);
-}
-
-function findTouchByIdentifier(touchList, identifier) {
-  for (let i = 0; i < touchList.length; i++) {
-    if (touchList[i].identifier === identifier) {
-      return touchList[i];
-    }
-  }
-  return null;
-}
-
-function resetMobilePinchZoom() {
-  pinchZoomTouchIds = [];
-  pinchStartDistance = 0;
-  pinchStartThirdPersonDistance = thirdPersonDistance;
-}
-
-function shouldBlockMobilePinchTouch(touch) {
-  const target = touch?.target;
-  return Boolean(target instanceof Element && target.closest(MOBILE_PINCH_BLOCK_SELECTOR));
-}
-
-function isTouchInsideSceneView(touch) {
-  if (!touch || !sceneView || !sceneView.isConnected) return false;
-
-  /* Pinch ownership belongs to the visible scene rectangle, not the global
-  touch list, so mobile-landscape side controls cannot accidentally hijack one
-  finger and prevent the camera zoom gesture from ever starting. */
-  const rect = sceneView.getBoundingClientRect();
-  return (
-    touch.clientX >= rect.left
-    && touch.clientX <= rect.right
-    && touch.clientY >= rect.top
-    && touch.clientY <= rect.bottom
-  );
-}
-
-function resolveScenePinchTouches(touchList) {
-  const sceneTouches = [];
-
-  for (let i = 0; i < touchList.length; i += 1) {
-    const touch = touchList[i];
-    if (!isTouchInsideSceneView(touch) || shouldBlockMobilePinchTouch(touch)) continue;
-    sceneTouches.push(touch);
-    if (sceneTouches.length === 2) break;
-  }
-
-  return sceneTouches;
-}
-
-function handleMobilePinchStart(event) {
-  if (!mobileMode || isMenuCentralVisible()) return;
-
-  const [firstTouch, secondTouch] = resolveScenePinchTouches(event.touches);
-  if (!firstTouch || !secondTouch) return;
-
-  pinchZoomTouchIds = [firstTouch.identifier, secondTouch.identifier];
-  pinchStartDistance = getTouchDistance(firstTouch, secondTouch);
-  pinchStartThirdPersonDistance = thirdPersonDistance;
-  event.preventDefault();
-}
-
-function handleMobilePinchMove(event) {
-  if (!mobileMode || isMenuCentralVisible() || pinchZoomTouchIds.length !== 2) return;
-
-  const firstTouch = findTouchByIdentifier(event.touches, pinchZoomTouchIds[0]);
-  const secondTouch = findTouchByIdentifier(event.touches, pinchZoomTouchIds[1]);
-  if (!firstTouch || !secondTouch) return;
-  if (!isTouchInsideSceneView(firstTouch) || !isTouchInsideSceneView(secondTouch)) {
-    resetMobilePinchZoom();
-    return;
-  }
-
-  const pinchDistance = getTouchDistance(firstTouch, secondTouch);
-  const pinchDelta = pinchStartDistance - pinchDistance;
-  setThirdPersonDistance(pinchStartThirdPersonDistance + pinchDelta * THIRD_PERSON_DISTANCE_INPUT_SCALE);
-  event.preventDefault();
-}
-
-function handleMobilePinchEnd(event) {
-  if (!mobileMode || pinchZoomTouchIds.length === 0) return;
-
-  const firstTouch = findTouchByIdentifier(event.touches, pinchZoomTouchIds[0]);
-  const secondTouch = findTouchByIdentifier(event.touches, pinchZoomTouchIds[1]);
-  if (firstTouch && secondTouch) return;
-
-  resetMobilePinchZoom();
+function getCurrentThirdPersonDistance() {
+  return cameraRigController.getCurrentThirdPersonDistance();
 }
 
 function syncCameraToPlayerView(deltaTime = 0) {
-  const minThirdPersonDistance = getMinThirdPersonDistance();
-  if (thirdPersonDistance < minThirdPersonDistance) {
-    thirdPersonDistance = minThirdPersonDistance;
-  }
-  if (isLegoLolCameraMode() && currentThirdPersonDistance < minThirdPersonDistance) {
-    currentThirdPersonDistance = minThirdPersonDistance;
-  }
-  const tDistance = 1 - Math.exp(-THIRD_PERSON_DISTANCE_LERP * deltaTime);
-  const tShoulder = 1 - Math.exp(-THIRD_PERSON_SHOULDER_LERP * deltaTime);
-  currentThirdPersonDistance = THREE.MathUtils.lerp(currentThirdPersonDistance, thirdPersonDistance, tDistance);
-  // Skyrim keeps the over-the-shoulder offset in third person; WoW and Lego Lol stay centered behind the player.
-  const targetShoulderOffset = thirdPersonDistance > 0.001 && !usesCenteredThirdPersonCamera() ? THIRD_PERSON_MAX_SHOULDER_OFFSET : 0;
-  currentShoulderOffset = THREE.MathUtils.lerp(currentShoulderOffset, targetShoulderOffset, tShoulder);
-
-  camera.position.copy(playerEye);
-  // Swap first-person arms for the full body mesh once the camera pulls back into third person.
-  playerBody.visible = currentThirdPersonDistance > 0.001;
-  firstPersonArmsRig.root.visible = currentThirdPersonDistance <= 0.001 && !isLegoLolCameraMode();
-  syncLocalPlayerShadowCasters();
-
-  if (isLegoLolCameraMode() && currentThirdPersonDistance > 0.001) {
-    const horizontalDistance = currentThirdPersonDistance * Math.cos(LEGO_LOL_FIXED_ORBIT_ANGLE);
-    const verticalDistance = currentThirdPersonDistance * Math.sin(LEGO_LOL_FIXED_ORBIT_ANGLE);
-    thirdPersonTargetPos.set(
-      playerEye.x,
-      playerEye.y + verticalDistance,
-      // Flipping the sign rotates the fixed Lego Lol orbit 180 degrees around
-      // the world's vertical axis, moving the camera to the opposite side of
-      // the player while preserving the same height and orbit distance.
-      playerEye.z + horizontalDistance
-    );
-    camera.position.copy(thirdPersonTargetPos);
-    legoLolFocusPos.set(playerEye.x, playerBody.position.y + PLAYER_HEIGHT * 0.7, playerEye.z);
-    camera.lookAt(legoLolFocusPos);
-    return;
-  }
-
-  if (currentThirdPersonDistance > 0.001) {
-    // Move camera backward from the look direction to get a third-person view.
-    camera.getWorldDirection(thirdPersonOffsetDir);
-    thirdPersonRightDir.crossVectors(thirdPersonOffsetDir, thirdPersonWorldUp).normalize();
-    thirdPersonTargetPos.copy(playerEye);
-    thirdPersonTargetPos.addScaledVector(thirdPersonOffsetDir, -currentThirdPersonDistance);
-    thirdPersonTargetPos.addScaledVector(thirdPersonRightDir, currentShoulderOffset);
-    camera.position.copy(thirdPersonTargetPos);
-  }
-}
-
-function handleDesktopWheelThirdPerson(event) {
-  /* Keep zoom responsive while gameplay is visible even if pointer lock is
-  temporarily down during a browser-mandated relock cooldown. */
-  if (
-    mobileMode
-    || isMenuCentralVisible()
-    || chatUI.isInputOpen()
-    || isTypingTarget(event.target)
-    || (!controls.isLocked && !isScreenDragCameraActive() && !isLegoLolCameraMode())
-  ) return;
-
-  // Scroll out to move into third-person; scroll in back to first-person.
-  setThirdPersonDistance(thirdPersonDistance + event.deltaY * THIRD_PERSON_DISTANCE_INPUT_SCALE);
-  event.preventDefault();
+  cameraRigController.syncCameraToPlayerView(deltaTime);
 }
 
 input.bindDesktopMouse({
@@ -3463,16 +3127,16 @@ input.bindDesktopMouse({
     gameAudio.unlockAudio(true);
     handleDesktopAttack(event);
   },
-  onWheel: handleDesktopWheelThirdPerson,
+  onWheel: event => cameraRigController.handleDesktopWheelThirdPerson(event),
   onContextMenu: event => {
     event.preventDefault();
   },
 });
 
-document.addEventListener('touchstart', handleMobilePinchStart, { passive: false });
-document.addEventListener('touchmove', handleMobilePinchMove, { passive: false });
-document.addEventListener('touchend', handleMobilePinchEnd, { passive: false });
-document.addEventListener('touchcancel', handleMobilePinchEnd, { passive: false });
+document.addEventListener('touchstart', event => cameraRigController.handleMobilePinchStart(event), { passive: false });
+document.addEventListener('touchmove', event => cameraRigController.handleMobilePinchMove(event), { passive: false });
+document.addEventListener('touchend', event => cameraRigController.handleMobilePinchEnd(event), { passive: false });
+document.addEventListener('touchcancel', event => cameraRigController.handleMobilePinchEnd(event), { passive: false });
 
 applyInitialSavedMultiplayerPlayerTransform();
 updatePlayerCollider(playerEye);
@@ -3646,7 +3310,7 @@ function projectileHitsEntity(position, radius) {
 }
 
 function getPunchForwardDirection(outDir) {
-  if (currentThirdPersonDistance > 0.001) {
+  if (getCurrentThirdPersonDistance() > 0.001) {
     if (playerFacingDir.lengthSq() > 0.0001) {
       outDir.copy(playerFacingDir).normalize();
       return outDir;
@@ -3883,92 +3547,42 @@ function syncVoxelHighlightStyle() {
 }
 
 function clearBoxelSelectedVoxelHighlight() {
-  /* Clearing through one helper keeps every future selection/removal path in
-  sync instead of scattering visibility resets across multiple action flows. */
-  boxelSelectedHighlightMesh.visible = false;
-  boxelRangeHighlightMesh.visible = false;
-  boxelSelectionAnchorBox.makeEmpty();
-  boxelSelectionRangeBox.makeEmpty();
-  boxelSelectionCombinedBox.makeEmpty();
+  boxelSelectionController.clear();
 }
 
 function syncBoxelSelectedVoxelHighlightVisibility() {
-  /* The Boxel-picked voxel should feel persistent while the tool is equipped,
-  but hiding it outside Boxel mode prevents stale selection visuals from
-  competing with normal voxel editing and combat interactions. */
-  boxelSelectedHighlightMesh.visible = isBoxelSelectionToolSelected()
-    && boxelSelectionAnchorBox.isEmpty() === false;
-  boxelRangeHighlightMesh.visible = isBoxelSelectionToolSelected()
-    && boxelSelectionRangeBox.isEmpty() === false
-    && boxelSelectionCombinedBox.isEmpty() === false;
-}
-
-function placeBoxelSelectedVoxelHighlightFromBox(clickedVoxelBox) {
-  /* Both Boxel actions feed into the same rolling selection state. This keeps
-  left-click and right-click perfectly aligned once they resolve which voxel
-  box should be used as the next selection point. */
-  if (!clickedVoxelBox || clickedVoxelBox.isEmpty()) {
-    clearBoxelSelectedVoxelHighlight();
-    return false;
-  }
-
-  if (boxelSelectionAnchorBox.isEmpty()) {
-    /* The very first click only establishes the initial anchor point. */
-    boxelSelectionAnchorBox.copy(clickedVoxelBox);
-    boxelSelectionRangeBox.makeEmpty();
-    boxelSelectionCombinedBox.makeEmpty();
-    boxelSelectionAnchorBox.getCenter(boxelSelectedHighlightMesh.position);
-    boxelRangeHighlightMesh.visible = false;
-    syncBoxelSelectedVoxelHighlightVisibility();
-    return true;
-  }
-
-  if (boxelSelectionRangeBox.isEmpty() === false) {
-    /* Once both points exist, every new click advances the window so the old
-    second point becomes the new anchor and the latest click becomes the new
-    opposite corner. */
-    boxelSelectionAnchorBox.copy(boxelSelectionRangeBox);
-    boxelSelectionAnchorBox.getCenter(boxelSelectedHighlightMesh.position);
-  }
-
-  boxelSelectionRangeBox.copy(clickedVoxelBox);
-  boxelSelectionCombinedBox.copy(boxelSelectionAnchorBox).union(boxelSelectionRangeBox);
-
-  /* Slight padding keeps the combined selection visible around the voxel faces
-  instead of z-fighting directly on the terrain surfaces. */
-  boxelSelectionCombinedBox.getSize(boxelSelectionCombinedSize);
-  boxelSelectionCombinedBox.getCenter(boxelSelectionCombinedCenter);
-  boxelRangeHighlightMesh.position.copy(boxelSelectionCombinedCenter);
-  boxelRangeHighlightMesh.scale.set(
-    boxelSelectionCombinedSize.x + BOXEL_RANGE_HIGHLIGHT_PADDING,
-    boxelSelectionCombinedSize.y + BOXEL_RANGE_HIGHLIGHT_PADDING,
-    boxelSelectionCombinedSize.z + BOXEL_RANGE_HIGHLIGHT_PADDING
-  );
-  syncBoxelSelectedVoxelHighlightVisibility();
-  return true;
+  boxelSelectionController.syncVisibility();
 }
 
 function placeBoxelSelectedVoxelHighlightFromHit(voxelHit) {
-  /* Left-click still uses the voxel currently under the raycast. */
-  if (!voxelHit || !getVoxelBoxFromRaycastHit(voxelHit, boxelSelectionInputBox)) {
-    clearBoxelSelectedVoxelHighlight();
-    return false;
-  }
-
-  return placeBoxelSelectedVoxelHighlightFromBox(boxelSelectionInputBox);
+  return boxelSelectionController.placeFromHit(voxelHit);
 }
 
 function placeBoxelSelectedVoxelHighlightFromAdjacentHit(voxelHit) {
-  /* Right-click should target the empty voxel space on the pointed face, so we
-  ask the world editor for the actual adjacent voxel box in world space. */
-  const adjacentVoxelBox = worldEditor.getAdjacentTargetVoxelBox(voxelHit, boxelSelectionInputBox);
-  if (!adjacentVoxelBox) {
-    clearBoxelSelectedVoxelHighlight();
-    return false;
-  }
-
-  return placeBoxelSelectedVoxelHighlightFromBox(adjacentVoxelBox);
+  return boxelSelectionController.placeFromAdjacentHit(voxelHit);
 }
+
+const voxelEditingController = createVoxelEditingController({
+  worldEditor,
+  inventoryUI,
+  getUseWorldEditorVoxelMode: () => useWorldEditorVoxelMode,
+  getCanEditCurrentVoxelWorld: canEditCurrentVoxelWorld,
+  getPlayerCollider: () => playerCollider,
+  resolveRaycastLabel,
+  createVoxelFromType,
+  orientPlacedVoxelFromHit,
+  removeVoxelAtRaycastHit,
+  addVoxelAtRaycastHit,
+  syncWorldVoxelRemovedAtCell,
+  syncWorldVoxelAddedAtCell,
+  recordLocalVoxelRemoved,
+  recordLocalVoxelAdded,
+  getLocalWorldSaveStore: () => localWorldSaveStore,
+  getMultiplayerWorldStore: () => multiplayerWorldStore,
+  isSurvivalMode: () => inventoryUI.getGameMode() === GAME_MODE_SURVIVAL,
+  invalidateVoxelRaycast,
+  refreshVoxelRaycast,
+});
 
 function triggerActionForMouseButton(button, options = {}) {
   const allowMobile = options.allowMobile === true;
@@ -3992,46 +3606,7 @@ function triggerActionForMouseButton(button, options = {}) {
     }
 
     if (currentRaycastState.voxelEditionMode) {
-      if (!canEditCurrentVoxelWorld()) return;
-
-      const removedVoxelType = resolveRaycastLabel(currentRaycastState.hit);
-      const removedResult = useWorldEditorVoxelMode
-        ? worldEditor.removeVoxelFromHit(currentRaycastState.hit)
-        : null;
-      const removedVoxelCell = removedResult ?? worldEditor.getTargetVoxelCell(currentRaycastState.hit);
-      const removed = useWorldEditorVoxelMode
-        ? Boolean(removedResult && syncWorldVoxelRemovedAtCell(
-          removedResult.cellX,
-          removedResult.cellY,
-          removedResult.cellZ
-        ))
-        : removeVoxelAtRaycastHit(currentRaycastState.hit);
-      if (removed && removedVoxelType) {
-        if (removedVoxelCell && localWorldSaveStore) {
-          recordLocalVoxelRemoved(
-            removedVoxelCell.cellX,
-            removedVoxelCell.cellY,
-            removedVoxelCell.cellZ
-          );
-        }
-        if (removedVoxelCell && multiplayerWorldStore) {
-          multiplayerWorldStore.recordVoxelRemoved(
-            removedVoxelCell.cellX,
-            removedVoxelCell.cellY,
-            removedVoxelCell.cellZ
-          ).catch(error => {
-            console.error('Failed to persist the Kolorlando multiplayer voxel removal.', error);
-          });
-        }
-        if (inventoryUI.getGameMode() === GAME_MODE_SURVIVAL) {
-          inventoryUI.addItemToInventory(removedVoxelType, 1);
-        } else if (!inventoryUI.inventoryHasType(removedVoxelType)) {
-          inventoryUI.addCreativeInventoryItem(removedVoxelType);
-        }
-        // Breaking a voxel mutates the raycast scene immediately, so the next idle
-        // refresh must resolve a brand-new target instead of reusing the old hit.
-        invalidateVoxelRaycast();
-      }
+      voxelEditingController.removeVoxelFromHit(currentRaycastState.hit);
       return;
     }
     startRightPunch({ allowMobile });
@@ -4045,68 +3620,7 @@ function triggerActionForMouseButton(button, options = {}) {
     }
 
     if (currentRaycastState.voxelEditionMode) {
-      if (!canEditCurrentVoxelWorld()) return;
-
-      // Placement must only consume actual voxel stacks. Non-build items can share
-      // the hotbar, so we resolve a voxel-safe selection before touching the world.
-      const selectedVoxelType = inventoryUI.getSelectedPlaceableVoxelType();
-      if (!selectedVoxelType) return;
-
-      let addedVoxelCell = null;
-
-      const added = useWorldEditorVoxelMode
-        ? (() => {
-          const selectedWorldVoxel = createVoxelFromType(selectedVoxelType);
-          if (!selectedWorldVoxel) return false;
-          orientPlacedVoxelFromHit(currentRaycastState.hit, selectedWorldVoxel);
-
-          const addedResult = worldEditor.setVoxelFromHit(
-            currentRaycastState.hit,
-            selectedWorldVoxel,
-            { playerCollider }
-          );
-          if (!addedResult) return false;
-          addedVoxelCell = addedResult;
-
-          return syncWorldVoxelAddedAtCell(
-            addedResult.cellX,
-            addedResult.cellY,
-            addedResult.cellZ
-          );
-        })()
-        : (() => {
-          addedVoxelCell = worldEditor.getAdjacentTargetVoxelCell(currentRaycastState.hit);
-          if (!addedVoxelCell) return false;
-          return addVoxelAtRaycastHit(currentRaycastState.hit, {
-            playerCollider,
-            voxelType: selectedVoxelType,
-          });
-        })();
-      if (added && localWorldSaveStore) {
-        recordLocalVoxelAdded(
-          addedVoxelCell.cellX,
-          addedVoxelCell.cellY,
-          addedVoxelCell.cellZ,
-          selectedVoxelType
-        );
-      }
-      if (added && addedVoxelCell && multiplayerWorldStore) {
-        multiplayerWorldStore.recordVoxelAdded(
-          addedVoxelCell.cellX,
-          addedVoxelCell.cellY,
-          addedVoxelCell.cellZ,
-          selectedVoxelType
-        ).catch(error => {
-          console.error('Failed to persist the Kolorlando multiplayer voxel addition.', error);
-        });
-      }
-      if (added && inventoryUI.getGameMode() === GAME_MODE_SURVIVAL) {
-          inventoryUI.consumeSelectedInventoryItem(1);
-      }
-      if (added) {
-        // Placing a voxel also changes the front-most hit surface right away.
-        invalidateVoxelRaycast();
-      }
+      voxelEditingController.placeVoxelFromHit(currentRaycastState.hit);
       return;
     }
     startLeftPunch({ allowMobile });
@@ -4120,7 +3634,7 @@ function triggerActionForMouseButton(button, options = {}) {
 function updateRightPunch(deltaTime) {
   const shoulder = firstPersonArmsRig.joints.rightShoulder;
   const elbow = firstPersonArmsRig.joints.rightElbow;
-  const isFirstPerson = currentThirdPersonDistance <= 0.001;
+  const isFirstPerson = getCurrentThirdPersonDistance() <= 0.001;
 
   if (rightPunchTimer <= 0) {
     shoulder.position.copy(fpRightShoulderBasePos);
@@ -4157,7 +3671,7 @@ function updateRightPunch(deltaTime) {
 function updateLeftPunch(deltaTime) {
   const shoulder = firstPersonArmsRig.joints.leftShoulder;
   const elbow = firstPersonArmsRig.joints.leftElbow;
-  const isFirstPerson = currentThirdPersonDistance <= 0.001;
+  const isFirstPerson = getCurrentThirdPersonDistance() <= 0.001;
 
   if (leftPunchTimer <= 0) {
     shoulder.position.copy(fpLeftShoulderBasePos);
@@ -4688,7 +4202,7 @@ klRaycast = new KLRaycast({
   isScreenDragCameraActive,
   isScreenDragCameraMode,
   isLegoLolCameraMode,
-  getThirdPersonDistance: () => currentThirdPersonDistance,
+  getThirdPersonDistance: getCurrentThirdPersonDistance,
   resolveRaycastLabel,
   getWorldEntityRaycastHit,
   getRemotePlayerRaycastHit: (...args) => multiplayerController.getRemotePlayerRaycastHit(...args),
@@ -4739,7 +4253,7 @@ function updateDesktopLook() {
     camera.rotation.x = pitch;
     return;
   }
-  if (!controls.isLocked) return;
+  if (!pointerLockController?.isLocked?.()) return;
   yaw = camera.rotation.y;
   pitch = camera.rotation.x;
 }
@@ -5069,8 +4583,8 @@ function toggleMenuCentralTab(tabName) {
 
   setMenuCentralTab(tabName);
 
-  if (controls.isLocked) {
-    controls.unlock();
+  if (pointerLockController?.isLocked?.()) {
+    pointerLockController.unlock();
     return;
   }
   if (isScreenDragCameraActive()) {

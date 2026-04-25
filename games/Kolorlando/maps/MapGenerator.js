@@ -44,6 +44,7 @@ export function buildMapFromWorld({
   const texturedVoxelMeshByKey = new Map();
   const planeRaycastMeshByKey = new Map();
   const solidChunkMeshByKey = new Map();
+  const temporaryExposedFaceGroupByChunkKey = new Map();
   const chunkRenderStateByKey = new Map();
   const worldOrigin = world.getMapOrigin(voxelSize);
   const usesLazyChunkGeneration = typeof world.chunkGenerator === 'function';
@@ -80,6 +81,14 @@ export function buildMapFromWorld({
     back: { x: 0, y: 0, z: -1 },
   };
   const TEXTURED_FACE_ORDER = ['right', 'left', 'top', 'bottom', 'front', 'back'];
+  const OPPOSITE_FACE_BY_NAME = {
+    right: 'left',
+    left: 'right',
+    top: 'bottom',
+    bottom: 'top',
+    front: 'back',
+    back: 'front',
+  };
 
   mapGroup.name = world.name || 'World';
 
@@ -1277,6 +1286,144 @@ export function buildMapFromWorld({
     bucket.vertexCount += 4;
   }
 
+  function createSolidVoxelFaceGeometry(cellX, cellY, cellZ, faceName, voxel = null) {
+    const minX = worldOrigin.x + cellX * voxelSize;
+    const minY = worldOrigin.y + cellY * voxelSize;
+    const minZ = worldOrigin.z + cellZ * voxelSize;
+    const maxX = minX + voxelSize;
+    const maxY = minY + voxelSize;
+    const maxZ = minZ + voxelSize;
+    const faceSpecs = {
+      right: {
+        normal: [1, 0, 0],
+        vertices: [[maxX, minY, minZ], [maxX, maxY, minZ], [maxX, maxY, maxZ], [maxX, minY, maxZ]],
+      },
+      left: {
+        normal: [-1, 0, 0],
+        vertices: [[minX, minY, maxZ], [minX, maxY, maxZ], [minX, maxY, minZ], [minX, minY, minZ]],
+      },
+      top: {
+        normal: [0, 1, 0],
+        vertices: [[minX, maxY, maxZ], [maxX, maxY, maxZ], [maxX, maxY, minZ], [minX, maxY, minZ]],
+      },
+      bottom: {
+        normal: [0, -1, 0],
+        vertices: [[minX, minY, minZ], [maxX, minY, minZ], [maxX, minY, maxZ], [minX, minY, maxZ]],
+      },
+      front: {
+        normal: [0, 0, 1],
+        vertices: [[minX, minY, maxZ], [maxX, minY, maxZ], [maxX, maxY, maxZ], [minX, maxY, maxZ]],
+      },
+      back: {
+        normal: [0, 0, -1],
+        vertices: [[maxX, minY, minZ], [minX, minY, minZ], [minX, maxY, minZ], [maxX, maxY, minZ]],
+      },
+    };
+    const faceSpec = faceSpecs[faceName];
+    if (!faceSpec) return null;
+
+    const color = new THREE.Color(normalizeColor(voxel?.color));
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', new THREE.Float32BufferAttribute(faceSpec.vertices.flat(), 3));
+    geometry.setAttribute('normal', new THREE.Float32BufferAttribute([
+      ...faceSpec.normal,
+      ...faceSpec.normal,
+      ...faceSpec.normal,
+      ...faceSpec.normal,
+    ], 3));
+    geometry.setAttribute('color', new THREE.Float32BufferAttribute([
+      color.r, color.g, color.b,
+      color.r, color.g, color.b,
+      color.r, color.g, color.b,
+      color.r, color.g, color.b,
+    ], 3));
+    geometry.setAttribute('uv', new THREE.Float32BufferAttribute([0, 0, 1, 0, 1, 1, 0, 1], 2));
+    geometry.setIndex([0, 1, 2, 0, 2, 3]);
+    geometry.computeBoundingSphere();
+    geometry.computeBoundingBox();
+    return geometry;
+  }
+
+  function removeTemporaryExposedFacesForChunk(chunkKey = '') {
+    const existingGroup = temporaryExposedFaceGroupByChunkKey.get(chunkKey);
+    if (!existingGroup) return false;
+
+    existingGroup.traverse(part => {
+      if (part?.geometry?.dispose) {
+        part.geometry.dispose();
+      }
+    });
+    solidChunkGroup.remove(existingGroup);
+    temporaryExposedFaceGroupByChunkKey.delete(chunkKey);
+    return true;
+  }
+
+  function removeTemporaryExposedFacesForCell(cellX, cellY, cellZ, { includeNeighbors = false } = {}) {
+    const chunkKeys = collectSolidChunkKeysForCell(cellX, cellY, cellZ, { includeNeighbors });
+    for (let i = 0; i < chunkKeys.length; i += 1) {
+      removeTemporaryExposedFacesForChunk(chunkKeys[i]);
+    }
+  }
+
+  function addTemporaryExposedFacesForRemovedCell(cellX, cellY, cellZ) {
+    const meshByChunkKey = new Map();
+
+    for (const [faceName, offset] of Object.entries(FACE_NEIGHBOR_OFFSETS)) {
+      const neighborCellX = cellX + offset.x;
+      const neighborCellY = cellY + offset.y;
+      const neighborCellZ = cellZ + offset.z;
+      if (!world.isVoxelCellActive(neighborCellX, neighborCellY, neighborCellZ)) continue;
+
+      const neighborVoxel = readWorldVoxel(neighborCellX, neighborCellY, neighborCellZ);
+      if (!isOpaqueCubeVoxel(neighborVoxel)) continue;
+
+      const exposedFaceName = OPPOSITE_FACE_BY_NAME[faceName];
+      const geometry = createSolidVoxelFaceGeometry(
+        neighborCellX,
+        neighborCellY,
+        neighborCellZ,
+        exposedFaceName,
+        neighborVoxel
+      );
+      if (!geometry) continue;
+
+      const mesh = new THREE.Mesh(
+        geometry,
+        getSolidChunkMaterial(
+          getSolidVoxelTextureKey(neighborVoxel),
+          getSolidVoxelTextureInfluence(neighborVoxel)
+        )
+      );
+      const chunkKey = createChunkKeyFromCell(neighborCellX, neighborCellY, neighborCellZ);
+      mesh.receiveShadow = true;
+      mesh.castShadow = false;
+      mesh.userData.isGreedySolidChunk = true;
+      mesh.userData.chunkKey = chunkKey;
+      mesh.userData.isTemporaryExposedFace = true;
+
+      if (!meshByChunkKey.has(chunkKey)) {
+        meshByChunkKey.set(chunkKey, []);
+      }
+      meshByChunkKey.get(chunkKey).push(mesh);
+    }
+
+    for (const [chunkKey, meshes] of meshByChunkKey.entries()) {
+      let chunkGroup = temporaryExposedFaceGroupByChunkKey.get(chunkKey);
+      if (!chunkGroup) {
+        chunkGroup = new THREE.Group();
+        chunkGroup.name = `${mapGroup.name} Temporary Faces ${chunkKey}`;
+        chunkGroup.userData.isGreedySolidChunk = true;
+        chunkGroup.userData.chunkKey = chunkKey;
+        chunkGroup.userData.isTemporaryExposedFaces = true;
+        solidChunkGroup.add(chunkGroup);
+        temporaryExposedFaceGroupByChunkKey.set(chunkKey, chunkGroup);
+      }
+      for (let i = 0; i < meshes.length; i += 1) {
+        chunkGroup.add(meshes[i]);
+      }
+    }
+  }
+
   function getSolidVoxelMergeSignature(voxel = null, cell = null) {
     const baseSignature = getSolidVoxelSignature(voxel);
     if (!baseSignature) {
@@ -1570,6 +1717,7 @@ export function buildMapFromWorld({
       return false;
     }
 
+    removeTemporaryExposedFacesForChunk(chunkKey);
     removeSolidChunkMesh(chunkKey);
 
     if (!world.isChunkActive(chunkPosition.x, chunkPosition.y, chunkPosition.z)) {
@@ -1719,6 +1867,7 @@ export function buildMapFromWorld({
     }
 
     registerVoxelType(voxel);
+    removeTemporaryExposedFacesForCell(cellX, cellY, cellZ, { includeNeighbors: true });
     refreshVoxelVisual(cellX, cellY, cellZ);
     if (refreshNeighbors) {
       refreshAdjacentVoxelVisuals(cellX, cellY, cellZ);
@@ -1747,6 +1896,9 @@ export function buildMapFromWorld({
     removeColliderForCell(cellX, cellY, cellZ);
     invalidateChunkRenderStateForCell(cellX, cellY, cellZ, { includeNeighbors: true });
     scheduleSolidChunkRebuildForCell(cellX, cellY, cellZ, { includeNeighbors: true, priority: true });
+    if (!immediateSolidChunkJobs) {
+      addTemporaryExposedFacesForRemovedCell(cellX, cellY, cellZ);
+    }
     if (refreshNeighbors) {
       refreshAdjacentVoxelVisuals(cellX, cellY, cellZ);
     }
