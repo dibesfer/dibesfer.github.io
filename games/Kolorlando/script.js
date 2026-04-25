@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { Player } from './code/Player.js';
 import { Walker, Chaser, Talker } from './code/entities/humanoid.js';
 import {
   applyHumanoidEquipment,
@@ -746,7 +747,7 @@ let characterPreviewResizeObserver = null;
 let isCharacterPreviewSizeDirty = true;
 const CHARACTER_PREVIEW_LOOK_Y = 1.26;
 const CHARACTER_PREVIEW_DRAG_THRESHOLD = 10;
-let playerHumanoid = null;
+let player = null;
 let firstPersonArmsRig = null;
 
 function resolveKolorlandoItemDefinition(itemId) {
@@ -754,8 +755,8 @@ function resolveKolorlandoItemDefinition(itemId) {
 }
 
 function syncPlayerEquipmentVisuals() {
-  if (playerHumanoid) {
-    applyHumanoidEquipment(playerHumanoid, playerEquipment, resolveKolorlandoItemDefinition);
+  if (player) {
+    applyHumanoidEquipment(player, playerEquipment, resolveKolorlandoItemDefinition);
   }
 
   if (characterPreviewModel) {
@@ -2397,13 +2398,13 @@ const PLAYER_OUTFIT = {
   faceData: playerFaceDataResult.faceData,
 };
 initCharacterPreview();
-playerHumanoid = createHumanoidModel({
+player = new Player({
   outfit: PLAYER_OUTFIT,
   castShadow: true,
   receiveShadow: false,
 });
-playerBody.add(playerHumanoid.root);
-playerBody.scale.set(1, PLAYER_HEIGHT / playerHumanoid.baseHeight, 1);
+playerBody.add(player.root);
+playerBody.scale.set(1, PLAYER_HEIGHT / player.baseHeight, 1);
 syncPlayerEquipmentVisuals();
 playerEquipment.subscribe(function () {
   syncPlayerEquipmentVisuals();
@@ -2501,7 +2502,7 @@ function applyHeldItemShadows(root, castShadow, receiveShadow) {
 function syncLocalPlayerShadowCasters() {
   const thirdPersonVisible = currentThirdPersonDistance > 0.001;
 
-  playerHumanoid?.root?.traverse(part => {
+  player?.root?.traverse(part => {
     if (!part?.isMesh) return;
     part.castShadow = thirdPersonVisible;
   });
@@ -2660,7 +2661,7 @@ async function mountHeldItem(itemType) {
   const definition = HELD_ITEM_DEFINITIONS[itemType]
     ? { ...HELD_ITEM_DEFAULTS, ...HELD_ITEM_DEFINITIONS[itemType] }
     : null;
-  const worldSlot = definition ? playerHumanoid.joints[definition.slotName] : null;
+  const worldSlot = definition ? player.joints[definition.slotName] : null;
   const firstPersonSlot = definition && firstPersonArmsRig
     ? firstPersonArmsRig.joints[getFirstPersonHeldItemSlotName(definition.slotName)]
     : null;
@@ -3201,12 +3202,12 @@ function syncFirstPersonPlayerFacing() {
 function animatePlayerBody(deltaTime, isMoving) {
   if (isMoving) {
     playerWalkCycle += deltaTime * 10;
-    applyHumanoidWalkAnimation(playerHumanoid.joints, playerWalkCycle, 1);
+    applyHumanoidWalkAnimation(player.joints, playerWalkCycle, 1);
     return;
   }
 
   playerIdleCycle += deltaTime * 2.2;
-  applyHumanoidIdleAnimation(playerHumanoid.joints, playerIdleCycle, 1);
+  applyHumanoidIdleAnimation(player.joints, playerIdleCycle, 1);
 }
 
 const thirdPersonOffsetDir = new THREE.Vector3();
@@ -4103,7 +4104,7 @@ function updateRightPunch(deltaTime) {
   shoulder.position.copy(fpRightShoulderBasePos);
   shoulder.rotation.copy(fpRightShoulderBaseRot);
   elbow.rotation.copy(fpRightElbowBaseRot);
-  applyHumanoidLeftPunchAnimation(playerHumanoid.joints, punch, camera.rotation.x);
+  applyHumanoidLeftPunchAnimation(player.joints, punch, camera.rotation.x);
 }
 
 function updateLeftPunch(deltaTime) {
@@ -4139,7 +4140,7 @@ function updateLeftPunch(deltaTime) {
   shoulder.position.copy(fpLeftShoulderBasePos);
   shoulder.rotation.copy(fpLeftShoulderBaseRot);
   elbow.rotation.copy(fpLeftElbowBaseRot);
-  applyHumanoidRightPunchAnimation(playerHumanoid.joints, punch, camera.rotation.x);
+  applyHumanoidRightPunchAnimation(player.joints, punch, camera.rotation.x);
 }
 
 function handleDesktopAttack(event) {
