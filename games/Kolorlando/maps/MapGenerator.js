@@ -984,6 +984,66 @@ export function buildMapFromWorld({
     return processedJobs;
   }
 
+  function collectSolidChunkKeysForCell(cellX, cellY, cellZ, { includeNeighbors = false } = {}) {
+    const chunkKey = createChunkKeyFromCell(cellX, cellY, cellZ);
+    if (!chunkKey) {
+      return [];
+    }
+
+    const chunkKeys = new Set([chunkKey]);
+    if (!includeNeighbors) {
+      return [...chunkKeys];
+    }
+
+    const chunkPosition = typeof world.parseChunkKey === 'function'
+      ? world.parseChunkKey(chunkKey)
+      : null;
+    if (!chunkPosition) {
+      return [...chunkKeys];
+    }
+
+    const chunkSize = world.getChunkSize();
+    const voxelAddress = world.getChunkVoxelAddress(cellX, cellY, cellZ);
+    const local = voxelAddress?.local;
+    if (!local) {
+      return [...chunkKeys];
+    }
+
+    const boundaryOffsets = [];
+    if (local.x === 0) boundaryOffsets.push(FACE_NEIGHBOR_OFFSETS.left);
+    if (local.x === chunkSize - 1) boundaryOffsets.push(FACE_NEIGHBOR_OFFSETS.right);
+    if (local.y === 0) boundaryOffsets.push(FACE_NEIGHBOR_OFFSETS.bottom);
+    if (local.y === chunkSize - 1) boundaryOffsets.push(FACE_NEIGHBOR_OFFSETS.top);
+    if (local.z === 0) boundaryOffsets.push(FACE_NEIGHBOR_OFFSETS.back);
+    if (local.z === chunkSize - 1) boundaryOffsets.push(FACE_NEIGHBOR_OFFSETS.front);
+
+    for (let i = 0; i < boundaryOffsets.length; i += 1) {
+      const offset = boundaryOffsets[i];
+      const neighborChunkX = chunkPosition.x + offset.x;
+      const neighborChunkY = chunkPosition.y + offset.y;
+      const neighborChunkZ = chunkPosition.z + offset.z;
+      if (
+        !world.isChunkPositionWithinWorld(neighborChunkX, neighborChunkY, neighborChunkZ)
+        || !world.isChunkActive(neighborChunkX, neighborChunkY, neighborChunkZ)
+      ) continue;
+
+      chunkKeys.add(world.getChunkKey(neighborChunkX, neighborChunkY, neighborChunkZ));
+    }
+
+    return [...chunkKeys];
+  }
+
+  function rebuildImmediateSolidChunksForCell(cellX, cellY, cellZ, { includeNeighbors = false } = {}) {
+    const chunkKeys = collectSolidChunkKeysForCell(cellX, cellY, cellZ, { includeNeighbors });
+    for (let i = 0; i < chunkKeys.length; i += 1) {
+      const chunkKey = chunkKeys[i];
+      pendingPrioritySolidChunkJobs.delete(chunkKey);
+      pendingSolidChunkJobs.delete(chunkKey);
+      rebuildSolidChunkMesh(chunkKey);
+    }
+    return chunkKeys.length;
+  }
+
   function queueChunkActivation(chunkKey = '') {
     if (typeof chunkKey !== 'string' || !chunkKey.trim()) {
       return false;
@@ -1649,7 +1709,7 @@ export function buildMapFromWorld({
 
   function syncWorldVoxelAddedAtCell(cellX, cellY, cellZ, {
     refreshNeighbors = true,
-    immediateSolidChunkJobs = refreshNeighbors ? 8 : 0,
+    immediateSolidChunkJobs = refreshNeighbors,
   } = {}) {
     const voxel = readWorldVoxel(cellX, cellY, cellZ);
     if (!voxel) return false;
@@ -1663,15 +1723,15 @@ export function buildMapFromWorld({
     if (refreshNeighbors) {
       refreshAdjacentVoxelVisuals(cellX, cellY, cellZ);
     }
-    if (immediateSolidChunkJobs > 0) {
-      flushPrioritySolidChunkJobs({ x: cellX, y: cellY, z: cellZ }, immediateSolidChunkJobs);
+    if (immediateSolidChunkJobs) {
+      rebuildImmediateSolidChunksForCell(cellX, cellY, cellZ, { includeNeighbors: true });
     }
     return true;
   }
 
   function syncWorldVoxelRemovedAtCell(cellX, cellY, cellZ, {
     refreshNeighbors = true,
-    immediateSolidChunkJobs = refreshNeighbors ? 8 : 0,
+    immediateSolidChunkJobs = refreshNeighbors,
   } = {}) {
     const key = createCellKey(cellX, cellY, cellZ);
     const texturedVoxelMesh = texturedVoxelMeshByKey.get(key);
@@ -1690,8 +1750,8 @@ export function buildMapFromWorld({
     if (refreshNeighbors) {
       refreshAdjacentVoxelVisuals(cellX, cellY, cellZ);
     }
-    if (immediateSolidChunkJobs > 0) {
-      flushPrioritySolidChunkJobs({ x: cellX, y: cellY, z: cellZ }, immediateSolidChunkJobs);
+    if (immediateSolidChunkJobs) {
+      rebuildImmediateSolidChunksForCell(cellX, cellY, cellZ, { includeNeighbors: true });
     }
     return true;
   }

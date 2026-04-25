@@ -171,6 +171,10 @@ export class Humanoid extends Entity {
     clearance = 1.0,
     miniMapType = 'walker',
     maxHealth = 100,
+    showLabel = true,
+    showHealthBar = true,
+    castShadow = true,
+    receiveShadow = false,
   }) {
     super({ scene, position, groundY, name, typeLabel, miniMapType });
 
@@ -202,19 +206,27 @@ export class Humanoid extends Entity {
 
     const humanoid = createHumanoidModel({
       outfit: resolvedOutfit,
-      castShadow: true,
-      receiveShadow: false,
+      castShadow,
+      receiveShadow,
     });
     this.group.add(humanoid.root);
+    this.modelRoot = humanoid.root;
     this.joints = humanoid.joints;
+    this.parts = humanoid.parts;
+    this.equipmentRoots = humanoid.equipmentRoots;
     this.modelBaseHeight = humanoid.baseHeight;
+    this.baseHeight = humanoid.baseHeight;
     this.group.scale.set(1, this.bodyHeight / this.modelBaseHeight, 1);
-    this.labelSprite = createEntityLabelSprite(this.name, this.typeLabel);
-    this.labelSprite.position.set(0, this.bodyHeight + 0.5, 0);
-    this.group.add(this.labelSprite);
-    this.healthBarSprite = createHealthBarSprite(1);
-    this.healthBarSprite.position.set(0, this.bodyHeight + 0.82, 0);
-    this.group.add(this.healthBarSprite);
+    if (showLabel) {
+      this.labelSprite = createEntityLabelSprite(this.name, this.typeLabel);
+      this.labelSprite.position.set(0, this.bodyHeight + 0.5, 0);
+      this.group.add(this.labelSprite);
+    }
+    if (showHealthBar) {
+      this.healthBarSprite = createHealthBarSprite(1);
+      this.healthBarSprite.position.set(0, this.bodyHeight + 0.82, 0);
+      this.group.add(this.healthBarSprite);
+    }
     if (this.dialogLines && this.dialogLines.length > 0) {
       this.dialogSprite = createDialogSprite(this.dialogLines);
       this.dialogSprite.position.set(0, this.bodyHeight + 1.85, 0);
@@ -238,7 +250,9 @@ export class Humanoid extends Entity {
   applyDamage(amount) {
     if (!Number.isFinite(amount) || amount <= 0) return false;
     this.health = Math.max(0, this.health - amount);
-    drawHealthBarSprite(this.healthBarSprite, this.health / this.maxHealth);
+    if (this.healthBarSprite) {
+      drawHealthBarSprite(this.healthBarSprite, this.health / this.maxHealth);
+    }
     return this.health <= 0;
   }
 

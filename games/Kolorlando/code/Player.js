@@ -1,4 +1,4 @@
-import { createHumanoidModel } from './entities/entityModel.js';
+import { Humanoid } from './entities/humanoid.js';
 
 export class Player {
   constructor({
@@ -6,13 +6,17 @@ export class Player {
     castShadow = true,
     receiveShadow = false,
   } = {}) {
-    this.humanoid = createHumanoidModel({
+    this.humanoid = new Humanoid({
       outfit,
       castShadow,
       receiveShadow,
+      name: 'Player',
+      typeLabel: 'Player',
+      showLabel: false,
+      showHealthBar: false,
     });
 
-    this.root = this.humanoid.root;
+    this.root = this.humanoid.modelRoot;
     this.joints = this.humanoid.joints;
     this.parts = this.humanoid.parts;
     this.equipmentRoots = this.humanoid.equipmentRoots;

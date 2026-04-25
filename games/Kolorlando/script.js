@@ -3954,8 +3954,7 @@ function triggerActionForMouseButton(button, options = {}) {
         ? Boolean(removedResult && syncWorldVoxelRemovedAtCell(
           removedResult.cellX,
           removedResult.cellY,
-          removedResult.cellZ,
-          { immediateSolidChunkJobs: 2 }
+          removedResult.cellZ
         ))
         : removeVoxelAtRaycastHit(currentRaycastState.hit);
       if (removed && removedVoxelType) {
@@ -4023,8 +4022,7 @@ function triggerActionForMouseButton(button, options = {}) {
           return syncWorldVoxelAddedAtCell(
             addedResult.cellX,
             addedResult.cellY,
-            addedResult.cellZ,
-            { immediateSolidChunkJobs: 1 }
+            addedResult.cellZ
           );
         })()
         : (() => {
