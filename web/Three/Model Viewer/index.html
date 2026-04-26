@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>GLB Viewer</title>
+
+<style>
+html, body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #111;
+}
+
+canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+</style>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+</head>
+
+<body>
+<script type="module">
+import * as THREE from "three";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+
+const MODEL_SRC = "homo2.gltf";
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x111111);
+
+const camera = new THREE.PerspectiveCamera(
+  60,
+  innerWidth / innerHeight,
+  0.1,
+  1000
+);
+
+const renderer = new THREE.WebGLRenderer({
+  antialias: true,
+
+  // 🔥 permite click derecho → guardar/abrir imagen del canvas
+  preserveDrawingBuffer: true
+});
+
+renderer.setSize(innerWidth, innerHeight);
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+document.body.appendChild(renderer.domElement);
+
+scene.add(new THREE.AmbientLight(0xffffff, 1.2));
+
+const light = new THREE.DirectionalLight(0xffffff, 2);
+light.position.set(3, 5, 4);
+scene.add(light);
+
+const pivot = new THREE.Group();
+scene.add(pivot);
+
+let root = null;
+let modelCenterY = 1;
+let modelHeight = 2;
+
+const loader = new GLTFLoader();
+
+loader.load(MODEL_SRC, (gltf) => {
+  root = gltf.scene;
+  pivot.add(root);
+
+  const box = new THREE.Box3().setFromObject(root);
+  const size = box.getSize(new THREE.Vector3());
+
+  const maxSize = Math.max(size.x, size.y, size.z);
+  const scale = 2 / maxSize;
+  root.scale.setScalar(scale);
+
+  // Mantiene el eje X/Z real del modelo
+  // Solo ajusta datos para encuadrar la cámara
+  const finalBox = new THREE.Box3().setFromObject(root);
+  const finalSize = finalBox.getSize(new THREE.Vector3());
+  const finalCenter = finalBox.getCenter(new THREE.Vector3());
+
+  modelCenterY = finalCenter.y;
+  modelHeight = finalSize.y;
+
+  fitCameraToModel();
+});
+
+function fitCameraToModel() {
+  const distance = Math.max(3, modelHeight * 1.7);
+
+  camera.position.set(0, modelCenterY, distance);
+  camera.lookAt(0, modelCenterY, 0);
+}
+
+function animate() {
+  if (root) {
+    root.rotation.y += 0.01;
+  }
+
+  renderer.render(scene, camera);
+}
+
+renderer.setAnimationLoop(animate);
+
+window.addEventListener("resize", () => {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+  fitCameraToModel();
+});
+</script>
+</body>
+</html>
