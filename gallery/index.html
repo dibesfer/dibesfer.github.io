@@ -30,6 +30,11 @@
 </head>
 
 <body>
+
+  <div id="loadingScreen">
+    <img class="shadowIcon" width="200px" class="icon" src="assets/branding/dibesfer-logo.png" alt="dibesfer logo">
+  </div>
+
   <header></header>
 
   <main>
@@ -161,6 +166,10 @@
     }
 
     load("header", "/web/aa_amor/components/header.html");
+
+    window.onload = function () {
+      document.getElementById("loadingScreen").classList.add("hidden");
+    };
 
   </script>
 </body>

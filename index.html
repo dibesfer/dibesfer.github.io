@@ -42,37 +42,6 @@
 
 <body>
 
-  <style>
-    #loadingScreen img {
-      animation: rotate 4s linear infinite;
-    }
-
-    @keyframes rotate {
-      from {
-        transform: rotate(0deg);
-      }
-
-      to {
-        transform: rotate(360deg);
-      }
-    }
-
-
-    #loadingScreen {
-      position: fixed;
-      inset: 0;
-      z-index: 9999;
-      background: #000000;
-      color: white;
-      display: grid;
-      place-items: center;
-    }
-
-    #loadingScreen.hidden {
-      display: none;
-    }
-  </style>
-
   <div id="loadingScreen">
     <img class="shadowIcon" width="200px" class="icon" src="assets/branding/dibesfer-logo.png" alt="dibesfer logo">
   </div>
@@ -218,12 +187,12 @@
 
     load("header", "/web/aa_amor/components/header-main.html");
 
-  </script>
-  <script>
     window.onload = function () {
-  document.getElementById("loadingScreen").classList.add("hidden");
-};
+      document.getElementById("loadingScreen").classList.add("hidden");
+    };
+
   </script>
+
   <!-- <script src="/assets/scripts/loadModules.js"></script> -->
 </body>
 
