@@ -159,7 +159,7 @@ function app() {
             localStorage.setItem("dibesfer_ls_description_id", random)
             description.innerHTML = descriptions[random]
             dibesfer_ls_description_id = localStorage.getItem("dibesfer_ls_description_id")
-            console.log(dibesfer_ls_description_id)
+            //console.log(dibesfer_ls_description_id)
             
             
         }
