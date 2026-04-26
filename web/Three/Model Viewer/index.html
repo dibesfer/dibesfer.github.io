@@ -36,13 +36,13 @@ canvas {
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
-const MODEL_SRC = "homo2.gltf";
+const MODEL_SRC = "magichine.glb";
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x111111);
 
 const camera = new THREE.PerspectiveCamera(
-  60,
+  50,
   innerWidth / innerHeight,
   0.1,
   1000
@@ -50,8 +50,6 @@ const camera = new THREE.PerspectiveCamera(
 
 const renderer = new THREE.WebGLRenderer({
   antialias: true,
-
-  // 🔥 permite click derecho → guardar/abrir imagen del canvas
   preserveDrawingBuffer: true
 });
 
@@ -69,6 +67,9 @@ const pivot = new THREE.Group();
 scene.add(pivot);
 
 let root = null;
+let mixer = null;
+const clock = new THREE.Clock();
+
 let modelCenterY = 1;
 let modelHeight = 2;
 
@@ -78,6 +79,21 @@ loader.load(MODEL_SRC, (gltf) => {
   root = gltf.scene;
   pivot.add(root);
 
+  console.log("Animaciones encontradas:", gltf.animations.map(a => a.name));
+
+  // 🔥 ANIMACIÓN
+  mixer = new THREE.AnimationMixer(root);
+
+  const clip = THREE.AnimationClip.findByName(gltf.animations, "show");
+  if (clip) {
+    const action = mixer.clipAction(clip);
+    action.setLoop(THREE.LoopRepeat);
+    action.play();
+  } else {
+    console.warn("Animación 'show' no encontrada");
+  }
+
+  // escala
   const box = new THREE.Box3().setFromObject(root);
   const size = box.getSize(new THREE.Vector3());
 
@@ -85,8 +101,7 @@ loader.load(MODEL_SRC, (gltf) => {
   const scale = 2 / maxSize;
   root.scale.setScalar(scale);
 
-  // Mantiene el eje X/Z real del modelo
-  // Solo ajusta datos para encuadrar la cámara
+  // cámara centrada
   const finalBox = new THREE.Box3().setFromObject(root);
   const finalSize = finalBox.getSize(new THREE.Vector3());
   const finalCenter = finalBox.getCenter(new THREE.Vector3());
@@ -105,8 +120,14 @@ function fitCameraToModel() {
 }
 
 function animate() {
+  const delta = clock.getDelta();
+
+  if (mixer) {
+    mixer.update(delta); // 🔥 animación interna
+  }
+
   if (root) {
-    root.rotation.y += 0.01;
+    root.rotation.y += 0.01; // 🔥 rotación global
   }
 
   renderer.render(scene, camera);
