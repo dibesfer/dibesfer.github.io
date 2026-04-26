@@ -64,6 +64,7 @@ hr {
   border: solid 1px white;
   width: min(800px, calc(100vw - 16px));
   margin: 0 auto;
+  overflow: hidden;
 }
 
 .ad ins {
