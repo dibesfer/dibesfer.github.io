@@ -162,9 +162,9 @@ banners.push(banner);
 banner = new Banner();
 
 banner.emoji = "🧊";
-banner.title = "VoxelViewer";
+banner.title = "VoxelEditor";
 banner.desc = "15³ 3D voxel viewer-editor (WIP)";
-banner.link = "/web/VoxelViewer";
+banner.link = "/web/Three/VoxelViewer";
 
 banners.push(banner);
 banner = new Banner();
