@@ -9,6 +9,8 @@
 }
 
 body {
+  /* Compatibility with Android Studio App > webView */
+  padding-top: env(safe-area-inset-top);
   background-color: black;
   color: white;
   font-family: Jost, sans-serif;
