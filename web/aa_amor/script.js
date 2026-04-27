@@ -164,10 +164,46 @@ function app() {
             
         }
         changeDescription()
+
+        let images = [
+            "/assets/art/dibesfer/Alan Moore - 2019Ja23.jpg",
+            "/assets/art/dibesfer/azamshir-y-amigos.png",
+            "/assets/art/dibesfer/mandala.jpg",
+            "/assets/art/minetest/rainbowsz.png",
+            "/assets/art/minetest/SpaceDesk.png",
+            "/assets/art/minetest/woodenhouse.png",
+            "/assets/art/minetest/colorlandia_spawn.png",
+            "/assets/art/minetest/colorlandia_spawn_night.png",
+            "/assets/art/minetest/voxelmanipclassiccommands.png",
+            "/assets/art/minetest/lifeisasimulation.png",
+            "/assets/art/minetest/minitest.png",
+            "/assets/art/minetest/minitest2.png",
+            "/assets/art/minetest/decospacedesk.png",
+            "/assets/art/minetest/mineclone_ray.png",
+            "/assets/art/minetest/datatest_trees.png",
+            "/assets/art/minetest/datatest_landscape2.png",
+            "/assets/art/minetest/datatest_landscape3.png",
+            "/games/assets/colorlandia-spawn.png",
+            "/games/assets/torresArcoiris.png",
+            "/games/minetest/art/voxelmanip-tower-entrance.png",
+            "/games/minetest/art/voxelmanip-batallacreative.png",
+            
+            "/games/minetest/colorlandia/art/cl_wireframe.png",
+            "/assets/art/pixelArt/mandala-mastodon.png",
+            "/assets/art/pixelArt/mandala-mastodon2.png",
+            "https://content.luanti.org/uploads/4e6235eec4.png"
+        ]
+
+        function changeScreenImg() {
+            let random = randomInt(0, images.length - 1);
+            screenImg.src = images[random]
+        }
+        changeScreenImg()
+
     }
-    else {
+    /*else {
         console.log("SECONDARY")
-    }
+    }*/
 
 
     async function setVisits() {
