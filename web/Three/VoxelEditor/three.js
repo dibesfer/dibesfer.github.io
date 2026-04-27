@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { Microxel } from '../../games/Kolorlando/code/data/Microxel.js';
-import { Voxel } from '../../games/Kolorlando/code/data/Voxel.js';
+import { Microxel } from '/games/Kolorlando/code/data/Microxel.js';
+import { Voxel } from '/games/Kolorlando/code/data/Voxel.js';
 
 const VOXEL_EDITOR_SIZE = 15;
 
