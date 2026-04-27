@@ -186,8 +186,7 @@ function app() {
             "/games/assets/colorlandia-spawn.png",
             "/games/assets/torresArcoiris.png",
             "/games/minetest/art/voxelmanip-tower-entrance.png",
-            "/games/minetest/art/voxelmanip-batallacreative.png",
-            
+            "/games/minetest/art/voxelmanip-batallacreative.png",            
             "/games/minetest/colorlandia/art/cl_wireframe.png",
             "/assets/art/pixelArt/mandala-mastodon.png",
             "/assets/art/pixelArt/mandala-mastodon2.png",
