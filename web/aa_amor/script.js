@@ -267,6 +267,10 @@ function scrollToBottom() {
 
 }
 
-if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("/service-worker.js");
+if (
+  "serviceWorker" in navigator &&
+  location.hostname !== "localhost" &&
+  location.hostname !== "127.0.0.1"
+) {
+  navigator.serviceWorker.register("/service-worker.js");
 }

@@ -1,4 +1,4 @@
-const CACHE_NAME = "v2";
+const CACHE_NAME = "v3";
 
 const FILES = [
   "/",
@@ -13,6 +13,7 @@ self.addEventListener("install", event => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => cache.addAll(FILES))
   );
+
   self.skipWaiting();
 });
 
@@ -26,22 +27,69 @@ self.addEventListener("activate", event => {
       )
     )
   );
+
   self.clients.claim();
 });
 
 self.addEventListener("fetch", event => {
   const req = event.request;
+  const url = new URL(req.url);
 
   if (req.method !== "GET") return;
-  if (!req.url.startsWith("http")) return;
 
+  // Only handle this same site.
+  if (url.origin !== self.location.origin) return;
+
+  // HTML pages: network first.
+  if (req.mode === "navigate" || req.destination === "document") {
+    event.respondWith(
+      fetch(req)
+        .then(res => {
+          const copy = res.clone();
+
+          caches.open(CACHE_NAME).then(cache => {
+            cache.put(req, copy);
+          });
+
+          return res;
+        })
+        .catch(async () => {
+          return (
+            (await caches.match(req)) ||
+            (await caches.match("/index.html")) ||
+            new Response("Offline", {
+              status: 503,
+              headers: {
+                "Content-Type": "text/plain"
+              }
+            })
+          );
+        })
+    );
+
+    return;
+  }
+
+  // Assets: network first, cache fallback.
   event.respondWith(
-    caches.match(req).then(cached => {
-      return cached || fetch(req).catch(() => {
-        if (req.mode === "navigate") {
-          return caches.match("/index.html");
-        }
-      });
-    })
+    fetch(req)
+      .then(res => {
+        const copy = res.clone();
+
+        caches.open(CACHE_NAME).then(cache => {
+          cache.put(req, copy);
+        });
+
+        return res;
+      })
+      .catch(async () => {
+        return (
+          (await caches.match(req)) ||
+          new Response("", {
+            status: 504,
+            statusText: "Offline and not cached"
+          })
+        );
+      })
   );
 });
