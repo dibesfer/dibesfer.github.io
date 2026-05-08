@@ -191,7 +191,6 @@ function app() {
             "/assets/art/pixelArt/mandala-mastodon.png",
             "/assets/art/pixelArt/mandala-mastodon2.png",
             "https://content.luanti.org/uploads/4e6235eec4.png",
-            "/assets/gif/sketch2026.gif"
         ]
 
         function changeScreenImg() {
