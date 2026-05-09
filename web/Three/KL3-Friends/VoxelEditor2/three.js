@@ -10,7 +10,9 @@ const LOCAL_STORAGE_VOXEL_KEY = 'voxel-editor.currentVoxel';
 const LOCAL_STORAGE_SAVE_DELAY = 3000;
 const HISTORY_LIMIT = 80;
 const RIGHT_ANGLE_DEGREES = 90;
-const MAX_ORIENTATION_DEGREES = 270;
+const ORIENTATION_LABEL_DISTANCE_PADDING = 1.2;
+const ORIENTATION_LABEL_MIN_SCALE = 1.8;
+const ORIENTATION_LABEL_SCALE_PER_MICROXEL = 0.32;
 let voxelEditorSize = DEFAULT_VOXEL_EDITOR_SIZE;
 let localStorageSaveTimeout = null;
 let historyBatchDepth = 0;
@@ -35,9 +37,9 @@ const boxModeButton = document.getElementById('boxModeButton');
 const mirrorXInput = document.getElementById('mirrorXInput');
 const mirrorYInput = document.getElementById('mirrorYInput');
 const mirrorZInput = document.getElementById('mirrorZInput');
-const orientXInput = document.getElementById('orientXInput');
-const orientYInput = document.getElementById('orientYInput');
-const orientZInput = document.getElementById('orientZInput');
+const rotateXInput = document.getElementById('rotateXInput');
+const rotateYInput = document.getElementById('rotateYInput');
+const rotateZInput = document.getElementById('rotateZInput');
 const editorToolState = {
     mode: 'erase',
     shapeMode: 'single',
@@ -53,7 +55,7 @@ editedVoxel.fromJSON(resolveVoxelEditorPreset('full', voxelEditorSize));
 restoreVoxelFromLocalStorage();
 pushHistorySnapshot();
 
-window.getVoxelSaveData = () => editedVoxel.toJSON();
+window.getVoxelSaveData = () => getBakedVoxelSaveData();
 window.getVoxelEditorSize = () => voxelEditorSize;
 window.ensureVoxelName = (fallbackName = 'Table') => {
     const nextName = editedVoxel.name || String(fallbackName).trim() || 'Table';
@@ -62,7 +64,7 @@ window.ensureVoxelName = (fallbackName = 'Table') => {
     syncVoxelNameInput();
     recordVoxelHistory();
 
-    return editedVoxel.toJSON();
+    return getBakedVoxelSaveData();
 };
 
 function syncVoxelNameInput() {
@@ -113,9 +115,9 @@ mirrorZInput?.addEventListener('change', event => {
     syncMirrorGuides();
 });
 
-orientXInput?.addEventListener('change', syncVoxelRotationFromInputs);
-orientYInput?.addEventListener('change', syncVoxelRotationFromInputs);
-orientZInput?.addEventListener('change', syncVoxelRotationFromInputs);
+setupRotationInput(rotateXInput, 'x');
+setupRotationInput(rotateYInput, 'y');
+setupRotationInput(rotateZInput, 'z');
 
 syncVoxelNameInput();
 syncVoxelRotationInputs();
@@ -872,6 +874,7 @@ function onResize() {
     camera.aspect = innerWidth / innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(innerWidth, innerHeight);
+    updateOrientationNorthLabel();
 }
 
 window.addEventListener('resize', onResize);
@@ -891,6 +894,10 @@ function createMicroxelDataGrid(size, { color = '#ffffff', active = true } = {})
             }))
         )
     );
+}
+
+function createEmptyMicroxelGrid(size) {
+    return createMicroxelDataGrid(size, { active: false });
 }
 
 function createRandomMicroxelDataGrid(size) {
@@ -1117,43 +1124,246 @@ function syncEditorToolButtons() {
     boxModeButton?.classList.toggle('option_selected', editorToolState.shapeMode === 'box');
 }
 
-function normalizeOrientationDegrees(value = 0) {
+function normalizeRotationDegrees(value = 0) {
     const numericValue = Number(value);
     const finiteValue = Number.isFinite(numericValue) ? numericValue : 0;
     const snappedValue = Math.round(finiteValue / RIGHT_ANGLE_DEGREES) * RIGHT_ANGLE_DEGREES;
-    const normalizedValue = ((snappedValue % 360) + 360) % 360;
 
-    return Math.min(MAX_ORIENTATION_DEGREES, normalizedValue);
+    // Keep rotation as a clean 0/90/180/270 cycle.
+    return ((snappedValue % 360) + 360) % 360;
+}
+
+function setupRotationInput(input, axis = '') {
+    if (!input) {
+        return;
+    }
+
+    input.dataset.rotationAxis = axis;
+    input.dataset.lastRotationValue = normalizeRotationDegrees(input.value);
+
+    input.addEventListener('input', () => {
+        syncVoxelRotationFromInputs();
+    });
+
+    input.addEventListener('change', () => {
+        syncVoxelRotationFromInputs();
+    });
+
+    input.addEventListener('keydown', event => {
+        if (event.key !== 'ArrowUp' && event.key !== 'ArrowDown') {
+            return;
+        }
+
+        event.preventDefault();
+        const direction = event.key === 'ArrowUp' ? 1 : -1;
+        stepRotationInput(input, direction);
+    });
+
+    input.addEventListener('wheel', event => {
+        if (document.activeElement !== input) {
+            return;
+        }
+
+        event.preventDefault();
+        const direction = event.deltaY < 0 ? 1 : -1;
+        stepRotationInput(input, direction);
+    }, { passive: false });
+}
+
+function stepRotationInput(input, direction = 1) {
+    if (!input) {
+        return;
+    }
+
+    const currentValue = normalizeRotationDegrees(input.dataset.lastRotationValue ?? input.value);
+    input.value = normalizeRotationDegrees(currentValue + direction * RIGHT_ANGLE_DEGREES);
+    syncVoxelRotationFromInputs();
 }
 
 function syncVoxelRotationFromInputs() {
     const nextRotation = {
-        x: normalizeOrientationDegrees(orientXInput?.value),
-        y: normalizeOrientationDegrees(orientYInput?.value),
-        z: normalizeOrientationDegrees(orientZInput?.value)
+        x: normalizeRotationDegrees(rotateXInput?.value),
+        y: normalizeRotationDegrees(rotateYInput?.value),
+        z: normalizeRotationDegrees(rotateZInput?.value)
     };
 
     editedVoxel.setRotation(nextRotation);
     syncVoxelRotationInputs();
     syncVoxelModelRotation();
+    resetEditorSelectionState();
     recordVoxelHistory();
 }
 
 function syncVoxelRotationInputs() {
     const rotation = editedVoxel.rotation || { x: 0, y: 0, z: 0 };
 
-    if (orientXInput) orientXInput.value = normalizeOrientationDegrees(rotation.x);
-    if (orientYInput) orientYInput.value = normalizeOrientationDegrees(rotation.y);
-    if (orientZInput) orientZInput.value = normalizeOrientationDegrees(rotation.z);
+    syncRotationInputValue(rotateXInput, rotation.x);
+    syncRotationInputValue(rotateYInput, rotation.y);
+    syncRotationInputValue(rotateZInput, rotation.z);
+}
+
+function syncRotationInputValue(input, value = 0) {
+    if (!input) {
+        return;
+    }
+
+    const normalizedValue = normalizeRotationDegrees(value);
+    input.value = normalizedValue;
+    input.dataset.lastRotationValue = normalizedValue;
+}
+
+function getSignedRotationDegrees(value = 0) {
+    const normalizedValue = normalizeRotationDegrees(value);
+
+    if (normalizedValue === 270) {
+        return -RIGHT_ANGLE_DEGREES;
+    }
+
+    return normalizedValue;
+}
+
+function getBakedVoxelSaveData() {
+    const saveData = editedVoxel.toJSON();
+    const rotation = saveData.rotation || { x: 0, y: 0, z: 0 };
+
+    if (Array.isArray(saveData.microxels) && saveData.microxels.length > 0) {
+        const rotationSteps = [
+            ['x', getSignedRotationDegrees(rotation.x)],
+            ['y', getSignedRotationDegrees(rotation.y)],
+            ['z', getSignedRotationDegrees(rotation.z)]
+        ];
+
+        rotationSteps.forEach(([axis, degrees]) => {
+            if (degrees !== 0) {
+                saveData.microxels = rotateSerializedMicroxelData(saveData.microxels, axis, degrees);
+            }
+        });
+    }
+
+    // VE2 rotation is authoring-only. Exported voxels are already baked toward North.
+    // Do not store redundant 0/0/0 rotation in the final .voxel asset.
+    delete saveData.rotation;
+    return saveData;
+}
+
+function rotateSerializedMicroxelData(sourceMicroxels, axis = '', degrees = 0) {
+    const steps = ((Math.round(degrees / RIGHT_ANGLE_DEGREES) % 4) + 4) % 4;
+    let rotatedMicroxels = cloneSerializedMicroxelGrid(sourceMicroxels);
+
+    for (let step = 0; step < steps; step += 1) {
+        rotatedMicroxels = rotateSerializedMicroxelDataOnce(rotatedMicroxels, axis);
+    }
+
+    return rotatedMicroxels;
+}
+
+function rotateSerializedMicroxelDataOnce(sourceMicroxels, axis = '') {
+    const size = sourceMicroxels.length;
+    const rotatedMicroxels = createEmptySerializedMicroxelGrid(size);
+
+    for (let x = 0; x < size; x += 1) {
+        for (let y = 0; y < size; y += 1) {
+            for (let z = 0; z < size; z += 1) {
+                const sourceCell = sourceMicroxels?.[x]?.[y]?.[z];
+                if (!sourceCell) continue;
+
+                const targetCoord = rotateMicroxelCoordOnce(axis, x, y, z, size);
+                rotatedMicroxels[targetCoord.x][targetCoord.y][targetCoord.z] = {
+                    ...sourceCell,
+                    position: {
+                        x: targetCoord.x,
+                        y: targetCoord.y,
+                        z: targetCoord.z
+                    }
+                };
+            }
+        }
+    }
+
+    return rotatedMicroxels;
+}
+
+function createEmptySerializedMicroxelGrid(size) {
+    return Array.from({ length: size }, (_, x) =>
+        Array.from({ length: size }, (_, y) =>
+            Array.from({ length: size }, (_, z) => ({
+                position: { x, y, z },
+                color: '#ffffff',
+                active: false
+            }))
+        )
+    );
+}
+
+function cloneSerializedMicroxelGrid(sourceMicroxels) {
+    const size = sourceMicroxels.length;
+
+    return Array.from({ length: size }, (_, x) =>
+        Array.from({ length: size }, (_, y) =>
+            Array.from({ length: size }, (_, z) => {
+                const sourceCell = sourceMicroxels?.[x]?.[y]?.[z];
+                return sourceCell
+                    ? {
+                        ...sourceCell,
+                        position: {
+                            x,
+                            y,
+                            z
+                        }
+                    }
+                    : {
+                        position: { x, y, z },
+                        color: '#ffffff',
+                        active: false
+                    };
+            })
+        )
+    );
+}
+
+function rotateMicroxelCoordOnce(axis = '', x = 0, y = 0, z = 0, size = voxelEditorSize) {
+    const maxIndex = size - 1;
+
+    // These are pure 90º right-handed rotations around Three.js axes:
+    // +X pitch: local North/front (-Z) points up (+Y).
+    // +Y yaw: local North/front (-Z) turns left/west (-X).
+    // +Z roll: local Up (+Y) turns left/west (-X).
+    if (axis === 'x') {
+        return {
+            x,
+            y: maxIndex - z,
+            z: y
+        };
+    }
+
+    if (axis === 'y') {
+        return {
+            x: maxIndex - z,
+            y,
+            z: x
+        };
+    }
+
+    if (axis === 'z') {
+        return {
+            x: maxIndex - y,
+            y: x,
+            z
+        };
+    }
+
+    return { x, y, z };
 }
 
 function getVoxelRotationEuler() {
     const rotation = editedVoxel.rotation || { x: 0, y: 0, z: 0 };
 
+    // Pure Three.js Euler rotation, no VE2-specific axis remapping:
+    // X = pitch, Y = yaw, Z = roll, using the fixed editor compass as reference.
     return tempVoxelRotationEuler.set(
-        THREE.MathUtils.degToRad(normalizeOrientationDegrees(rotation.x)),
-        THREE.MathUtils.degToRad(normalizeOrientationDegrees(rotation.y)),
-        THREE.MathUtils.degToRad(normalizeOrientationDegrees(rotation.z)),
+        THREE.MathUtils.degToRad(normalizeRotationDegrees(rotation.x)),
+        THREE.MathUtils.degToRad(normalizeRotationDegrees(rotation.y)),
+        THREE.MathUtils.degToRad(normalizeRotationDegrees(rotation.z)),
         'XYZ'
     );
 }
@@ -1180,10 +1390,10 @@ function ensureOrientationNorthLabel() {
 
     if (context) {
         context.clearRect(0, 0, canvas.width, canvas.height);
-        context.font = '900 96px monospace';
+        context.font = '900 132px monospace';
         context.textAlign = 'center';
         context.textBaseline = 'middle';
-        context.lineWidth = 18;
+        context.lineWidth = 24;
         context.strokeStyle = 'rgba(0, 18, 80, 0.95)';
         context.fillStyle = '#0099ff';
         context.strokeText('North (-Z)', canvas.width * 0.5, canvas.height * 0.5);
@@ -1213,11 +1423,14 @@ function ensureOrientationNorthLabel() {
 
 function updateOrientationNorthLabel() {
     const label = ensureOrientationNorthLabel();
-    const labelDistance = voxelEditorSize * 0.5 + 2;
-    const labelScale = Math.max(4, Math.min(10, voxelEditorSize * 0.8));
+    const labelDistance = voxelEditorSize * 0.5 + ORIENTATION_LABEL_DISTANCE_PADDING;
+    const labelScale = Math.max(
+        ORIENTATION_LABEL_MIN_SCALE,
+        voxelEditorSize * ORIENTATION_LABEL_SCALE_PER_MICROXEL
+    );
 
     // North is a fixed world/editor reference.
-    // Orientation rotates the voxel model, not this compass label.
+    // Runtime Rotate previews the model; export bakes it into microxel data.
     label.position.set(0, 0.035, -labelDistance);
     label.rotation.y = 0;
     label.scale.set(labelScale, labelScale, labelScale);

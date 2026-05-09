@@ -106,7 +106,7 @@ canvas {
     
 }
 
-.orientation-controls input[type="number"] {
+.rotation-controls input[type="number"] {
     width: 54px;
     font: unset;
     border: solid 3px;
@@ -114,7 +114,7 @@ canvas {
     padding: 2px 4px;
 }
 
-.orientation-controls label {
+.rotation-controls label {
     font-weight: bold;
 }
 
