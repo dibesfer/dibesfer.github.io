@@ -791,10 +791,16 @@ function normalizeVoxelRotation(rotation = null) {
   }
 
   return {
-    x: toFiniteNumber(rotation.x, 0),
-    y: toFiniteNumber(rotation.y, 0),
-    z: toFiniteNumber(rotation.z, 0),
+    x: normalizeRightAngleDegrees(rotation.x),
+    y: normalizeRightAngleDegrees(rotation.y),
+    z: normalizeRightAngleDegrees(rotation.z),
   };
+}
+
+function normalizeRightAngleDegrees(value = 0) {
+  const numericValue = toFiniteNumber(value, 0);
+  const snappedValue = Math.round(numericValue / 90) * 90;
+  return ((snappedValue % 360) + 360) % 360;
 }
 
 function cloneVoxelTexture(texture) {
@@ -905,3 +911,5 @@ function normalizeVoxelTextureInfluence(textureInfluence = 1) {
 
   return Math.min(1, Math.max(0, numericInfluence));
 }
+
+

@@ -9,6 +9,8 @@ const MAX_VOXEL_EDITOR_SIZE = 64;
 const LOCAL_STORAGE_VOXEL_KEY = 'voxel-editor.currentVoxel';
 const LOCAL_STORAGE_SAVE_DELAY = 3000;
 const HISTORY_LIMIT = 80;
+const RIGHT_ANGLE_DEGREES = 90;
+const MAX_ORIENTATION_DEGREES = 270;
 let voxelEditorSize = DEFAULT_VOXEL_EDITOR_SIZE;
 let localStorageSaveTimeout = null;
 let historyBatchDepth = 0;
@@ -33,6 +35,9 @@ const boxModeButton = document.getElementById('boxModeButton');
 const mirrorXInput = document.getElementById('mirrorXInput');
 const mirrorYInput = document.getElementById('mirrorYInput');
 const mirrorZInput = document.getElementById('mirrorZInput');
+const orientXInput = document.getElementById('orientXInput');
+const orientYInput = document.getElementById('orientYInput');
+const orientZInput = document.getElementById('orientZInput');
 const editorToolState = {
     mode: 'erase',
     shapeMode: 'single',
@@ -108,7 +113,12 @@ mirrorZInput?.addEventListener('change', event => {
     syncMirrorGuides();
 });
 
+orientXInput?.addEventListener('change', syncVoxelRotationFromInputs);
+orientYInput?.addEventListener('change', syncVoxelRotationFromInputs);
+orientZInput?.addEventListener('change', syncVoxelRotationFromInputs);
+
 syncVoxelNameInput();
+syncVoxelRotationInputs();
 syncEditorToolButtons();
 
 console.log('🔥 INITIAL VOXEL:', editedVoxel);
@@ -121,7 +131,7 @@ const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x111111);
 
 const camera = new THREE.PerspectiveCamera(75, innerWidth / innerHeight, 0.1, 1000);
-const defaultCameraPosition = new THREE.Vector3(20, 20, 20);
+const defaultCameraPosition = new THREE.Vector3(-20, 20, -20);
 camera.position.copy(defaultCameraPosition);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -146,6 +156,8 @@ scene.add(new THREE.HemisphereLight(0xaaaaaa, 0x444444, 0.7));
 // =========================
 
 let gridHelper = null;
+let orientationNorthLabel = null;
+let voxelModelGroup = null;
 
 // =========================
 // INSTANCED MICROXELS
@@ -167,6 +179,7 @@ const hiddenScale = new THREE.Vector3(0, 0, 0);
 const tempPosition = new THREE.Vector3();
 const tempColor = new THREE.Color();
 const tempHitPoint = new THREE.Vector3();
+const tempVoxelRotationEuler = new THREE.Euler();
 const groundOffset = 0.5;
 let modelCenterOffset = getModelCenterOffset();
 let instanced = null;
@@ -185,8 +198,13 @@ function rebuildEditorMesh() {
         gridHelper.material.dispose();
     }
 
+    if (!voxelModelGroup) {
+        voxelModelGroup = new THREE.Group();
+        scene.add(voxelModelGroup);
+    }
+
     if (instanced) {
-        scene.remove(instanced);
+        voxelModelGroup.remove(instanced);
         instanced.dispose?.();
     }
 
@@ -194,6 +212,9 @@ function rebuildEditorMesh() {
     idToCoord = [];
     gridHelper = new THREE.GridHelper(voxelEditorSize, voxelEditorSize, 0xffffff, 0xffffff);
     scene.add(gridHelper);
+    ensureOrientationNorthLabel();
+    updateOrientationNorthLabel();
+    syncVoxelModelRotation();
 
     instanced = new THREE.InstancedMesh(
         geometry,
@@ -215,14 +236,16 @@ function rebuildEditorMesh() {
 
     instanced.instanceMatrix.needsUpdate = true;
     instanced.instanceColor.needsUpdate = true;
-    scene.add(instanced);
+    voxelModelGroup.add(instanced);
+    syncVoxelModelRotation();
     frameCameraToVoxelSize();
+    updateOrientationNorthLabel();
 }
 
 function getMicroxelPosition(x, y, z) {
     return tempPosition.set(
         x - modelCenterOffset,
-        y + groundOffset,
+        y - modelCenterOffset,
         z - modelCenterOffset
     );
 }
@@ -293,6 +316,9 @@ window.applyVoxelSaveData = jsonText => {
         rebuildEditorMesh();
         resetEditorSelectionState();
         syncMirrorGuides();
+        syncVoxelRotationInputs();
+        syncVoxelModelRotation();
+        updateOrientationNorthLabel();
         recordVoxelHistory();
 
         return { ok: true, message: `Voxel loaded (${voxelEditorSize}³).` };
@@ -325,6 +351,9 @@ window.applyVoxelPreset = (presetName, requestedSize = voxelEditorSize) => {
         rebuildEditorMesh();
         resetEditorSelectionState();
         syncMirrorGuides();
+        syncVoxelRotationInputs();
+        syncVoxelModelRotation();
+        updateOrientationNorthLabel();
         recordVoxelHistory();
 
         return { ok: true, message: `Preset "${presetName}" loaded (${voxelEditorSize}³).` };
@@ -798,11 +827,10 @@ function updateHighlight() {
 
     const { x, y, z } = currentTargetCoord;
 
-    highlight.position.set(
-        x - modelCenterOffset,
-        y + groundOffset,
-        z - modelCenterOffset
-    );
+    highlight.position.copy(getPreviewWorldPosition({ x, y, z }));
+    if (voxelModelGroup) {
+        highlight.rotation.copy(voxelModelGroup.rotation);
+    }
 
     placementSlotHighlight.visible = false;
     highlight.scale.set(1, 1, 1);
@@ -1026,6 +1054,9 @@ function restoreVoxelSnapshot(snapshot) {
     rebuildEditorMesh();
     resetEditorSelectionState();
     syncMirrorGuides();
+    syncVoxelRotationInputs();
+    syncVoxelModelRotation();
+    updateOrientationNorthLabel();
     saveVoxelToLocalStorage();
 }
 
@@ -1084,6 +1115,112 @@ function syncEditorToolButtons() {
     eraserToolButton?.classList.toggle('option_selected', editorToolState.mode === 'erase');
     lineModeButton?.classList.toggle('option_selected', editorToolState.shapeMode === 'line');
     boxModeButton?.classList.toggle('option_selected', editorToolState.shapeMode === 'box');
+}
+
+function normalizeOrientationDegrees(value = 0) {
+    const numericValue = Number(value);
+    const finiteValue = Number.isFinite(numericValue) ? numericValue : 0;
+    const snappedValue = Math.round(finiteValue / RIGHT_ANGLE_DEGREES) * RIGHT_ANGLE_DEGREES;
+    const normalizedValue = ((snappedValue % 360) + 360) % 360;
+
+    return Math.min(MAX_ORIENTATION_DEGREES, normalizedValue);
+}
+
+function syncVoxelRotationFromInputs() {
+    const nextRotation = {
+        x: normalizeOrientationDegrees(orientXInput?.value),
+        y: normalizeOrientationDegrees(orientYInput?.value),
+        z: normalizeOrientationDegrees(orientZInput?.value)
+    };
+
+    editedVoxel.setRotation(nextRotation);
+    syncVoxelRotationInputs();
+    syncVoxelModelRotation();
+    recordVoxelHistory();
+}
+
+function syncVoxelRotationInputs() {
+    const rotation = editedVoxel.rotation || { x: 0, y: 0, z: 0 };
+
+    if (orientXInput) orientXInput.value = normalizeOrientationDegrees(rotation.x);
+    if (orientYInput) orientYInput.value = normalizeOrientationDegrees(rotation.y);
+    if (orientZInput) orientZInput.value = normalizeOrientationDegrees(rotation.z);
+}
+
+function getVoxelRotationEuler() {
+    const rotation = editedVoxel.rotation || { x: 0, y: 0, z: 0 };
+
+    return tempVoxelRotationEuler.set(
+        THREE.MathUtils.degToRad(normalizeOrientationDegrees(rotation.x)),
+        THREE.MathUtils.degToRad(normalizeOrientationDegrees(rotation.y)),
+        THREE.MathUtils.degToRad(normalizeOrientationDegrees(rotation.z)),
+        'XYZ'
+    );
+}
+
+function syncVoxelModelRotation() {
+    if (!voxelModelGroup) {
+        return;
+    }
+
+    voxelModelGroup.position.set(0, getModelCenterY(), 0);
+    voxelModelGroup.rotation.copy(getVoxelRotationEuler());
+    voxelModelGroup.updateMatrixWorld(true);
+}
+
+function ensureOrientationNorthLabel() {
+    if (orientationNorthLabel) {
+        return orientationNorthLabel;
+    }
+
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+    canvas.width = 1024;
+    canvas.height = 256;
+
+    if (context) {
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        context.font = '900 96px monospace';
+        context.textAlign = 'center';
+        context.textBaseline = 'middle';
+        context.lineWidth = 18;
+        context.strokeStyle = 'rgba(0, 18, 80, 0.95)';
+        context.fillStyle = '#0099ff';
+        context.strokeText('North (-Z)', canvas.width * 0.5, canvas.height * 0.5);
+        context.fillText('North (-Z)', canvas.width * 0.5, canvas.height * 0.5);
+    }
+
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.colorSpace = THREE.SRGBColorSpace;
+
+    const labelPlane = new THREE.Mesh(
+        new THREE.PlaneGeometry(1, 0.25),
+        new THREE.MeshBasicMaterial({
+            map: texture,
+            transparent: true,
+            side: THREE.DoubleSide,
+            depthWrite: false
+        })
+    );
+    labelPlane.rotation.x = -Math.PI * 0.5;
+
+    orientationNorthLabel = new THREE.Group();
+    orientationNorthLabel.add(labelPlane);
+    scene.add(orientationNorthLabel);
+
+    return orientationNorthLabel;
+}
+
+function updateOrientationNorthLabel() {
+    const label = ensureOrientationNorthLabel();
+    const labelDistance = voxelEditorSize * 0.5 + 2;
+    const labelScale = Math.max(4, Math.min(10, voxelEditorSize * 0.8));
+
+    // North is a fixed world/editor reference.
+    // Orientation rotates the voxel model, not this compass label.
+    label.position.set(0, 0.035, -labelDistance);
+    label.rotation.y = 0;
+    label.scale.set(labelScale, labelScale, labelScale);
 }
 
 function syncMirrorGuides() {
@@ -1220,6 +1357,9 @@ function updateSecondaryPreview(currentTargetCoord) {
 
     const startWorldPosition = getPreviewWorldPosition(editorToolState.lineStart);
     lineStartHighlight.position.copy(startWorldPosition);
+    if (voxelModelGroup) {
+        lineStartHighlight.rotation.copy(voxelModelGroup.rotation);
+    }
     lineStartHighlight.visible = true;
 
     if (!currentTargetCoord) {
@@ -1234,11 +1374,18 @@ function updateSecondaryPreview(currentTargetCoord) {
 }
 
 function getPreviewWorldPosition(coord) {
-    return new THREE.Vector3(
+    const previewPosition = new THREE.Vector3(
         coord.x - modelCenterOffset,
-        coord.y + groundOffset,
+        coord.y - modelCenterOffset,
         coord.z - modelCenterOffset
     );
+
+    if (!voxelModelGroup) {
+        return previewPosition;
+    }
+
+    voxelModelGroup.updateMatrixWorld(true);
+    return voxelModelGroup.localToWorld(previewPosition);
 }
 
 function renderLinePreviewHighlights(coords) {
@@ -1251,6 +1398,9 @@ function renderLinePreviewHighlights(coords) {
     coords.forEach(coord => {
         const previewVoxel = new THREE.Mesh(linePreviewGeometry, linePreviewMaterial);
         previewVoxel.position.copy(getPreviewWorldPosition(coord));
+        if (voxelModelGroup) {
+            previewVoxel.rotation.copy(voxelModelGroup.rotation);
+        }
         linePreviewGroup.add(previewVoxel);
     });
 
