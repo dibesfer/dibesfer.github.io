@@ -1,10 +1,11 @@
+import { DEFAULT_MICROXEL_COLOR } from './MicroxelPalette.js';
 export class Microxel {
   constructor({
     x = 0,
     y = 0,
     z = 0,
     position = null,
-    color = '#ffffff',
+    color = DEFAULT_MICROXEL_COLOR,
     active = undefined,
     filled = undefined,
   } = {}) {
@@ -14,7 +15,7 @@ export class Microxel {
     this.y = toFiniteNumber(sourcePosition?.y ?? y, 0);
     this.z = toFiniteNumber(sourcePosition?.z ?? z, 0);
     this.position = { x: this.x, y: this.y, z: this.z };
-    this.color = normalizeText(color, '#ffffff');
+    this.color = normalizeText(color, DEFAULT_MICROXEL_COLOR);
     this.active = Boolean(active === undefined && filled !== undefined ? filled : active ?? true);
     this.filled = this.active;
   }
@@ -27,8 +28,8 @@ export class Microxel {
     return this;
   }
 
-  setColor(color = '#ffffff') {
-    this.color = normalizeText(color, this.color || '#ffffff');
+  setColor(color = DEFAULT_MICROXEL_COLOR) {
+    this.color = normalizeText(color, this.color || DEFAULT_MICROXEL_COLOR);
     return this;
   }
 
@@ -72,3 +73,4 @@ function normalizeText(value, fallback = '') {
   const trimmedValue = value.trim();
   return trimmedValue || fallback;
 }
+

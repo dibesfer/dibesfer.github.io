@@ -118,6 +118,32 @@ canvas {
     font-weight: bold;
 }
 
+.microxel-palette-option {
+    gap: 8px !important;
+}
+
+.microxel-palette-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 18px);
+    grid-template-rows: repeat(2, 18px);
+    gap: 3px;
+    align-items: center;
+}
+
+.microxel-color-button {
+    width: 18px;
+    height: 18px;
+    padding: 0;
+    border: solid 2px black;
+    border-radius: 0;
+    cursor: pointer;
+}
+
+.microxel-color-button.is-selected {
+    border-color: gold;
+    box-shadow: 0 0 0 1px black;
+}
+
 .invisible {
     display: none;
 }
@@ -153,5 +179,7 @@ canvas {
         cursor: grabbing;
     }
 }
+
+
 
 

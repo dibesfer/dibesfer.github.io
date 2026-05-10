@@ -1,5 +1,6 @@
 import { Microxel } from './Microxel.js';
 import { VoxelPresets } from './VoxelPresets.js';
+import { DEFAULT_VOXEL_COLOR } from './MicroxelPalette.js';
 
 const VOXEL_FILE_FORMAT = 'voxel-editor';
 const VOXEL_FILE_VERSION = 1;
@@ -16,7 +17,7 @@ export class Voxel {
       rotation = null,
       solid = false,
       type = 'colored',
-      color = '#ffffff',
+      color = DEFAULT_VOXEL_COLOR,
       texture = null,
       textureInfluence = 1,
       transparent = false,
@@ -58,7 +59,7 @@ export class Voxel {
     this.padding = toFiniteNumber(padding, 0);
     this.rotation = normalizeVoxelRotation(rotation);
     this.type = normalizeVoxelType(type);
-    this.color = normalizeText(color, '#ffffff');
+    this.color = normalizeText(color, DEFAULT_VOXEL_COLOR);
     this.texture = normalizeVoxelTexture(texture);
     this.textureInfluence = normalizeVoxelTextureInfluence(textureInfluence);
     this.transparent = Boolean(transparent);
@@ -95,9 +96,9 @@ export class Voxel {
     return this;
   }
 
-  setColor(color = '#ffffff') {
+  setColor(color = DEFAULT_VOXEL_COLOR) {
     this.type = 'colored';
-    this.color = normalizeText(color, this.color || '#ffffff');
+    this.color = normalizeText(color, this.color || DEFAULT_VOXEL_COLOR);
     this.syncMode();
     return this;
   }
@@ -408,7 +409,7 @@ export class Voxel {
     }
 
     if (typeof data?.color === 'string' && data.color.trim()) {
-      this.color = normalizeText(data.color, this.color || '#ffffff');
+      this.color = normalizeText(data.color, this.color || DEFAULT_VOXEL_COLOR);
     }
 
     if ('texture' in data) {
@@ -876,7 +877,7 @@ function createEmptyMicroxelDataGrid(size) {
   return Array.from({ length: size }, () =>
     Array.from({ length: size }, () =>
       Array.from({ length: size }, () => ({
-        color: '#ffffff',
+        color: DEFAULT_VOXEL_COLOR,
         active: false,
       }))
     )
@@ -891,7 +892,7 @@ function cloneMicroxelDataGrid(grid, size) {
   return Array.from({ length: size }, (_, x) =>
     Array.from({ length: size }, (_, y) =>
       Array.from({ length: size }, (_, z) => ({
-        color: grid?.[x]?.[y]?.[z]?.color ?? '#ffffff',
+        color: grid?.[x]?.[y]?.[z]?.color ?? DEFAULT_VOXEL_COLOR,
         active: Boolean(grid?.[x]?.[y]?.[z]?.active ?? grid?.[x]?.[y]?.[z]?.filled),
       }))
     )
@@ -911,5 +912,6 @@ function normalizeVoxelTextureInfluence(textureInfluence = 1) {
 
   return Math.min(1, Math.max(0, numericInfluence));
 }
+
 
 

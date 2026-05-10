@@ -2,6 +2,11 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { Microxel } from '/assets/classes/Microxel.js';
 import { Voxel } from '/assets/classes/Voxel.js';
+import {
+    DEFAULT_MICROXEL_COLOR,
+    MICROXEL_COLORS12,
+    MICROXEL_PALETTE_ENCODING,
+} from '/assets/classes/MicroxelPalette.js';
 
 const DEFAULT_VOXEL_EDITOR_SIZE = 15;
 const MIN_VOXEL_EDITOR_SIZE = 1;
@@ -28,7 +33,7 @@ const editedVoxel = new Voxel({
 });
 const fpsCounter = document.getElementById('fpsCounter');
 const uiVoxelName = document.getElementById('UIVoxelName');
-const editorColorInput = document.getElementById('editorColorInput');
+const microxelPaletteGrid = document.getElementById('microxelPaletteGrid');
 const paintToolButton = document.getElementById('paintToolButton');
 const placeToolButton = document.getElementById('placeToolButton');
 const eraserToolButton = document.getElementById('eraserToolButton');
@@ -43,7 +48,7 @@ const rotateZInput = document.getElementById('rotateZInput');
 const editorToolState = {
     mode: 'erase',
     shapeMode: 'single',
-    color: editorColorInput?.value || '#ffffff',
+    color: DEFAULT_MICROXEL_COLOR,
     lineStart: null,
     mirror: {
         x: false,
@@ -76,9 +81,7 @@ uiVoxelName.addEventListener('input', event => {
     recordVoxelHistory();
 });
 
-editorColorInput?.addEventListener('input', event => {
-    editorToolState.color = String(event.target.value || '#ffffff');
-});
+renderMicroxelPaletteGrid();
 
 paintToolButton?.addEventListener('click', () => {
     setEditorToolMode('paint');
@@ -122,8 +125,59 @@ setupRotationInput(rotateZInput, 'z');
 syncVoxelNameInput();
 syncVoxelRotationInputs();
 syncEditorToolButtons();
+syncMicroxelPaletteSelection();
 
 console.log('🔥 INITIAL VOXEL:', editedVoxel);
+
+function renderMicroxelPaletteGrid() {
+    if (!microxelPaletteGrid) return;
+
+    microxelPaletteGrid.innerHTML = '';
+
+    MICROXEL_COLORS12.forEach((paletteColor) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'microxel-color-button';
+        button.title = `${paletteColor.name} ${paletteColor.color}`;
+        button.dataset.color = paletteColor.color;
+        button.style.backgroundColor = paletteColor.color;
+        button.addEventListener('click', () => {
+            editorToolState.color = paletteColor.color;
+            syncMicroxelPaletteSelection();
+        });
+
+        microxelPaletteGrid.appendChild(button);
+    });
+
+    syncMicroxelPaletteSelection();
+}
+
+function syncMicroxelPaletteSelection() {
+    if (!microxelPaletteGrid) return;
+
+    const selectedColor = normalizeMicroxelPaletteColor(editorToolState.color);
+    Array.from(microxelPaletteGrid.querySelectorAll('.microxel-color-button')).forEach((button) => {
+        button.classList.toggle('is-selected', button.dataset.color === selectedColor);
+    });
+}
+
+function normalizeMicroxelPaletteColor(color = DEFAULT_MICROXEL_COLOR) {
+    const text = typeof color === 'string' ? color.trim().toLowerCase() : '';
+    const match = MICROXEL_COLORS12.find((paletteColor) => paletteColor.color === text);
+
+    return match?.color ?? DEFAULT_MICROXEL_COLOR;
+}
+
+function getRandomMicroxelPaletteColor() {
+    return MICROXEL_COLORS12[Math.floor(Math.random() * MICROXEL_COLORS12.length)]?.color
+        ?? DEFAULT_MICROXEL_COLOR;
+}
+
+function getMicroxelPaletteId(color = DEFAULT_MICROXEL_COLOR) {
+    const normalizedColor = normalizeMicroxelPaletteColor(color);
+    return MICROXEL_COLORS12.find((paletteColor) => paletteColor.color === normalizedColor)?.id ?? 1;
+}
+
 
 // =========================
 // THREE SETUP
@@ -295,7 +349,7 @@ function syncMicroxelVisual(currentInstanceId) {
     );
 
     instanced.setMatrixAt(currentInstanceId, matrix);
-    instanced.setColorAt(currentInstanceId, tempColor.set(microxel?.color || '#ffffff'));
+    instanced.setColorAt(currentInstanceId, tempColor.set(microxel?.color || DEFAULT_MICROXEL_COLOR));
     instanced.instanceMatrix.needsUpdate = true;
     instanced.instanceColor.needsUpdate = true;
 }
@@ -882,7 +936,7 @@ window.addEventListener('beforeunload', saveVoxelToLocalStorage);
 window.addEventListener('pagehide', saveVoxelToLocalStorage);
 window.addEventListener('keydown', handleHistoryShortcut);
 
-function createMicroxelDataGrid(size, { color = '#ffffff', active = true } = {}) {
+function createMicroxelDataGrid(size, { color = DEFAULT_MICROXEL_COLOR, active = true } = {}) {
     return Array.from({ length: size }, (_, x) =>
         Array.from({ length: size }, (_, y) =>
             Array.from({ length: size }, (_, z) => new Microxel({
@@ -904,7 +958,7 @@ function createRandomMicroxelDataGrid(size) {
     return Array.from({ length: size }, () =>
         Array.from({ length: size }, () =>
             Array.from({ length: size }, () => ({
-                color: '#ffffff',
+                color: getRandomMicroxelPaletteColor(),
                 active: Math.random() >= 0.5
             }))
         )
@@ -942,24 +996,82 @@ function resolveVoxelEditorPreset(presetName, size = voxelEditorSize) {
 }
 
 function normalizeEditorVoxelData(data = {}) {
-    const inferredSize = Array.isArray(data?.microxels)
-        ? data.microxels.length
+    const microxelsFromPalette = microxelPaletteToMicroxels(data?.microxelPalette, data?.color);
+    const sourceMicroxels = Array.isArray(data?.microxels)
+        ? data.microxels
+        : microxelsFromPalette;
+    const inferredSize = Array.isArray(sourceMicroxels)
+        ? sourceMicroxels.length
         : data?.microxelSize || data?.size || voxelEditorSize;
     const nextSize = normalizeVoxelEditorSize(inferredSize);
     const fallbackColor = typeof data?.color === 'string' && data.color.trim()
-        ? data.color.trim()
-        : '#ffffff';
+        ? normalizeMicroxelPaletteColor(data.color)
+        : DEFAULT_MICROXEL_COLOR;
     const fallbackActive = data?.active ?? true;
 
     return {
         ...data,
         type: 'microxeled',
+        color: fallbackColor,
         microxelSize: nextSize,
-        microxels: Array.isArray(data?.microxels)
-            ? data.microxels
+        microxels: Array.isArray(sourceMicroxels)
+            ? sourceMicroxels
             : createMicroxelDataGrid(nextSize, { color: fallbackColor, active: Boolean(fallbackActive) })
     };
 }
+
+function microxelPaletteToMicroxels(microxelPalette = null, fallbackColor = DEFAULT_MICROXEL_COLOR) {
+    if (!microxelPalette || typeof microxelPalette !== 'object') {
+        return null;
+    }
+
+    const size = normalizeVoxelEditorSize(microxelPalette.size ?? microxelPalette.microxelSize);
+    const colors = normalizeMicroxelPaletteColors(microxelPalette.colors ?? microxelPalette.palette);
+    const indices = normalizeMicroxelPaletteIndices(microxelPalette.indices, size);
+    const fallback = normalizeMicroxelPaletteColor(fallbackColor);
+
+    return Array.from({ length: size }, (_, x) =>
+        Array.from({ length: size }, (_, y) =>
+            Array.from({ length: size }, (_, z) => {
+                const paletteIndex = indices[getCompactCellIndex(x, y, z, size)] ?? 0;
+                const active = paletteIndex > 0;
+                const color = active
+                    ? normalizeMicroxelPaletteColor(colors[paletteIndex - 1] ?? fallback)
+                    : fallback;
+
+                return new Microxel({ x, y, z, color, active });
+            })
+        )
+    );
+}
+
+function normalizeMicroxelPaletteColors(colors = []) {
+    const normalizedColors = (Array.isArray(colors) ? colors : [])
+        .map((color) => normalizeMicroxelPaletteColor(color));
+
+    return normalizedColors.length > 0
+        ? normalizedColors
+        : MICROXEL_COLORS12.map((paletteColor) => paletteColor.color);
+}
+
+function normalizeMicroxelPaletteIndices(indices = [], size = voxelEditorSize) {
+    const volume = size * size * size;
+    const output = new Array(volume).fill(0);
+    const source = Array.isArray(indices)
+        ? indices
+        : ArrayBuffer.isView(indices)
+            ? Array.from(indices)
+            : [];
+    const limit = Math.min(source.length, volume);
+
+    for (let index = 0; index < limit; index += 1) {
+        const value = Math.floor(Number(source[index]) || 0);
+        output[index] = Math.min(Math.max(value, 0), MICROXEL_COLORS12.length);
+    }
+
+    return output;
+}
+
 
 function normalizeVoxelEditorSize(size = DEFAULT_VOXEL_EDITOR_SIZE) {
     const numericSize = Math.floor(Number(size));
@@ -1225,8 +1337,9 @@ function getSignedRotationDegrees(value = 0) {
 function getBakedVoxelSaveData() {
     const saveData = editedVoxel.toJSON();
     const rotation = saveData.rotation || { x: 0, y: 0, z: 0 };
+    let bakedMicroxels = Array.isArray(saveData.microxels) ? saveData.microxels : null;
 
-    if (Array.isArray(saveData.microxels) && saveData.microxels.length > 0) {
+    if (bakedMicroxels) {
         const rotationSteps = [
             ['x', getSignedRotationDegrees(rotation.x)],
             ['y', getSignedRotationDegrees(rotation.y)],
@@ -1235,16 +1348,55 @@ function getBakedVoxelSaveData() {
 
         rotationSteps.forEach(([axis, degrees]) => {
             if (degrees !== 0) {
-                saveData.microxels = rotateSerializedMicroxelData(saveData.microxels, axis, degrees);
+                bakedMicroxels = rotateSerializedMicroxelData(bakedMicroxels, axis, degrees);
             }
         });
     }
 
-    // VE2 rotation is authoring-only. Exported voxels are already baked toward North.
-    // Do not store redundant 0/0/0 rotation in the final .voxel asset.
+    const compactPalette = createCompactMicroxelPalette(bakedMicroxels, saveData.color);
+
     delete saveData.rotation;
+    delete saveData.microxels;
+
+    saveData.type = 'microxeled';
+    saveData.color = DEFAULT_MICROXEL_COLOR;
+    saveData.microxelSize = compactPalette.size;
+    saveData.microxelPalette = compactPalette;
+
     return saveData;
 }
+
+function createCompactMicroxelPalette(microxels = null, fallbackColor = DEFAULT_MICROXEL_COLOR) {
+    const size = normalizeVoxelEditorSize(
+        Array.isArray(microxels) ? microxels.length : voxelEditorSize
+    );
+    const indices = new Array(size * size * size).fill(0);
+
+    for (let x = 0; x < size; x += 1) {
+        for (let y = 0; y < size; y += 1) {
+            for (let z = 0; z < size; z += 1) {
+                const cell = microxels?.[x]?.[y]?.[z] ?? null;
+                const active = cell?.active ?? cell?.filled ?? false;
+                if (!active) continue;
+
+                indices[getCompactCellIndex(x, y, z, size)] = getMicroxelPaletteId(cell?.color ?? fallbackColor);
+            }
+        }
+    }
+
+    return {
+        encoding: MICROXEL_PALETTE_ENCODING,
+        size,
+        colors: MICROXEL_COLORS12.map((paletteColor) => paletteColor.color),
+        indexType: 'uint8',
+        indices
+    };
+}
+
+function getCompactCellIndex(x = 0, y = 0, z = 0, size = voxelEditorSize) {
+    return x + y * size + z * size * size;
+}
+
 
 function rotateSerializedMicroxelData(sourceMicroxels, axis = '', degrees = 0) {
     const steps = ((Math.round(degrees / RIGHT_ANGLE_DEGREES) % 4) + 4) % 4;
@@ -1288,7 +1440,7 @@ function createEmptySerializedMicroxelGrid(size) {
         Array.from({ length: size }, (_, y) =>
             Array.from({ length: size }, (_, z) => ({
                 position: { x, y, z },
-                color: '#ffffff',
+                color: DEFAULT_MICROXEL_COLOR,
                 active: false
             }))
         )
@@ -1313,12 +1465,41 @@ function cloneSerializedMicroxelGrid(sourceMicroxels) {
                     }
                     : {
                         position: { x, y, z },
-                        color: '#ffffff',
+                        color: DEFAULT_MICROXEL_COLOR,
                         active: false
                     };
             })
         )
     );
+}
+
+function rotateMicroxelData(axis = '', degrees = 0) {
+    const steps = ((Math.round(degrees / RIGHT_ANGLE_DEGREES) % 4) + 4) % 4;
+
+    for (let step = 0; step < steps; step += 1) {
+        rotateMicroxelDataOnce(axis);
+    }
+}
+
+function rotateMicroxelDataOnce(axis = '') {
+    const size = voxelEditorSize;
+    const rotatedMicroxels = createEmptyMicroxelGrid(size);
+
+    for (let x = 0; x < size; x += 1) {
+        for (let y = 0; y < size; y += 1) {
+            for (let z = 0; z < size; z += 1) {
+                const sourceMicroxel = readEditorMicroxel(x, y, z);
+                if (!sourceMicroxel) continue;
+
+                const targetCoord = rotateMicroxelCoordOnce(axis, x, y, z, size);
+                rotatedMicroxels[targetCoord.x][targetCoord.y][targetCoord.z] = sourceMicroxel
+                    .clone()
+                    .setPosition(targetCoord.x, targetCoord.y, targetCoord.z);
+            }
+        }
+    }
+
+    editedVoxel.setMicroxels(rotatedMicroxels);
 }
 
 function rotateMicroxelCoordOnce(axis = '', x = 0, y = 0, z = 0, size = voxelEditorSize) {
@@ -1705,3 +1886,4 @@ function getBoxCoordinates(startCoord, endCoord) {
 
     return coords;
 }
+
