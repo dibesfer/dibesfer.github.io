@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { Microxel } from '/assets/classes/Microxel.js';
 import { Voxel } from '/assets/classes/Voxel.js';
+import { Binarier } from '/assets/classes/Binarier.js';
 import {
     DEFAULT_MICROXEL_COLOR,
     MICROXEL_COLORS12,
@@ -24,6 +25,7 @@ let historyBatchDepth = 0;
 let historyBatchChanged = false;
 const undoStack = [];
 const redoStack = [];
+const voxelBinarier = new Binarier();
 
 // The editor produces one shared Voxel and edits its Microxels directly.
 const editedVoxel = new Voxel({
@@ -61,6 +63,9 @@ restoreVoxelFromLocalStorage();
 pushHistorySnapshot();
 
 window.getVoxelSaveData = () => getBakedVoxelSaveData();
+window.getVoxelBinaryBlob = (saveData = getBakedVoxelSaveData()) => voxelBinarier.encode(saveData);
+window.getVoxelFileStats = async (saveData = getBakedVoxelSaveData()) => getVoxelFileStats(saveData);
+window.applyVoxelFile = (file) => applyVoxelFile(file);
 window.getVoxelEditorSize = () => voxelEditorSize;
 window.ensureVoxelName = (fallbackName = 'Table') => {
     const nextName = editedVoxel.name || String(fallbackName).trim() || 'Table';
@@ -362,8 +367,36 @@ function syncAllMicroxels() {
 
 window.applyVoxelSaveData = jsonText => {
     try {
-        const rawData = JSON.parse(jsonText);
-        const normalizedVoxelData = normalizeEditorVoxelData(rawData);
+        return applyVoxelData(JSON.parse(jsonText));
+    } catch (error) {
+        return {
+            ok: false,
+            message: error instanceof Error ? error.message : 'Invalid voxel JSON.'
+        };
+    }
+};
+
+async function applyVoxelFile(file) {
+    if (!file) {
+        return { ok: false, message: 'No file selected.' };
+    }
+
+    const buffer = await file.arrayBuffer();
+    const data = isKL3BinaryBuffer(buffer)
+        ? await voxelBinarier.decode(buffer)
+        : JSON.parse(new TextDecoder().decode(buffer));
+    const result = applyVoxelData(data);
+
+    if (result.ok) {
+        result.message = `${result.message} (${isKL3BinaryBuffer(buffer) ? 'binary' : 'JSON'})`;
+    }
+
+    return result;
+}
+
+function applyVoxelData(data = {}) {
+    try {
+        const normalizedVoxelData = normalizeEditorVoxelData(data);
         const nextSize = normalizeVoxelEditorSize(normalizedVoxelData.microxelSize);
 
         voxelEditorSize = nextSize;
@@ -381,10 +414,33 @@ window.applyVoxelSaveData = jsonText => {
     } catch (error) {
         return {
             ok: false,
-            message: error instanceof Error ? error.message : 'Invalid voxel JSON.'
+            message: error instanceof Error ? error.message : 'Invalid voxel data.'
         };
     }
-};
+}
+
+function isKL3BinaryBuffer(buffer) {
+    if (!buffer || buffer.byteLength < 4) return false;
+
+    const magic = new TextDecoder().decode(new Uint8Array(buffer, 0, 4));
+
+    return magic === 'KL3B';
+}
+
+async function getVoxelFileStats(saveData = getBakedVoxelSaveData()) {
+    const jsonBytes = new TextEncoder().encode(JSON.stringify(saveData, null, 2)).length;
+    const binaryBlob = await voxelBinarier.encode(saveData);
+    const binaryBytes = binaryBlob.size;
+    const savedPercent = jsonBytes > 0
+        ? Math.max(0, Math.round((1 - binaryBytes / jsonBytes) * 100))
+        : 0;
+
+    return {
+        jsonBytes,
+        binaryBytes,
+        savedPercent,
+    };
+}
 
 window.applyVoxelPreset = (presetName, requestedSize = voxelEditorSize) => {
     if (!presetName) {
@@ -1886,4 +1942,5 @@ function getBoxCoordinates(startCoord, endCoord) {
 
     return coords;
 }
+
 

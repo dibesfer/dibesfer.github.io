@@ -49,21 +49,38 @@ async function openMenu(panel) {
 function hydrateMenu(panel) {
     if (panel === "save") {
         const output = menu.querySelector("#saveJsonOutput");
-        const downloadButton = menu.querySelector("#downloadVoxelButton");
+        const binaryButton = menu.querySelector("#downloadVoxelBinaryButton");
+        const jsonButton = menu.querySelector("#downloadVoxelJsonButton");
+        const sizeInfo = menu.querySelector("#saveSizeInfo");
         const saveData = window.getVoxelSaveData?.();
 
-        if (!output || !downloadButton || !saveData) return;
+        if (!output || !binaryButton || !jsonButton || !saveData) return;
 
         syncSavePreview(output);
-        downloadButton.addEventListener("click", () => {
-            const freshSaveData = window.ensureVoxelName?.("Table");
+        syncSaveSizeInfo(sizeInfo);
 
+        binaryButton.addEventListener("click", async () => {
+            const freshSaveData = window.ensureVoxelName?.("Table");
+            if (!freshSaveData) return;
+
+            syncSavePreview(output, freshSaveData);
+            const fileName = buildVoxelFileName(freshSaveData.name);
+            const blob = await window.getVoxelBinaryBlob?.(freshSaveData);
+            if (!blob) return;
+
+            downloadVoxelBlob(fileName, blob);
+            syncSaveSizeInfo(sizeInfo, freshSaveData);
+        });
+
+        jsonButton.addEventListener("click", () => {
+            const freshSaveData = window.ensureVoxelName?.("Table");
             if (!freshSaveData) return;
 
             syncSavePreview(output, freshSaveData);
             const fileName = buildVoxelFileName(freshSaveData.name);
             const fileContent = JSON.stringify(freshSaveData, null, 2);
             downloadVoxelFile(fileName, fileContent);
+            syncSaveSizeInfo(sizeInfo, freshSaveData);
         });
         return;
     }
@@ -89,8 +106,7 @@ function hydrateMenu(panel) {
 
             if (fileInput.files?.[0]) {
                 try {
-                    const fileText = await fileInput.files[0].text();
-                    result = window.applyVoxelSaveData?.(fileText);
+                    result = await window.applyVoxelFile?.(fileInput.files[0]);
                 } catch (error) {
                     result = {
                         ok: false,
@@ -118,6 +134,25 @@ function syncSavePreview(output, saveData = window.getVoxelSaveData?.()) {
     output.value = JSON.stringify(saveData, null, 2);
 }
 
+
+async function syncSaveSizeInfo(sizeInfo, saveData = window.getVoxelSaveData?.()) {
+    if (!sizeInfo || !saveData) return;
+
+    const stats = await window.getVoxelFileStats?.(saveData);
+    if (!stats) return;
+
+    sizeInfo.textContent = `Binary ${formatBytes(stats.binaryBytes)} · JSON ${formatBytes(stats.jsonBytes)} · saved ${stats.savedPercent}%`;
+}
+
+function formatBytes(bytes = 0) {
+    const number = Math.max(0, Number(bytes) || 0);
+
+    if (number < 1024) return `${number} B`;
+    if (number < 1024 * 1024) return `${(number / 1024).toFixed(1)} KB`;
+
+    return `${(number / (1024 * 1024)).toFixed(2)} MB`;
+}
+
 function buildVoxelFileName(name = "") {
     const safeName = String(name)
         .trim()
@@ -128,7 +163,10 @@ function buildVoxelFileName(name = "") {
 }
 
 function downloadVoxelFile(fileName, content) {
-    const blob = new Blob([content], { type: "application/octet-stream" });
+    downloadVoxelBlob(fileName, new Blob([content], { type: "application/octet-stream" }));
+}
+
+function downloadVoxelBlob(fileName, blob) {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
 
@@ -246,3 +284,5 @@ function enableDesktopDragScroll(element) {
         element.classList.remove("is-dragging");
     });
 }
+
+
