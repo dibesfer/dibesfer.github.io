@@ -1,13 +1,13 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { Microxel } from '/assets/classes/Microxel.js';
-import { Voxel } from '/assets/classes/Voxel.js';
-import { Binarier } from '/assets/classes/Binarier.js';
+import { Microxel } from './assets/classes/Microxel.js';
+import { Voxel } from './assets/classes/Voxel.js';
+import { Binarier } from './assets/classes/Binarier.js';
 import {
     DEFAULT_MICROXEL_COLOR,
     MICROXEL_COLORS12,
     MICROXEL_PALETTE_ENCODING,
-} from '/assets/classes/MicroxelPalette.js';
+} from './assets/classes/MicroxelPalette.js';
 
 const DEFAULT_VOXEL_EDITOR_SIZE = 15;
 const MIN_VOXEL_EDITOR_SIZE = 1;
