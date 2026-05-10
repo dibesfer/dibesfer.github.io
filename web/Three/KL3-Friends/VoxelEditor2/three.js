@@ -1390,7 +1390,17 @@ function getSignedRotationDegrees(value = 0) {
     return normalizedValue;
 }
 
-function getBakedVoxelSaveData() {
+function getSaveOrientableValue(fallback = true) {
+    const input = document.getElementById('saveOrientableInput');
+
+    if (!input) {
+        return Boolean(fallback);
+    }
+
+    return Boolean(input.checked);
+}
+
+function getBakedVoxelSaveData(options = {}) {
     const saveData = editedVoxel.toJSON();
     const rotation = saveData.rotation || { x: 0, y: 0, z: 0 };
     let bakedMicroxels = Array.isArray(saveData.microxels) ? saveData.microxels : null;
@@ -1416,6 +1426,9 @@ function getBakedVoxelSaveData() {
 
     saveData.type = 'microxeled';
     saveData.color = DEFAULT_MICROXEL_COLOR;
+    saveData.orientable = Boolean(
+        options.orientable ?? getSaveOrientableValue(saveData.orientable ?? true)
+    );
     saveData.microxelSize = compactPalette.size;
     saveData.microxelPalette = compactPalette;
 
@@ -1942,5 +1955,3 @@ function getBoxCoordinates(startCoord, endCoord) {
 
     return coords;
 }
-
-

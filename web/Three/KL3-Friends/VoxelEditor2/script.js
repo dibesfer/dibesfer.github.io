@@ -52,9 +52,18 @@ function hydrateMenu(panel) {
         const binaryButton = menu.querySelector("#downloadVoxelBinaryButton");
         const jsonButton = menu.querySelector("#downloadVoxelJsonButton");
         const sizeInfo = menu.querySelector("#saveSizeInfo");
+        const orientableInput = menu.querySelector("#saveOrientableInput");
         const saveData = window.getVoxelSaveData?.();
 
         if (!output || !binaryButton || !jsonButton || !saveData) return;
+
+        if (orientableInput) {
+            orientableInput.checked = Boolean(saveData.orientable ?? true);
+            orientableInput.addEventListener("change", () => {
+                syncSavePreview(output);
+                syncSaveSizeInfo(sizeInfo);
+            });
+        }
 
         syncSavePreview(output);
         syncSaveSizeInfo(sizeInfo);
@@ -284,5 +293,3 @@ function enableDesktopDragScroll(element) {
         element.classList.remove("is-dragging");
     });
 }
-
-

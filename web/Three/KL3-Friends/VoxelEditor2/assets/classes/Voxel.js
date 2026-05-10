@@ -22,6 +22,7 @@ export class Voxel {
       textureInfluence = 1,
       transparent = false,
       active = true,
+      orientable = false,
       microxelSize = 0,
       microxels = null,
       shape = 'voxel',
@@ -64,6 +65,7 @@ export class Voxel {
     this.textureInfluence = normalizeVoxelTextureInfluence(textureInfluence);
     this.transparent = Boolean(transparent);
     this.active = Boolean(active);
+    this.orientable = Boolean(orientable);
     this.microxelSize = normalizeGridSize(microxelSize);
     this.microxels = null;
 
@@ -117,6 +119,11 @@ export class Voxel {
 
   setTransparent(transparent = false) {
     this.transparent = Boolean(transparent);
+    return this;
+  }
+
+  setOrientable(orientable = false) {
+    this.orientable = Boolean(orientable);
     return this;
   }
 
@@ -255,6 +262,7 @@ export class Voxel {
       textureInfluence: this.textureInfluence,
       transparent: this.transparent,
       active: this.active,
+      orientable: this.orientable,
       microxelSize: this.microxelSize,
       microxels: this.microxels ? cloneMicroxelGrid(this.microxels) : null,
     });
@@ -316,6 +324,7 @@ export class Voxel {
       textureInfluence: this.textureInfluence,
       transparent: this.transparent,
       active: this.active,
+      orientable: this.orientable,
       microxelSize: serializedMicroxels ? serializedMicroxels.length : 0,
       microxels: serializedMicroxels,
     };
@@ -350,6 +359,10 @@ export class Voxel {
 
     if ('active' in data) {
       this.active = Boolean(data.active);
+    }
+
+    if ('orientable' in data) {
+      this.setOrientable(data.orientable);
     }
 
     if ('shape' in data) {
@@ -483,6 +496,7 @@ export class VoxelPlane extends Voxel {
       textureInfluence: this.textureInfluence,
       transparent: this.transparent,
       active: this.active,
+      orientable: this.orientable,
       name: this.name,
       planeFace: this.planeFace,
       doubleSided: this.doubleSided,
@@ -556,6 +570,7 @@ export class VoxelPlaneText extends VoxelPlane {
       textureInfluence: this.textureInfluence,
       transparent: this.transparent,
       active: this.active,
+      orientable: this.orientable,
       name: this.name,
       planeFace: this.planeFace,
       doubleSided: this.doubleSided,
@@ -912,6 +927,3 @@ function normalizeVoxelTextureInfluence(textureInfluence = 1) {
 
   return Math.min(1, Math.max(0, numericInfluence));
 }
-
-
-
