@@ -142,7 +142,7 @@ function app() {
             "Creer o crear, tú eliges",
             "No es la <b>forma</b> ni el <i>mensaje</i>, es el <u>tono</u>",
             "It is not the <b>shape</b>, nor the <u>message</u>, it is the <i>tone</i>",
-            "Jen mia mondo. Envenu.",
+            "<span style='color: lightgreen'>★</span> Jen mia mondo. Envenu.",
             "Be <b class='red'>aggresive</b> defending your <i>quality</i> of <u>existing</u>. For <b>you</b>, for <i>us</i>",
         ]
         function changeDescription() {
