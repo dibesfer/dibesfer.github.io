@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KL2 - Game</title>
+    <link rel="shortcut icon" href="../../branding/KoloraSimbolo_Square_512.png" type="image/x-icon">
+    <link rel="stylesheet" href="./game.css">
+    <link rel="stylesheet" href="../UI/Icon/icon.css">
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.184.0/build/three.module.js"
+            }
+        }
+    </script>
+</head>
+<body>
+    <div id="ThreeScene"></div>
+
+    <div id="UIOverlay">
+
+        <div id="topLeft">
+            <p data-ui="consola" id="consola">FPS Coords</p>
+            <p data-ui="chat" id="chat">13:14 System: Saluton mondo!🗺️</p>
+            <input id="chatInput" type="text" hidden
+            placeholder="Write here...">
+            
+        </div>
+
+        <div id="topRight" data-ui="minimap">
+            <p>Minimap</p>
+        </div>
+
+        <div id="crosshair">
+            +
+        </div>
+
+        <div id="center" data-ui="menu"></div>
+
+        <div id="hotBar" data-ui="hotbar">
+            <p data-ui="target">Target: none</p>
+            <div class="healthBar">healthBar</div>
+           
+            <div class="grid" data-ui="hotbarItems"></div>
+        </div>
+
+    </div>
+
+    <script type="module" src="./game.js"></script>
+</body>
+
+</html>
+

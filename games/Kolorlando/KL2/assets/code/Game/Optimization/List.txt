@@ -1,0 +1,249 @@
+KL2 Optimization List
+=====================
+
+Purpose
+-------
+
+This file is a working map of KL2 optimizations.
+
+It separates:
+- implemented optimizations
+- defined but not wired optimization classes
+- future optimization plans
+
+Golden Rule
+-----------
+
+Core split:
+- Data  [Data   "./GoldenRule/Data.js"]
+- Mesh  [Mesh   "./GoldenRule/Mesh.js"]
+- Render[Render "./GoldenRule/Render.js"]
+
+Rules:
+- Data prepares world/chunk data.
+- Mesh builds geometry.
+- Render decides what is visible and worth drawing.
+- GameRuntime coordinates, but should not own low-level optimization logic.
+
+
+Voxel / Wabavam System
+----------------------
+
+Chunk structure:
+- Boxel15 chunk unit [Boxel15 "../../Wabavam/Boxel/Boxel15.js"]
+- Woxel chunk sizing [Woxel "../../Wabavam/Woxel/Woxel.js"]
+
+Meshing:
+- Greedy meshing [BoxelMesher "./Meshing/BoxelMesher.js"]
+- Face culling [BoxelMesher "./Meshing/BoxelMesher.js"]
+- Per-face surface rendering [BoxelMesher "./Meshing/BoxelMesher.js"]
+- Surface-only geometry creation [BoxelMesher "./Meshing/BoxelMesher.js"]
+- Merged microxel faces [BoxelMesher "./Meshing/BoxelMesher.js"]
+- Shared mesh material [BoxelMesher "./Meshing/BoxelMesher.js"]
+- Fake per-face lighting with vertex colors [BoxelMesher "./Meshing/BoxelMesher.js"]
+
+World data:
+- Sparse land boxel generation [Mapper "../../Map/Mapper.js"]
+- Transient land boxel unloading [ChunkVisibility "./Visibility/ChunkVisibility.js"]
+- Shared voxel lookup data [Mapper "../../Map/Mapper.js"]
+- Shared face voxel lookup data [Mapper "../../Map/Mapper.js"]
+- Dirty neighbor boxel refresh after edits [Mapper "../../Map/Mapper.js"]
+- Mesh worker payload serialization [Mapper "../../Map/Mapper.js"]
+- Solid-neighbor payload window for worker meshing [Mapper "../../Map/Mapper.js"]
+
+
+Visibility / Camera
+-------------------
+
+Frustum:
+- Soft frustum culling [FrustumCulling "./Visibility/FrustumCulling.js"]
+- Frustum refresh thresholds [GameRuntime "../GameRuntime.js"]
+
+Chunk visibility:
+- Chunk render distance [ChunkVisibility "./Visibility/ChunkVisibility.js"]
+- Front chunk priority [ChunkVisibility "./Visibility/ChunkVisibility.js"]
+- Motion direction priority [ChunkVisibility "./Visibility/ChunkVisibility.js"]
+- Surface chunk priority [ChunkVisibility "./Visibility/ChunkVisibility.js"]
+- Queue age priority boost [ChunkVisibility "./Visibility/ChunkVisibility.js"]
+- Near chunk memory / easy reload [FrustumCulling "./Visibility/FrustumCulling.js"]
+- Chunk refresh camera turn thresholds [GameRuntime "../GameRuntime.js"]
+
+Raycast:
+- Raycast target frustum filtering [Render "./GoldenRule/Render.js"]
+- Raycast target distance filtering [Render "./GoldenRule/Render.js"]
+- Raycast target grace window [ChunkVisibility "./Visibility/ChunkVisibility.js"]
+- Raycast interval throttling [Raycast "../../Raycast/Raycast.js"]
+- Raycast candidate bounding sphere prefilter [Raycast "../../Raycast/Raycast.js"]
+
+
+Render
+------
+
+Budget:
+- RenderBudgeter [RenderBudgeter "./RenderBudgeter.js"]
+- Max visible chunk presets [RenderBudgeter "./RenderBudgeter.js"]
+- Mesh builds per frame presets [RenderBudgeter "./RenderBudgeter.js"]
+
+Renderer:
+- Render-on-demand with needsRender [ThreeD "../../3D/3D.js"]
+- Renderer high-performance options [ThreeD "../../3D/3D.js"]
+- Undersampling render scale [ThreeD "../../3D/3D.js"]
+- Pixelated upscale option [ThreeD "../../3D/3D.js"]
+- Fog matched to render distance [ThreeD "../../3D/3D.js"]
+
+Cleanup:
+- Mesh disposal on replacement or unload [ChunkVisibility "./Visibility/ChunkVisibility.js"]
+
+
+Runtime
+-------
+
+- Generic minimal responsibility [GameRuntime "../GameRuntime.js"]
+- Golden Rule data / mesh / render split [GoldenRule "./GoldenRule"]
+- Active-loop gating [GameRuntime "../GameRuntime.js"]
+- Input-version based render refresh [GameRuntime "../GameRuntime.js"]
+
+
+Streaming
+---------
+
+Budgets:
+- Per-frame data loading budget [Data "./GoldenRule/Data.js"]
+- Per-frame mesh building budget [ChunkVisibility "./Visibility/ChunkVisibility.js"]
+
+Workers:
+- Web Worker meshing [BoxelMeshWorker "./Meshing/BoxelMeshWorker.js"]
+- Worker job concurrency limit [ChunkVisibility "./Visibility/ChunkVisibility.js"]
+- Async mesh job tracking [ChunkVisibility "./Visibility/ChunkVisibility.js"]
+- Main-thread fallback for worker failure [ChunkVisibility "./Visibility/ChunkVisibility.js"]
+
+Queues:
+- Queue dedupe [Data "./GoldenRule/Data.js"]
+- Queue pruning [Data "./GoldenRule/Data.js"]
+- Mesh queue trimming [Mesh "./GoldenRule/Mesh.js"]
+- Chunk state tracking [ChunkVisibility "./Visibility/ChunkVisibility.js"]
+
+
+Memory
+------
+
+Storage:
+- IndexedDB instead of localStorage [Memory "../../Memory/Memory.js"]
+
+Saving:
+- Autosave interval [GameRuntime "../GameRuntime.js"]
+- Save on beforeunload [GameRuntime "../GameRuntime.js"]
+- World patches for placed voxels [Mapper "../../Map/Mapper.js"]
+- World patches for removed voxels [Mapper "../../Map/Mapper.js"]
+
+
+Profiling
+---------
+
+- Debug profiling counters [Debug "../Debug.js"]
+- Debug profile snapshot [Debug "../Debug.js"]
+- Benchmark sampler [GameRuntime "../GameRuntime.js"]
+
+Rule:
+- Benchmark before enabling each new tier.
+- Compare before/after with same camera position, render distance, and world state.
+
+
+Defined But Not Wired Yet
+-------------------------
+
+These files exist as contracts / planning classes.
+They are not connected to the active render pipeline yet.
+
+- LOD [LOD "./LOD.js"]
+- Impostor [Impostor "./Impostor.js"]
+- OcclusionCulling [OcclusionCulling "./Visibility/OcclusionCulling.js"]
+
+Need review before wiring:
+- Compare responsibilities.
+- Avoid duplicated distance logic.
+- Decide which class owns distance bands.
+- Decide which class owns cache keys.
+- Decide what data goes into worker payloads.
+
+Suggested responsibility split:
+
+LOD:
+- Decides detail level.
+- Uses 3 modes only:
+  - full-detail
+  - medium-detail
+  - minimal-detail
+- Should affect Boxel15 meshes first.
+- Later scales down into microxeled voxels.
+
+Impostor:
+- Decides when real representation is replaced.
+- Should come after LOD.
+- Useful for very far land before full mesh streaming.
+- Future output could be billboard, boxel card, or color volume.
+
+OcclusionCulling:
+- Should only run in caves / closed spaces.
+- Should skip open space by default.
+- Must stay low priority.
+- Must avoid slowing down outdoor traversal.
+
+
+Future Plan
+-----------
+
+Main roadmap:
+- LOD tiers for far Boxel15 meshes [LOD "./LOD.js"]
+- LOD hysteresis to prevent tier flicker [LOD "./LOD.js"]
+- LOD-aware mesh cache per Boxel15 + mode [ChunkVisibility "./Visibility/ChunkVisibility.js"]
+- Far-land impostors before full mesh streaming [Impostor "./Impostor.js"]
+- Occlusion only for caves / closed spaces [OcclusionCulling "./Visibility/OcclusionCulling.js"]
+- Distance bands: near editable, mid greedy mesh, far simplified [Render "./GoldenRule/Render.js"]
+- Keep raycast/edit targets near only [Raycast "../../Raycast/Raycast.js"]
+- Worker payload includes lodMode / impostorMode [BoxelMeshWorker "./Meshing/BoxelMeshWorker.js"]
+- Memory budget for cached far meshes / impostors [RenderBudgeter "./RenderBudgeter.js"]
+- Benchmark before enabling each tier [GameRuntime "../GameRuntime.js"]
+
+Execution order:
+1. LOD
+2. LOD-aware mesh cache
+3. Impostors
+4. Raycast near-only
+5. Occlusion caves-only
+
+LOD detail rule:
+- Near: editable, full mesh, full microxels.
+- Mid: greedy mesh, simplified microxeled voxels.
+- Far: simplified chunk volume or impostor.
+- Very far: hidden or fog-covered.
+
+Do not do:
+- Do not start LOD at microxel level.
+- Do not run occlusion in open space.
+- Do not remesh when crossing distance thresholds without hysteresis.
+- Do not let GameRuntime become the owner of optimization policy.
+- Do not mix LOD and Impostor into the same class too early.
+
+
+Bottom Notes
+------------
+
+LOD.js future use:
+- Feed ChunkVisibility with a mode per Boxel15.
+- Send lodMode to BoxelMesher / BoxelMeshWorker.
+- Cache meshes by boxelKey + lodMode.
+- First implementation should only switch Boxel15 mesh detail.
+- Later implementation can simplify microxeled voxels internally.
+
+Impostor.js future use:
+- Generate far cheap representations.
+- Replace full chunk meshes at long distance.
+- Should probably use its own future mesher, not BoxelMesher directly.
+- Best used after LOD is stable.
+
+OcclusionCulling.js future use:
+- Only useful when player is in closed spaces.
+- Must detect open-space and skip.
+- Should be soft first.
+- Hard occlusion can cause popping and should wait.
