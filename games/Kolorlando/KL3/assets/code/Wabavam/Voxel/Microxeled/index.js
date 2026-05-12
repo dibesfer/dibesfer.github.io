@@ -4,6 +4,7 @@ const ROOT = new URL("./", import.meta.url).href;
 
 export const microxeledVoxelFiles = [
     "StyledBox.voxel",
+    "SpaceShip1.voxel",
 ].map((file) => `${ROOT}${file}`);
 
 export async function loadMicroxeledVoxels() {
