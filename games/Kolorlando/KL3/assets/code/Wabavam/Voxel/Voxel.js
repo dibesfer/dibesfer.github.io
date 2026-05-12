@@ -13,6 +13,10 @@ export class Voxel {
         );
         this.orientation = this.normalizeOrientation(options.orientation ?? null);
         this.type = this.normalizeType(options.type ?? "colored");
+        this.textureAtlasTile = this.normalizeOptionalText(options.textureAtlasTile ?? options.textureTile ?? options.atlasTile ?? null);
+        this.faceTextureAtlasTiles = this.normalizeFaceTextureAtlasTiles(
+            options.faceTextureAtlasTiles ?? options.faceTextureTiles ?? options.atlasTiles ?? options.textureTiles ?? null
+        );
         this.microxelSize = this.normalizeGridSize(options.microxelSize ?? options.size ?? 0);
         this.microxelPalette = null;
         this.microxels = null;
@@ -163,8 +167,13 @@ export class Voxel {
             orientable: this.orientable,
             orientation: this.orientation,
             type: this.type,
+            textureAtlasTile: this.textureAtlasTile,
+            faceTextureAtlasTiles: this.faceTextureAtlasTiles,
             microxelSize: this.effectiveMicroxelSize(),
         };
+
+        if (!data.textureAtlasTile) delete data.textureAtlasTile;
+        if (!data.faceTextureAtlasTiles) delete data.faceTextureAtlasTiles;
 
         if (this.hasStoredMicroxels()) {
             data.microxelPalette = this.serializeMicroxelPalette();
@@ -252,6 +261,24 @@ export class Voxel {
             : "colored";
     }
 
+    normalizeFaceTextureAtlasTiles(tiles = null) {
+        if (!tiles || typeof tiles !== "object") return null;
+
+        const normalized = {};
+        ["px", "nx", "py", "ny", "pz", "nz", "top", "bottom", "side", "default"].forEach((key) => {
+            const value = this.normalizeOptionalText(tiles[key] ?? null);
+            if (value) normalized[key] = value;
+        });
+
+        return Object.keys(normalized).length > 0 ? normalized : null;
+    }
+
+    normalizeOptionalText(value = null) {
+        if (value === null || value === undefined || value === "") return null;
+
+        return this.normalizeText(value, null);
+    }
+
     normalizeGridSize(size = 0) {
         const number = Math.floor(Number(size));
 
@@ -268,3 +295,5 @@ export class Voxel {
 }
 
 export default Voxel;
+
+// ./assets/code/Wabavam/Voxel/VoxelFile.j

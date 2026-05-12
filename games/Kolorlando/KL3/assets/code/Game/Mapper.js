@@ -120,6 +120,7 @@ export class Mapper {
         const mesh = this.createBoxel15Mesh(boxel15, woxel);
         if (!mesh) return null;
 
+        this.applyWireframeToMesh(mesh, this.wireframeMode);
         mesh.visible = false;
         this.registerBoxel15Mesh(boxel15, mesh);
         this.worldObject3D.add(mesh);
@@ -154,6 +155,7 @@ export class Mapper {
         const newMesh = this.createBoxel15Mesh(boxel15, woxel);
         if (!newMesh) return null;
 
+        this.applyWireframeToMesh(newMesh, this.wireframeMode);
         this.registerBoxel15Mesh(boxel15, newMesh);
         this.worldObject3D.add(newMesh);
         this.applyBoxel15Visibility(boxel15);
@@ -336,6 +338,7 @@ export class Mapper {
         this.debugBoundsVisible = this.wireframeMode;
 
         this.boxel15Mesher.setWireframe(this.wireframeMode);
+        this.applyWireframeToExistingMeshes(this.wireframeMode);
 
         if (this.debugBoundsVisible) {
             this.boxel15MeshStreamer.syncDebugBoundsForLoadedMeshes?.();
@@ -347,6 +350,54 @@ export class Mapper {
     setBoxel15BoundsVisible(enabled = false) {
         this.debugBoundsVisible = Boolean(enabled);
         this.applyDebugBoundsVisibility();
+    }
+
+    applyWireframeToExistingMeshes(enabled = false) {
+        this.meshes.forEach((mesh) => this.applyWireframeToMesh(mesh, enabled));
+    }
+
+    applyWireframeToMesh(mesh, enabled = false) {
+        if (!mesh) return;
+
+        const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+
+        materials.filter(Boolean).forEach((material) => {
+            this.applyDebugMaterialState(mesh, material, enabled);
+        });
+    }
+
+    applyDebugMaterialState(mesh, material, enabled = false) {
+        const debugEnabled = Boolean(enabled);
+        const isFaceBaked = mesh.userData?.faceBaked === true;
+
+        if (!material.userData) material.userData = {};
+
+        if (debugEnabled && !material.userData.beforeWireframeDebug) {
+            material.userData.beforeWireframeDebug = {
+                map: material.map ?? null,
+                color: material.color?.clone?.() ?? null,
+                vertexColors: material.vertexColors,
+            };
+        }
+
+        if (!debugEnabled && material.userData.beforeWireframeDebug) {
+            const previous = material.userData.beforeWireframeDebug;
+
+            material.map = previous.map ?? null;
+            if (previous.color && material.color?.copy) material.color.copy(previous.color);
+            material.vertexColors = previous.vertexColors;
+            delete material.userData.beforeWireframeDebug;
+        }
+
+        material.wireframe = debugEnabled;
+
+        if (debugEnabled && isFaceBaked) {
+            // Keep the baked texture visible in debug.
+            // The wireframe now shows the real reduced geometry: big flat rects instead of voxel-per-face spam.
+            material.vertexColors = false;
+        }
+
+        material.needsUpdate = true;
     }
 
     applyDebugBoundsVisibility() {

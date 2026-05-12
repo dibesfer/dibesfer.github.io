@@ -61,6 +61,8 @@ export class VoxelPalette {
                 orientable: data.orientable ?? data.isOrientable ?? false,
                 orientation: data.orientation ?? null,
                 type: data.type ?? (Array.isArray(data.microxels) || data.microxelPalette ? "microxeled" : "colored"),
+                textureAtlasTile: data.textureAtlasTile ?? data.textureTile ?? data.atlasTile ?? null,
+                faceTextureAtlasTiles: data.faceTextureAtlasTiles ?? data.faceTextureTiles ?? data.atlasTiles ?? data.textureTiles ?? null,
                 microxelSize: data.microxelSize ?? data.microxelPalette?.size ?? data.microxels?.length ?? 0,
                 microxelPalette: data.microxelPalette ?? data.microxelData ?? null,
                 microxels: data.microxels ?? null,
@@ -149,6 +151,8 @@ export class VoxelPalette {
             orientable: voxel?.orientable ?? voxel?.isOrientable?.() ?? false,
             orientation: voxel?.orientation ?? null,
             type: voxel?.type ?? "colored",
+            textureAtlasTile: voxel?.textureAtlasTile ?? null,
+            faceTextureAtlasTiles: voxel?.faceTextureAtlasTiles ?? null,
         };
     }
 
@@ -165,3 +169,5 @@ export class VoxelPalette {
 }
 
 export default VoxelPalette;
+
+// ./assets/code/Wabavam/Voxel/VoxelOrienting.js 

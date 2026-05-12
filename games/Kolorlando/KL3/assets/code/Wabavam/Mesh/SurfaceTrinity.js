@@ -22,6 +22,7 @@ export class SurfaceTrinity {
         const forEachCell = source.forEachCell ?? (() => {});
         const isSolidAt = source.isSolidAt ?? (() => false);
         const getColor = source.getColor ?? ((cell) => cell?.color ?? "#ffffff");
+        const getFaceData = source.getFaceData ?? (() => null);
         const origin = source.origin ?? { x: 0, y: 0, z: 0 };
 
         forEachCell((cell, localX, localY, localZ) => {
@@ -37,12 +38,17 @@ export class SurfaceTrinity {
                     x: origin.x + localX,
                     y: origin.y + localY,
                     z: origin.z + localZ,
-                    color: getColor(cell, localX, localY, localZ),
+                    color: getColor(cell, localX, localY, localZ, direction),
+                    ...this.normalizeFaceData(getFaceData(cell, direction, localX, localY, localZ)),
                 });
             });
         });
 
         return faces;
+    }
+
+    normalizeFaceData(data = null) {
+        return data && typeof data === "object" ? data : {};
     }
 
     perFaceSurfaceRendering(faces = []) {
@@ -92,6 +98,8 @@ export class SurfaceTrinity {
                     width,
                     height,
                     color: face.color,
+                    textureAtlas: face.textureAtlas ?? null,
+                    greedyKey: face.greedyKey ?? null,
                 });
             }
         }
@@ -197,7 +205,12 @@ export class SurfaceTrinity {
     }
 
     createGreedyGroupKey(face) {
-        return `${face.direction}|${face.plane}|${face.color}`;
+        const materialKey = face.greedyKey
+            ?? face.textureAtlas?.greedyKey
+            ?? face.textureAtlas?.tileId
+            ?? face.color;
+
+        return `${face.direction}|${face.plane}|${materialKey}`;
     }
 
     toGreedyFace(face) {
@@ -212,3 +225,5 @@ export class SurfaceTrinity {
 }
 
 export default SurfaceTrinity;
+
+
