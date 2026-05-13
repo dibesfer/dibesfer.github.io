@@ -6,6 +6,10 @@ function randInt(max) {
   return Math.floor(Math.random() * max);
 }
 
+function randRange(min, max) {
+  return min + randInt(max - min + 1);
+}
+
 function randomColor() {
   return palette[randInt(palette.length)];
 }
@@ -15,15 +19,13 @@ function randomVoxelSpec() {
   if (!useMicroxels) return { type: 'voxel', color: randomColor() };
 
   const microxels = [];
-  const size = 3;
+  const size = randRange(2, 4);
+  const targetCount = randRange(1, Math.min(64, size ** 3));
 
-  for (let x = 0; x < size; x += 1) {
-    for (let y = 0; y < size; y += 1) {
-      for (let z = 0; z < size; z += 1) {
-        const shell = x === 0 || y === 0 || z === 0 || x === size - 1 || y === size - 1 || z === size - 1;
-        if (shell && Math.random() > 0.42) microxels.push({ x, y, z, color: randomColor() });
-      }
-    }
+  while (microxels.length < targetCount) {
+    const entry = { x: randInt(size), y: randInt(size), z: randInt(size), color: randomColor() };
+    const key = `${entry.x}:${entry.y}:${entry.z}`;
+    if (!microxels.some(item => `${item.x}:${item.y}:${item.z}` === key)) microxels.push(entry);
   }
 
   return { type: 'voxel', microxels };
@@ -31,18 +33,29 @@ function randomVoxelSpec() {
 
 function randomBoxelSpec() {
   const voxels = [];
-  const width = 3 + randInt(4);
-  const depth = 3 + randInt(4);
-  const height = 1 + randInt(4);
+  const targetCount = randRange(1, 64);
+  let width = 1;
+  let depth = 1;
+  let maxHeight = 1;
 
-  for (let x = 0; x < width; x += 1) {
-    for (let z = 0; z < depth; z += 1) {
-      const columnHeight = 1 + randInt(height);
-      for (let y = 0; y < columnHeight; y += 1) {
-        const keep = y === 0 || Math.random() > 0.3;
-        if (keep) voxels.push({ x, y, z, color: randomColor() });
-      }
-    }
+  do {
+    width = randRange(1, 8);
+    depth = randRange(1, 8);
+    const minHeight = Math.ceil(targetCount / Math.max(1, width * depth));
+    if (minHeight > 8) continue;
+    maxHeight = randRange(minHeight, 8);
+  } while (width * depth * maxHeight < targetCount);
+
+  const columns = Array.from({ length: width * depth }, () => 0);
+
+  while (voxels.length < targetCount) {
+    const x = randInt(width);
+    const z = randInt(depth);
+    const index = z * width + x;
+    const y = columns[index];
+    if (y >= maxHeight) continue;
+    voxels.push({ x, y, z, color: randomColor() });
+    columns[index] += 1;
   }
 
   return { type: 'boxel', voxels };
@@ -53,6 +66,7 @@ const options = {
   pixelRatio: 1,
   pixelPerfect: true,
   debugCubeStroke: true,
+  debugGrid: true,
   debugHexStroke: true,
 };
 

@@ -13,18 +13,18 @@ const DEFAULTS = Object.freeze({
   tileHalfWidth: 8,
   tileHalfHeight: 4,
   cubeHeight: 8,
-  padding: 10,
+  padding: 0,
   background: 'transparent',
-  hexInset: 8,
-  hexFill: 'rgba(255,255,255,0.04)',
-  hexStroke: 'rgba(20,20,30,0.92)',
-  cubeStroke: 'rgba(10,10,16,0.72)',
+  hexInset: 0,
+  hexFill: 'rgba(255,255,255,0.07)',
+  hexStroke: 'rgba(20,20,30,0.9)',
+  cubeStroke: 'rgba(10,10,16,0.58)',
+  gridStroke: 'rgba(134,218,255,0.22)',
   debugCubeStroke: true,
+  debugGrid: true,
   debugHexStroke: true,
   pixelPerfect: true,
   pixelLineWidth: 1,
-  maxScale: 8,
-  minScale: 1,
   cache: true,
 });
 
@@ -77,22 +77,29 @@ function normalizePoint(entry, fallbackColor = '#8cc8ff') {
 }
 
 function normalizeSpec(spec = {}) {
-  if (Array.isArray(spec)) return { type: 'boxel', voxels: spec.map(entry => normalizePoint(entry)) };
+  if (Array.isArray(spec)) {
+    const voxels = spec.map(entry => normalizePoint(entry));
+    return { type: 'boxel', voxels };
+  }
+
   const type = spec.type || (spec.voxels ? 'boxel' : 'voxel');
 
   if (type === 'boxel') {
+    const voxels = (spec.voxels || spec.cells || spec.entries || [])
+      .map(entry => normalizePoint(entry, spec.color || '#8cc8ff'));
     return {
       type,
-      voxels: (spec.voxels || spec.cells || spec.entries || [])
-        .map(entry => normalizePoint(entry, spec.color || '#8cc8ff')),
+      voxels,
     };
   }
 
   if (type === 'voxel' && Array.isArray(spec.microxels) && spec.microxels.length > 0) {
-    return { type, voxels: spec.microxels.map(entry => normalizePoint(entry, spec.color || '#8cc8ff')) };
+    const voxels = spec.microxels.map(entry => normalizePoint(entry, spec.color || '#8cc8ff'));
+    return { type, voxels };
   }
 
-  return { type: 'voxel', voxels: [{ x: 0, y: 0, z: 0, color: normalizeHexColor(spec.color || '#8cc8ff') }] };
+  const voxels = [{ x: 0, y: 0, z: 0, color: normalizeHexColor(spec.color || '#8cc8ff') }];
+  return { type: 'voxel', voxels };
 }
 
 function depthSort(a, b) {
@@ -128,24 +135,31 @@ function cubePolygons(voxel, o) {
   };
 }
 
-function measure(voxels, o) {
-  const b = { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity };
-  for (const voxel of voxels) {
-    const faces = cubePolygons(voxel, o);
-    for (const face of [faces.top, faces.left, faces.right]) {
-      for (const p of face) {
-        b.minX = Math.min(b.minX, p.x);
-        b.minY = Math.min(b.minY, p.y);
-        b.maxX = Math.max(b.maxX, p.x);
-        b.maxY = Math.max(b.maxY, p.y);
-      }
-    }
-  }
-  return Number.isFinite(b.minX) ? b : { minX: 0, minY: 0, maxX: 1, maxY: 1 };
+function cubeInnerGridPolygons(o) {
+  const hw = o.tileHalfWidth, hh = o.tileHalfHeight, ch = o.cubeHeight;
+  const top = [
+    { x: 0, y: -hh },
+    { x: hw, y: 0 },
+    { x: 0, y: hh },
+    { x: -hw, y: 0 },
+  ];
+  const bottom = top.map(point => ({ x: point.x, y: point.y + ch }));
+
+  return {
+    bottom,
+    back: [top[0], top[1], bottom[1], bottom[0]],
+    left: [top[3], bottom[3], bottom[0], top[0]],
+    right: [top[1], bottom[1], bottom[2], top[2]],
+  };
+}
+
+function transformPoint(p, t) {
+  return { x: (p.x - t.cx) * t.scale + t.ox, y: (p.y - t.cy) * t.scale + t.oy };
 }
 
 function mapPoint(p, t) {
-  return { x: Math.round((p.x - t.cx) * t.scale + t.ox), y: Math.round((p.y - t.cy) * t.scale + t.oy) };
+  const mapped = transformPoint(p, t);
+  return { x: Math.round(mapped.x), y: Math.round(mapped.y) };
 }
 
 function mapPolygon(points, t) { return points.map(p => mapPoint(p, t)); }
@@ -199,19 +213,45 @@ function drawPolygon(ctx, points, fillStyle, strokeStyle, o) {
   else drawCanvasStroke(ctx, points, strokeStyle, o.pixelLineWidth);
 }
 
-function hexPoints(size, inset) {
-  const cx = Math.round(size * 0.5);
-  const top = inset, right = size - inset, bottom = size - inset, left = inset;
-  const quarterY = Math.round(size * 0.25 + inset * 0.5);
-  const threeQuarterY = Math.round(size * 0.75 - inset * 0.5);
+function strokePolygon(ctx, points, strokeStyle, o) {
+  if (o.pixelPerfect) drawPixelStroke(ctx, points, strokeStyle, o.pixelLineWidth);
+  else drawCanvasStroke(ctx, points, strokeStyle, o.pixelLineWidth);
+}
+
+function resolveHexInset(size, o) {
+  const inset = o.hexInset <= 1 ? size * o.hexInset : o.hexInset;
+  return Math.round(clamp(inset, 0, size * 0.24));
+}
+
+function cubeSilhouette(o) {
+  const hw = o.tileHalfWidth, hh = o.tileHalfHeight, ch = o.cubeHeight;
   return [
-    { x: cx, y: top },
-    { x: right, y: quarterY },
-    { x: right, y: threeQuarterY },
-    { x: cx, y: bottom },
-    { x: left, y: threeQuarterY },
-    { x: left, y: quarterY },
+    { x: 0, y: -hh },
+    { x: hw, y: 0 },
+    { x: hw, y: ch },
+    { x: 0, y: ch + hh },
+    { x: -hw, y: ch },
+    { x: -hw, y: 0 },
   ];
+}
+
+function fitPointsToSize(points, size, inset) {
+  const b = measurePoints(points);
+  const w = Math.max(1, b.maxX - b.minX);
+  const h = Math.max(1, b.maxY - b.minY);
+  const fit = Math.max(1, size - inset * 2 - 1);
+  const scale = fit / Math.max(w, h);
+  return points.map(point => mapPoint(point, {
+    cx: b.minX + w * 0.5,
+    cy: b.minY + h * 0.5,
+    ox: Math.round((size - 1) * 0.5),
+    oy: Math.round((size - 1) * 0.5),
+    scale,
+  }));
+}
+
+function hexPoints(size, inset, o) {
+  return fitPointsToSize(cubeSilhouette(o), size, inset);
 }
 
 function clipPolygon(ctx, points) {
@@ -229,20 +269,120 @@ function makeCanvas(size) {
   return canvas;
 }
 
-function fitTransform(voxels, size, o) {
-  const b = measure(voxels, o);
+function measurePoints(points) {
+  const b = { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity };
+  for (const p of points) {
+    b.minX = Math.min(b.minX, p.x);
+    b.minY = Math.min(b.minY, p.y);
+    b.maxX = Math.max(b.maxX, p.x);
+    b.maxY = Math.max(b.maxY, p.y);
+  }
+  return Number.isFinite(b.minX) ? b : { minX: 0, minY: 0, maxX: 1, maxY: 1 };
+}
+
+function voxelVertices(voxels, o) {
+  const points = [];
+  for (const voxel of voxels) {
+    const faces = cubePolygons(voxel, o);
+    points.push(...faces.top, ...faces.left, ...faces.right);
+  }
+  return points;
+}
+
+function gridVoxels(grid) {
+  const voxels = [];
+  for (let x = 0; x < grid.width; x += 1) {
+    for (let y = 0; y < grid.height; y += 1) {
+      for (let z = 0; z < grid.depth; z += 1) {
+        voxels.push({ x, y, z });
+      }
+    }
+  }
+  return voxels;
+}
+
+function lerpPoint(a, b, amount) {
+  return {
+    x: a.x + (b.x - a.x) * amount,
+    y: a.y + (b.y - a.y) * amount,
+  };
+}
+
+function strokeLine(ctx, a, b, strokeStyle, o) {
+  const from = { x: Math.round(a.x), y: Math.round(a.y) };
+  const to = { x: Math.round(b.x), y: Math.round(b.y) };
+
+  if (o.pixelPerfect) pixelLine(ctx, from, to, strokeStyle, o.pixelLineWidth);
+  else {
+    ctx.beginPath();
+    ctx.moveTo(from.x + 0.5, from.y + 0.5);
+    ctx.lineTo(to.x + 0.5, to.y + 0.5);
+    ctx.strokeStyle = strokeStyle;
+    ctx.lineWidth = o.pixelLineWidth;
+    ctx.stroke();
+  }
+}
+
+function drawFaceGrid(ctx, face, divisions, o) {
+  const [a, b, c, d] = face;
+
+  for (let column = 0; column <= divisions; column += 1) {
+    const amount = column / divisions;
+    strokeLine(ctx, lerpPoint(a, d, amount), lerpPoint(b, c, amount), o.gridStroke, o);
+  }
+
+  for (let row = 0; row <= divisions; row += 1) {
+    const amount = row / divisions;
+    strokeLine(ctx, lerpPoint(a, b, amount), lerpPoint(d, c, amount), o.gridStroke, o);
+  }
+}
+
+function iconTransform(size, o) {
+  const points = cubeSilhouette(o);
+  const b = measurePoints(points);
   const w = Math.max(1, b.maxX - b.minX);
   const h = Math.max(1, b.maxY - b.minY);
-  const available = Math.max(1, size - o.padding * 2);
-  const rawScale = available / Math.max(w, h);
-  const scale = o.pixelPerfect ? clamp(Math.floor(rawScale), o.minScale, o.maxScale) : clamp(rawScale, o.minScale, o.maxScale);
 
   return {
     cx: b.minX + w * 0.5,
     cy: b.minY + h * 0.5,
-    ox: Math.round(size * 0.5),
-    oy: Math.round(size * 0.5),
-    scale,
+    ox: Math.round((size - 1) * 0.5),
+    oy: Math.round((size - 1) * 0.5),
+    scale: Math.max(1, size - resolveHexInset(size, o) * 2 - 1) / Math.max(w, h),
+  };
+}
+
+function voxelSpan(voxels) {
+  const max = voxels.reduce((bounds, voxel) => ({
+    x: Math.max(bounds.x, voxel.x),
+    y: Math.max(bounds.y, voxel.y),
+    z: Math.max(bounds.z, voxel.z),
+  }), { x: 0, y: 0, z: 0 });
+
+  return Math.max(1, max.x + 1, max.y + 1, max.z + 1);
+}
+
+function drawInnerGrid(ctx, size, divisions, o) {
+  const faces = cubeInnerGridPolygons(o);
+  const transform = iconTransform(size, o);
+  const safeDivisions = Math.max(1, Math.min(64, divisions));
+
+  drawFaceGrid(ctx, mapPolygon(faces.bottom, transform), safeDivisions, o);
+  drawFaceGrid(ctx, mapPolygon(faces.left, transform), safeDivisions, o);
+  drawFaceGrid(ctx, mapPolygon(faces.back, transform), safeDivisions, o);
+}
+
+function gridAlignedTransform(size, o, divisions) {
+  const icon = iconTransform(size, o);
+  const points = voxelVertices(gridVoxels({ width: divisions, height: divisions, depth: divisions }), o);
+  const b = measurePoints(points);
+
+  return {
+    cx: b.minX + (b.maxX - b.minX) * 0.5,
+    cy: b.minY + (b.maxY - b.minY) * 0.5,
+    ox: icon.ox,
+    oy: icon.oy,
+    scale: icon.scale / divisions,
   };
 }
 
@@ -275,15 +415,18 @@ export class Isometricon {
       ctx.fillRect(0, 0, size, size);
     }
 
-    const iconHex = hexPoints(size, o.hexInset);
+    const iconHex = hexPoints(size, resolveHexInset(size, o), o);
 
     ctx.save();
     clipPolygon(ctx, iconHex);
     drawFilledPolygon(ctx, iconHex, o.hexFill);
 
     if (voxels.length > 0) {
-      const transform = fitTransform(voxels, size, o);
+      const gridDivisions = voxelSpan(voxels);
+      const transform = gridAlignedTransform(size, o, gridDivisions);
       const stroke = o.debugCubeStroke ? o.cubeStroke : null;
+
+      if (o.debugGrid) drawInnerGrid(ctx, size, gridDivisions, o);
 
       for (const voxel of voxels) {
         const faces = cubePolygons(voxel, o);

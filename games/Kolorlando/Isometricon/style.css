@@ -70,8 +70,7 @@ canvas,
   display: block;
   image-rendering: pixelated;
   image-rendering: crisp-edges;
-  border: 1px dashed #666;
-  background: #f7f1df;
+  background: transparent;
   margin-bottom: 12px;
 }
 
