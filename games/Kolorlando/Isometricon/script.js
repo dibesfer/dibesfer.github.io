@@ -19,13 +19,17 @@ function randomVoxelSpec() {
   if (!useMicroxels) return { type: 'voxel', color: randomColor() };
 
   const microxels = [];
+  const occupied = new Set();
   const size = randRange(2, 4);
   const targetCount = randRange(1, Math.min(64, size ** 3));
 
   while (microxels.length < targetCount) {
     const entry = { x: randInt(size), y: randInt(size), z: randInt(size), color: randomColor() };
     const key = `${entry.x}:${entry.y}:${entry.z}`;
-    if (!microxels.some(item => `${item.x}:${item.y}:${item.z}` === key)) microxels.push(entry);
+    if (!occupied.has(key)) {
+      occupied.add(key);
+      microxels.push(entry);
+    }
   }
 
   return { type: 'voxel', microxels };
@@ -65,9 +69,9 @@ const options = {
   size: 192,
   pixelRatio: 1,
   pixelPerfect: true,
-  debugCubeStroke: true,
-  debugGrid: true,
-  debugHexStroke: true,
+  cubeOutline: true,
+  underlayGrid: true,
+  hexOutline: true,
 };
 
 const boxelCanvas = document.querySelector('#boxelIcon');

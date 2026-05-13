@@ -20,9 +20,9 @@ const DEFAULTS = Object.freeze({
   hexStroke: 'rgba(20,20,30,0.9)',
   cubeStroke: 'rgba(10,10,16,0.58)',
   gridStroke: 'rgba(134,218,255,0.22)',
-  debugCubeStroke: true,
-  debugGrid: true,
-  debugHexStroke: true,
+  cubeOutline: true,
+  underlayGrid: true,
+  hexOutline: true,
   pixelPerfect: true,
   pixelLineWidth: 1,
   cache: true,
@@ -213,11 +213,6 @@ function drawPolygon(ctx, points, fillStyle, strokeStyle, o) {
   else drawCanvasStroke(ctx, points, strokeStyle, o.pixelLineWidth);
 }
 
-function strokePolygon(ctx, points, strokeStyle, o) {
-  if (o.pixelPerfect) drawPixelStroke(ctx, points, strokeStyle, o.pixelLineWidth);
-  else drawCanvasStroke(ctx, points, strokeStyle, o.pixelLineWidth);
-}
-
 function resolveHexInset(size, o) {
   const inset = o.hexInset <= 1 ? size * o.hexInset : o.hexInset;
   return Math.round(clamp(inset, 0, size * 0.24));
@@ -289,11 +284,11 @@ function voxelVertices(voxels, o) {
   return points;
 }
 
-function gridVoxels(grid) {
+function cubicSlotVoxels(divisions) {
   const voxels = [];
-  for (let x = 0; x < grid.width; x += 1) {
-    for (let y = 0; y < grid.height; y += 1) {
-      for (let z = 0; z < grid.depth; z += 1) {
+  for (let x = 0; x < divisions; x += 1) {
+    for (let y = 0; y < divisions; y += 1) {
+      for (let z = 0; z < divisions; z += 1) {
         voxels.push({ x, y, z });
       }
     }
@@ -374,7 +369,7 @@ function drawInnerGrid(ctx, size, divisions, o) {
 
 function gridAlignedTransform(size, o, divisions) {
   const icon = iconTransform(size, o);
-  const points = voxelVertices(gridVoxels({ width: divisions, height: divisions, depth: divisions }), o);
+  const points = voxelVertices(cubicSlotVoxels(divisions), o);
   const b = measurePoints(points);
 
   return {
@@ -424,9 +419,9 @@ export class Isometricon {
     if (voxels.length > 0) {
       const gridDivisions = voxelSpan(voxels);
       const transform = gridAlignedTransform(size, o, gridDivisions);
-      const stroke = o.debugCubeStroke ? o.cubeStroke : null;
+      const stroke = o.cubeOutline ? o.cubeStroke : null;
 
-      if (o.debugGrid) drawInnerGrid(ctx, size, gridDivisions, o);
+      if (o.underlayGrid) drawInnerGrid(ctx, size, gridDivisions, o);
 
       for (const voxel of voxels) {
         const faces = cubePolygons(voxel, o);
@@ -438,7 +433,7 @@ export class Isometricon {
 
     ctx.restore();
 
-    if (o.debugHexStroke) {
+    if (o.hexOutline) {
       if (o.pixelPerfect) drawPixelStroke(ctx, iconHex, o.hexStroke, Math.max(1, o.pixelLineWidth));
       else drawCanvasStroke(ctx, iconHex, o.hexStroke, 2);
     }
