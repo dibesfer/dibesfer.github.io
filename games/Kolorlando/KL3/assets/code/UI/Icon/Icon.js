@@ -1,4 +1,78 @@
 import { Isometricon } from "../../../../../Isometricon/Isometricon.js";
+import { Compass } from "../../Wabavam/Compass.js";
+
+function isActiveMicroxel(microxel = null) {
+    if (!microxel) return false;
+    if (microxel.active === false) return false;
+    if (microxel.filled === false) return false;
+
+    return true;
+}
+
+function microxelColor(microxel = null, fallback = "#ffffff") {
+    return typeof microxel?.color === "string" && microxel.color.trim()
+        ? microxel.color
+        : fallback;
+}
+
+function rotateMicroxelPosition(position = {}, voxel = null) {
+    const baseOrientation = voxel?.isOrientable?.()
+        ? (Compass.normalize(voxel.orientation) ?? Compass.NORTH)
+        : Compass.NORTH;
+
+    const iconOrientation = Compass.combine(baseOrientation, Compass.SOUTH);
+    const size = Math.max(1, Math.floor(voxel?.effectiveMicroxelSize?.() ?? voxel?.microxelSize ?? 1));
+
+    return Compass.rotatePositionInSize(position, {
+        x: size,
+        y: size,
+        z: size,
+    }, iconOrientation);
+}
+
+function voxelToIsometriconSpec(voxel = null, fallbackColor = "#ffffff") {
+    if (!voxel) {
+        return {
+            type: "voxel",
+            color: fallbackColor,
+        };
+    }
+
+    if (!voxel.hasMicroxels?.()) {
+        return {
+            type: "voxel",
+            color: voxel.color ?? fallbackColor,
+        };
+    }
+
+    const microxels = [];
+
+    voxel.forEachMicroxel((microxel, x, y, z) => {
+        if (!isActiveMicroxel(microxel)) return;
+
+        const position = rotateMicroxelPosition({ x, y, z }, voxel);
+
+        microxels.push({
+            x: position.x,
+            y: position.y,
+            z: position.z,
+            color: microxelColor(microxel, voxel.color ?? fallbackColor),
+        });
+    });
+
+    if (microxels.length === 0) {
+        return {
+            type: "voxel",
+            color: voxel.color ?? fallbackColor,
+        };
+    }
+
+    return {
+        type: "voxel",
+        microxels,
+        color: voxel.color ?? fallbackColor,
+    };
+}
 
 export class Icon {
     constructor(options = {}) {
@@ -79,15 +153,17 @@ export class Icon {
         const color = icon.color ?? voxel?.color ?? "#ffffff";
 
         if (voxel || this.item.kind === "voxel" || icon.type === "color") {
-            const image = Isometricon.toImage({
-                type: "voxel",
-                color,
-            }, {
+            const canvas = Isometricon.toCanvas(voxelToIsometriconSpec(voxel, color), {
                 size: 64,
+                pixelRatio: 4,
+                underlayGrid: false,
+                cubeOutline: false,
             });
 
-            image.alt = this.item.name ?? "Voxel";
-            imageElement.appendChild(image);
+            canvas.className = "iconCanvas";
+            canvas.setAttribute("role", "img");
+            canvas.setAttribute("aria-label", this.item.name ?? "Voxel");
+            imageElement.appendChild(canvas);
             return;
         }
 
