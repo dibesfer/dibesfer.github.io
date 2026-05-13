@@ -1,13 +1,25 @@
 import * as THREE from "three";
 
+import { colorToShadedBytes, createFaceShading, getFaceShade, normalizeHexColor } from "./FaceShading.js";
+
 export class FaceBaking {
     constructor(options = {}) {
         this.enabled = options.enabled ?? true;
         this.pixelScale = this.positiveInt(options.pixelScale, 4);
         this.maxTextureSize = this.positiveInt(options.maxTextureSize, 2048);
         this.wireframe = Boolean(options.wireframe ?? false);
+        this.faceShading = createFaceShading(options.faceShading ?? {});
         this.materials = new Set();
         this.textures = new Set();
+
+        this.adaptive = options.adaptive ?? true;
+        this.minVisibleFaces = this.positiveInt(options.minVisibleFaces, 24);
+        this.minFaceSavings = this.positiveInt(options.minFaceSavings, 32);
+        this.minReductionRatio = this.clamp01(options.minReductionRatio ?? 0.45);
+        this.minDensePlaneFillRatio = this.clamp01(options.minDensePlaneFillRatio ?? 0.55);
+        this.minDensePlaneFaces = this.positiveInt(options.minDensePlaneFaces, 16);
+        this.minBakeCandidateFaceRatio = this.clamp01(options.minBakeCandidateFaceRatio ?? 0.40);
+        this.minLargestPlaneRatio = this.clamp01(options.minLargestPlaneRatio ?? 0.25);
 
         this.directions = options.directions ?? [
             { name: "px", normal: { x: 1, y: 0, z: 0 } },
@@ -20,13 +32,20 @@ export class FaceBaking {
     }
 
     createMesh(boxel15 = null, woxel = null, options = {}) {
-        if (!this.enabled || !boxel15 || this.hasMicroxels(boxel15, woxel)) return null;
+        if (!this.enabled || !boxel15) return null;
 
-        const faces = this.createVisibleFaces(boxel15, woxel);
+        const faces = Array.isArray(options.visibleFaces)
+            ? this.normalizeVisibleFaces(options.visibleFaces)
+            : this.createVisibleFaces(boxel15, woxel);
+
         if (faces.length === 0) return null;
 
+        const visibleAnalysis = this.analyzeVisibleFaces(faces);
+        if (!visibleAnalysis.shouldTry) return null;
+
         const rects = this.mergeByPlane(faces);
-        if (rects.length === 0 || rects.length >= faces.length) return null;
+        const bakeAnalysis = this.analyzeBakeResult(faces, rects, visibleAnalysis);
+        if (!bakeAnalysis.shouldBake) return null;
 
         const atlas = this.createAtlas(rects);
         if (!atlas?.texture) return null;
@@ -41,12 +60,126 @@ export class FaceBaking {
         mesh.userData.faceCount = rects.length;
         mesh.userData.originalVisibleFaceCount = faces.length;
         mesh.userData.faceCountReduction = faces.length - rects.length;
+        mesh.userData.faceCountReductionRatio = bakeAnalysis.reductionRatio;
         mesh.userData.bakedSurfaceRects = rects.length;
         mesh.userData.boxel15Visible = true;
         mesh.userData.boxel15Raycastable = true;
         mesh.userData.textureAtlas = false;
+        mesh.userData.faceBakingAnalysis = bakeAnalysis;
 
         return mesh;
+    }
+
+    normalizeVisibleFaces(faces = []) {
+        return faces
+            .map((face) => {
+                if (Number.isFinite(face?.plane) && Number.isFinite(face?.u) && Number.isFinite(face?.v)) {
+                    return {
+                        ...face,
+                        width: face.width ?? 1,
+                        height: face.height ?? 1,
+                        color: face.color ?? "#ffffff",
+                    };
+                }
+
+                return this.toFace({
+                    ...face,
+                    color: face?.color ?? "#ffffff",
+                });
+            })
+            .filter((face) => face?.direction && Number.isFinite(face.plane) && Number.isFinite(face.u) && Number.isFinite(face.v));
+    }
+
+    analyzeVisibleFaces(faces = []) {
+        const count = faces.length;
+        const empty = {
+            faceCount: count,
+            shouldTry: false,
+            candidateFaceRatio: 0,
+            largestPlaneRatio: 0,
+            densePlaneCount: 0,
+            reason: "not-enough-faces",
+        };
+
+        if (!this.adaptive) return { ...empty, shouldTry: true, reason: "adaptive-off" };
+        if (count < this.minVisibleFaces) return empty;
+
+        const planeMap = new Map();
+        faces.forEach((face) => {
+            const key = `${face.direction}|${face.plane}`;
+            if (!planeMap.has(key)) {
+                planeMap.set(key, {
+                    direction: face.direction,
+                    plane: face.plane,
+                    count: 0,
+                    minU: Infinity,
+                    maxU: -Infinity,
+                    minV: Infinity,
+                    maxV: -Infinity,
+                });
+            }
+
+            const plane = planeMap.get(key);
+            plane.count += 1;
+            plane.minU = Math.min(plane.minU, face.u);
+            plane.maxU = Math.max(plane.maxU, face.u);
+            plane.minV = Math.min(plane.minV, face.v);
+            plane.maxV = Math.max(plane.maxV, face.v);
+        });
+
+        let candidateFaces = 0;
+        let densePlaneCount = 0;
+        let largestPlaneFaces = 0;
+
+        planeMap.forEach((plane) => {
+            const area = Math.max(1, (plane.maxU - plane.minU + 1) * (plane.maxV - plane.minV + 1));
+            const fillRatio = plane.count / area;
+            const dense = plane.count >= this.minDensePlaneFaces && fillRatio >= this.minDensePlaneFillRatio;
+
+            largestPlaneFaces = Math.max(largestPlaneFaces, plane.count);
+            if (!dense) return;
+
+            densePlaneCount += 1;
+            candidateFaces += plane.count;
+        });
+
+        const candidateFaceRatio = candidateFaces / count;
+        const largestPlaneRatio = largestPlaneFaces / count;
+        const shouldTry = candidateFaceRatio >= this.minBakeCandidateFaceRatio
+            || largestPlaneRatio >= this.minLargestPlaneRatio;
+
+        return {
+            faceCount: count,
+            planeCount: planeMap.size,
+            densePlaneCount,
+            candidateFaces,
+            candidateFaceRatio,
+            largestPlaneRatio,
+            shouldTry,
+            reason: shouldTry ? "candidate-surfaces" : "too-noisy",
+        };
+    }
+
+    analyzeBakeResult(faces = [], rects = [], visibleAnalysis = {}) {
+        const faceCount = faces.length;
+        const rectCount = rects.length;
+        const savedFaces = faceCount - rectCount;
+        const reductionRatio = faceCount > 0 ? savedFaces / faceCount : 0;
+        const shouldBake = !this.adaptive || (
+            rectCount > 0
+            && savedFaces >= this.minFaceSavings
+            && reductionRatio >= this.minReductionRatio
+        );
+
+        return {
+            ...visibleAnalysis,
+            faceCount,
+            rectCount,
+            savedFaces,
+            reductionRatio,
+            shouldBake,
+            reason: shouldBake ? "worth-baking" : "not-worth-baking",
+        };
     }
 
     createVisibleFaces(boxel15, woxel = null) {
@@ -56,6 +189,7 @@ export class FaceBaking {
         boxel15.forEachVoxelId((voxelId, x, y, z) => {
             const voxel = boxel15.getVoxel(x, y, z, palette);
             if (!voxel?.isActive?.()) return;
+            if (voxel?.hasMicroxels?.()) return;
 
             this.directions.forEach((direction) => {
                 if (this.isSolidAt(boxel15, woxel, x + direction.normal.x, y + direction.normal.y, z + direction.normal.z)) return;
@@ -244,7 +378,7 @@ export class FaceBaking {
             ? woxel.getVoxelAt(worldX, worldY, worldZ)
             : boxel15.getVoxel(localX, localY, localZ);
 
-        return voxel?.isActive?.() === true && voxel?.hasMicroxels?.() !== true;
+        return voxel?.isActive?.() === true;
     }
 
     toFace(face) {
@@ -351,29 +485,26 @@ export class FaceBaking {
     }
 
     bytes(color = "#ffffff", shade = 1) {
-        const c = new THREE.Color(this.color(color)).multiplyScalar(shade);
-        return { r: Math.round(c.r * 255), g: Math.round(c.g * 255), b: Math.round(c.b * 255) };
+        return colorToShadedBytes(color, shade);
     }
 
     color(color = "#ffffff") {
-        if (typeof color !== "string") return "#ffffff";
-        const value = color.trim().toLowerCase();
-        return /^#[0-9a-f]{6}$/.test(value) ? value : "#ffffff";
+        return normalizeHexColor(color);
     }
 
     faceShade(direction = "") {
-        if (direction === "py") return 1.0;
-        if (direction === "px") return 0.85;
-        if (direction === "nx") return 0.75;
-        if (direction === "pz") return 0.70;
-        if (direction === "nz") return 0.60;
-        if (direction === "ny") return 0.45;
-        return 1;
+        return getFaceShade(direction, this.faceShading);
     }
 
     positiveInt(value, fallback = 1) {
         const n = Math.floor(Number(value));
         return Number.isFinite(n) && n > 0 ? n : fallback;
+    }
+
+    clamp01(value) {
+        const n = Number(value);
+        if (!Number.isFinite(n)) return 0;
+        return Math.max(0, Math.min(1, n));
     }
 
     key(u, v) {

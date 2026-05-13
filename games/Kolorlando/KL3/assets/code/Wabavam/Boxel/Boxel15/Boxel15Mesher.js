@@ -4,32 +4,33 @@ import { SurfaceTrinity } from "../../Mesh/SurfaceTrinity.js";
 import { TextureAtlas } from "../../Mesh/TextureAtlas.js";
 import { FaceBaking } from "../../Mesh/FaceBaking.js";
 import { MicroxelMesher } from "../../Microxel/MicroxelMesher.js";
+import { createFaceShading, getFaceShade } from "../../Mesh/FaceShading.js";
 
 export class Boxel15Mesher {
     constructor(options = {}) {
         this.surfaceTrinity = options.surfaceTrinity ?? new SurfaceTrinity(options.surfaceTrinityOptions ?? {});
+        this.faceShading = createFaceShading(options.faceShading ?? {});
         this.textureAtlas = options.textureAtlas === false
             ? null
             : options.textureAtlas ?? new TextureAtlas(options.textureAtlasOptions ?? {});
         this.faceBaking = options.faceBaking === false
             ? null
-            : options.faceBaking ?? new FaceBaking(options.faceBakingOptions ?? {});
+            : options.faceBaking ?? new FaceBaking({
+                ...(options.faceBakingOptions ?? {}),
+                faceShading: this.faceShading,
+            });
 
         // Atlas material stays opt-in. Default KL3 debug/normal render remains vertex-color safe.
         this.useTextureAtlasMaterial = Boolean(options.useTextureAtlasMaterial ?? false);
         this.material = options.material ?? this.createDefaultMaterial(options.materialOptions ?? {});
 
-        this.faceShading = {
-            px: options.faceShading?.px ?? 0.5,
-            nx: options.faceShading?.nx ?? 0.4,
-            py: options.faceShading?.py ?? 1.0,
-            ny: options.faceShading?.ny ?? 0.2,
-            pz: options.faceShading?.pz ?? 0.3,
-            nz: options.faceShading?.nz ?? 0.6,
-        };
-
         this.microxelMesher = options.microxelMesher ?? new MicroxelMesher({
             surfaceTrinity: this.surfaceTrinity,
+            textureAtlas: this.textureAtlas,
+            faceBaking: options.microxelFaceBaking ?? true,
+            pixelScale: options.microxelFaceBakingPixelScale ?? 4,
+            maxTextureSize: options.microxelFaceBakingMaxTextureSize ?? 512,
+            faceShading: this.faceShading,
         });
 
         this.directions = this.surfaceTrinity.directions;
@@ -51,22 +52,67 @@ export class Boxel15Mesher {
         });
     }
 
-    createMesh(boxel15, woxel = null) {
+    createMesh(boxel15, woxel = null, options = {}) {
         if (!boxel15) return null;
 
-        const baked = this.tryFaceBaking(boxel15, woxel);
-        if (baked) return baked;
+        const allowFaceBaking = options.allowFaceBaking ?? true;
+        const surfaceSource = this.createSurfaceSource(boxel15, woxel);
+        const visibleSurfaceFaces = this.surfaceTrinity.perFaceSurfaceRendering(
+            this.surfaceTrinity.faceCulling(surfaceSource)
+        );
+        const microxelResult = this.createMicroxelRenderParts(boxel15, woxel);
+        const baked = allowFaceBaking
+            ? this.tryFaceBaking(boxel15, woxel, visibleSurfaceFaces)
+            : null;
 
-        const voxelFaces = this.surfaceTrinity.createFaces(this.createSurfaceSource(boxel15, woxel));
-        const microxelFaces = this.createMicroxelFaces(boxel15, woxel);
-        return this.buildMesh([...voxelFaces, ...microxelFaces], boxel15);
+        if (!baked) {
+            const surfaceFaces = this.surfaceTrinity.greedyMeshing(visibleSurfaceFaces);
+            const surfaceMesh = this.buildMesh([
+                ...surfaceFaces,
+                ...microxelResult.faces,
+            ], boxel15);
+
+            if (microxelResult.meshes.length === 0) return surfaceMesh;
+            return this.createMeshGroup(boxel15, surfaceMesh, microxelResult);
+        }
+
+        if (microxelResult.faces.length === 0 && microxelResult.meshes.length === 0) return baked;
+
+        const microxelFallbackMesh = this.buildMesh(microxelResult.faces, boxel15);
+        const microxelMeshes = microxelFallbackMesh
+            ? [microxelFallbackMesh, ...microxelResult.meshes]
+            : microxelResult.meshes;
+
+        return this.createMeshGroup(boxel15, baked, { faces: [], meshes: microxelMeshes });
     }
 
-    tryFaceBaking(boxel15, woxel = null) {
+    createMeshGroup(boxel15, surfaceMesh = null, microxelResult = { faces: [], meshes: [] }) {
+        const group = new THREE.Group();
+        group.name = `${boxel15.name} Mesh Group`;
+        group.userData.boxel = boxel15;
+        group.userData.faceBaked = surfaceMesh?.userData?.faceBaked === true
+            || microxelResult.meshes.some((mesh) => mesh.userData?.faceBaked === true);
+        group.userData.microxelFaceBaked = microxelResult.meshes.some((mesh) => mesh.userData?.microxelFaceBaked === true);
+        group.userData.faceCount = (surfaceMesh?.userData?.faceCount ?? 0)
+            + microxelResult.meshes.reduce((sum, mesh) => sum + (mesh.userData?.faceCount ?? 0), 0);
+        group.userData.originalVisibleFaceCount = (surfaceMesh?.userData?.originalVisibleFaceCount ?? 0)
+            + microxelResult.meshes.reduce((sum, mesh) => sum + (mesh.userData?.originalVisibleFaceCount ?? 0), 0);
+        group.userData.boxel15Visible = true;
+        group.userData.boxel15Raycastable = true;
+        group.userData.textureAtlas = false;
+
+        if (surfaceMesh) group.add(surfaceMesh);
+        microxelResult.meshes.forEach((mesh) => group.add(mesh));
+
+        return group;
+    }
+
+    tryFaceBaking(boxel15, woxel = null, visibleFaces = null) {
         if (!this.faceBaking) return null;
 
         try {
             return this.faceBaking.createMesh(boxel15, woxel, {
+                visibleFaces,
                 materialOptions: { wireframe: this.material?.wireframe === true },
             });
         } catch (error) {
@@ -101,23 +147,37 @@ export class Boxel15Mesher {
         };
     }
 
-    createMicroxelFaces(boxel15, woxel = null) {
+    createMicroxelRenderParts(boxel15, woxel = null) {
         const faces = [];
+        const meshes = [];
 
         boxel15.forEachVoxel((voxel, localX, localY, localZ) => {
             if (!voxel?.isActive?.()) return;
             if (!voxel?.hasMicroxels?.()) return;
 
-            faces.push(...this.microxelMesher.createFaces(voxel, {
+            const origin = {
                 x: boxel15.position.x + localX,
                 y: boxel15.position.y + localY,
                 z: boxel15.position.z + localZ,
-            }, {
-                isWorldVoxelSolid: () => false,
-            }));
+            };
+            const context = {
+                isWorldVoxelSolid: (worldX, worldY, worldZ) => this.isWorldVoxelSolid(boxel15, woxel, worldX, worldY, worldZ),
+            };
+            const baked = this.microxelMesher.createMesh(voxel, origin, context);
+
+            if (baked) {
+                meshes.push(baked);
+                return;
+            }
+
+            faces.push(...this.microxelMesher.createFaces(voxel, origin, context));
         });
 
-        return faces;
+        return { faces, meshes };
+    }
+
+    createMicroxelFaces(boxel15, woxel = null) {
+        return this.createMicroxelRenderParts(boxel15, woxel).faces;
     }
 
     faceCulling(boxel15, woxel = null) {
@@ -133,6 +193,8 @@ export class Boxel15Mesher {
     }
 
     buildMesh(faces, boxel15) {
+        if (!faces || faces.length === 0) return null;
+
         const geometry = this.buildGeometry(faces);
         const mesh = new THREE.Mesh(geometry, this.material);
 
@@ -210,24 +272,44 @@ export class Boxel15Mesher {
             ? woxel.getVoxelAt(worldX, worldY, worldZ)
             : boxel15.getVoxel(localX, localY, localZ);
 
-        return neighbor?.isActive?.() === true && neighbor?.hasMicroxels?.() !== true;
+        return neighbor?.isActive?.() === true;
+    }
+
+
+    isWorldVoxelSolid(boxel15, woxel, worldX, worldY, worldZ) {
+        if (woxel) {
+            if (!woxel.isInside(worldX, worldY, worldZ)) return false;
+            return woxel.getVoxelAt(worldX, worldY, worldZ)?.isActive?.() === true;
+        }
+
+        const localX = worldX - boxel15.position.x;
+        const localY = worldY - boxel15.position.y;
+        const localZ = worldZ - boxel15.position.z;
+
+        if (localX < 0 || localY < 0 || localZ < 0) return false;
+        if (localX >= boxel15.size.x || localY >= boxel15.size.y || localZ >= boxel15.size.z) return false;
+
+        return boxel15.getVoxel(localX, localY, localZ)?.isActive?.() === true;
     }
 
     getFaceShade(direction = "") {
-        return this.faceShading[direction] ?? 1;
+        return getFaceShade(direction, this.faceShading);
     }
 
     setWireframe(enabled = false) {
         this.material.wireframe = Boolean(enabled);
         this.material.needsUpdate = true;
         this.faceBaking?.setWireframe?.(enabled);
+        this.microxelMesher?.setWireframe?.(enabled);
     }
 
     dispose() {
         this.material?.dispose?.();
         this.textureAtlas?.dispose?.();
         this.faceBaking?.dispose?.();
+        this.microxelMesher?.dispose?.();
     }
 }
 
 export default Boxel15Mesher;
+

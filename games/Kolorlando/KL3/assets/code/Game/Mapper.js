@@ -43,6 +43,10 @@ export class Mapper {
         this.debugBoundsVisible = false;
 
         this.debugBoundsColor = options.debugBoundsColor ?? 0xcfcfcf;
+
+        // Dynamic voxel edits must prefer geometric truth over baked render shortcuts.
+        // FaceBaking remains for fresh/static chunks; dirty remeshes fall back to SurfaceTrinity.
+        this.disableFaceBakingOnDirtyRemesh = options.disableFaceBakingOnDirtyRemesh ?? true;
     }
 
     createBoxel15RenderDistance(options = {}) {
@@ -90,8 +94,8 @@ export class Mapper {
         return group;
     }
 
-    createBoxel15Mesh(boxel15, woxel = this.currentWoxel) {
-        return this.boxel15Mesher.createMesh(boxel15, woxel);
+    createBoxel15Mesh(boxel15, woxel = this.currentWoxel, options = {}) {
+        return this.boxel15Mesher.createMesh(boxel15, woxel, options);
     }
 
     registerBoxel15Mesh(boxel15, mesh) {
@@ -138,7 +142,7 @@ export class Mapper {
         if (!mesh) return null;
 
         this.worldObject3D?.remove(mesh);
-        mesh.geometry?.dispose?.();
+        this.disposeObject3D(mesh);
 
         return mesh;
     }
@@ -149,10 +153,12 @@ export class Mapper {
         const oldMesh = this.unregisterBoxel15Mesh(boxel15);
         if (oldMesh) {
             this.worldObject3D.remove(oldMesh);
-            oldMesh.geometry?.dispose();
+            this.disposeObject3D(oldMesh);
         }
 
-        const newMesh = this.createBoxel15Mesh(boxel15, woxel);
+        const newMesh = this.createBoxel15Mesh(boxel15, woxel, {
+            allowFaceBaking: !this.disableFaceBakingOnDirtyRemesh,
+        });
         if (!newMesh) return null;
 
         this.applyWireframeToMesh(newMesh, this.wireframeMode);
@@ -161,6 +167,29 @@ export class Mapper {
         this.applyBoxel15Visibility(boxel15);
 
         return newMesh;
+    }
+
+
+    disposeObject3D(object = null) {
+        if (!object) return;
+
+        object.traverse?.((child) => {
+            child.geometry?.dispose?.();
+
+            const material = child.material;
+            if (Array.isArray(material)) {
+                material.forEach((item) => this.disposeMaterial(item));
+            } else {
+                this.disposeMaterial(material);
+            }
+        });
+    }
+
+    disposeMaterial(material = null) {
+        if (!material) return;
+
+        material.map?.dispose?.();
+        material.dispose?.();
     }
 
     remeshBoxel15(boxel15, woxel = this.currentWoxel) {
@@ -359,10 +388,12 @@ export class Mapper {
     applyWireframeToMesh(mesh, enabled = false) {
         if (!mesh) return;
 
-        const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+        mesh.traverse?.((object) => {
+            const materials = Array.isArray(object.material) ? object.material : [object.material];
 
-        materials.filter(Boolean).forEach((material) => {
-            this.applyDebugMaterialState(mesh, material, enabled);
+            materials.filter(Boolean).forEach((material) => {
+                this.applyDebugMaterialState(object, material, enabled);
+            });
         });
     }
 
@@ -408,7 +439,9 @@ export class Mapper {
 
     dispose() {
         this.meshes.forEach((mesh) => {
-            mesh.geometry?.dispose();
+            mesh.traverse?.((object) => {
+                object.geometry?.dispose?.();
+            });
         });
 
         this.boxel15Bounds.forEach((bounds) => {

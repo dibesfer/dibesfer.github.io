@@ -1,5 +1,7 @@
 import * as THREE from "three";
 
+import { hexColorToBytes, normalizeHexColor } from "./FaceShading.js";
+
 export const DEFAULT_TEXTURE_ATLAS_COLORS = [
     { id: 1, name: "White", color: "#ededed" },
     { id: 2, name: "Black", color: "#0d0d0d" },
@@ -271,14 +273,11 @@ export class TextureAtlas {
     }
 
     bytes(color = "#ffffff") {
-        const c = new THREE.Color(this.normalizeColor(color));
-        return { r: Math.round(c.r * 255), g: Math.round(c.g * 255), b: Math.round(c.b * 255) };
+        return hexColorToBytes(color);
     }
 
     normalizeColor(color = "#ffffff") {
-        if (typeof color !== "string") return "#ffffff";
-        const value = color.trim().toLowerCase();
-        return /^#[0-9a-f]{6}$/.test(value) ? value : "#ffffff";
+        return normalizeHexColor(color);
     }
 
     positiveInt(value, fallback = 1) {
@@ -297,3 +296,4 @@ export class TextureAtlas {
 }
 
 export default TextureAtlas;
+
