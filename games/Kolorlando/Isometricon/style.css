@@ -1,14 +1,104 @@
 * { box-sizing: border-box; }
-html { background: #101015; color: #efeff5; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
-body { margin: 0; padding: 20px; }
-main { max-width: 980px; margin: 0 auto; }
-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
-h1, h2 { margin: 0; font-size: 18px; font-weight: 700; }
-h2 { margin-bottom: 12px; font-size: 14px; opacity: 0.8; }
-button { padding: 9px 12px; border: 1px solid #666; background: #20202a; color: #fff; cursor: pointer; }
+
+html {
+  background: #101015;
+  color: #efeff5;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+body {
+  margin: 0;
+  padding: 20px;
+}
+
+main {
+  max-width: 1080px;
+  margin: 0 auto;
+}
+
+header {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+h1, h2, p { margin: 0; }
+
+h1 {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+h2 {
+  margin-bottom: 12px;
+  font-size: 14px;
+  opacity: 0.8;
+}
+
+p {
+  margin-top: 4px;
+  font-size: 12px;
+  opacity: 0.6;
+}
+
+button {
+  padding: 9px 12px;
+  border: 1px solid #666;
+  background: #20202a;
+  color: #fff;
+  cursor: pointer;
+}
+
 button:hover { background: #2a2a36; }
-.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
-.panel { border: 1px solid #3a3a48; padding: 14px; background: #171720; }
-canvas { display: block; width: 192px; height: 192px; image-rendering: pixelated; border: 1px dashed #666; background: #f7f1df; margin-bottom: 12px; }
-pre { margin: 0; padding: 10px; max-height: 360px; overflow: auto; background: #0b0b10; border: 1px solid #30303a; font-size: 11px; line-height: 1.35; }
-@media (max-width: 720px) { .grid { grid-template-columns: 1fr; } header { align-items: flex-start; flex-direction: column; } }
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.panel {
+  border: 1px solid #3a3a48;
+  padding: 14px;
+  background: #171720;
+}
+
+canvas,
+.isometriconImage {
+  display: block;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  border: 1px dashed #666;
+  background: #f7f1df;
+  margin-bottom: 12px;
+}
+
+canvas {
+  width: 192px;
+  height: 192px;
+}
+
+.imageMount {
+  min-height: 108px;
+}
+
+pre {
+  margin: 0;
+  padding: 10px;
+  max-height: 360px;
+  overflow: auto;
+  background: #0b0b10;
+  border: 1px solid #30303a;
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+@media (max-width: 720px) {
+  .grid { grid-template-columns: 1fr; }
+  header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

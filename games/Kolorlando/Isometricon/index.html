@@ -9,7 +9,10 @@
 <body>
   <main>
     <header>
-      <h1>Isometricon</h1>
+      <div>
+        <h1>Isometricon</h1>
+        <p>orthographic pixel-isometric debug</p>
+      </div>
       <button id="reroll" type="button">reroll random data</button>
     </header>
 
@@ -24,6 +27,18 @@
         <h2>Voxel icon</h2>
         <canvas id="voxelIcon" width="192" height="192" aria-label="Random voxel isometric icon"></canvas>
         <pre id="voxelData"></pre>
+      </article>
+
+      <article class="panel">
+        <h2>Single cube reference</h2>
+        <canvas id="singleIcon" width="192" height="192" aria-label="Single cube reference icon"></canvas>
+        <pre id="singleData"></pre>
+      </article>
+
+      <article class="panel">
+        <h2>DataURL / cached image</h2>
+        <div id="imageMount" class="imageMount"></div>
+        <pre id="imageData"></pre>
       </article>
     </section>
   </main>

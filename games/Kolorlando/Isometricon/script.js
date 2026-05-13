@@ -12,12 +12,11 @@ function randomColor() {
 
 function randomVoxelSpec() {
   const useMicroxels = Math.random() > 0.35;
-  if (!useMicroxels) {
-    return { type: 'voxel', color: randomColor() };
-  }
+  if (!useMicroxels) return { type: 'voxel', color: randomColor() };
 
   const microxels = [];
   const size = 3;
+
   for (let x = 0; x < size; x += 1) {
     for (let y = 0; y < size; y += 1) {
       for (let z = 0; z < size; z += 1) {
@@ -32,15 +31,15 @@ function randomVoxelSpec() {
 
 function randomBoxelSpec() {
   const voxels = [];
-  const width = 4 + randInt(3);
-  const depth = 4 + randInt(3);
+  const width = 3 + randInt(4);
+  const depth = 3 + randInt(4);
   const height = 1 + randInt(4);
 
   for (let x = 0; x < width; x += 1) {
     for (let z = 0; z < depth; z += 1) {
       const columnHeight = 1 + randInt(height);
       for (let y = 0; y < columnHeight; y += 1) {
-        const keep = y === 0 || Math.random() > 0.28;
+        const keep = y === 0 || Math.random() > 0.3;
         if (keep) voxels.push({ x, y, z, color: randomColor() });
       }
     }
@@ -49,21 +48,39 @@ function randomBoxelSpec() {
   return { type: 'boxel', voxels };
 }
 
+const options = {
+  size: 192,
+  pixelRatio: 1,
+  pixelPerfect: true,
+  debugCubeStroke: true,
+  debugHexStroke: true,
+};
+
 const boxelCanvas = document.querySelector('#boxelIcon');
 const voxelCanvas = document.querySelector('#voxelIcon');
+const singleCanvas = document.querySelector('#singleIcon');
 const boxelOutput = document.querySelector('#boxelData');
 const voxelOutput = document.querySelector('#voxelData');
+const singleOutput = document.querySelector('#singleData');
+const imageOutput = document.querySelector('#imageData');
+const imageMount = document.querySelector('#imageMount');
 const rerollButton = document.querySelector('#reroll');
 
 function drawDebug() {
   const boxelSpec = randomBoxelSpec();
   const voxelSpec = randomVoxelSpec();
+  const singleSpec = { type: 'voxel', color: '#f7c948' };
 
-  Isometricon.draw(boxelCanvas, boxelSpec, { size: 192, pixelRatio: 1 });
-  Isometricon.draw(voxelCanvas, voxelSpec, { size: 192, pixelRatio: 1 });
+  Isometricon.draw(boxelCanvas, boxelSpec, options);
+  Isometricon.draw(voxelCanvas, voxelSpec, options);
+  Isometricon.draw(singleCanvas, singleSpec, options);
+
+  imageMount.replaceChildren(Isometricon.toImage(boxelSpec, { ...options, size: 96 }));
 
   boxelOutput.textContent = JSON.stringify(boxelSpec, null, 2);
   voxelOutput.textContent = JSON.stringify(voxelSpec, null, 2);
+  singleOutput.textContent = JSON.stringify(singleSpec, null, 2);
+  imageOutput.textContent = `cache size: ${Isometricon.cache.size}\nIsometricon.toImage(boxelSpec, { size: 96 })`;
 }
 
 rerollButton.addEventListener('click', drawDebug);
