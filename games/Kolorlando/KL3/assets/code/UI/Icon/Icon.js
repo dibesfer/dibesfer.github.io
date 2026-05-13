@@ -1,3 +1,5 @@
+import { Isometricon } from "../../../../../Isometricon/Isometricon.js";
+
 export class Icon {
     constructor(options = {}) {
         this.item = options.item ?? null;
@@ -73,7 +75,22 @@ export class Icon {
             return;
         }
 
-        const color = icon.color ?? this.item.getVoxel?.()?.color ?? "#ffffff";
+        const voxel = this.item.getVoxel?.() ?? null;
+        const color = icon.color ?? voxel?.color ?? "#ffffff";
+
+        if (voxel || this.item.kind === "voxel" || icon.type === "color") {
+            const image = Isometricon.toImage({
+                type: "voxel",
+                color,
+            }, {
+                size: 64,
+            });
+
+            image.alt = this.item.name ?? "Voxel";
+            imageElement.appendChild(image);
+            return;
+        }
+
         const colorBox = document.createElement("div");
         colorBox.className = "iconColor";
         colorBox.style.backgroundColor = color;
