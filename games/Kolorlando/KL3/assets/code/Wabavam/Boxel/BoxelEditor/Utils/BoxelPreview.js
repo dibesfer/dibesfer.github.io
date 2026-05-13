@@ -106,7 +106,7 @@ export class BoxelPreview {
         this.clearMesh();
 
         const renderBoxel = this.createRenderBoxel(boxel, options);
-        const mesh = this.boxelMesher.createMesh(renderBoxel, null);
+        const mesh = this.boxelMesher.createMesh(renderBoxel, null, { allowFaceBaking: false });
         if (!mesh) return;
 
         mesh.name = "BoxelClipboardPreviewMesh";

@@ -125,12 +125,9 @@ export class Boxel15Mesher {
         return {
             origin: boxel15.position,
             forEachCell: (callback) => {
-                boxel15.forEachVoxelId((voxelId, localX, localY, localZ) => {
-                    const voxel = boxel15.getVoxel(localX, localY, localZ, woxel?.palette ?? boxel15.palette);
-                    if (!voxel?.isActive?.()) return;
-                    if (voxel?.hasMicroxels?.()) return;
+                this.forEachRenderableVoxel(boxel15, woxel, (voxel, voxelId, localX, localY, localZ) => {
                     callback({ voxel, voxelId }, localX, localY, localZ);
-                });
+                }, { skipMicroxels: true });
             },
             isSolidAt: (localX, localY, localZ) => this.isNeighborSolid(boxel15, woxel, localX, localY, localZ),
             getColor: (cell) => cell?.voxel?.color ?? cell?.color ?? "#ffffff",
@@ -145,6 +142,31 @@ export class Boxel15Mesher {
                 }) ?? null;
             },
         };
+    }
+
+    forEachRenderableVoxel(boxel15, woxel = null, callback = () => {}, options = {}) {
+        const skipMicroxels = options.skipMicroxels ?? false;
+        const palette = woxel?.palette ?? boxel15?.palette ?? null;
+
+        if (typeof boxel15?.forEachVoxelId === "function") {
+            boxel15.forEachVoxelId((voxelId, localX, localY, localZ) => {
+                const voxel = boxel15.getVoxel(localX, localY, localZ, palette);
+                if (!voxel?.isActive?.()) return;
+                if (skipMicroxels && voxel?.hasMicroxels?.()) return;
+
+                callback(voxel, voxelId, localX, localY, localZ, boxel15);
+            });
+            return;
+        }
+
+        if (typeof boxel15?.forEachVoxel === "function") {
+            boxel15.forEachVoxel((voxel, localX, localY, localZ) => {
+                if (!voxel?.isActive?.()) return;
+                if (skipMicroxels && voxel?.hasMicroxels?.()) return;
+
+                callback(voxel, null, localX, localY, localZ, boxel15);
+            });
+        }
     }
 
     createMicroxelRenderParts(boxel15, woxel = null) {
