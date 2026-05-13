@@ -72,7 +72,7 @@ export class BoxelClipboard {
         return {
             kind: "boxel",
             version: 1,
-            name: boxel.name ?? "Boxel",
+            name: Object.hasOwn(boxel, "name") ? boxel.name : "Boxel",
             size: { ...boxel.size },
             position: { ...boxel.position },
             orientation: boxel.orientation ?? 0,
@@ -86,7 +86,7 @@ export class BoxelClipboard {
         if (!data) return null;
 
         const boxel = new Boxel({
-            name: data.name ?? "Boxel",
+            name: Object.hasOwn(data, "name") ? data.name : "Boxel",
             size: data.size,
             position: data.position,
             orientation: data.orientation ?? 0,
@@ -119,5 +119,7 @@ export class BoxelClipboard {
 }
 
 export default BoxelClipboard;
+
+
 
 

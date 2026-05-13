@@ -77,6 +77,30 @@ function voxelToIsometriconSpec(voxel = null, fallbackColor = "#ffffff") {
     };
 }
 
+
+function boxelToIsometriconSpec(boxel = null) {
+    const voxels = [];
+    const orientation = Compass.normalize(boxel?.orientation) ?? Compass.NORTH;
+    const size = boxel?.size ?? { x: 1, y: 1, z: 1 };
+
+    boxel?.forEachVoxel?.((voxel, x, y, z) => {
+        if (!voxel?.isActive?.()) return;
+
+const position = Compass.rotatePositionInSize({ x, y, z }, size, Compass.opposite(orientation));
+        voxels.push({
+            x: position.x,
+            y: position.y,
+            z: position.z,
+            color: voxel?.color ?? "#ffffff",
+        });
+    });
+
+    return {
+        type: "boxel",
+        voxels,
+    };
+}
+
 function createIsometriconImage(spec, alt = "Voxel") {
     const image = Isometricon.toImage(spec, {
         size: 256,
@@ -168,6 +192,15 @@ export class Icon {
             image.src = icon.src;
             image.alt = this.item.name;
             imageElement.appendChild(image);
+            return;
+        }
+
+        const boxel = this.item.getBoxel?.() ?? null;
+        if (boxel || this.item.kind === "boxel" || icon.type === "isometricon") {
+            imageElement.appendChild(createIsometriconImage(
+                boxelToIsometriconSpec(boxel),
+                this.item.name ?? "NULL"
+            ));
             return;
         }
 

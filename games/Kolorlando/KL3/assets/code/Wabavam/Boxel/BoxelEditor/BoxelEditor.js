@@ -24,6 +24,7 @@ export class BoxelEditor {
         this.isInsidePlayerBody = options.isInsidePlayerBody ?? (() => false);
         this.scheduleAutosave = options.scheduleAutosave ?? (() => {});
         this.scheduleClipboardSave = options.scheduleClipboardSave ?? (() => {});
+        this.onBlueBoxelSaved = options.onBlueBoxelSaved ?? (() => {});
         this.history = options.history ?? null;
 
         this.colors = {
@@ -422,6 +423,14 @@ export class BoxelEditor {
     }
 
 
+    saveBlueBoxelAsAsset(boxel = null) {
+        if (!boxel) return false;
+
+        this.onBlueBoxelSaved(boxel);
+
+        return true;
+    }
+
     getBlueBoxelClipboardMemoryData() {
         return this.blueBoxelClipboard?.toMemoryData?.() ?? null;
     }
@@ -460,3 +469,4 @@ Object.assign(
 );
 
 export default BoxelEditor;
+

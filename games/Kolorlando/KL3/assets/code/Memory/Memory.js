@@ -53,6 +53,25 @@ export class Memory {
         return data?.kind === "settings" ? data : null;
     }
 
+    async saveSavedBoxels(key = "mainSavedBoxels", savedBoxels = []) {
+        if (!key) return false;
+
+        const data = this.savedBoxelsToMemoryData(savedBoxels);
+
+        return this.saveData(key, data);
+    }
+
+    async loadSavedBoxels(key = "mainSavedBoxels") {
+        if (!key) return [];
+
+        const data = await this.loadData(key);
+        if (!data) return [];
+
+        return data?.kind === "savedBoxels"
+            ? this.savedBoxelsFromMemoryData(data)
+            : [];
+    }
+
     async load(key) {
         if (!key) return null;
 
@@ -127,6 +146,10 @@ export class Memory {
     }
 
     fromMemoryData(data) {
+        if (data?.kind === "savedBoxels") {
+            return this.savedBoxelsFromMemoryData(data);
+        }
+
         if (data?.kind === "woxel") {
             return Woxel.fromMemoryData(data);
         }
@@ -142,8 +165,47 @@ export class Memory {
         throw new Error(`Memory cannot load kind: ${data?.kind ?? "unknown"}`);
     }
 
+    savedBoxelsToMemoryData(savedBoxels = []) {
+        const serializer = new BoxelClipboard({ name: "SavedBoxelSerializer" });
+
+        return {
+            kind: "savedBoxels",
+            version: 1,
+            name: "Saved Boxels",
+            boxels: savedBoxels.map((savedBoxel) => ({
+                id: savedBoxel?.id ?? this.createSavedBoxelId(),
+                name: Object.hasOwn(savedBoxel ?? {}, "name") ? savedBoxel.name : null,
+                createdAt: savedBoxel?.createdAt ?? new Date().toISOString(),
+                boxel: serializer.boxelToMemoryData(savedBoxel?.boxel ?? savedBoxel),
+            })).filter((savedBoxel) => savedBoxel.boxel),
+        };
+    }
+
+    savedBoxelsFromMemoryData(data = null) {
+        const serializer = new BoxelClipboard({ name: "SavedBoxelSerializer" });
+        const boxels = Array.isArray(data?.boxels) ? data.boxels : [];
+
+        return boxels.map((savedBoxel) => {
+            const boxel = serializer.boxelFromMemoryData(savedBoxel?.boxel);
+            if (!boxel) return null;
+
+            return {
+                id: savedBoxel?.id ?? this.createSavedBoxelId(),
+                name: Object.hasOwn(savedBoxel ?? {}, "name") ? savedBoxel.name : null,
+                createdAt: savedBoxel?.createdAt ?? new Date().toISOString(),
+                boxel,
+            };
+        }).filter(Boolean);
+    }
+
+    createSavedBoxelId() {
+        if (globalThis.crypto?.randomUUID) return `boxel_${globalThis.crypto.randomUUID()}`;
+
+        return `boxel_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    }
+
     createFilename(data = {}) {
-        const extension = data.kind === "woxel" ? "woxel" : data.kind === "boxelClipboard" ? "boxel" : data.kind === "settings" ? "settings" : "kl3";
+        const extension = data.kind === "woxel" ? "woxel" : data.kind === "boxelClipboard" ? "boxel" : data.kind === "settings" ? "settings" : data.kind === "savedBoxels" ? "boxels" : "kl3";
         const name = this.sanitizeFilename(data.name ?? data.kind ?? "Wabavam");
 
         return `${name}.${extension}`;
@@ -174,3 +236,5 @@ export class Memory {
 }
 
 export default Memory;
+
+

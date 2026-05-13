@@ -3,7 +3,7 @@ import { rotateVoxelOrientation } from "../Voxel/VoxelOrienting.js";
 
 export class Boxel {
     constructor(options = {}) {
-        this.name = options.name ?? "Boxel";
+        this.name = Object.hasOwn(options, "name") ? options.name : "Boxel";
         this.size = {
             x: options.size?.x ?? 1,
             y: options.size?.y ?? 1,
@@ -61,7 +61,7 @@ export class Boxel {
         const amount = Compass.normalize(delta) ?? Compass.NORTH;
         const size = Compass.rotateSize(this.size, amount);
         const boxel = new Boxel({
-            name: options.name ?? `${this.name} Transformed`,
+            name: Object.hasOwn(options, "name") ? options.name : `${this.name ?? "Boxel"} Transformed`,
             size,
             position: options.position ?? { x: 0, y: 0, z: 0 },
             orientation: Compass.combine(this.orientation, amount),
@@ -86,3 +86,5 @@ export class Boxel {
 }
 
 export default Boxel;
+
+

@@ -20,7 +20,7 @@ import { Screen } from "../Game/Screen/Screen.js";
 import { ThreeD } from "../ThreeD/ThreeD.js";
 import { UI } from "../UI/UI.js";
 import { VoxelHighlight } from "../Wabavam/Voxel/VoxelHighlight.js";
-import { createVoxelItem } from "../Item/Item.js";
+import { createBoxelItem, createVoxelItem } from "../Item/Item.js";
 import { voxelObjects12 } from "../Wabavam/Voxel/12colors/12colors.js";
 import { DEFAULT_WOXEL_TEMPLATE_ID } from "../Wabavam/Woxel/woxelTemplates.js";
 import { loadMicroxeledVoxels } from "../Wabavam/Voxel/Microxeled/index.js";
@@ -30,9 +30,12 @@ export class App {
         this.mainWoxelKey = options.mainWoxelKey ?? "mainWoxel";
         this.mainHistoryKey = options.mainHistoryKey ?? "mainWoxelHistory";
         this.mainBlueBoxelClipboardKey = options.mainBlueBoxelClipboardKey ?? "mainBlueBoxelClipboard";
+        this.mainSavedBoxelsKey = options.mainSavedBoxelsKey ?? "mainSavedBoxels";
         this.mainSettingsKey = options.mainSettingsKey ?? "mainSettings";
         this.autosaveDelayMs = options.autosaveDelayMs ?? 5000;
         this.historySaveDelayMs = options.historySaveDelayMs ?? 750;
+        this.savedBoxelsSaveDelayMs = options.savedBoxelsSaveDelayMs ?? 250;
+        this.savedBoxelsLimit = options.savedBoxelsLimit ?? 30;
         this.inventorySize = options.inventorySize ?? 7;
         this.boxelHoldMs = options.boxelHoldMs ?? 450;
         this.boxel15RenderDistance = options.boxel15RenderDistance ?? 60;
@@ -45,14 +48,17 @@ export class App {
         this.autosaveTimer = null;
         this.historySaveTimer = null;
         this.blueBoxelClipboardSaveTimer = null;
+        this.savedBoxelsSaveTimer = null;
         this.settingsSaveTimer = null;
         this.autosaveInFlight = false;
         this.historySaveInFlight = false;
         this.blueBoxelClipboardSaveInFlight = false;
+        this.savedBoxelsSaveInFlight = false;
         this.settingsSaveInFlight = false;
         this.woxel = null;
         this.microxeledVoxels = [];
         this.selectedItem = null;
+        this.savedBoxels = [];
         this.woxelMemoryStatusText = "checking...";
     }
 
@@ -74,6 +80,7 @@ export class App {
         */
         this.memory = new Memory();
         this.savedSettingsData = await this.loadSettingsDataFromIndexedDB();
+        await this.loadSavedBoxelsFromIndexedDB();
 
         /*
         3. THREED AND MAPPER
@@ -224,6 +231,7 @@ export class App {
             isInsidePlayerBody: (gridPosition) => this.isInsidePlayerBody(gridPosition),
             scheduleAutosave: () => this.scheduleAutosave(),
             scheduleClipboardSave: () => this.scheduleBlueBoxelClipboardSave(),
+            onBlueBoxelSaved: (boxel) => this.addSavedBoxelFromBlueBoxel(boxel),
         });
         await this.loadCurrentBlueBoxelClipboardFromIndexedDB();
         this.threeD.add(this.boxelEditor.getObject3D());
@@ -586,6 +594,103 @@ export class App {
         }
     }
 
+    async loadSavedBoxelsFromIndexedDB() {
+        try {
+            this.savedBoxels = await this.memory.loadSavedBoxels(this.mainSavedBoxelsKey);
+            this.trimSavedBoxels();
+            this.syncSavedBoxelsGlobal();
+            return true;
+        } catch (error) {
+            console.warn("Saved Boxels load failed.", error);
+            this.savedBoxels = [];
+            return false;
+        }
+    }
+
+    addSavedBoxelFromBlueBoxel(boxel = null) {
+        if (!boxel) return false;
+
+        const savedBoxel = {
+            id: this.createSavedBoxelId(),
+            name: null,
+            createdAt: new Date().toISOString(),
+            boxel,
+        };
+
+        this.savedBoxels = [savedBoxel, ...this.savedBoxels];
+        this.trimSavedBoxels();
+        this.syncSavedBoxelsGlobal();
+        this.scheduleSavedBoxelsSave();
+        this.refreshBoxelCatalog();
+
+        return true;
+    }
+
+    createSavedBoxelId() {
+        if (globalThis.crypto?.randomUUID) return `boxel_${globalThis.crypto.randomUUID()}`;
+
+        return `boxel_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    }
+
+    trimSavedBoxels() {
+        this.savedBoxels = this.savedBoxels.slice(0, this.savedBoxelsLimit);
+    }
+
+    syncSavedBoxelsGlobal() {
+        if (window.KL3) {
+            window.KL3.savedBoxels = this.savedBoxels;
+        }
+    }
+
+    getSavedBoxelItems() {
+        return this.savedBoxels.map((savedBoxel) => createBoxelItem(savedBoxel, {
+            name: savedBoxel.name ?? "NULL",
+        }));
+    }
+
+    loadSavedBoxelIntoClipboard(savedBoxelId = null) {
+        const savedBoxel = this.savedBoxels.find((boxel) => boxel.id === savedBoxelId);
+        if (!savedBoxel?.boxel) return false;
+
+        this.boxelEditor?.blueBoxelClipboard?.setBoxel?.(savedBoxel.boxel);
+        this.boxelEditor?.enterBlueBoxelPreview?.();
+        this.scheduleBlueBoxelClipboardSave();
+
+        return true;
+    }
+
+    scheduleSavedBoxelsSave() {
+        window.clearTimeout(this.savedBoxelsSaveTimer);
+
+        this.savedBoxelsSaveTimer = window.setTimeout(() => {
+            this.saveSavedBoxelsToIndexedDB();
+        }, this.savedBoxelsSaveDelayMs);
+    }
+
+    async saveSavedBoxelsToIndexedDB() {
+        if (this.savedBoxelsSaveInFlight) return false;
+
+        this.savedBoxelsSaveInFlight = true;
+        window.clearTimeout(this.savedBoxelsSaveTimer);
+        this.savedBoxelsSaveTimer = null;
+
+        try {
+            return await this.memory.saveSavedBoxels(this.mainSavedBoxelsKey, this.savedBoxels);
+        } catch (error) {
+            console.warn("Saved Boxels save failed.", error);
+            return false;
+        } finally {
+            this.savedBoxelsSaveInFlight = false;
+        }
+    }
+
+    refreshBoxelCatalog() {
+        document.querySelectorAll("#boxelCatalog").forEach((catalogElement) => {
+            const contentElement = catalogElement.closest(".menuSection") ?? document;
+            this.events?.renderBoxelCatalog?.(contentElement);
+        });
+    }
+
     scheduleSettingsSave() {
         window.clearTimeout(this.settingsSaveTimer);
 
@@ -660,6 +765,7 @@ export class App {
             mapper: this.mapper,
             memory: this.memory,
             history: this.history,
+            savedBoxels: this.savedBoxels,
             woxel: this.woxel,
             collision: this.collision,
             player: this.player,
@@ -684,3 +790,5 @@ export class App {
 }
 
 export default App;
+
+

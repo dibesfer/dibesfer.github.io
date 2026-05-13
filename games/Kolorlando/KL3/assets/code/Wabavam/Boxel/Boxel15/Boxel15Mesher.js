@@ -294,14 +294,18 @@ export class Boxel15Mesher {
             ? woxel.getVoxelAt(worldX, worldY, worldZ)
             : boxel15.getVoxel(localX, localY, localZ);
 
-        return neighbor?.isActive?.() === true;
+        return this.isSolidMacroVoxel(neighbor);
+    }
+
+    isSolidMacroVoxel(voxel = null) {
+        return voxel?.isActive?.() === true && voxel?.hasMicroxels?.() !== true;
     }
 
 
     isWorldVoxelSolid(boxel15, woxel, worldX, worldY, worldZ) {
         if (woxel) {
             if (!woxel.isInside(worldX, worldY, worldZ)) return false;
-            return woxel.getVoxelAt(worldX, worldY, worldZ)?.isActive?.() === true;
+            return this.isSolidMacroVoxel(woxel.getVoxelAt(worldX, worldY, worldZ));
         }
 
         const localX = worldX - boxel15.position.x;
@@ -311,7 +315,7 @@ export class Boxel15Mesher {
         if (localX < 0 || localY < 0 || localZ < 0) return false;
         if (localX >= boxel15.size.x || localY >= boxel15.size.y || localZ >= boxel15.size.z) return false;
 
-        return boxel15.getVoxel(localX, localY, localZ)?.isActive?.() === true;
+        return this.isSolidMacroVoxel(boxel15.getVoxel(localX, localY, localZ));
     }
 
     getFaceShade(direction = "") {
@@ -334,4 +338,3 @@ export class Boxel15Mesher {
 }
 
 export default Boxel15Mesher;
-

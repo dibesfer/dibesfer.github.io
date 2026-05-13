@@ -35,6 +35,13 @@ export class Item {
             };
         }
 
+        if (this.kind === "boxel" && this.data.boxel) {
+            return {
+                ...this.data,
+                boxel: this.data.boxel,
+            };
+        }
+
         return { ...this.data };
     }
 
@@ -47,6 +54,31 @@ export class Item {
 
         return this.data?.voxel ?? null;
     }
+
+    getBoxel() {
+        if (this.kind !== "boxel") return null;
+
+        return this.data?.boxel ?? null;
+    }
+}
+
+export function createBoxelItem(savedBoxel, options = {}) {
+    const boxel = savedBoxel?.boxel ?? savedBoxel ?? null;
+
+    return new Item({
+        name: options.name ?? savedBoxel?.name ?? boxel?.name ?? "NULL",
+        kind: "boxel",
+        icon: options.icon ?? {
+            type: "isometricon",
+        },
+        data: {
+            id: savedBoxel?.id ?? null,
+            createdAt: savedBoxel?.createdAt ?? null,
+            boxel,
+        },
+        count: options.count ?? null,
+        stackable: false,
+    });
 }
 
 export function createVoxelItem(voxel, options = {}) {
@@ -66,3 +98,5 @@ export function createVoxelItem(voxel, options = {}) {
 }
 
 export default Item;
+
+

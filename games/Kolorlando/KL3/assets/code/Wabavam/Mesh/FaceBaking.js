@@ -388,7 +388,7 @@ export class FaceBaking {
             ? woxel.getVoxelAt(worldX, worldY, worldZ)
             : boxel15.getVoxel(localX, localY, localZ);
 
-        return voxel?.isActive?.() === true;
+        return voxel?.isActive?.() === true && voxel?.hasMicroxels?.() !== true;
     }
 
     toFace(face) {
@@ -560,5 +560,3 @@ export class FaceBaking {
 }
 
 export default FaceBaking;
-
-

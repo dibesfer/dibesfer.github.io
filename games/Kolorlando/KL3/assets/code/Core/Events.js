@@ -1,4 +1,5 @@
 import { Icon } from "../UI/Icon/Icon.js";
+import { createBoxelItem } from "../Item/Item.js";
 import { orientVoxelForPlacement } from "../Wabavam/Voxel/VoxelOrienting.js";
 
 export class Events {
@@ -51,6 +52,7 @@ export class Events {
     handlePageHide() {
         this.app.saveCurrentWoxelToIndexedDB();
         this.app.saveCurrentHistoryToIndexedDB?.();
+        this.app.saveSavedBoxelsToIndexedDB?.();
         this.app.saveCurrentSettingsToIndexedDB?.();
     }
 
@@ -63,6 +65,7 @@ export class Events {
 
         this.app.saveCurrentWoxelToIndexedDB();
         this.app.saveCurrentHistoryToIndexedDB?.();
+        this.app.saveSavedBoxelsToIndexedDB?.();
         this.app.saveCurrentSettingsToIndexedDB?.();
     }
 
@@ -219,6 +222,11 @@ export class Events {
 
         if (page === "voxels") {
             this.renderVoxelCatalog(contentElement);
+            return;
+        }
+
+        if (page === "boxels") {
+            this.renderBoxelCatalog(contentElement);
         }
     }
 
@@ -261,6 +269,25 @@ export class Events {
         });
     }
 
+    renderBoxelCatalog(contentElement) {
+        const catalogElement = contentElement.querySelector("#boxelCatalog");
+        if (!catalogElement) return;
+
+        catalogElement.innerHTML = "";
+
+        this.app.getSavedBoxelItems().forEach((item) => {
+            const icon = new Icon({
+                item,
+                onClick: () => {
+                    this.app.loadSavedBoxelIntoClipboard(item.data?.id);
+                },
+            });
+
+            icon.element.classList.add("boxelCatalogItem");
+            catalogElement.appendChild(icon.element);
+        });
+    }
+
     async handleCreateWoxelClick(event) {
         const contentElement = event?.target?.closest?.(".menuSection") ?? document;
         const templateId = contentElement.querySelector("#woxelTemplateSelect")?.value ?? "grassWithFlowers";
@@ -297,3 +324,5 @@ export class Events {
 }
 
 export default Events;
+
+

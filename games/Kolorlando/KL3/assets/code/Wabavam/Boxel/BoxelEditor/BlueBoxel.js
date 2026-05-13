@@ -107,6 +107,7 @@ export const BlueBoxelMixin = {
 
         copiedBoxel.orientation = this.getCurrentBlueBoxelOrientation();
         this.blueBoxelClipboard.setBoxel(copiedBoxel);
+        this.saveBlueBoxelAsAsset(copiedBoxel);
         this.scheduleClipboardSave();
         this.enterBlueBoxelPreview();
 
@@ -121,6 +122,7 @@ export const BlueBoxelMixin = {
 
         copiedBoxel.orientation = this.getCurrentBlueBoxelOrientation();
         this.blueBoxelClipboard.setBoxel(copiedBoxel);
+        this.saveBlueBoxelAsAsset(copiedBoxel);
         this.scheduleClipboardSave();
 
         const results = [];
@@ -337,7 +339,11 @@ export const BlueBoxelMixin = {
     },
 
     getCurrentBlueBoxelOrientation() {
-        return Compass.normalize(this.player?.getDesiredOrientation?.()) ?? Compass.NORTH;
+        return Compass.normalize(
+            this.player?.getFacingPlayerOrientation?.()
+            ?? Compass.opposite(this.player?.getDesiredOrientation?.())
+            ?? null
+        ) ?? Compass.NORTH;
     },
 
     getClipboardOrientationDelta(boxel = this.blueBoxelClipboard.getBoxel()) {
@@ -352,7 +358,7 @@ export const BlueBoxelMixin = {
 
         const delta = this.getClipboardOrientationDelta(boxel);
         return typeof boxel.transformed === "function"
-            ? boxel.transformed(delta, { name: `${boxel.name ?? "Boxel"} Oriented` })
+            ? boxel.transformed(delta, { name: boxel.name ?? null })
             : boxel;
     },
 
@@ -362,7 +368,7 @@ export const BlueBoxelMixin = {
         const origin = area.getMin();
         const size = area.getSize();
         const boxel = new Boxel({
-            name: "BlueBoxelClipboard",
+            name: null,
             size,
             position: origin,
         });
