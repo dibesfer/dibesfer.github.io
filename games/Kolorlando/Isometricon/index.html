@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Isometricon Debug</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <main>
+    <header>
+      <h1>Isometricon</h1>
+      <button id="reroll" type="button">reroll random data</button>
+    </header>
+
+    <section class="grid">
+      <article class="panel">
+        <h2>Boxel icon</h2>
+        <canvas id="boxelIcon" width="192" height="192" aria-label="Random boxel isometric icon"></canvas>
+        <pre id="boxelData"></pre>
+      </article>
+
+      <article class="panel">
+        <h2>Voxel icon</h2>
+        <canvas id="voxelIcon" width="192" height="192" aria-label="Random voxel isometric icon"></canvas>
+        <pre id="voxelData"></pre>
+      </article>
+    </section>
+  </main>
+
+  <script type="module" src="./script.js"></script>
+</body>
+</html>

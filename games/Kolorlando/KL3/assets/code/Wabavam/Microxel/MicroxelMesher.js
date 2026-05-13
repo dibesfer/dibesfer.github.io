@@ -229,6 +229,8 @@ export class MicroxelMesher {
     }
 
     createAtlas(rects = []) {
+        // Keep geometry and texture proportions identical to the normal SurfaceTrinity mesh.
+        // The padding lives outside the UV rectangle; it only prevents atlas bleeding.
         const padding = 1;
         let x = padding;
         let y = padding;
@@ -239,16 +241,18 @@ export class MicroxelMesher {
         rects.forEach((rect) => {
             const w = Math.max(1, rect.width * this.pixelScale);
             const h = Math.max(1, rect.height * this.pixelScale);
+            const slotW = w + padding * 2;
+            const slotH = h + padding * 2;
 
-            if (x + w + padding > this.maxTextureSize) {
+            if (x + slotW + padding > this.maxTextureSize) {
                 x = padding;
                 y += rowHeight + padding;
                 rowHeight = 0;
             }
 
-            rect.atlas = { x, y, width: w, height: h };
-            x += w + padding;
-            rowHeight = Math.max(rowHeight, h);
+            rect.atlas = { x: x + padding, y: y + padding, width: w, height: h, padding };
+            x += slotW + padding;
+            rowHeight = Math.max(rowHeight, slotH);
             width = Math.max(width, x + padding);
             height = Math.max(height, y + rowHeight + padding);
         });
@@ -268,13 +272,19 @@ export class MicroxelMesher {
     paintRect(data, width, height, rect) {
         const cells = new Map(rect.cells.map((cell) => [this.key(cell.u, cell.v), cell]));
         const shade = this.faceShade(rect.direction);
+        const padding = rect.atlas.padding ?? 0;
 
-        for (let py = 0; py < rect.atlas.height; py++) {
-            for (let px = 0; px < rect.atlas.width; px++) {
-                const u = rect.u + Math.min(rect.width - 1, Math.floor(px / this.pixelScale));
-                const v = rect.v + Math.min(rect.height - 1, Math.floor(py / this.pixelScale));
+        for (let py = -padding; py < rect.atlas.height + padding; py++) {
+            for (let px = -padding; px < rect.atlas.width + padding; px++) {
+                const sampleX = this.clampInt(px, 0, rect.atlas.width - 1);
+                const sampleY = this.clampInt(py, 0, rect.atlas.height - 1);
+                const u = rect.u + Math.min(rect.width - 1, Math.floor(sampleX / this.pixelScale));
+                const v = rect.v + Math.min(rect.height - 1, Math.floor(sampleY / this.pixelScale));
                 const cell = cells.get(this.key(u, v));
-                const index = ((rect.atlas.y + py) * width + rect.atlas.x + px) * 4;
+                const tx = rect.atlas.x + px;
+                const ty = rect.atlas.y + py;
+                if (tx < 0 || ty < 0 || tx >= width || ty >= height) continue;
+                const index = (ty * width + tx) * 4;
 
                 if (!cell) {
                     data[index + 0] = 0;
@@ -301,7 +311,7 @@ export class MicroxelMesher {
 
         rects.forEach((rect) => {
             const start = positions.length / 3;
-            const uv = this.uvRect(rect.atlas, atlas.width, atlas.height);
+            const rectUvs = this.uvsForRectVertices(rect, atlas);
 
             this.vertices(rect).forEach((vertex) => {
                 positions.push(
@@ -310,7 +320,7 @@ export class MicroxelMesher {
                     origin.z + vertex.z * unit
                 );
             });
-            uvs.push(uv.u0, uv.v0, uv.u1, uv.v0, uv.u1, uv.v1, uv.u0, uv.v1);
+            rectUvs.forEach((uv) => uvs.push(uv.u, uv.v));
             indices.push(start, start + 1, start + 2, start, start + 2, start + 3);
         });
 
@@ -465,14 +475,31 @@ export class MicroxelMesher {
         }), { minU: Infinity, maxU: -Infinity, minV: Infinity, maxV: -Infinity });
     }
 
+
+    uvsForRectVertices(rect = {}, atlas = {}) {
+        const uv = this.uvRect(rect.atlas, atlas.width, atlas.height);
+        const uv00 = { u: uv.u0, v: uv.v0 };
+        const uv10 = { u: uv.u1, v: uv.v0 };
+        const uv11 = { u: uv.u1, v: uv.v1 };
+        const uv01 = { u: uv.u0, v: uv.v1 };
+
+        // Same contract as FaceBaking.js: texel local (u, v) must land on the matching mesh corner.
+        if (rect.direction === "px") return [uv10, uv00, uv01, uv11];
+        if (rect.direction === "nx") return [uv00, uv10, uv11, uv01];
+        if (rect.direction === "py") return [uv01, uv11, uv10, uv00];
+        if (rect.direction === "ny") return [uv00, uv10, uv11, uv01];
+        if (rect.direction === "pz") return [uv00, uv10, uv11, uv01];
+        return [uv10, uv00, uv01, uv11];
+    }
+
     uvRect(rect, width, height) {
-        const halfU = 0.5 / width;
-        const halfV = 0.5 / height;
+        // Exact texel-edge UVs: no half-texel crop.
+        // Half-texel UVs made baked faces look subtly rescaled compared to SurfaceTrinity.
         return {
-            u0: rect.x / width + halfU,
-            u1: (rect.x + rect.width) / width - halfU,
-            v0: rect.y / height + halfV,
-            v1: (rect.y + rect.height) / height - halfV,
+            u0: rect.x / width,
+            u1: (rect.x + rect.width) / width,
+            v0: rect.y / height,
+            v1: (rect.y + rect.height) / height,
         };
     }
 
@@ -533,6 +560,10 @@ export class MicroxelMesher {
         return Math.min(1, Math.max(0, number));
     }
 
+    clampInt(value, min, max) {
+        return Math.max(min, Math.min(max, Math.floor(value)));
+    }
+
     key(x = 0, y = 0, z = null) {
         return z === null ? `${x},${y}` : `${x},${y},${z}`;
     }
@@ -554,5 +585,7 @@ export class MicroxelMesher {
 }
 
 export default MicroxelMesher;
+
+
 
 
