@@ -15,19 +15,22 @@ function microxelColor(microxel = null, fallback = "#ffffff") {
         : fallback;
 }
 
-function rotateMicroxelPosition(position = {}, voxel = null) {
-    const baseOrientation = voxel?.isOrientable?.()
+function microxelIconOrientation(voxel = null) {
+    const voxelOrientation = voxel?.isOrientable?.()
         ? (Compass.normalize(voxel.orientation) ?? Compass.NORTH)
         : Compass.NORTH;
 
-    const iconOrientation = Compass.combine(baseOrientation, Compass.SOUTH);
+    return Compass.combine(voxelOrientation, Compass.SOUTH);
+}
+
+function rotateMicroxelPosition(position = {}, voxel = null) {
     const size = Math.max(1, Math.floor(voxel?.effectiveMicroxelSize?.() ?? voxel?.microxelSize ?? 1));
 
     return Compass.rotatePositionInSize(position, {
         x: size,
         y: size,
         z: size,
-    }, iconOrientation);
+    }, microxelIconOrientation(voxel));
 }
 
 function voxelToIsometriconSpec(voxel = null, fallbackColor = "#ffffff") {
@@ -69,9 +72,25 @@ function voxelToIsometriconSpec(voxel = null, fallbackColor = "#ffffff") {
 
     return {
         type: "voxel",
-        microxels,
         color: voxel.color ?? fallbackColor,
+        microxels,
     };
+}
+
+function createIsometriconImage(spec, alt = "Voxel") {
+    const image = Isometricon.toImage(spec, {
+        size: 256,
+        pixelRatio: 2,
+        pixelPerfect: true,
+        cubeOutline: true,
+        underlayGrid: true,
+        hexOutline: true,
+    });
+
+    image.classList.add("iconImageAsset");
+    image.alt = alt;
+
+    return image;
 }
 
 export class Icon {
@@ -153,17 +172,10 @@ export class Icon {
         const color = icon.color ?? voxel?.color ?? "#ffffff";
 
         if (voxel || this.item.kind === "voxel" || icon.type === "color") {
-            const canvas = Isometricon.toCanvas(voxelToIsometriconSpec(voxel, color), {
-                size: 64,
-                pixelRatio: 4,
-                underlayGrid: false,
-                cubeOutline: false,
-            });
-
-            canvas.className = "iconCanvas";
-            canvas.setAttribute("role", "img");
-            canvas.setAttribute("aria-label", this.item.name ?? "Voxel");
-            imageElement.appendChild(canvas);
+            imageElement.appendChild(createIsometriconImage(
+                voxelToIsometriconSpec(voxel, color),
+                this.item.name ?? "Voxel"
+            ));
             return;
         }
 
