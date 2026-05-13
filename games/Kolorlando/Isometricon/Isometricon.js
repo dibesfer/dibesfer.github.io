@@ -2,9 +2,12 @@
  * Isometricon.js
  * Tiny 2D API for square hexagonal orthographic isometric voxel/boxel icons.
  *
- * KL3:
- *   import { Isometricon } from './Isometricon.js';
- *   Isometricon.draw(canvas, { type:'boxel', voxels:[{x:0,y:0,z:0,color:'#44aa66'}] });
+ * External apps:
+ *   import { renderIsometricon } from './Isometricon.js';
+ *   renderIsometricon(canvas, { voxels:[{x:0,y:0,z:0,color:'#44aa66'}] });
+ *
+ * Voxel data may use direct colors, palette indexes, or palette keys:
+ *   { palette:['#44aa66'], voxels:[{x:0,y:0,z:0,material:0}] }
  */
 
 const DEFAULTS = Object.freeze({
@@ -66,13 +69,26 @@ function tint(color, target, amount) {
   });
 }
 
-function normalizePoint(entry, fallbackColor = '#8cc8ff') {
+function paletteColor(palette, key, fallbackColor) {
+  if (Array.isArray(palette)) return normalizeHexColor(palette[key], fallbackColor);
+  if (isPlainObject(palette)) return normalizeHexColor(palette[key], fallbackColor);
+  return fallbackColor;
+}
+
+function entryColor(entry, spec, fallbackColor) {
+  const direct = entry?.color || entry?.voxel?.color;
+  if (direct) return normalizeHexColor(direct, fallbackColor);
+  const key = entry?.material ?? entry?.palette ?? entry?.colorIndex ?? entry?.voxel?.material;
+  return paletteColor(spec?.palette, key, normalizeHexColor(spec?.color || fallbackColor, fallbackColor));
+}
+
+function normalizePoint(entry, fallbackColor = '#8cc8ff', spec = {}) {
   const pos = entry?.position || entry || {};
   return {
     x: Math.round(Number(pos.x) || 0),
     y: Math.round(Number(pos.y) || 0),
     z: Math.round(Number(pos.z) || 0),
-    color: normalizeHexColor(entry?.color || entry?.voxel?.color || fallbackColor, fallbackColor),
+    color: entryColor(entry, spec, fallbackColor),
   };
 }
 
@@ -82,11 +98,12 @@ function normalizeSpec(spec = {}) {
     return { type: 'boxel', voxels };
   }
 
-  const type = spec.type || (spec.voxels ? 'boxel' : 'voxel');
+  const voxelsSource = spec.voxels || spec.cells || spec.entries || spec.data;
+  const type = spec.type || (voxelsSource ? 'boxel' : 'voxel');
 
-  if (type === 'boxel') {
-    const voxels = (spec.voxels || spec.cells || spec.entries || [])
-      .map(entry => normalizePoint(entry, spec.color || '#8cc8ff'));
+  if (Array.isArray(voxelsSource)) {
+    const voxels = (voxelsSource || [])
+      .map(entry => normalizePoint(entry, spec.color || '#8cc8ff', spec));
     return {
       type,
       voxels,
@@ -94,7 +111,7 @@ function normalizeSpec(spec = {}) {
   }
 
   if (type === 'voxel' && Array.isArray(spec.microxels) && spec.microxels.length > 0) {
-    const voxels = spec.microxels.map(entry => normalizePoint(entry, spec.color || '#8cc8ff'));
+    const voxels = spec.microxels.map(entry => normalizePoint(entry, spec.color || '#8cc8ff', spec));
     return { type, voxels };
   }
 
@@ -264,6 +281,24 @@ function makeCanvas(size) {
   return canvas;
 }
 
+function isCanvasTarget(target) {
+  return typeof HTMLCanvasElement !== 'undefined' && target instanceof HTMLCanvasElement;
+}
+
+function resolveTarget(target, size) {
+  const node = typeof target === 'string' ? document.querySelector(target) : target;
+  if (isCanvasTarget(node)) return { canvas: node, mount: null };
+  return {
+    canvas: node?.querySelector?.('canvas') || makeCanvas(size),
+    mount: node && node.appendChild ? node : null,
+  };
+}
+
+function resolveOptions(spec, userOptions = {}) {
+  const specOptions = isPlainObject(spec?.options) ? spec.options : {};
+  return { ...DEFAULTS, ...specOptions, ...userOptions };
+}
+
 function measurePoints(points) {
   const b = { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity };
   for (const p of points) {
@@ -389,7 +424,7 @@ export class Isometricon {
   static clearCache() { this.cache.clear(); }
 
   static renderToCanvas(canvas, spec, userOptions = {}) {
-    const o = { ...DEFAULTS, ...userOptions };
+    const o = resolveOptions(spec, userOptions);
     const normalized = normalizeSpec(spec);
     const voxels = normalized.voxels.slice().sort(depthSort);
     const size = Math.max(16, Math.round(o.size));
@@ -442,21 +477,25 @@ export class Isometricon {
   }
 
   static draw(target, spec, options = {}) {
-    const canvas = target instanceof HTMLCanvasElement
-      ? target
-      : target?.querySelector?.('canvas') || makeCanvas(options.size || DEFAULTS.size);
-    const rendered = this.renderToCanvas(canvas, spec, options);
-    if (target && target !== rendered && target.appendChild) target.appendChild(rendered);
+    const merged = resolveOptions(spec, options);
+    const { canvas, mount } = resolveTarget(target, merged.size);
+    const rendered = this.renderToCanvas(canvas, spec, merged);
+    if (mount && rendered.parentNode !== mount) mount.appendChild(rendered);
     return rendered;
   }
 
+  static render(target, voxelData, options = {}) {
+    return this.draw(target, voxelData, options);
+  }
+
   static toCanvas(spec, options = {}) {
-    const canvas = makeCanvas(options.size || DEFAULTS.size);
-    return this.renderToCanvas(canvas, spec, options);
+    const merged = resolveOptions(spec, options);
+    const canvas = makeCanvas(merged.size);
+    return this.renderToCanvas(canvas, spec, merged);
   }
 
   static toDataURL(spec, options = {}) {
-    const merged = { ...DEFAULTS, ...options };
+    const merged = resolveOptions(spec, options);
     const key = merged.cache ? stableStringify({ spec: normalizeSpec(spec), options: merged }) : null;
     if (key && this.cache.has(key)) return this.cache.get(key);
     const dataURL = this.toCanvas(spec, merged).toDataURL('image/png');
@@ -466,12 +505,17 @@ export class Isometricon {
 
   static toImage(spec, options = {}) {
     const image = new Image();
-    image.width = options.size || DEFAULTS.size;
-    image.height = options.size || DEFAULTS.size;
-    image.src = this.toDataURL(spec, options);
+    const merged = resolveOptions(spec, options);
+    image.width = merged.size;
+    image.height = merged.size;
+    image.src = this.toDataURL(spec, merged);
     image.className = 'isometriconImage';
     return image;
   }
+}
+
+export function renderIsometricon(target, voxelData, options = {}) {
+  return Isometricon.render(target, voxelData, options);
 }
 
 export default Isometricon;

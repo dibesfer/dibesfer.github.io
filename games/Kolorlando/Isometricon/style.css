@@ -24,6 +24,18 @@ header {
   margin-bottom: 18px;
 }
 
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logoMount {
+  flex: 0 0 auto;
+  width: 72px;
+  height: 72px;
+}
+
 h1, h2, p { margin: 0; }
 
 h1 {
@@ -74,6 +86,10 @@ canvas,
   margin-bottom: 12px;
 }
 
+.logoMount .isometriconImage {
+  margin-bottom: 0;
+}
+
 canvas {
   width: 192px;
   height: 192px;
@@ -86,7 +102,7 @@ canvas {
 pre {
   margin: 0;
   padding: 10px;
-  max-height: 360px;
+  max-height: 150px;
   overflow: auto;
   background: #0b0b10;
   border: 1px solid #30303a;

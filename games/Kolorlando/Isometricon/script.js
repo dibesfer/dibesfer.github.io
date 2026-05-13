@@ -1,6 +1,36 @@
-import { Isometricon } from './Isometricon.js';
+import { Isometricon, renderIsometricon } from './Isometricon.js';
 
 const palette = ['#7bd88f', '#6bb7ff', '#f7c948', '#f97068', '#b794f4', '#62d6d6', '#f4a261'];
+
+const logoSpec = {
+  palette: {
+    core: '#f7c948',
+    leaf: '#7bd88f',
+    water: '#62d6d6',
+    shadow: '#6bb7ff',
+  },
+  options: {
+    size: 72,
+    hexFill: 'rgba(255,255,255,0.04)',
+    gridStroke: 'rgba(255,255,255,0.12)',
+  },
+  voxels: [
+    { x: 2, y: 0, z: 0, material: 'water' },
+    { x: 1, y: 0, z: 1, material: 'leaf' },
+    { x: 2, y: 0, z: 1, material: 'core' },
+    { x: 3, y: 0, z: 1, material: 'leaf' },
+    { x: 0, y: 0, z: 2, material: 'water' },
+    { x: 1, y: 0, z: 2, material: 'core' },
+    { x: 2, y: 0, z: 2, material: 'shadow' },
+    { x: 3, y: 0, z: 2, material: 'core' },
+    { x: 4, y: 0, z: 2, material: 'water' },
+    { x: 1, y: 0, z: 3, material: 'leaf' },
+    { x: 2, y: 0, z: 3, material: 'core' },
+    { x: 3, y: 0, z: 3, material: 'leaf' },
+    { x: 2, y: 0, z: 4, material: 'water' },
+    { x: 2, y: 1, z: 2, material: 'core' },
+  ],
+};
 
 function randInt(max) {
   return Math.floor(Math.random() * max);
@@ -77,6 +107,7 @@ const options = {
 const boxelCanvas = document.querySelector('#boxelIcon');
 const voxelCanvas = document.querySelector('#voxelIcon');
 const singleCanvas = document.querySelector('#singleIcon');
+const logoMount = document.querySelector('#logoMount');
 const boxelOutput = document.querySelector('#boxelData');
 const voxelOutput = document.querySelector('#voxelData');
 const singleOutput = document.querySelector('#singleData');
@@ -84,14 +115,18 @@ const imageOutput = document.querySelector('#imageData');
 const imageMount = document.querySelector('#imageMount');
 const rerollButton = document.querySelector('#reroll');
 
+function drawLogo() {
+  logoMount.replaceChildren(Isometricon.toImage(logoSpec));
+}
+
 function drawDebug() {
   const boxelSpec = randomBoxelSpec();
   const voxelSpec = randomVoxelSpec();
   const singleSpec = { type: 'voxel', color: '#f7c948' };
 
-  Isometricon.draw(boxelCanvas, boxelSpec, options);
-  Isometricon.draw(voxelCanvas, voxelSpec, options);
-  Isometricon.draw(singleCanvas, singleSpec, options);
+  renderIsometricon(boxelCanvas, boxelSpec, options);
+  renderIsometricon(voxelCanvas, voxelSpec, options);
+  renderIsometricon(singleCanvas, singleSpec, options);
 
   imageMount.replaceChildren(Isometricon.toImage(boxelSpec, { ...options, size: 96 }));
 
@@ -102,6 +137,7 @@ function drawDebug() {
 }
 
 rerollButton.addEventListener('click', drawDebug);
+drawLogo();
 drawDebug();
 
 window.Isometricon = Isometricon;
