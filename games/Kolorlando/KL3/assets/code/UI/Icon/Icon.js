@@ -80,11 +80,14 @@ function voxelToIsometriconSpec(voxel = null, fallbackColor = "#ffffff") {
 function createIsometriconImage(spec, alt = "Voxel") {
     const image = Isometricon.toImage(spec, {
         size: 256,
-        pixelRatio: 2,
+        pixelRatio: 3,
         pixelPerfect: true,
         cubeOutline: true,
         underlayGrid: true,
         hexOutline: true,
+        gridStroke: "rgba(134,218,255,0.85)",
+        hexFill: "rgba(255,255,255,0.10)",
+        pixelLineWidth: 1,
     });
 
     image.classList.add("iconImageAsset");
