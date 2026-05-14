@@ -34,7 +34,7 @@
     max-width: 100%;
     max-height: 35svh;
     overflow: hidden;
-    background-color: rgb(141, 235, 141);
+    background-color: rgba(141, 235, 141, 0.5);
     pointer-events: auto;
 }
 
@@ -43,7 +43,7 @@
 }
 
 #consola {
-    background-color: rgb(94, 94, 94);
+    background-color: rgba(94, 94, 94, 0.5);
 }
 
 #chatBox {
@@ -67,7 +67,7 @@ button:active {
 
 input,
 button, select {
-    background-color: rgb(142, 222, 142);
+    background-color: rgb(53, 137, 53);
     font: unset;
     border: unset;
     border: solid rgba(30, 110, 23, 0.85);
@@ -168,13 +168,16 @@ button, select {
     gap: var(--ui-grid-gap);
     width: 100%;
     align-content: start;
+    
 }
 
 .uiGridItem {
     min-width: 0;
     aspect-ratio: 1;
-    border: solid rgba(30, 110, 23, 0.85);
+    border: 1px dashed rgb(0, 0, 0);
+    background-color: unset;
     overflow: hidden;
+    
 }
 
 .uiGrid[data-ui-grid-scroll="true"] {

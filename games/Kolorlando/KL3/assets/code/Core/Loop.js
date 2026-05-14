@@ -75,9 +75,7 @@ export class Loop {
         5. DEBUG
         Refresh FPS and player coordinates with a throttled UI draw.
         */
-        const feet = app.player.getFeetPosition();
-        app.debug.setCoords(feet.x, feet.y, feet.z);
-        app.debug.update(now);
+        app.debug.update(now, app.player.position);
 
         /*
         6. THREED
@@ -90,5 +88,3 @@ export class Loop {
 }
 
 export default Loop;
-
-

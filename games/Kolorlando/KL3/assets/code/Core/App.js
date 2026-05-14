@@ -758,6 +758,15 @@ export class App {
         return this.autosaveTimer !== null || this.autosaveInFlight === true;
     }
 
+
+    debugProfile() {
+        return this.debug?.debugProfile?.(this);
+    }
+
+    debugBenchmark(durationSec = 15, intervalMs = 1000) {
+        return this.debug?.debugBenchmark?.(this, durationSec, intervalMs);
+    }
+
     exposeGlobal() {
         window.KL3 = {
             app: this,
@@ -785,7 +794,13 @@ export class App {
             microxeledVoxels: this.microxeledVoxels,
             events: this.events,
             loop: this.loop,
+            debug: this.debug,
+            debugProfile: () => this.debugProfile(),
+            debugBenchmark: (durationSec = 15, intervalMs = 1000) => this.debugBenchmark(durationSec, intervalMs),
         };
+
+        window.debugProfile = () => this.debugProfile();
+        window.debugBenchmark = (durationSec = 15, intervalMs = 1000) => this.debugBenchmark(durationSec, intervalMs);
     }
 }
 
