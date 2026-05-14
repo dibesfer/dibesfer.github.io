@@ -612,3 +612,57 @@ body[data-screen-mode="mobile-landscape"] #joysticksRight {
     background-color: rgba(0, 96, 0, 0.493);
     border-top-left-radius: 50%;
 }
+
+.boxelCatalogItem {
+    position: relative;
+}
+
+.boxelCatalogActions {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0;
+    background: rgba(255, 255, 255, 0.88);
+    border-top: 1px dashed rgb(0, 0, 0);
+    opacity: 0;
+    transform: translateY(100%);
+    transition: opacity 120ms ease, transform 120ms ease;
+    pointer-events: none;
+}
+
+.boxelCatalogItem:hover .boxelCatalogActions,
+.boxelCatalogItem:focus-within .boxelCatalogActions {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+
+.boxelCatalogActionButton {
+    min-width: 0;
+    min-height: 1.25rem;
+    padding: 0.15rem 0.1rem;
+    border: 0;
+    border-right: 1px dashed rgba(0, 0, 0, 0.55);
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-size: 0.68rem;
+    line-height: 1;
+    cursor: pointer;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.boxelCatalogActionButton:last-child {
+    border-right: 0;
+}
+
+.boxelCatalogActionButton:hover,
+.boxelCatalogActionButton:focus-visible {
+    background: rgba(0, 0, 0, 0.10);
+    outline: 0;
+}

@@ -124,6 +124,30 @@ export class Memory {
         return true;
     }
 
+
+    async exportBoxel(boxel, options = {}) {
+        if (!boxel) return false;
+
+        const serializer = new BoxelClipboard({
+            name: options.name ?? boxel.name ?? "Boxel",
+            boxel,
+        });
+        const data = serializer.toMemoryData();
+        const blob = await this.binarier.encode(data);
+
+        this.downloadBlob(blob, this.createFilename(data));
+
+        return true;
+    }
+
+    async exportSavedBoxel(savedBoxel = null) {
+        if (!savedBoxel?.boxel) return false;
+
+        return this.exportBoxel(savedBoxel.boxel, {
+            name: savedBoxel.name ?? savedBoxel.boxel?.name ?? "Boxel",
+        });
+    }
+
     async import(file) {
         if (!file) return null;
 

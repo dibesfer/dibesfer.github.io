@@ -294,8 +294,47 @@ export class Events {
             });
 
             icon.element.classList.add("boxelCatalogItem");
+            this.addSavedBoxelActions(icon.element, item);
             catalogElement.appendChild(icon.element);
         });
+    }
+
+    addSavedBoxelActions(iconElement, item) {
+        const savedBoxelId = item?.data?.id ?? null;
+        if (!iconElement || !savedBoxelId) return;
+
+        const actionsElement = document.createElement("div");
+        actionsElement.className = "boxelCatalogActions";
+        actionsElement.innerHTML = `
+            <button type="button" class="boxelCatalogAction" data-boxel-action="star">Star</button>
+            <button type="button" class="boxelCatalogAction" data-boxel-action="save">Save</button>
+            <button type="button" class="boxelCatalogAction" data-boxel-action="delete">Delete</button>
+        `;
+
+        actionsElement.addEventListener("click", async (event) => {
+            const actionButton = event.target?.closest?.("[data-boxel-action]");
+            if (!actionButton) return;
+
+            event.preventDefault();
+            event.stopPropagation();
+
+            const action = actionButton.dataset.boxelAction;
+
+            if (action === "star") {
+                return;
+            }
+
+            if (action === "save") {
+                await this.app.downloadSavedBoxel?.(savedBoxelId);
+                return;
+            }
+
+            if (action === "delete") {
+                this.app.deleteSavedBoxel?.(savedBoxelId);
+            }
+        });
+
+        iconElement.appendChild(actionsElement);
     }
 
     createLoadBoxelSlot(contentElement) {

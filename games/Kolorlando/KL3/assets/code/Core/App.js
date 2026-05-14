@@ -35,7 +35,7 @@ export class App {
         this.autosaveDelayMs = options.autosaveDelayMs ?? 5000;
         this.historySaveDelayMs = options.historySaveDelayMs ?? 750;
         this.savedBoxelsSaveDelayMs = options.savedBoxelsSaveDelayMs ?? 250;
-        this.savedBoxelsLimit = options.savedBoxelsLimit ?? 18;
+        this.savedBoxelsLimit = options.savedBoxelsLimit ?? 17;
         this.inventorySize = options.inventorySize ?? 7;
         this.boxelHoldMs = options.boxelHoldMs ?? 450;
         this.boxel15RenderDistance = options.boxel15RenderDistance ?? 60;
@@ -659,6 +659,34 @@ export class App {
         return true;
     }
 
+    getSavedBoxelById(savedBoxelId = null) {
+        if (!savedBoxelId) return null;
+
+        return this.savedBoxels.find((boxel) => boxel.id === savedBoxelId) ?? null;
+    }
+
+    async downloadSavedBoxel(savedBoxelId = null) {
+        const savedBoxel = this.getSavedBoxelById(savedBoxelId);
+        if (!savedBoxel?.boxel) return false;
+
+        return this.memory.exportSavedBoxel(savedBoxel);
+    }
+
+    deleteSavedBoxel(savedBoxelId = null) {
+        if (!savedBoxelId) return false;
+
+        const nextSavedBoxels = this.savedBoxels.filter((boxel) => boxel.id !== savedBoxelId);
+        if (nextSavedBoxels.length === this.savedBoxels.length) return false;
+
+        this.savedBoxels = nextSavedBoxels;
+        this.syncSavedBoxelsGlobal();
+        this.scheduleSavedBoxelsSave();
+        this.refreshBoxelCatalog();
+
+        return true;
+    }
+
+
     scheduleSavedBoxelsSave() {
         window.clearTimeout(this.savedBoxelsSaveTimer);
 
@@ -805,5 +833,3 @@ export class App {
 }
 
 export default App;
-
-
