@@ -306,9 +306,9 @@ export class Events {
         const actionsElement = document.createElement("div");
         actionsElement.className = "boxelCatalogActions";
         actionsElement.innerHTML = `
-            <button type="button" class="boxelCatalogAction" data-boxel-action="star">Star</button>
-            <button type="button" class="boxelCatalogAction" data-boxel-action="save">Save</button>
-            <button type="button" class="boxelCatalogAction" data-boxel-action="delete">Delete</button>
+            <button type="button" class="boxelCatalogAction" data-boxel-action="star">⭐</button>
+            <button type="button" class="boxelCatalogAction" data-boxel-action="save">⬇️</button>
+            <button type="button" class="boxelCatalogAction" data-boxel-action="delete">❌</button>
         `;
 
         actionsElement.addEventListener("click", async (event) => {

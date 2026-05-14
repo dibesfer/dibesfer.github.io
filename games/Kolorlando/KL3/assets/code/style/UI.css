@@ -57,17 +57,18 @@ button {
 }
 
 button:hover {
-    background-color: rgba(10, 87, 41, 0.3);
+    background-color: rgba(0, 0, 0, 0.27);
 }
 
 button:active {
-    background-color: rgba(0, 0, 0, 0.2);
-    
+    background-color: rgba(0, 0, 0, 0.827);
+    color: white;
+    border: solid rgba(16, 65, 11, 0.85);
 }
 
 input,
 button, select {
-    background-color: rgb(53, 137, 53);
+    background-color: rgb(147, 210, 147);
     font: unset;
     border: unset;
     border: solid rgba(30, 110, 23, 0.85);
