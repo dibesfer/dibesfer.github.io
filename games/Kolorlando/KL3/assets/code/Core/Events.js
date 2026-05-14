@@ -11,6 +11,7 @@ export class Events {
         this.handleCreateWoxelClick = this.handleCreateWoxelClick.bind(this);
         this.handleSaveWoxelClick = this.handleSaveWoxelClick.bind(this);
         this.handleLoadWoxelFileChange = this.handleLoadWoxelFileChange.bind(this);
+        this.handleLoadBoxelFileChange = this.handleLoadBoxelFileChange.bind(this);
     }
 
     start() {
@@ -227,7 +228,7 @@ export class Events {
         }
 
         if (page === "boxels") {
-            this.renderBoxelCatalog(contentElement);
+            this.wireBoxelsPage(contentElement);
         }
     }
 
@@ -247,6 +248,13 @@ export class Events {
             ?.addEventListener("change", this.handleLoadWoxelFileChange);
 
         this.app.updateWoxelMenuInfo(contentElement);
+    }
+
+    wireBoxelsPage(contentElement) {
+        contentElement.querySelector("#loadBoxelInput")
+            ?.addEventListener("change", this.handleLoadBoxelFileChange);
+
+        this.renderBoxelCatalog(contentElement);
     }
 
     renderVoxelCatalog(contentElement) {
@@ -275,6 +283,7 @@ export class Events {
         if (!catalogElement) return;
 
         catalogElement.innerHTML = "";
+        catalogElement.appendChild(this.createLoadBoxelSlot(contentElement));
 
         this.app.getSavedBoxelItems().forEach((item) => {
             const icon = new Icon({
@@ -287,6 +296,21 @@ export class Events {
             icon.element.classList.add("boxelCatalogItem");
             catalogElement.appendChild(icon.element);
         });
+    }
+
+    createLoadBoxelSlot(contentElement) {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "icon uiGridItem boxelCatalogItem boxelLoadItem";
+        button.innerHTML = `
+            <div class="iconName">Load</div>
+            <div class="iconImage" aria-hidden="true" style="font-size: 2rem; line-height: 1;">+</div>
+        `;
+        button.addEventListener("click", () => {
+            contentElement.querySelector("#loadBoxelInput")?.click();
+        });
+
+        return button;
     }
 
     async handleCreateWoxelClick(event) {
@@ -320,6 +344,40 @@ export class Events {
         } catch (error) {
             console.warn(error);
             alert("No se pudo cargar este .woxel");
+        }
+    }
+
+    async handleLoadBoxelFileChange(event) {
+        const inputElement = event.target;
+        const file = inputElement.files?.[0] ?? null;
+
+        inputElement.value = "";
+
+        if (!file) return;
+
+        try {
+            const loaded = await this.app.memory.import(file);
+            const boxel = loaded?.getBoxel?.() ?? loaded?.boxel ?? loaded;
+
+            if (!boxel?.forEachVoxel) {
+                throw new Error("Loaded file is not a Boxel.");
+            }
+
+            const savedBoxel = {
+                id: this.app.createSavedBoxelId?.() ?? `boxel_${Date.now()}`,
+                name: boxel.name ?? null,
+                createdAt: new Date().toISOString(),
+                boxel,
+            };
+
+            this.app.savedBoxels = [savedBoxel, ...(this.app.savedBoxels ?? [])];
+            this.app.trimSavedBoxels?.();
+            this.app.syncSavedBoxelsGlobal?.();
+            this.app.scheduleSavedBoxelsSave?.();
+            this.app.refreshBoxelCatalog?.();
+        } catch (error) {
+            console.warn(error);
+            alert("No se pudo cargar este .boxel");
         }
     }
 }

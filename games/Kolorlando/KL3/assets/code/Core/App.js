@@ -35,7 +35,7 @@ export class App {
         this.autosaveDelayMs = options.autosaveDelayMs ?? 5000;
         this.historySaveDelayMs = options.historySaveDelayMs ?? 750;
         this.savedBoxelsSaveDelayMs = options.savedBoxelsSaveDelayMs ?? 250;
-        this.savedBoxelsLimit = options.savedBoxelsLimit ?? 30;
+        this.savedBoxelsLimit = options.savedBoxelsLimit ?? 18;
         this.inventorySize = options.inventorySize ?? 7;
         this.boxelHoldMs = options.boxelHoldMs ?? 450;
         this.boxel15RenderDistance = options.boxel15RenderDistance ?? 60;
