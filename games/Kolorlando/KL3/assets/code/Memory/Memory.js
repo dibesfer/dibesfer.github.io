@@ -113,7 +113,10 @@ export class Memory {
     async exportWoxel(woxel, options = {}) {
         if (!woxel) return false;
 
-        const data = this.toMemoryData(woxel, options);
+        const data = this.toMemoryData(woxel, {
+            ...options,
+            includePaletteSnapshot: options.includePaletteSnapshot ?? true,
+        });
         const blob = await this.binarier.encode(data);
 
         this.downloadBlob(blob, this.createFilename(data));
@@ -139,7 +142,7 @@ export class Memory {
         }
 
         if (wabavam?.toMemoryData) {
-            return wabavam.toMemoryData();
+            return wabavam.toMemoryData(options);
         }
 
         throw new Error("Memory cannot save this Wabavam yet.");
@@ -236,5 +239,3 @@ export class Memory {
 }
 
 export default Memory;
-
-

@@ -3,7 +3,7 @@ import { VoxelPalette } from "../VoxelPalette.js";
 
 export const voxelColors12 = [
     { id: 1, name: "White", color: "#ededed" },
-    { id: 2, name: "Black", color: "#e43e3e" },
+    { id: 2, name: "Black", color: "#1f1f1f" },
     { id: 3, name: "Gray", color: "#8a8a8a" },
     { id: 4, name: "Orange", color: "#ff8e1e" },
     { id: 5, name: "Yellow", color: "#ebeb26" },

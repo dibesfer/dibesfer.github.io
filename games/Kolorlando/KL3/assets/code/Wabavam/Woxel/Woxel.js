@@ -42,7 +42,7 @@ export class Woxel {
             throw new Error("Woxel.fromMemoryData expected kind 'woxel'.");
         }
 
-        const palette = Woxel.createPaletteFromMemoryData(data.palette);
+        const palette = Woxel.createPaletteFromMemoryData(data.palette, data.palettePreset);
         const woxel = new Woxel({
             name: data.name ?? "Loaded Woxel",
             size: data.size,
@@ -62,8 +62,10 @@ export class Woxel {
         return woxel;
     }
 
-    static createPaletteFromMemoryData(data = null) {
-        if (!data) return create12ColorsPalette();
+    static createPaletteFromMemoryData(data = null, palettePreset = null) {
+        if (!data || palettePreset === "12colors" || data?.name === "12colors") {
+            return create12ColorsPalette();
+        }
 
         if (Array.isArray(data)) {
             const palette = new VoxelPalette({ name: "Loaded VoxelPalette" });
@@ -76,6 +78,10 @@ export class Woxel {
         }
 
         return VoxelPalette.fromMemoryData(data);
+    }
+
+    getPalettePreset() {
+        return this.palette?.name === "12colors" ? "12colors" : null;
     }
 
     loadBoxel15MemoryData(boxelDataList = []) {
@@ -139,20 +145,29 @@ export class Woxel {
         return 0;
     }
 
-    toMemoryData() {
-        return {
+    toMemoryData(options = {}) {
+        const palettePreset = this.getPalettePreset();
+        const includePaletteSnapshot = options.includePaletteSnapshot === true && !palettePreset;
+
+        const data = {
             magic: "KL3W",
-            version: 3,
+            version: 4,
             kind: "woxel",
             name: this.name,
             size: { ...this.size },
             land: { ...this.land },
             spawnPosition: { ...this.spawnPosition },
-            palette: this.palette?.toMemoryData?.() ?? null,
+            palettePreset: palettePreset ?? undefined,
             playerState: this.playerState ? { ...this.playerState, position: { ...this.playerState.position } } : null,
             boxelFormat: "boxel15-rle16",
             boxels: this.toBoxel15MemoryData(),
         };
+
+        if (includePaletteSnapshot) {
+            data.palette = this.palette?.toMemoryData?.() ?? null;
+        }
+
+        return data;
     }
 
     setPlayerState(playerState = null) {
@@ -578,4 +593,3 @@ export class Woxel {
 }
 
 export default Woxel;
-
