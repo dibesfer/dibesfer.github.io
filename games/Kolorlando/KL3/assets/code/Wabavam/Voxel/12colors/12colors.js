@@ -16,6 +16,19 @@ export const voxelColors12 = [
     { id: 12, name: "Brown", color: "#583311" },
 ];
 
+export const voxelFakeShading12 = Object.freeze({
+    // Central fake shading knobs for every KL3 voxel surface path.
+    // 1.0 = real voxel color. Lower values only darken that face direction.
+    py: 1.0, // top
+    px: 0.8, // right
+    nx: 0.5, // left
+    pz: 0.7, // front
+    nz: 0.7, // back
+    ny: 0.4, // bottom
+});
+
+export const fakeShading12 = voxelFakeShading12;
+
 export function create12ColorsPalette() {
     const palette = new VoxelPalette({ name: "12colors" });
 
@@ -60,3 +73,4 @@ export function randomVoxelId12(options = {}) {
 }
 
 export default voxelObjects12;
+
