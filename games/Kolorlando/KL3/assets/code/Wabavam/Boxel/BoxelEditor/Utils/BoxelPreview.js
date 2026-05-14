@@ -29,10 +29,11 @@ export class BoxelPreview {
         if (!this.woxel || !area) return;
 
         const color = options.color ?? this.color;
+        const opacity = options.opacity ?? this.opacity;
         const min = area.getMin();
         const size = area.getSize();
 
-        this.showBounds(min, size, { color });
+        this.showBounds(min, size, { color, opacity });
     }
 
     showBoxel(boxel, originPosition, options = {}) {
@@ -45,18 +46,20 @@ export class BoxelPreview {
         const orientationDelta = Compass.normalize(options.orientationDelta ?? Compass.NORTH) ?? Compass.NORTH;
         const size = Compass.rotateSize(boxel.size, orientationDelta);
         const color = options.color ?? this.color;
+        const opacity = options.opacity ?? this.opacity;
 
-        this.showBounds(originPosition, size, { color });
+        this.showBounds(originPosition, size, { color, opacity });
     }
 
     showBounds(originPosition, size, options = {}) {
         if (!this.woxel || !originPosition || !size) return;
 
         const color = options.color ?? this.color;
-        const geometryKey = this.createGeometryKey(size, color);
+        const opacity = options.opacity ?? this.opacity;
+        const geometryKey = this.createGeometryKey(size, color, opacity);
 
         if (geometryKey !== this.lastGeometryKey) {
-            this.rebuild(size, color);
+            this.rebuild(size, color, opacity);
             this.lastGeometryKey = geometryKey;
         }
 
@@ -64,11 +67,11 @@ export class BoxelPreview {
         this.group.visible = true;
     }
 
-    rebuild(size, color) {
+    rebuild(size, color, opacity = this.opacity) {
         this.clearMesh();
 
         const geometry = this.createBoxGeometry(size);
-        const material = this.createMaterial(color);
+        const material = this.createMaterial(color, opacity);
 
         this.mesh = new THREE.Mesh(geometry, material);
         this.mesh.name = "BoxelPreviewMesh";
@@ -103,17 +106,17 @@ export class BoxelPreview {
         return Math.max(0, this.scale - 1);
     }
 
-    createMaterial(color) {
+    createMaterial(color, opacity = this.opacity) {
         return new THREE.MeshBasicMaterial({
             color,
             transparent: true,
-            opacity: this.opacity,
+            opacity,
             side: THREE.DoubleSide,
             depthWrite: this.depthWrite,
         });
     }
 
-    createGeometryKey(size = {}, color = this.color) {
+    createGeometryKey(size = {}, color = this.color, opacity = this.opacity) {
         return [
             "bounds",
             size.x ?? 0,
@@ -121,7 +124,7 @@ export class BoxelPreview {
             size.z ?? 0,
             color,
             this.scale,
-            this.opacity,
+            opacity,
             this.depthWrite ? 1 : 0,
         ].join("|");
     }

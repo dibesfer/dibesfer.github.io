@@ -16,21 +16,34 @@ export const GhostVoxelMixin = {
         };
     },
 
-    getDistanceLockedGhostVoxel(reference) {
+    getDistanceLockedGhostVoxel(reference, options = {}) {
+        const distance = options.distance ?? this.voxelExtrusion?.distanceLock ?? 1;
+
+        return this.getCameraGhostVoxelAtDistance(distance, reference);
+    },
+
+    getCameraGhostVoxelAtDistance(distance = 1, fallback = null) {
         const cameraPosition = this.getCameraPosition();
         const cameraDirection = this.getCameraDirection();
 
-        if (!cameraPosition || !cameraDirection) return reference;
+        if (!cameraPosition || !cameraDirection) return fallback;
 
-        const distance = this.voxelExtrusion.distanceLock;
-
+        const safeDistance = Math.max(1, Number(distance) || 1);
         const aimPoint = {
-            x: cameraPosition.x + cameraDirection.x * distance,
-            y: cameraPosition.y + cameraDirection.y * distance,
-            z: cameraPosition.z + cameraDirection.z * distance,
+            x: cameraPosition.x + cameraDirection.x * safeDistance,
+            y: cameraPosition.y + cameraDirection.y * safeDistance,
+            z: cameraPosition.z + cameraDirection.z * safeDistance,
         };
 
         return this.clampPositionToWoxel(this.woxel.gameToGrid(aimPoint));
+    },
+
+    getFlyModeGhostVoxelDistance(reference = null, fallbackDistance = 6) {
+        if (reference) {
+            return this.getDistanceFromCameraToGridPosition(reference);
+        }
+
+        return Math.max(1, Number(fallbackDistance) || 6);
     },
 
     getCameraPosition() {

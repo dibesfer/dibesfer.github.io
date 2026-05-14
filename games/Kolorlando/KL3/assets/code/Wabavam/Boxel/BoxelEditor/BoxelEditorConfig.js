@@ -4,6 +4,7 @@ export const VOXEL_EXTRUSION_CONFIG = {
     modes: {
         green: "greenVoxelExtrusion",
         blue: "blueVoxelExtrusion",
+        purple: "purpleVoxelExtrusion",
     },
 };
 

@@ -39,6 +39,7 @@ export class Events {
             onSecondaryHold: () => this.startGreenBoxel(),
             onPointerRelease: () => this.commitBoxelEditor(),
             onMiddleAction: () => this.toggleBlueBoxel(),
+            onMiddleHold: () => this.togglePurpleBoxel(),
             onCopy: () => this.copyBlueBoxelSelection(),
             onCut: () => this.cutBlueBoxelSelection(),
             onPaste: () => this.previewBlueBoxelClipboard(),
@@ -83,31 +84,29 @@ export class Events {
 
     quitTargetVoxel() {
         const app = this.app;
-        if (app.boxelEditor.isActive()) return;
+        if (app.boxelEditor.isActive() && !app.boxelEditor.isPurpleBoxelMirroring?.()) return;
 
         const target = app.raycast.getTarget();
         if (!target?.voxel || !target?.gridPosition) return;
 
-        const result = app.woxel.removeVoxelAt(
-            target.gridPosition.x,
-            target.gridPosition.y,
-            target.gridPosition.z
-        );
+        const results = app.boxelEditor.removeVoxelAtWithPurpleMirror?.(target.gridPosition) ?? [
+            app.woxel.removeVoxelAt(
+                target.gridPosition.x,
+                target.gridPosition.y,
+                target.gridPosition.z
+            )
+        ];
 
-        if (!result.changed) return;
-
-        app.history?.pushResults?.([result], {
-            type: "voxelQuit",
-            label: "Voxel quit",
+        app.boxelEditor.finishWorldChanges(results, {
+            cancel: false,
+            historyType: results.length > 1 ? "bulkQuit" : "voxelQuit",
+            historyLabel: app.boxelEditor.isPurpleBoxelMirroring?.() ? "PurpleBoxel voxel quit" : "Voxel quit",
         });
-        app.mapper.remeshDirtyResult(result, app.woxel);
-        app.raycast.forceNextCast({ preserveTargetOnMiss: true });
-        app.scheduleAutosave();
     }
 
     placeVoxelOnTarget() {
         const app = this.app;
-        if (app.boxelEditor.isActive()) return;
+        if (app.boxelEditor.isActive() && !app.boxelEditor.isPurpleBoxelMirroring?.()) return;
 
         const target = app.raycast.getTarget();
         if (!target?.voxel || !target?.gridPosition || !target?.faceNormal) return;
@@ -123,22 +122,20 @@ export class Events {
             app.player
         );
 
-        const result = app.woxel.placeVoxelAt(
-            position.x,
-            position.y,
-            position.z,
-            placeVoxel
-        );
+        const results = app.boxelEditor.placeVoxelAtWithPurpleMirror?.(position, placeVoxel) ?? [
+            app.woxel.placeVoxelAt(
+                position.x,
+                position.y,
+                position.z,
+                placeVoxel
+            )
+        ];
 
-        if (!result.changed) return;
-
-        app.history?.pushResults?.([result], {
-            type: "voxelPlacement",
-            label: "Voxel placement",
+        app.boxelEditor.finishWorldChanges(results, {
+            cancel: false,
+            historyType: results.length > 1 ? "bulkPlacement" : "voxelPlacement",
+            historyLabel: app.boxelEditor.isPurpleBoxelMirroring?.() ? "PurpleBoxel voxel placement" : "Voxel placement",
         });
-        app.mapper.remeshDirtyResult(result, app.woxel);
-        app.raycast.forceNextCast({ preserveTargetOnMiss: true });
-        app.scheduleAutosave();
     }
 
     startRedBoxel() {
@@ -157,6 +154,10 @@ export class Events {
 
     toggleBlueBoxel() {
         this.app.boxelEditor.toggleBlueBoxel?.();
+    }
+
+    togglePurpleBoxel() {
+        this.app.boxelEditor.togglePurpleBoxel?.();
     }
 
     copyBlueBoxelSelection() {
@@ -324,5 +325,3 @@ export class Events {
 }
 
 export default Events;
-
-

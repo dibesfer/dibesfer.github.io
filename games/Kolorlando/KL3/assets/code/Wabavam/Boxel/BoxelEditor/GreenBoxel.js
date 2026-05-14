@@ -4,6 +4,7 @@ import { orientVoxelForPlacement } from "../../Voxel/VoxelOrienting.js";
 export const GreenBoxelMixin = {
     startGreenBoxel() {
         if (this.isBlueBoxelMode()) return false;
+        if (this.mode === "purpleBoxelSelecting") return false;
 
         const target = this.raycast?.getTarget?.();
         if (!target?.voxel || !target?.gridPosition || !target?.faceNormal) return false;
@@ -37,8 +38,13 @@ export const GreenBoxelMixin = {
                 this.player
             );
 
-            const result = this.woxel.placeVoxelAt(position.x, position.y, position.z, placeVoxel);
-            if (result.changed) results.push(result);
+            const placeResults = this.placeVoxelAtWithPurpleMirror?.(position, placeVoxel) ?? [
+                this.woxel.placeVoxelAt(position.x, position.y, position.z, placeVoxel)
+            ];
+
+            placeResults.forEach((result) => {
+                if (result.changed) results.push(result);
+            });
         });
 
         return this.finishCommit(results);

@@ -41,16 +41,9 @@ export const VoxelExtrusionMixin = {
         }
 
         if (!this.isBlueVoxelExtrusionActive()) {
-            if (!target?.voxel || !target?.gridPosition || !target?.faceNormal) {
-                this.startPosition = this.clonePosition(referencePosition);
-                this.endPosition = this.clonePosition(referencePosition);
-                this.rebuildArea();
-                this.drawPreview();
-                this.hideSecondaryBlueBoxel();
-                return false;
-            }
-
-            this.startVoxelExtrusion(target, referencePosition, {
+            // BlueBoxel must keep its flymode ghost after pos1 even when raycast misses.
+            // GreenBoxel already owns a reference voxel before the miss; here pos1 is that reference.
+            this.startVoxelExtrusion(target ?? {}, referencePosition, {
                 mode: VOXEL_EXTRUSION_CONFIG.modes.blue,
             });
         }

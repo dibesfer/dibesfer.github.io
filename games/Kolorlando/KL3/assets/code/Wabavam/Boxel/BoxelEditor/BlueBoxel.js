@@ -177,14 +177,18 @@ export const BlueBoxelMixin = {
 
             if (!this.canPlaceAt(position)) return;
 
-            const result = this.woxel.placeVoxelAt(
-                position.x,
-                position.y,
-                position.z,
-                voxel?.clone?.() ?? voxel
-            );
+            const placeResults = this.placeVoxelAtWithPurpleMirror?.(position, voxel?.clone?.() ?? voxel) ?? [
+                this.woxel.placeVoxelAt(
+                    position.x,
+                    position.y,
+                    position.z,
+                    voxel?.clone?.() ?? voxel
+                )
+            ];
 
-            if (result.changed) results.push(result);
+            placeResults.forEach((result) => {
+                if (result.changed) results.push(result);
+            });
         });
 
         this.finishWorldChanges(results, {
@@ -284,23 +288,12 @@ export const BlueBoxelMixin = {
         if (!boxel) {
             this.preview.hide();
             this.previewOrigin = null;
+            this.blueBoxelClipboardDistanceLock = null;
             return false;
         }
 
-        if (!target?.voxel || !target?.gridPosition) {
-            this.preview.hide();
-            this.previewOrigin = null;
-            return false;
-        }
-
-        if (!target.faceNormal) {
-            this.preview.hide();
-            this.previewOrigin = null;
-            return false;
-        }
-
-        const position = this.getPlaceGridPosition(target);
-        if (!this.canPreviewBlueAt(position)) {
+        const position = this.getBlueBoxelClipboardPreviewPosition(target);
+        if (!position || !this.canPreviewBlueAt(position)) {
             this.preview.hide();
             this.previewOrigin = null;
             return false;
@@ -313,6 +306,24 @@ export const BlueBoxelMixin = {
         });
 
         return true;
+    },
+
+    getBlueBoxelClipboardPreviewPosition(target = this.raycast?.getTarget?.()) {
+        if (target?.voxel && target?.gridPosition && target?.faceNormal) {
+            const position = this.getPlaceGridPosition(target);
+            this.blueBoxelClipboardDistanceLock = this.getDistanceFromCameraToGridPosition(position);
+            return this.clonePosition(position);
+        }
+
+        if (!this.shouldStartVoxelExtrusion()) return null;
+
+        const distance = this.getFlyModeGhostVoxelDistance(
+            this.previewOrigin,
+            this.blueBoxelClipboardDistanceLock ?? this.raycast?.range * 0.5 ?? 6
+        );
+        this.blueBoxelClipboardDistanceLock = distance;
+
+        return this.getCameraGhostVoxelAtDistance(distance, this.previewOrigin);
     },
 
     showSecondaryBlueBoxel(position) {

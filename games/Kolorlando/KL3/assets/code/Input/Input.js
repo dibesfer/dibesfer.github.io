@@ -11,6 +11,7 @@ export class Input {
         this.onSecondaryHold = options.onSecondaryHold ?? null;
         this.onPointerRelease = options.onPointerRelease ?? null;
         this.onMiddleAction = options.onMiddleAction ?? null;
+        this.onMiddleHold = options.onMiddleHold ?? null;
         this.onCopy = options.onCopy ?? null;
         this.onCut = options.onCut ?? null;
         this.onPaste = options.onPaste ?? null;
@@ -20,6 +21,7 @@ export class Input {
         this.onHotbarSelect = options.onHotbarSelect ?? null;
 
         this.holdMs = options.holdMs ?? 650;
+        this.middleHoldMs = options.middleHoldMs ?? 1200;
         this.pointerHold = null;
 
         this.screenPolicy = this.createDefaultScreenPolicy();
@@ -162,6 +164,10 @@ export class Input {
 
     setMiddleAction(callback = null) {
         this.onMiddleAction = callback;
+    }
+
+    setMiddleHold(callback = null) {
+        this.onMiddleHold = callback;
     }
 
     setCopy(callback = null) {
@@ -708,12 +714,6 @@ export class Input {
             this.playerInputOn = true;
         }
 
-        if (event.button === 1) {
-            this.clearPointerHold();
-            this.onMiddleAction?.(event);
-            return;
-        }
-
         this.startPointerHold(event.button);
     }
 
@@ -735,14 +735,26 @@ export class Input {
     startPointerHold(button) {
         this.clearPointerHold();
 
+        const action = button === 0
+            ? this.onPrimaryAction
+            : button === 1
+                ? this.onMiddleAction
+                : this.onSecondaryAction;
+        const holdAction = button === 0
+            ? this.onPrimaryHold
+            : button === 1
+                ? this.onMiddleHold
+                : this.onSecondaryHold;
+        const holdMs = button === 1 ? this.middleHoldMs : this.holdMs;
+
         this.pointerHold = {
             button,
             didHold: false,
-            action: button === 0 ? this.onPrimaryAction : this.onSecondaryAction,
-            holdAction: button === 0 ? this.onPrimaryHold : this.onSecondaryHold,
+            action,
+            holdAction,
             timer: window.setTimeout(() => {
                 this.triggerPointerHold();
-            }, this.holdMs),
+            }, holdMs),
         };
     }
 

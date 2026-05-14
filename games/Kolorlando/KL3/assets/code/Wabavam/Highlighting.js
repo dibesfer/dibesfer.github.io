@@ -11,6 +11,10 @@ export class Highlighting {
             redBoxel: options.colors?.redBoxel ?? 0xff2222,
             greenBoxel: options.colors?.greenBoxel ?? 0x22ff44,
             blueBoxel: options.colors?.blueBoxel ?? 0x2299ff,
+            purpleBoxel: options.colors?.purpleBoxel ?? 0x9b35ff,
+            axisX: options.colors?.axisX ?? 0xff3333,
+            axisY: options.colors?.axisY ?? 0x33ff66,
+            axisZ: options.colors?.axisZ ?? 0x3388ff,
         };
     }
 

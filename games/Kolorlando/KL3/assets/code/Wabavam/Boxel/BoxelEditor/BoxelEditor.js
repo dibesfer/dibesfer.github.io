@@ -9,6 +9,7 @@ import { VOXEL_EXTRUSION_CONFIG } from "./BoxelEditorConfig.js";
 import { RedBoxelMixin } from "./RedBoxel.js";
 import { GreenBoxelMixin } from "./GreenBoxel.js";
 import { BlueBoxelMixin } from "./BlueBoxel.js";
+import { PurpleBoxelMixin } from "./PurpleBoxel.js";
 import { GhostVoxelMixin } from "./GhostVoxel.js";
 import { VoxelExtrusionMixin } from "./VoxelExtrusion.js";
 
@@ -34,6 +35,9 @@ export class BoxelEditor {
             blueBoxelSelecting: options.colors?.blue ?? this.highlighting.colors.blueBoxel,
             blueVoxelExtrusion: options.colors?.blue ?? this.highlighting.colors.blueBoxel,
             blueBoxelPreview: options.colors?.blue ?? this.highlighting.colors.blueBoxel,
+            purpleBoxelSelecting: options.colors?.purple ?? this.highlighting.colors.purpleBoxel,
+            purpleVoxelExtrusion: options.colors?.purple ?? this.highlighting.colors.purpleBoxel,
+            purpleBoxelMirroring: options.colors?.purple ?? this.highlighting.colors.purpleBoxel,
         };
 
         this.mode = "idle";
@@ -44,6 +48,14 @@ export class BoxelEditor {
 
         this.voxelExtrusion = this.createEmptyVoxelExtrusion();
         this.blueBoxelSelection = this.createEmptyBlueBoxelSelection();
+        this.purpleBoxel = this.createEmptyPurpleBoxelState?.() ?? {
+            hasStart: false,
+            locked: false,
+            mirroring: false,
+            committedStart: null,
+            committedEnd: null,
+            area: null,
+        };
         this.blueBoxelClipboard = options.blueBoxelClipboard ?? new BoxelClipboard({
             name: "blueBoxelClipboard",
         });
@@ -71,8 +83,27 @@ export class BoxelEditor {
             depthWrite: boxelStyle.depthWrite,
         });
 
+        const purpleBoxelStyle = this.highlighting.getBoxelOptions("purpleBoxel", {
+            color: this.colors.purpleBoxelSelecting,
+        });
+
+        this.purpleBoxelPreview = options.purpleBoxelPreview ?? new BoxelPreview({
+            woxel: this.woxel,
+            scale: purpleBoxelStyle.scale,
+            opacity: purpleBoxelStyle.opacity,
+            depthWrite: purpleBoxelStyle.depthWrite,
+        });
+        this.purpleMirrorPlaneGroup = new Group();
+        this.purpleMirrorPlaneGroup.name = "PurpleMirrorPlanes";
+        this.purpleMirrorPlaneGroup.visible = false;
+        this.purpleMirrorPlaneGroup.userData.debugOnly = true;
+        this.purpleMirrorPlaneGroup.userData.highlightOnly = true;
+        this.purpleMirrorPlanes = null;
+
         this.group.add(this.preview.getObject3D());
         this.group.add(this.secondaryBlueBoxelPreview.getObject3D());
+        this.group.add(this.purpleBoxelPreview.getObject3D());
+        this.group.add(this.purpleMirrorPlaneGroup);
     }
 
     setWoxel(woxel) {
@@ -80,6 +111,8 @@ export class BoxelEditor {
         this.woxel = woxel ?? null;
         this.preview.setWoxel(this.woxel);
         this.secondaryBlueBoxelPreview.setWoxel(this.woxel);
+        this.purpleBoxelPreview.setWoxel(this.woxel);
+        this.clearPurpleBoxel?.();
     }
 
     setPlayer(player) {
@@ -107,6 +140,11 @@ export class BoxelEditor {
     update(target = this.raycast?.getTarget?.()) {
         if (!this.isActive()) return;
 
+        if (this.mode === "purpleBoxelSelecting") {
+            this.updatePurpleBoxelSelectionPreview(target);
+            return;
+        }
+
         if (this.mode === "blueBoxelSelecting") {
             this.updateBlueBoxelSelectionPreview(target);
             return;
@@ -114,6 +152,11 @@ export class BoxelEditor {
 
         if (this.mode === VOXEL_EXTRUSION_CONFIG.modes.blue) {
             this.updateBlueBoxelVoxelExtrusionPreview(target);
+            return;
+        }
+
+        if (this.mode === VOXEL_EXTRUSION_CONFIG.modes.purple) {
+            this.updatePurpleBoxelVoxelExtrusionPreview(target);
             return;
         }
 
@@ -166,12 +209,28 @@ export class BoxelEditor {
             return this.confirmBlueBoxelVoxelExtrusion();
         }
 
+        if (this.mode === VOXEL_EXTRUSION_CONFIG.modes.purple) {
+            return this.confirmPurpleBoxelVoxelExtrusion();
+        }
+
+        if (this.mode === "purpleBoxelSelecting") {
+            return this.selectPurpleBoxelPosition({ usePlacePosition: false });
+        }
+
         if (this.mode !== "blueBoxelSelecting") return false;
 
         return this.selectBlueBoxelPosition({ usePlacePosition: false });
     }
 
     handleSecondaryAction() {
+        if (this.mode === "purpleBoxelSelecting") {
+            return this.selectPurpleBoxelPosition({ usePlacePosition: true });
+        }
+
+        if (this.mode === VOXEL_EXTRUSION_CONFIG.modes.purple) {
+            return this.confirmPurpleBoxelVoxelExtrusion();
+        }
+
         if (this.mode === "blueBoxelPreview") {
             return this.pasteBlueBoxelClipboard();
         }
@@ -211,6 +270,7 @@ export class BoxelEditor {
     finishCommit(results = []) {
         return this.finishWorldChanges(results, {
             cancel: true,
+            keepPurpleBoxel: this.isPurpleBoxelMirroring?.() === true,
             historyType: this.getCommitHistoryType(),
             historyLabel: this.getCommitHistoryLabel(),
         });
@@ -230,7 +290,9 @@ export class BoxelEditor {
         }
 
         if (options.cancel !== false) {
-            this.cancel();
+            this.cancel({
+                keepPurpleBoxel: options.keepPurpleBoxel === true,
+            });
         }
 
         return dirtyBoxels.length > 0;
@@ -277,6 +339,12 @@ export class BoxelEditor {
         if (this.isBlueBoxelMode() && options.forceIdle !== true) {
             this.resetBlueBoxelOperation();
             return;
+        }
+
+        if ((this.mode === "purpleBoxelSelecting" || this.isPurpleBoxelMirroring?.())
+            && options.keepPurpleBoxel !== true) {
+            this.clearPurpleBoxel?.();
+            if (this.mode === "idle") return;
         }
 
         this.mode = "idle";
@@ -380,7 +448,8 @@ export class BoxelEditor {
 
     isVoxelExtrusionActive() {
         return this.mode === VOXEL_EXTRUSION_CONFIG.modes.green
-            || this.mode === VOXEL_EXTRUSION_CONFIG.modes.blue;
+            || this.mode === VOXEL_EXTRUSION_CONFIG.modes.blue
+            || this.mode === VOXEL_EXTRUSION_CONFIG.modes.purple;
     }
 
     isBlueVoxelExtrusionActive() {
@@ -456,6 +525,11 @@ export class BoxelEditor {
     dispose() {
         this.preview.dispose();
         this.secondaryBlueBoxelPreview.dispose();
+        this.purpleBoxelPreview.dispose();
+        Object.values(this.purpleMirrorPlanes ?? {}).forEach((plane) => {
+            plane.geometry?.dispose?.();
+            plane.material?.dispose?.();
+        });
     }
 }
 
@@ -464,9 +538,9 @@ Object.assign(
     RedBoxelMixin,
     GreenBoxelMixin,
     BlueBoxelMixin,
+    PurpleBoxelMixin,
     GhostVoxelMixin,
     VoxelExtrusionMixin
 );
 
 export default BoxelEditor;
-
