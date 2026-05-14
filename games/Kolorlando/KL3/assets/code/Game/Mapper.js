@@ -32,6 +32,7 @@ export class Mapper {
         this.boxel15MeshStreamer.setMapper(this);
 
         this.meshes = [];
+        this.raycastableMeshes = [];
         this.meshesByBoxel = new Map();
         this.boxel15Bounds = [];
         this.boxel15BoundsByBoxel = new Map();
@@ -111,6 +112,7 @@ export class Mapper {
 
         this.meshesByBoxel.delete(boxel15);
         this.meshes = this.meshes.filter((item) => item !== mesh);
+        this.raycastableMeshes = this.raycastableMeshes.filter((item) => item !== mesh);
 
         return mesh;
     }
@@ -319,6 +321,7 @@ export class Mapper {
         );
 
         stats.meshStreaming = this.boxel15MeshStreamer.stream(stats);
+        this.syncRaycastableMeshes(stats);
         this.applyDebugBoundsVisibility();
         stats.deferredRemeshing = this.flushDeferredRemeshing({
             limit: this.deferredRemeshing.maxRemeshPerFlush,
@@ -351,15 +354,32 @@ export class Mapper {
             this.boxel15BoundsByBoxel.get(boxel15) ?? null
         );
 
+        this.syncRaycastableMeshes();
         this.applyDebugBoundsVisibility();
     }
 
-    getRaycastableMeshes() {
-        return this.meshes.filter((mesh) => {
-            if (!mesh?.visible) return false;
+    syncRaycastableMeshes(stats = null) {
+        const raycastableBoxels = stats?.raycastableBoxels
+            ?? this.boxel15RenderDistance?.raycastableBoxels
+            ?? [];
 
-            return mesh.userData?.boxel15Raycastable !== false;
+        const meshes = [];
+
+        raycastableBoxels.forEach((boxel15) => {
+            const mesh = this.meshesByBoxel.get(boxel15) ?? null;
+            if (!mesh) return;
+            if (mesh.visible !== true) return;
+            if (mesh.userData?.boxel15Raycastable !== true) return;
+
+            meshes.push(mesh);
         });
+
+        this.raycastableMeshes = meshes;
+        return this.raycastableMeshes;
+    }
+
+    getRaycastableMeshes() {
+        return this.raycastableMeshes;
     }
 
     setWireframeMode(enabled = false) {
@@ -463,3 +483,4 @@ export class Mapper {
 }
 
 export default Mapper;
+

@@ -330,8 +330,7 @@ export class Debug {
         const mapper = app?.mapper;
         if (!mapper) return 0;
         if (Array.isArray(mapper.raycastableMeshes)) return mapper.raycastableMeshes.length;
-        if (Array.isArray(mapper.meshes)) return mapper.meshes.length;
-        return 0;
+        return mapper.getRaycastableMeshes?.()?.length ?? 0;
     }
 
     safePaletteSize(palette = null) {
@@ -354,3 +353,4 @@ export class Debug {
 }
 
 export default Debug;
+

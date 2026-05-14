@@ -25,6 +25,13 @@ export class Boxel15RenderDistance {
         this.useSoftFrustum = options.useSoftFrustum ?? true;
         this.prioritizeFront = options.prioritizeFront ?? true;
 
+        // Raycast must be stricter than render/load.
+        // Render may keep nearby/behind chunks visible for continuity,
+        // but the crosshair should only test forward/frustum-relevant chunks.
+        this.raycastRequiresSoftFrustum = options.raycastRequiresSoftFrustum ?? true;
+        this.raycastSoftFrustumDot = normalizeBoxel15Dot(options.raycastSoftFrustumDot ?? -0.15);
+        this.raycastLocalDistance = normalizeBoxel15Distance(options.raycastLocalDistance ?? 2);
+
         this.origin = null;
         this.direction = null;
 
@@ -285,9 +292,25 @@ export class Boxel15RenderDistance {
     }
 
     isEntryRaycastable(entry) {
+        if (!entry) return false;
         if (!this.origin) return true;
+        if (entry.visible === false) return false;
+        if (entry.inDistance === false) return false;
+        if (entry.distance > this.raycastDistance) return false;
 
-        return entry.distance <= this.raycastDistance;
+        return this.isEntryInsideRaycastFrustum(entry);
+    }
+
+    isEntryInsideRaycastFrustum(entry = null) {
+        if (!this.raycastRequiresSoftFrustum) return true;
+        if (!this.direction) return true;
+        if (!entry) return false;
+
+        // Tiny local safety bubble: avoids losing targets when the camera starts
+        // inside or exactly beside the current Boxel15 boundary.
+        if ((entry.distance ?? Infinity) <= this.raycastLocalDistance) return true;
+
+        return (entry.frontScore ?? 1) >= this.raycastSoftFrustumDot;
     }
 
     rememberEntryState(entry, visible, raycastable, loadable = false) {
@@ -399,6 +422,9 @@ export class Boxel15RenderDistance {
     }
 
     isBoxel15Raycastable(boxel15) {
+        const state = this.getEntryState(boxel15);
+        if (state) return state.raycastable === true;
+
         return this.getDistanceToBoxel15(boxel15) <= this.raycastDistance;
     }
 
@@ -459,3 +485,4 @@ export class Boxel15RenderDistance {
 }
 
 export default Boxel15RenderDistance;
+
