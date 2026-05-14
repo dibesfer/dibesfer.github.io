@@ -57,11 +57,11 @@ button {
 }
 
 button:hover {
-    background-color: rgb(21, 177, 83);
+    background-color: rgba(10, 87, 41, 0.3);
 }
 
 button:active {
-    background-color: rgba(0, 0, 0, 0.25);
+    background-color: rgba(0, 0, 0, 0.2);
     
 }
 
@@ -105,7 +105,7 @@ button, select {
     gap: 10px;
 
     overflow: hidden;
-    background-color: rgb(215, 143, 215);
+    background-color: rgba(215, 143, 215, 0.594);
     padding: 10px;
     pointer-events: auto;
     z-index: 4;
@@ -130,7 +130,8 @@ button, select {
 
 #menuTabSelected {
     font-weight: bold;
-    background-color: rgb(159, 120, 159);
+    color: white;
+    background-color: rgb(111, 23, 111);
     padding: 0 5px;
 }
 
@@ -141,7 +142,7 @@ button, select {
     border: solid;
     overflow: auto;
     padding: 10px;
-    background-color: rgb(255, 170, 224);
+    background-color: rgb(245, 210, 232);
 }
 
 .menuSection {

@@ -51,7 +51,7 @@ export class ThreeD {
     createRenderer() {
         this.renderer = new THREE.WebGLRenderer({
             canvas: this.canvas,
-            antialias: false,
+            antialias: true,
             alpha: false,
         });
 
