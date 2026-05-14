@@ -1,8 +1,6 @@
 import * as THREE from "three";
 
-import { Boxel15Mesher } from "../../Boxel15/Boxel15Mesher.js";
 import { Compass } from "../../../Compass.js";
-import { rotateVoxelOrientation } from "../../../Voxel/VoxelOrienting.js";
 
 export class BoxelPreview {
     constructor(options = {}) {
@@ -19,17 +17,7 @@ export class BoxelPreview {
         this.group.userData.highlightOnly = true;
 
         this.mesh = null;
-        this.lastKey = "";
-
-        this.boxelMaterial = options.boxelMaterial ?? new THREE.MeshBasicMaterial({
-            vertexColors: true,
-            transparent: true,
-            opacity: options.boxelOpacity ?? Math.max(this.opacity, 0.35),
-            depthWrite: this.depthWrite,
-        });
-        this.boxelMesher = options.boxelMesher ?? new Boxel15Mesher({
-            material: this.boxelMaterial,
-        });
+        this.lastGeometryKey = "";
     }
 
     setWoxel(woxel) {
@@ -41,35 +29,44 @@ export class BoxelPreview {
         if (!this.woxel || !area) return;
 
         const color = options.color ?? this.color;
-        const key = `area|${area.key()}|${color}`;
+        const min = area.getMin();
+        const size = area.getSize();
 
-        if (key !== this.lastKey) {
-            this.rebuild(area, color);
-            this.lastKey = key;
-        }
-
-        this.group.visible = true;
+        this.showBounds(min, size, { color });
     }
 
     showBoxel(boxel, originPosition, options = {}) {
+        return this.showBoxelBounds(boxel, originPosition, options);
+    }
+
+    showBoxelBounds(boxel, originPosition, options = {}) {
         if (!this.woxel || !boxel || !originPosition) return;
 
         const orientationDelta = Compass.normalize(options.orientationDelta ?? Compass.NORTH) ?? Compass.NORTH;
-        const key = `boxel|${this.createBoxelKey(boxel)}|${this.positionKey(originPosition)}|${orientationDelta}`;
+        const size = Compass.rotateSize(boxel.size, orientationDelta);
+        const color = options.color ?? this.color;
 
-        if (key !== this.lastKey) {
-            this.rebuildBoxel(boxel, originPosition, options);
-            this.lastKey = key;
+        this.showBounds(originPosition, size, { color });
+    }
+
+    showBounds(originPosition, size, options = {}) {
+        if (!this.woxel || !originPosition || !size) return;
+
+        const color = options.color ?? this.color;
+        const geometryKey = this.createGeometryKey(size, color);
+
+        if (geometryKey !== this.lastGeometryKey) {
+            this.rebuild(size, color);
+            this.lastGeometryKey = geometryKey;
         }
 
+        this.positionMesh(originPosition, size);
         this.group.visible = true;
     }
 
-    rebuild(area, color) {
+    rebuild(size, color) {
         this.clearMesh();
 
-        const min = area.getMin();
-        const size = area.getSize();
         const geometry = this.createBoxGeometry(size);
         const material = this.createMaterial(color);
 
@@ -78,14 +75,18 @@ export class BoxelPreview {
         this.mesh.userData.debugOnly = true;
         this.mesh.userData.highlightOnly = true;
 
-        const gamePosition = this.woxel.gridToGame(min);
+        this.group.add(this.mesh);
+    }
+
+    positionMesh(originPosition, size) {
+        if (!this.mesh || !this.woxel || !originPosition || !size) return;
+
+        const gamePosition = this.woxel.gridToGame(originPosition);
         this.mesh.position.set(
             gamePosition.x + size.x / 2,
             gamePosition.y + size.y / 2,
             gamePosition.z + size.z / 2
         );
-
-        this.group.add(this.mesh);
     }
 
     createBoxGeometry(size) {
@@ -102,51 +103,6 @@ export class BoxelPreview {
         return Math.max(0, this.scale - 1);
     }
 
-    rebuildBoxel(boxel, originPosition, options = {}) {
-        this.clearMesh();
-
-        const renderBoxel = this.createRenderBoxel(boxel, options);
-        const mesh = this.boxelMesher.createMesh(renderBoxel, null, { allowFaceBaking: false });
-        if (!mesh) return;
-
-        mesh.name = "BoxelClipboardPreviewMesh";
-        mesh.userData.debugOnly = true;
-        mesh.userData.highlightOnly = true;
-
-        const gamePosition = this.woxel.gridToGame(originPosition);
-        mesh.position.set(gamePosition.x, gamePosition.y, gamePosition.z);
-
-        this.mesh = mesh;
-        this.group.add(this.mesh);
-    }
-
-    createRenderBoxel(boxel, options = {}) {
-        const orientationDelta = Compass.normalize(options.orientationDelta ?? Compass.NORTH) ?? Compass.NORTH;
-
-        if (typeof boxel.transformed === "function") {
-            return boxel.transformed(orientationDelta, {
-                name: `${boxel.name ?? "Boxel"} Preview`,
-                position: { x: 0, y: 0, z: 0 },
-            });
-        }
-
-        const clone = new boxel.constructor({
-            name: `${boxel.name ?? "Boxel"} Preview`,
-            size: Compass.rotateSize(boxel.size, orientationDelta),
-            position: { x: 0, y: 0, z: 0 },
-        });
-
-        boxel.forEachVoxel((voxel, x, y, z) => {
-            const position = Compass.rotatePositionInSize({ x, y, z }, boxel.size, orientationDelta);
-            const cloneVoxel = voxel?.clone?.() ?? voxel;
-            rotateVoxelOrientation(cloneVoxel, orientationDelta);
-
-            clone.setVoxel(position.x, position.y, position.z, cloneVoxel);
-        });
-
-        return clone;
-    }
-
     createMaterial(color) {
         return new THREE.MeshBasicMaterial({
             color,
@@ -157,28 +113,21 @@ export class BoxelPreview {
         });
     }
 
-    createBoxelKey(boxel) {
-        const voxels = [];
-
-        boxel.forEachVoxel((voxel, x, y, z) => {
-            voxels.push(`${x},${y},${z},${voxel?.color ?? ""},${voxel?.orientable ?? voxel?.isOrientable?.() ?? false},${voxel?.orientation ?? ""}`);
-        });
-
+    createGeometryKey(size = {}, color = this.color) {
         return [
-            boxel.size.x,
-            boxel.size.y,
-            boxel.size.z,
-            voxels.sort().join(";"),
+            "bounds",
+            size.x ?? 0,
+            size.y ?? 0,
+            size.z ?? 0,
+            color,
+            this.scale,
+            this.opacity,
+            this.depthWrite ? 1 : 0,
         ].join("|");
-    }
-
-    positionKey(position = {}) {
-        return `${position.x},${position.y},${position.z}`;
     }
 
     hide() {
         this.group.visible = false;
-        this.lastKey = "";
     }
 
     clearMesh() {
@@ -186,10 +135,9 @@ export class BoxelPreview {
 
         this.group.remove(this.mesh);
         this.mesh.geometry?.dispose?.();
-        if (this.mesh.material !== this.boxelMaterial) {
-            this.mesh.material?.dispose?.();
-        }
+        this.mesh.material?.dispose?.();
         this.mesh = null;
+        this.lastGeometryKey = "";
     }
 
     getObject3D() {
@@ -198,7 +146,6 @@ export class BoxelPreview {
 
     dispose() {
         this.clearMesh();
-        this.boxelMesher?.dispose?.();
     }
 }
 

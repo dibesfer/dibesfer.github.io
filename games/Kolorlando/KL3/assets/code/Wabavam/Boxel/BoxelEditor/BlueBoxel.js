@@ -307,7 +307,7 @@ export const BlueBoxelMixin = {
         }
 
         this.previewOrigin = this.clonePosition(position);
-        this.preview.showBoxel(boxel, this.previewOrigin, {
+        this.preview.showBoxelBounds(boxel, this.previewOrigin, {
             color: this.colors.blueBoxelPreview,
             orientationDelta: this.getClipboardOrientationDelta(boxel),
         });
