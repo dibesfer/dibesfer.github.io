@@ -1,5 +1,7 @@
 import * as THREE from "three";
 
+import { Compass } from "../../Compass.js";
+import { isVoxelOrientable, orientVoxel } from "../../Voxel/VoxelOrienting.js";
 import { BoxelArea } from "./Utils/BoxelArea.js";
 import { VOXEL_EXTRUSION_CONFIG } from "./BoxelEditorConfig.js";
 
@@ -434,17 +436,69 @@ export const PurpleBoxelMixin = {
         this.getPurpleMirroredPositions(position).forEach((targetPosition) => {
             if (!this.canPlaceAt(targetPosition)) return;
 
+            const mirroredVoxel = this.createPurpleMirroredVoxelForPosition(
+                voxel,
+                position,
+                targetPosition
+            );
+
             const result = this.woxel.placeVoxelAt(
                 targetPosition.x,
                 targetPosition.y,
                 targetPosition.z,
-                voxel?.clone?.() ?? voxel
+                mirroredVoxel
             );
 
             if (result.changed) results.push(result);
         });
 
         return results;
+    },
+
+    createPurpleMirroredVoxelForPosition(voxel = null, sourcePosition = {}, targetPosition = {}) {
+        if (!voxel) return voxel;
+
+        const nextVoxel = voxel?.clone?.() ?? voxel;
+        if (!isVoxelOrientable(nextVoxel)) return nextVoxel;
+
+        const mirroredOrientation = this.getPurpleMirroredOrientation(
+            nextVoxel.orientation,
+            sourcePosition,
+            targetPosition
+        );
+
+        return orientVoxel(nextVoxel, mirroredOrientation) ?? nextVoxel;
+    },
+
+    getPurpleMirroredOrientation(orientation = null, sourcePosition = {}, targetPosition = {}) {
+        let nextOrientation = Compass.normalize(orientation);
+        if (nextOrientation === null) return orientation;
+
+        const mirrorX = Math.floor(sourcePosition.x ?? 0) !== Math.floor(targetPosition.x ?? 0);
+        const mirrorZ = Math.floor(sourcePosition.z ?? 0) !== Math.floor(targetPosition.z ?? 0);
+
+        if (mirrorX) nextOrientation = this.mirrorPurpleOrientationOnX(nextOrientation);
+        if (mirrorZ) nextOrientation = this.mirrorPurpleOrientationOnZ(nextOrientation);
+
+        return nextOrientation;
+    },
+
+    mirrorPurpleOrientationOnX(orientation = Compass.NORTH) {
+        const normalized = Compass.normalize(orientation) ?? Compass.NORTH;
+
+        if (normalized === Compass.EAST) return Compass.WEST;
+        if (normalized === Compass.WEST) return Compass.EAST;
+
+        return normalized;
+    },
+
+    mirrorPurpleOrientationOnZ(orientation = Compass.NORTH) {
+        const normalized = Compass.normalize(orientation) ?? Compass.NORTH;
+
+        if (normalized === Compass.NORTH) return Compass.SOUTH;
+        if (normalized === Compass.SOUTH) return Compass.NORTH;
+
+        return normalized;
     },
 
     removeVoxelAtWithPurpleMirror(position = {}) {
