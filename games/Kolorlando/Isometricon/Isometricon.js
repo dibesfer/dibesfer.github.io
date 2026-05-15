@@ -392,6 +392,21 @@ function voxelSpan(voxels) {
   return Math.max(1, max.x + 1, max.y + 1, max.z + 1);
 }
 
+function normalizeVoxelOrigin(voxels) {
+  const min = voxels.reduce((bounds, voxel) => ({
+    x: Math.min(bounds.x, voxel.x),
+    y: Math.min(bounds.y, voxel.y),
+    z: Math.min(bounds.z, voxel.z),
+  }), { x: Infinity, y: Infinity, z: Infinity });
+
+  return voxels.map(voxel => ({
+    ...voxel,
+    x: voxel.x - min.x,
+    y: voxel.y - min.y,
+    z: voxel.z - min.z,
+  }));
+}
+
 function drawInnerGrid(ctx, size, divisions, o) {
   const faces = cubeInnerGridPolygons(o);
   const transform = iconTransform(size, o);
@@ -414,6 +429,35 @@ function gridAlignedTransform(size, o, divisions) {
     oy: icon.oy,
     scale: icon.scale / divisions,
   };
+}
+
+function voxelFootprintBounds(voxels) {
+  return voxels.reduce((b, voxel) => ({
+    minX: Math.min(b.minX, voxel.x),
+    maxX: Math.max(b.maxX, voxel.x),
+    minZ: Math.min(b.minZ, voxel.z),
+    maxZ: Math.max(b.maxZ, voxel.z),
+  }), { minX: Infinity, maxX: -Infinity, minZ: Infinity, maxZ: -Infinity });
+}
+
+function snapGridOffset(value, direction) {
+  const floor = Math.floor(value);
+  const fraction = value - floor;
+  if (Math.abs(fraction - 0.5) < 0.0001) return direction > 0 ? Math.ceil(value) : floor;
+  return Math.round(value);
+}
+
+function centeredGridOffset(min, max, targetCenter, direction) {
+  return snapGridOffset(targetCenter - (min + max) * 0.5, direction);
+}
+
+function gridCenteredVoxels(voxels, divisions) {
+  const bounds = voxelFootprintBounds(voxels);
+  const targetCenter = (divisions - 1) * 0.5;
+  const offsetX = centeredGridOffset(bounds.minX, bounds.maxX, targetCenter, 1);
+  const offsetZ = centeredGridOffset(bounds.minZ, bounds.maxZ, targetCenter, -1);
+
+  return voxels.map(voxel => ({ ...voxel, x: voxel.x + offsetX, z: voxel.z + offsetZ }));
 }
 
 export class Isometricon {
@@ -452,13 +496,15 @@ export class Isometricon {
     drawFilledPolygon(ctx, iconHex, o.hexFill);
 
     if (voxels.length > 0) {
-      const gridDivisions = voxelSpan(voxels);
+      const localVoxels = normalizeVoxelOrigin(voxels);
+      const gridDivisions = voxelSpan(localVoxels);
       const transform = gridAlignedTransform(size, o, gridDivisions);
+      const alignedVoxels = gridCenteredVoxels(localVoxels, gridDivisions);
       const stroke = o.cubeOutline ? o.cubeStroke : null;
 
       if (o.underlayGrid) drawInnerGrid(ctx, size, gridDivisions, o);
 
-      for (const voxel of voxels) {
+      for (const voxel of alignedVoxels) {
         const faces = cubePolygons(voxel, o);
         drawPolygon(ctx, mapPolygon(faces.left, transform), tint(voxel.color, 'black', 0.14), stroke, o);
         drawPolygon(ctx, mapPolygon(faces.right, transform), tint(voxel.color, 'black', 0.03), stroke, o);
