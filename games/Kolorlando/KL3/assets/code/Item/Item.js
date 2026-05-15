@@ -74,6 +74,8 @@ export function createBoxelItem(savedBoxel, options = {}) {
         data: {
             id: savedBoxel?.id ?? null,
             createdAt: savedBoxel?.createdAt ?? null,
+            favorite: savedBoxel?.favorite === true,
+            favoritedAt: savedBoxel?.favoritedAt ?? null,
             boxel,
         },
         count: options.count ?? null,
@@ -98,5 +100,7 @@ export function createVoxelItem(voxel, options = {}) {
 }
 
 export default Item;
+
+
 
 

@@ -643,6 +643,7 @@ export class App {
     async loadSavedBoxelsFromIndexedDB() {
         try {
             this.savedBoxels = await this.memory.loadSavedBoxels(this.mainSavedBoxelsKey);
+            this.normalizeSavedBoxels();
             this.trimSavedBoxels();
             this.syncSavedBoxelsGlobal();
             return true;
@@ -654,12 +655,24 @@ export class App {
     }
 
     addSavedBoxelFromBlueBoxel(boxel = null) {
+        return this.addSavedBoxel(boxel);
+    }
+
+    addSavedBoxel(boxel = null, options = {}) {
         if (!boxel) return false;
 
+        if (!this.canAddSavedBoxel()) {
+            this.refreshBoxelCatalog();
+            return false;
+        }
+
+        const now = new Date().toISOString();
         const savedBoxel = {
             id: this.createSavedBoxelId(),
-            name: null,
-            createdAt: new Date().toISOString(),
+            name: Object.hasOwn(options, "name") ? options.name : null,
+            createdAt: options.createdAt ?? now,
+            favorite: options.favorite === true,
+            favoritedAt: options.favorite === true ? options.favoritedAt ?? now : null,
             boxel,
         };
 
@@ -678,8 +691,62 @@ export class App {
         return `boxel_${Date.now()}_${Math.random().toString(36).slice(2)}`;
     }
 
+    normalizeSavedBoxels() {
+        this.savedBoxels = (this.savedBoxels ?? [])
+            .filter((savedBoxel) => savedBoxel?.boxel)
+            .map((savedBoxel) => ({
+                ...savedBoxel,
+                name: Object.hasOwn(savedBoxel, "name") ? savedBoxel.name : null,
+                createdAt: savedBoxel.createdAt ?? new Date().toISOString(),
+                favorite: savedBoxel.favorite === true,
+                favoritedAt: savedBoxel.favorite === true ? savedBoxel.favoritedAt ?? savedBoxel.createdAt ?? new Date().toISOString() : null,
+            }));
+    }
+
+    compareSavedBoxelsByCreatedAt(a, b) {
+        return String(b?.createdAt ?? "").localeCompare(String(a?.createdAt ?? ""));
+    }
+
+    compareSavedBoxelsByFavoritedAt(a, b) {
+        return String(b?.favoritedAt ?? b?.createdAt ?? "").localeCompare(String(a?.favoritedAt ?? a?.createdAt ?? ""));
+    }
+
+    getOrderedSavedBoxels() {
+        const favorites = (this.savedBoxels ?? [])
+            .filter((savedBoxel) => savedBoxel?.favorite === true)
+            .sort((a, b) => this.compareSavedBoxelsByFavoritedAt(a, b));
+        const regulars = (this.savedBoxels ?? [])
+            .filter((savedBoxel) => savedBoxel?.favorite !== true)
+            .sort((a, b) => this.compareSavedBoxelsByCreatedAt(a, b));
+
+        return [...favorites, ...regulars];
+    }
+
+    getVisibleSavedBoxels() {
+        return this.getOrderedSavedBoxels().slice(0, this.savedBoxelsLimit);
+    }
+
     trimSavedBoxels() {
-        this.savedBoxels = this.savedBoxels.slice(0, this.savedBoxelsLimit);
+        const favorites = (this.savedBoxels ?? [])
+            .filter((savedBoxel) => savedBoxel?.favorite === true)
+            .sort((a, b) => this.compareSavedBoxelsByFavoritedAt(a, b));
+        const regulars = (this.savedBoxels ?? [])
+            .filter((savedBoxel) => savedBoxel?.favorite !== true)
+            .sort((a, b) => this.compareSavedBoxelsByCreatedAt(a, b));
+        const regularLimit = Math.max(0, this.savedBoxelsLimit - favorites.length);
+
+        this.savedBoxels = [...favorites, ...regulars.slice(0, regularLimit)];
+    }
+
+    isSavedBoxelsFullOfFavorites() {
+        const visibleSavedBoxels = this.getVisibleSavedBoxels();
+
+        return visibleSavedBoxels.length >= this.savedBoxelsLimit
+            && visibleSavedBoxels.every((savedBoxel) => savedBoxel?.favorite === true);
+    }
+
+    canAddSavedBoxel() {
+        return !this.isSavedBoxelsFullOfFavorites();
     }
 
     syncSavedBoxelsGlobal() {
@@ -689,7 +756,7 @@ export class App {
     }
 
     getSavedBoxelItems() {
-        return this.savedBoxels.map((savedBoxel) => createBoxelItem(savedBoxel, {
+        return this.getVisibleSavedBoxels().map((savedBoxel) => createBoxelItem(savedBoxel, {
             name: savedBoxel.name ?? "NULL",
         }));
     }
@@ -716,6 +783,22 @@ export class App {
         if (!savedBoxel?.boxel) return false;
 
         return this.memory.exportSavedBoxel(savedBoxel);
+    }
+
+    toggleSavedBoxelFavorite(savedBoxelId = null) {
+        const savedBoxel = this.getSavedBoxelById(savedBoxelId);
+        if (!savedBoxel) return false;
+
+        const nextFavorite = savedBoxel.favorite !== true;
+        savedBoxel.favorite = nextFavorite;
+        savedBoxel.favoritedAt = nextFavorite ? new Date().toISOString() : null;
+
+        this.trimSavedBoxels();
+        this.syncSavedBoxelsGlobal();
+        this.scheduleSavedBoxelsSave();
+        this.refreshBoxelCatalog();
+
+        return true;
     }
 
     deleteSavedBoxel(savedBoxelId = null) {
@@ -879,3 +962,4 @@ export class App {
 }
 
 export default App;
+

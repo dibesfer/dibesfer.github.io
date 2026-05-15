@@ -203,6 +203,8 @@ export class Memory {
                 id: savedBoxel?.id ?? this.createSavedBoxelId(),
                 name: Object.hasOwn(savedBoxel ?? {}, "name") ? savedBoxel.name : null,
                 createdAt: savedBoxel?.createdAt ?? new Date().toISOString(),
+                favorite: savedBoxel?.favorite === true,
+                favoritedAt: savedBoxel?.favorite === true ? savedBoxel?.favoritedAt ?? savedBoxel?.createdAt ?? new Date().toISOString() : null,
                 boxel: serializer.boxelToMemoryData(savedBoxel?.boxel ?? savedBoxel),
             })).filter((savedBoxel) => savedBoxel.boxel),
         };
@@ -220,6 +222,8 @@ export class Memory {
                 id: savedBoxel?.id ?? this.createSavedBoxelId(),
                 name: Object.hasOwn(savedBoxel ?? {}, "name") ? savedBoxel.name : null,
                 createdAt: savedBoxel?.createdAt ?? new Date().toISOString(),
+                favorite: savedBoxel?.favorite === true,
+                favoritedAt: savedBoxel?.favorite === true ? savedBoxel?.favoritedAt ?? savedBoxel?.createdAt ?? new Date().toISOString() : null,
                 boxel,
             };
         }).filter(Boolean);
@@ -263,3 +267,4 @@ export class Memory {
 }
 
 export default Memory;
+

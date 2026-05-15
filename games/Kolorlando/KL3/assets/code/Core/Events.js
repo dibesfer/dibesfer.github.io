@@ -282,6 +282,8 @@ export class Events {
         const catalogElement = contentElement.querySelector("#boxelCatalog");
         if (!catalogElement) return;
 
+        this.renderSavedBoxelsWarning(contentElement);
+
         catalogElement.innerHTML = "";
         catalogElement.appendChild(this.createLoadBoxelSlot(contentElement));
 
@@ -294,21 +296,54 @@ export class Events {
             });
 
             icon.element.classList.add("boxelCatalogItem");
+            icon.element.classList.toggle("isFavorite", item.data?.favorite === true);
+            this.addSavedBoxelFavoriteBadge(icon.element, item);
             this.addSavedBoxelActions(icon.element, item);
             catalogElement.appendChild(icon.element);
         });
+    }
+
+    renderSavedBoxelsWarning(contentElement) {
+        const catalogElement = contentElement.querySelector("#boxelCatalog");
+        if (!catalogElement) return;
+
+        let warningElement = contentElement.querySelector("#boxelCatalogWarning");
+        if (!warningElement) {
+            warningElement = document.createElement("div");
+            warningElement.id = "boxelCatalogWarning";
+            warningElement.className = "boxelCatalogWarning";
+            catalogElement.before(warningElement);
+        }
+
+        const fullFavorites = this.app.isSavedBoxelsFullOfFavorites?.() === true;
+        warningElement.hidden = !fullFavorites;
+        warningElement.textContent = fullFavorites
+            ? `⛔⭐ You can't save more boxels because all ${this.app.savedBoxelsLimit ?? 17} slots are favorited. Consider saving best boxels locally.`
+            : "";
+    }
+
+    addSavedBoxelFavoriteBadge(iconElement, item) {
+        if (!iconElement || item?.data?.favorite !== true) return;
+
+        const badgeElement = document.createElement("div");
+        badgeElement.className = "boxelCatalogFavoriteBadge";
+        badgeElement.textContent = "⭐";
+        badgeElement.title = "Favorite Boxel";
+
+        iconElement.appendChild(badgeElement);
     }
 
     addSavedBoxelActions(iconElement, item) {
         const savedBoxelId = item?.data?.id ?? null;
         if (!iconElement || !savedBoxelId) return;
 
+        const isFavorite = item?.data?.favorite === true;
         const actionsElement = document.createElement("div");
         actionsElement.className = "boxelCatalogActions";
         actionsElement.innerHTML = `
-            <button type="button" class="boxelCatalogAction" data-boxel-action="star">⭐</button>
-            <button type="button" class="boxelCatalogAction" data-boxel-action="save">⬇️</button>
-            <button type="button" class="boxelCatalogAction" data-boxel-action="delete">❌</button>
+            <button type="button" class="boxelCatalogActionButton" data-boxel-action="favorite" title="${isFavorite ? "Unfavorite" : "Favorite"}">${isFavorite ? "⭐" : "☆"}</button>
+            <button type="button" class="boxelCatalogActionButton" data-boxel-action="save" title="Download .boxel">⬇️</button>
+            <button type="button" class="boxelCatalogActionButton" data-boxel-action="delete" title="Delete saved Boxel">❌</button>
         `;
 
         actionsElement.addEventListener("click", async (event) => {
@@ -320,7 +355,8 @@ export class Events {
 
             const action = actionButton.dataset.boxelAction;
 
-            if (action === "star") {
+            if (action === "favorite" || action === "star") {
+                this.app.toggleSavedBoxelFavorite?.(savedBoxelId);
                 return;
             }
 
@@ -402,18 +438,9 @@ export class Events {
                 throw new Error("Loaded file is not a Boxel.");
             }
 
-            const savedBoxel = {
-                id: this.app.createSavedBoxelId?.() ?? `boxel_${Date.now()}`,
+            this.app.addSavedBoxel?.(boxel, {
                 name: boxel.name ?? null,
-                createdAt: new Date().toISOString(),
-                boxel,
-            };
-
-            this.app.savedBoxels = [savedBoxel, ...(this.app.savedBoxels ?? [])];
-            this.app.trimSavedBoxels?.();
-            this.app.syncSavedBoxelsGlobal?.();
-            this.app.scheduleSavedBoxelsSave?.();
-            this.app.refreshBoxelCatalog?.();
+            });
         } catch (error) {
             console.warn(error);
             alert("No se pudo cargar este .boxel");
@@ -422,3 +449,4 @@ export class Events {
 }
 
 export default Events;
+
