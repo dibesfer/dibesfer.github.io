@@ -1,8 +1,12 @@
+import { Boxel15RenderDistanceGate } from "../Wabavam/Boxel/Boxel15/Boxel15RenderDistanceGate.js";
+
 export class Loop {
     constructor(options = {}) {
         this.app = options.app ?? null;
         this.lastTime = performance.now();
         this.running = false;
+        this.boxel15RenderDistanceGate = options.boxel15RenderDistanceGate
+            ?? new Boxel15RenderDistanceGate({ app: this.app });
 
         this.tick = this.tick.bind(this);
     }
@@ -12,6 +16,7 @@ export class Loop {
 
         this.running = true;
         this.lastTime = performance.now();
+        this.boxel15RenderDistanceGate.reset("loop-start");
         requestAnimationFrame(this.tick);
     }
 
@@ -35,12 +40,11 @@ export class Loop {
 
         /*
         2. BOXEL15 RENDER DISTANCE
-        Show/hide Boxel15 meshes before raycast so targeting only sees active chunks.
+        Render distance is state-driven, not frame-driven.
+        It updates only when its inputs change: Boxel15 cell, camera bucket,
+        Woxel identity, render settings or explicit dirty/reset.
         */
-        app.mapper.updateBoxel15RenderDistance(
-            app.player.getCameraPosition(),
-            app.player.getCameraDirection()
-        );
+        this.boxel15RenderDistanceGate.setApp(app).updateIfNeeded();
 
         /*
         3. RAYCAST
