@@ -194,12 +194,12 @@ export class Mapper {
         material.dispose?.();
     }
 
-    remeshBoxel15(boxel15, woxel = this.currentWoxel) {
-        return this.remeshBoxel15s([boxel15], woxel)[0] ?? null;
+    remeshBoxel15(boxel15, woxel = this.currentWoxel, options = {}) {
+        return this.remeshBoxel15s([boxel15], woxel, options)[0] ?? null;
     }
 
-    remeshBoxel15s(boxel15s = [], woxel = this.currentWoxel) {
-        return this.deferredRemeshing.remeshOrDefer(boxel15s, woxel);
+    remeshBoxel15s(boxel15s = [], woxel = this.currentWoxel, options = {}) {
+        return this.deferredRemeshing.remeshOrDefer(boxel15s, woxel, options);
     }
 
     remeshBoxel15sNow(boxel15s = [], woxel = this.currentWoxel) {
@@ -483,4 +483,3 @@ export class Mapper {
 }
 
 export default Mapper;
-

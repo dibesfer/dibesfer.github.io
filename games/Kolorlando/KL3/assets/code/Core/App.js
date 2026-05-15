@@ -43,6 +43,8 @@ export class App {
         this.cameraFov = options.cameraFov ?? 90;
         this.undersampling = options.undersampling ?? false;
         this.undersamplingRatio = options.undersamplingRatio ?? 0.5;
+        this.playerStateAutosavePositionBucket = options.playerStateAutosavePositionBucket ?? 1;
+        this.playerStateAutosaveYawBucket = options.playerStateAutosaveYawBucket ?? 0.125;
 
         this.elements = {};
         this.autosaveTimer = null;
@@ -60,6 +62,7 @@ export class App {
         this.selectedItem = null;
         this.savedBoxels = [];
         this.woxelMemoryStatusText = "checking...";
+        this.lastPlayerAutosaveStateKey = "";
     }
 
     async start() {
@@ -127,10 +130,14 @@ export class App {
             cameraPosition: 1.7,
         });
         this.restorePlayerInWoxel(this.woxel);
-        this.mapper.updateBoxel15RenderDistance(
-            this.player.getCameraPosition(),
-            this.player.getCameraDirection()
-        );
+        if (this.loop?.boxel15RenderDistanceGate) {
+            this.loop.boxel15RenderDistanceGate.reset("woxel-changed");
+        } else {
+            this.mapper.updateBoxel15RenderDistance(
+                this.player.getCameraPosition(),
+                this.player.getCameraDirection()
+            );
+        }
 
         this.settings = new Settings({
             threeD: this.threeD,
@@ -230,6 +237,9 @@ export class App {
             getSelectedVoxel: () => this.selectedItem?.getVoxel?.() ?? null,
             isInsidePlayerBody: (gridPosition) => this.isInsidePlayerBody(gridPosition),
             scheduleAutosave: () => this.scheduleAutosave(),
+            markRenderDistanceDirty: (reason = "world-changed") => {
+                this.loop?.boxel15RenderDistanceGate?.markDirty?.(reason);
+            },
             scheduleClipboardSave: () => this.scheduleBlueBoxelClipboardSave(),
             onBlueBoxelSaved: (boxel) => this.addSavedBoxelFromBlueBoxel(boxel),
         });
@@ -344,10 +354,14 @@ export class App {
             this.restorePlayerInWoxel(this.woxel);
         }
 
-        this.mapper.updateBoxel15RenderDistance(
-            this.player.getCameraPosition(),
-            this.player.getCameraDirection()
-        );
+        if (this.loop?.boxel15RenderDistanceGate) {
+            this.loop.boxel15RenderDistanceGate.reset("woxel-changed");
+        } else {
+            this.mapper.updateBoxel15RenderDistance(
+                this.player.getCameraPosition(),
+                this.player.getCameraDirection()
+            );
+        }
 
         if (window.KL3) {
             window.KL3.woxel = this.woxel;
@@ -372,6 +386,7 @@ export class App {
 
     rememberCurrentPlayerState() {
         this.lastPlayerStateKey = this.createPlayerStateKey();
+        this.lastPlayerAutosaveStateKey = this.createPlayerAutosaveStateKey();
     }
 
     createPlayerStateKey() {
@@ -386,13 +401,44 @@ export class App {
         ].join(",");
     }
 
+    createPlayerAutosaveStateKey() {
+        const state = this.player?.toMemoryData?.();
+        if (!state?.position) return "";
+
+        const bucketSize = this.playerStateAutosavePositionBucket;
+        const yawBucket = this.playerStateAutosaveYawBucket;
+
+        return [
+            this.bucketNumber(state.position.x, bucketSize),
+            this.bucketNumber(state.position.y, bucketSize),
+            this.bucketNumber(state.position.z, bucketSize),
+            this.bucketNumber(Number(state.yaw ?? 0), yawBucket),
+        ].join(",");
+    }
+
+    bucketNumber(value = 0, bucketSize = 1) {
+        const number = Number(value);
+        const size = Number(bucketSize);
+
+        if (!Number.isFinite(number)) return 0;
+        if (!Number.isFinite(size) || size <= 0) return Math.round(number);
+
+        return Math.floor(number / size);
+    }
+
     maybeSchedulePlayerStateAutosave() {
         if (!this.player || !this.woxel) return false;
 
-        const key = this.createPlayerStateKey();
-        if (!key || key === this.lastPlayerStateKey) return false;
+        const key = this.createPlayerAutosaveStateKey();
+        if (!key || key === this.lastPlayerAutosaveStateKey) return false;
 
-        this.rememberCurrentPlayerState();
+        this.lastPlayerAutosaveStateKey = key;
+        this.lastPlayerStateKey = this.createPlayerStateKey();
+
+        // Player movement must not reset the autosave debounce every frame.
+        // Once a save is pending, it will capture the latest precise player state.
+        if (this.isAutosavePending()) return false;
+
         this.scheduleAutosave();
 
         return true;

@@ -4,6 +4,11 @@ export class Boxel15RenderDistanceGate {
     constructor(options = {}) {
         this.app = options.app ?? null;
         this.boxelSize = options.boxelSize ?? 15;
+        this.cachedBoxelSize = this.boxelSize;
+        this.cachedWoxel = null;
+        this.cachedWoxelKey = "woxel:none";
+        this.woxelIds = new WeakMap();
+        this.nextWoxelId = 1;
 
         // State-driven, not frame-driven.
         // Movement uses sub-Boxel15 buckets so forward chunks wake up before
@@ -15,6 +20,7 @@ export class Boxel15RenderDistanceGate {
         this.dirty = true;
         this.dirtyReason = "initial";
         this.lastResult = null;
+        this.pendingMeshStreaming = false;
     }
 
     setApp(app = null) {
@@ -31,6 +37,10 @@ export class Boxel15RenderDistanceGate {
     reset(reason = "reset") {
         this.lastStateKey = null;
         this.lastResult = null;
+        this.pendingMeshStreaming = false;
+        this.cachedWoxel = null;
+        this.cachedWoxelKey = "woxel:none";
+        this.cachedBoxelSize = this.boxelSize;
         return this.markDirty(reason);
     }
 
@@ -53,17 +63,19 @@ export class Boxel15RenderDistanceGate {
             cameraPosition,
             cameraDirection
         );
+        this.pendingMeshStreaming = this.hasPendingMeshStreaming(app, this.lastResult);
 
         return this.lastResult;
     }
 
     continuePendingMeshStreaming(app = this.app) {
-        if (!this.lastResult || !this.hasPendingMeshStreaming(app, this.lastResult)) {
+        if (!this.lastResult || this.pendingMeshStreaming !== true) {
             return this.lastResult;
         }
 
         const meshStreaming = app.mapper.boxel15MeshStreamer.stream(this.lastResult);
         this.lastResult.meshStreaming = meshStreaming;
+        this.pendingMeshStreaming = this.hasPendingMeshStreaming(app, this.lastResult);
 
         // New meshes created by the streamer need to become raycastable without
         // recalculating the whole render-distance state.
@@ -109,16 +121,55 @@ export class Boxel15RenderDistanceGate {
     }
 
     createWoxelKey(app = null) {
-        const woxel = app?.woxel ?? app?.mapper?.currentWoxel ?? null;
-        if (!woxel) return "woxel:none";
+        this.ensureWoxelCache(app);
+        return this.cachedWoxelKey;
+    }
 
+    ensureWoxelCache(app = null) {
+        const woxel = app?.woxel ?? app?.mapper?.currentWoxel ?? null;
+
+        if (!woxel) {
+            this.cachedWoxel = null;
+            this.cachedWoxelKey = "woxel:none";
+            this.cachedBoxelSize = this.boxelSize;
+            return;
+        }
+
+        if (woxel === this.cachedWoxel) return;
+
+        this.cachedWoxel = woxel;
+        this.cachedBoxelSize = this.readBoxelSizeFromWoxel(woxel);
+
+        const id = this.getWoxelId(woxel);
         const name = woxel.name ?? "woxel";
         const size = woxel.size
             ? `${woxel.size.x ?? 0},${woxel.size.y ?? 0},${woxel.size.z ?? 0}`
             : "size:none";
         const boxelCount = this.countBoxel15s(woxel);
 
-        return `woxel:${name}:${size}:${boxelCount}`;
+        this.cachedWoxelKey = `woxel:${id}:${name}:${size}:${boxelCount}`;
+    }
+
+    getWoxelId(woxel = null) {
+        if (!woxel || typeof woxel !== "object") return "none";
+
+        if (!this.woxelIds.has(woxel)) {
+            this.woxelIds.set(woxel, this.nextWoxelId++);
+        }
+
+        return this.woxelIds.get(woxel);
+    }
+
+    readBoxelSizeFromWoxel(woxel = null) {
+        let firstBoxel = null;
+        woxel?.forEachBoxel?.((boxel15) => {
+            if (!firstBoxel) firstBoxel = boxel15;
+        });
+
+        const size = firstBoxel?.size?.x ?? this.boxelSize;
+        const number = Number(size);
+
+        return Number.isFinite(number) && number > 0 ? number : this.boxelSize;
     }
 
     createRenderSettingsKey(app = null) {
@@ -190,20 +241,8 @@ export class Boxel15RenderDistanceGate {
     }
 
     getBoxelSize(app = null) {
-        const firstBoxel = this.getFirstBoxel15(app);
-        const size = firstBoxel?.size?.x ?? this.boxelSize;
-        const number = Number(size);
-
-        return Number.isFinite(number) && number > 0 ? number : this.boxelSize;
-    }
-
-    getFirstBoxel15(app = null) {
-        let firstBoxel = null;
-        app?.woxel?.forEachBoxel?.((boxel15) => {
-            if (!firstBoxel) firstBoxel = boxel15;
-        });
-
-        return firstBoxel;
+        this.ensureWoxelCache(app);
+        return this.cachedBoxelSize;
     }
 
     countBoxel15s(woxel = null) {

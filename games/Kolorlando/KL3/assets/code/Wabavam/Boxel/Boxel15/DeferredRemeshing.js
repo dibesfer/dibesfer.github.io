@@ -57,15 +57,17 @@ export class DeferredRemeshing {
         if (options.flush === false) return [];
 
         const force = options.force === true;
-        const limit = force
+        const forceVisible = options.forceVisible === true;
+        const limit = (force || forceVisible)
             ? Infinity
             : normalizeBoxel15Limit(options.limit ?? this.maxRemeshPerFlush);
-        const maxMs = force
+        const maxMs = (force || forceVisible)
             ? Infinity
             : normalizeBoxel15Milliseconds(options.maxMs ?? this.maxFlushMs);
 
         const result = this.flush({
             force,
+            forceVisible,
             limit,
             maxMs,
             woxel,
@@ -76,10 +78,11 @@ export class DeferredRemeshing {
 
     flush(options = {}) {
         const force = options.force === true;
-        const limit = force
+        const forceVisible = options.forceVisible === true;
+        const limit = (force || forceVisible)
             ? Infinity
             : normalizeBoxel15Limit(options.limit ?? this.maxRemeshPerFlush);
-        const maxMs = force
+        const maxMs = (force || forceVisible)
             ? Infinity
             : normalizeBoxel15Milliseconds(options.maxMs ?? this.maxFlushMs);
         const woxel = options.woxel ?? this.woxel;

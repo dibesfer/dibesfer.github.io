@@ -24,6 +24,7 @@ export class BoxelEditor {
         this.getSelectedVoxel = options.getSelectedVoxel ?? (() => null);
         this.isInsidePlayerBody = options.isInsidePlayerBody ?? (() => false);
         this.scheduleAutosave = options.scheduleAutosave ?? (() => {});
+        this.markRenderDistanceDirty = options.markRenderDistanceDirty ?? (() => {});
         this.scheduleClipboardSave = options.scheduleClipboardSave ?? (() => {});
         this.onBlueBoxelSaved = options.onBlueBoxelSaved ?? (() => {});
         this.history = options.history ?? null;
@@ -284,7 +285,12 @@ export class BoxelEditor {
                 type: options.historyType ?? "bulkChange",
                 label: options.historyLabel ?? "Boxel edit",
             });
-            this.mapper?.remeshBoxel15s?.(dirtyBoxels, this.woxel);
+            // Bulk colorBoxel actions should immediately refresh visible chunks.
+            // Non-visible dirty chunks stay deferred until they become relevant.
+            this.mapper?.remeshBoxel15s?.(dirtyBoxels, this.woxel, {
+                forceVisible: true,
+            });
+            this.markRenderDistanceDirty?.("world-changed");
             this.raycast?.forceNextCast?.({ preserveTargetOnMiss: true });
             this.scheduleAutosave();
         }
