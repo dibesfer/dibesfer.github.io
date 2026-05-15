@@ -144,6 +144,8 @@ function app() {
             "It is not the <b>shape</b>, nor the <u>message</u>, it is the <i>tone</i>",
             "<span style='color: lightgreen'>★</span> Jen mia mondo. Envenu.",
             "Be <b class='red'>aggresive</b> defending your <i>quality</i> of <u>existing</u>. For <b>you</b>, for <i>us</i>",
+            "Patters are not shapes or manners",
+            "Good teachers points good"
         ]
         function changeDescription() {
             let random = randomInt(0, descriptions.length - 1);
