@@ -1,6 +1,6 @@
 export const VOXEL_EXTRUSION_CONFIG = {
-    axisEnterVoxels: 2,
-    axisExitVoxels: 1,
+    axisEnterVoxels: 1,
+    axisExitVoxels: 0,
     modes: {
         green: "greenVoxelExtrusion",
         blue: "blueVoxelExtrusion",
