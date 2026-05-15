@@ -16,6 +16,10 @@ export class ThreeD {
 
         this.lastWidth = 0;
         this.lastHeight = 0;
+        this.pendingWidth = 0;
+        this.pendingHeight = 0;
+        this.resizeDirty = true;
+        this.resizeObserver = null;
 
         this.handleResize = this.handleResize.bind(this);
     }
@@ -26,6 +30,7 @@ export class ThreeD {
         this.createScene();
         this.createCamera();
         this.createRenderer();
+        this.startResizeObserver();
 
         window.addEventListener("resize", this.handleResize);
         this.resize();
@@ -34,6 +39,7 @@ export class ThreeD {
 
     stop() {
         window.removeEventListener("resize", this.handleResize);
+        this.stopResizeObserver();
         this.dispose();
     }
 
@@ -56,6 +62,36 @@ export class ThreeD {
         });
 
         this.renderer.setPixelRatio(this.getPixelRatio());
+    }
+
+    startResizeObserver() {
+        if (!this.canvas || typeof ResizeObserver === "undefined") return;
+
+        this.resizeObserver = new ResizeObserver((entries = []) => {
+            const entry = entries[0];
+            const rect = entry?.contentRect;
+            if (!rect) return;
+
+            const width = Math.max(1, Math.round(rect.width));
+            const height = Math.max(1, Math.round(rect.height));
+
+            if (width === this.pendingWidth && height === this.pendingHeight) return;
+
+            this.pendingWidth = width;
+            this.pendingHeight = height;
+            this.markResizeDirty();
+        });
+
+        this.resizeObserver.observe(this.canvas);
+    }
+
+    stopResizeObserver() {
+        this.resizeObserver?.disconnect?.();
+        this.resizeObserver = null;
+    }
+
+    markResizeDirty() {
+        this.resizeDirty = true;
     }
 
     setWorld(object3D) {
@@ -127,35 +163,53 @@ export class ThreeD {
     }
 
     handleResize() {
-        this.resize();
-        this.render();
+        // Window resize is only a signal.
+        // The real canvas size is read once on the next frame, not every frame.
+        this.markResizeDirty();
     }
 
     resizeIfNeeded() {
-        if (!this.canvas) return;
+        if (!this.resizeDirty) return;
 
-        const width = this.canvas.clientWidth;
-        const height = this.canvas.clientHeight;
-
-        if (width === this.lastWidth && height === this.lastHeight) return;
-
+        this.resizeDirty = false;
         this.resize();
     }
 
-    resize() {
+    resize(width = null, height = null) {
         if (!this.canvas || !this.renderer || !this.camera) return;
 
-        const width = Math.max(1, this.canvas.clientWidth);
-        const height = Math.max(1, this.canvas.clientHeight);
+        const size = this.getCanvasRenderSize(width, height);
+        if (size.width === this.lastWidth && size.height === this.lastHeight) return;
 
-        this.lastWidth = width;
-        this.lastHeight = height;
+        this.lastWidth = size.width;
+        this.lastHeight = size.height;
+        this.pendingWidth = size.width;
+        this.pendingHeight = size.height;
 
-        this.camera.aspect = width / height;
+        this.camera.aspect = size.width / size.height;
         this.camera.updateProjectionMatrix();
 
         this.renderer.setPixelRatio(this.getPixelRatio());
-        this.renderer.setSize(width, height, false);
+        this.renderer.setSize(size.width, size.height, false);
+    }
+
+    getCanvasRenderSize(width = null, height = null) {
+        const nextWidth = Number(width ?? this.pendingWidth);
+        const nextHeight = Number(height ?? this.pendingHeight);
+
+        if (Number.isFinite(nextWidth) && nextWidth > 0 && Number.isFinite(nextHeight) && nextHeight > 0) {
+            return {
+                width: Math.max(1, Math.round(nextWidth)),
+                height: Math.max(1, Math.round(nextHeight)),
+            };
+        }
+
+        // Fallback path only runs on dirty resize events.
+        // It avoids forcing a layout read on every animation frame.
+        return {
+            width: Math.max(1, Math.round(this.canvas.clientWidth)),
+            height: Math.max(1, Math.round(this.canvas.clientHeight)),
+        };
     }
 
     getPixelRatio() {
@@ -201,6 +255,7 @@ export class ThreeD {
     }
 
     dispose() {
+        this.stopResizeObserver();
         this.renderer?.dispose();
     }
 }
