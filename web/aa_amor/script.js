@@ -75,8 +75,10 @@ function app() {
 
 
     if (url == "http://127.0.0.1:5500/" ||
+        url == "http://127.0.0.1:5501/" ||
         url == "https://dibesfer.com/" ||
         url == "http://127.0.0.1:5500/index.html" ||
+        url == "http://127.0.0.1:5501/index.html" ||
         url == "https://dibesfer.com/index.html"
 
     ) {
