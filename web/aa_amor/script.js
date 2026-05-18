@@ -145,7 +145,8 @@ function app() {
             "<span style='color: lightgreen'>★</span> Jen mia mondo. Envenu.",
             "Be <b class='red'>aggresive</b> defending your <i>quality</i> of <u>existing</u>. For <b>you</b>, for <i>us</i>",
             "Patters are not shapes or manners",
-            "Good teachers points good ->"
+            "Good teachers points good ->",
+            "RE¢REⒶTIV⨁"
         ]
         function changeDescription() {
             let random = randomInt(0, descriptions.length - 1);
