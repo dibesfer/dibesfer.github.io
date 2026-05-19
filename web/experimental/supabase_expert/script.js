@@ -166,6 +166,13 @@ async function invokeEdgeFunction() {
         return
     }
 
+    if (attempt.trim() === "") {
+        edgePayload.textContent = JSON.stringify(buildEdgePayload("[empty rejected locally]"), null, 2)
+        edgeStatus.textContent = "checkpoint rejected locally"
+        edgeResponse.textContent = "No. Empty or whitespace passwords are impossible."
+        return
+    }
+
     const payload = buildEdgePayload(attempt)
     edgePayload.textContent = JSON.stringify(buildEdgePayload("[hidden]"), null, 2)
     edgeStatus.textContent = "transmitting password attempt"
