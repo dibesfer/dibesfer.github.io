@@ -153,23 +153,21 @@ function renderValue(value) {
 function renderRestrictedRecord(data) {
     restrictedContent.innerHTML = `
         <div class="restricted-resource-card">
-            <p class="restricted-kicker">PRIVATE RESOURCE</p>
-            <h4>${renderValue(data.title)}</h4>
-            <p class="restricted-subtitle">${renderValue(data.slug)} · ${renderValue(data.type)}</p>
-
-            <dl class="restricted-fields">
-                <div><dt>slug</dt><dd>${renderValue(data.slug)}</dd></div>
-                <div><dt>title</dt><dd>${renderValue(data.title)}</dd></div>
-                <div><dt>type</dt><dd>${renderValue(data.type)}</dd></div>
-                <div><dt>storage_path</dt><dd>${renderValue(data.storage_path)}</dd></div>
-                <div><dt>required_role</dt><dd>${renderValue(data.required_role)}</dd></div>
-                <div><dt>created_at</dt><dd>${renderValue(data.created_at)}</dd></div>
-            </dl>
-
-            <div class="restricted-html-block">
-                <p class="restricted-kicker">HTML CONTENT</p>
-                <div class="restricted-rendered-content">${data.content || "<p>—</p>"}</div>
+            <div class="restricted-main-content">
+                ${data.content || "<p>—</p>"}
             </div>
+
+            <details class="restricted-row-details">
+                <summary>Show row data</summary>
+                <dl class="restricted-fields">
+                    <div><dt>slug</dt><dd>${renderValue(data.slug)}</dd></div>
+                    <div><dt>title</dt><dd>${renderValue(data.title)}</dd></div>
+                    <div><dt>type</dt><dd>${renderValue(data.type)}</dd></div>
+                    <div><dt>storage_path</dt><dd>${renderValue(data.storage_path)}</dd></div>
+                    <div><dt>required_role</dt><dd>${renderValue(data.required_role)}</dd></div>
+                    <div><dt>created_at</dt><dd>${renderValue(data.created_at)}</dd></div>
+                </dl>
+            </details>
         </div>
     `
 }
