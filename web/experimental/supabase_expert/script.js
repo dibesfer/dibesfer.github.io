@@ -213,6 +213,25 @@ async function invokeEdgeFunction() {
     }
 }
 
+function setupKeyboardSubmit() {
+    myInput.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+            event.preventDefault()
+            writeTable()
+        }
+    })
+
+    userEmail.addEventListener("keydown", submitLoginOnEnter)
+    userPass.addEventListener("keydown", submitLoginOnEnter)
+}
+
+function submitLoginOnEnter(event) {
+    if (event.key === "Enter") {
+        event.preventDefault()
+        login()
+    }
+}
+
 function setupLocalVisits() {
     let localVisits = localStorage.getItem("sb_LocalVisits")
     if (localVisits == null || localVisits <= 0) {
@@ -236,6 +255,7 @@ function init() {
         displayUsersonline.textContent = count
     })
 
+    setupKeyboardSubmit()
     setupLocalVisits()
     readTable()
     setUser()
