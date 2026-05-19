@@ -197,7 +197,8 @@ span,
     color: var(--strong);
 }
 
-.edge-panel {
+.edge-panel,
+.capabilities-panel {
     position: relative;
 }
 
@@ -211,11 +212,45 @@ span,
     letter-spacing: 0.12em;
 }
 
-.edge-grid {
+.capabilities-panel::before {
+    content: "FREE TIER BRIEFING";
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    color: var(--muted);
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+}
+
+.edge-grid,
+.capabilities-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 10px;
     margin: 10px 0;
+}
+
+.capabilities-grid article {
+    padding: 10px;
+    border: 1px solid rgba(36, 91, 50, 0.75);
+    background: rgba(0, 0, 0, 0.22);
+}
+
+.capabilities-grid strong {
+    display: block;
+    color: var(--strong);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.capabilities-grid p {
+    color: var(--muted);
+}
+
+.capability-emoji {
+    display: inline-block;
+    margin-right: 6px;
+    filter: grayscale(0.35);
 }
 
 code,
@@ -262,7 +297,8 @@ ol {
         height: 3rem;
     }
 
-    .edge-grid {
+    .edge-grid,
+    .capabilities-grid {
         grid-template-columns: 1fr;
     }
 
