@@ -62,8 +62,13 @@ section,
 }
 
 header,
-footer {
+footer,
+section {
     padding: 14px;
+}
+
+header,
+footer {
     text-align: center;
 }
 
@@ -180,14 +185,57 @@ label,
 #consola,
 footer p,
 li,
-span {
+span,
+.edge-note {
     color: var(--muted);
 }
 
 #displayUsername,
 #displayUsersonline,
-#displayLocalvisits {
+#displayLocalvisits,
+#edgeStatus {
     color: var(--strong);
+}
+
+.edge-panel {
+    position: relative;
+}
+
+.edge-panel::before {
+    content: "EDGE READY";
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    color: var(--muted);
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+}
+
+.edge-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin: 10px 0;
+}
+
+code,
+pre {
+    color: var(--strong);
+    background: rgba(0, 0, 0, 0.32);
+    border: 1px solid rgba(36, 91, 50, 0.75);
+}
+
+code {
+    padding: 1px 5px;
+}
+
+pre {
+    min-height: 140px;
+    max-height: 240px;
+    overflow: auto;
+    padding: 10px;
+    white-space: pre-wrap;
+    word-break: break-word;
 }
 
 ol {
@@ -212,6 +260,10 @@ ol {
     .message_img > img {
         width: 3rem;
         height: 3rem;
+    }
+
+    .edge-grid {
+        grid-template-columns: 1fr;
     }
 
     input,
