@@ -137,12 +137,12 @@ async function logout() {
 
 // EDGE FUNCTIONS
 const edgeFunctionName = "fortress_ping"
+const restrictedSlug = "private-test"
 
-function buildEdgePayload(attempt = "[hidden]", slug = null) {
+function buildEdgePayload(attempt = "[hidden]") {
     return {
         mission: "website_fortress_checkpoint",
         attempt,
-        slug,
         canonical_site: "https://dibesfer.github.io",
         user: TheUser ? TheUser.email : "Anonymous",
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
@@ -185,6 +185,38 @@ async function callEdge(payload) {
     }
 }
 
+function showRestrictedArea() {
+    restrictedSection.classList.remove("invisible")
+    restrictedBreakA.classList.remove("invisible")
+    restrictedBreakB.classList.remove("invisible")
+    restrictedBreakC.classList.remove("invisible")
+}
+
+async function loadRestrictedResource() {
+    restrictedStatus.textContent = "loading resource"
+    restrictedContent.innerHTML = "<p>Reading protected_resources...</p>"
+
+    const { data, error } = await database
+        .from("protected_resources")
+        .select("slug,title,type,content")
+        .eq("slug", restrictedSlug)
+        .single()
+
+    if (error) {
+        restrictedStatus.textContent = "resource read failed"
+        restrictedContent.textContent = error.message
+        return
+    }
+
+    restrictedStatus.textContent = "resource loaded"
+    restrictedContent.innerHTML = data.content || "<p>Resource exists. No content.</p>"
+}
+
+async function unlockRestrictedArea() {
+    showRestrictedArea()
+    await loadRestrictedResource()
+}
+
 async function invokeEdgeFunction() {
     const attempt = prompt("Which password opens the fortress?")
 
@@ -208,50 +240,18 @@ async function invokeEdgeFunction() {
 
     try {
         const report = await callEdge(payload)
-        edgeStatus.textContent = report.ok && report.body.ok ? "ACCESS GRANTED" : "ACCESS DENIED / CHECK RESPONSE"
+        const accessGranted = report.ok && report.body.ok
+
+        edgeStatus.textContent = accessGranted ? "ACCESS GRANTED" : "ACCESS DENIED / CHECK RESPONSE"
         edgeResponse.textContent = JSON.stringify(report, null, 2)
+
+        if (accessGranted) {
+            await unlockRestrictedArea()
+        }
     }
     catch (error) {
         edgeStatus.textContent = "request blocked / network failed"
         edgeResponse.textContent = String(error)
-    }
-}
-
-async function requestRestrictedArea() {
-    const attempt = prompt("Restricted Area password?")
-
-    if (attempt === null) {
-        restrictedStatus.textContent = "request cancelled"
-        restrictedContent.innerHTML = "<p>No signal sent.</p>"
-        return
-    }
-
-    if (attempt.trim() === "") {
-        restrictedStatus.textContent = "request rejected locally"
-        restrictedContent.innerHTML = "<p>No. Empty or whitespace passwords are impossible.</p>"
-        return
-    }
-
-    const payload = buildEdgePayload(attempt, "private-test")
-    restrictedStatus.textContent = "requesting clearance"
-    restrictedContent.innerHTML = "<p>Contacting Edge guard...</p>"
-
-    try {
-        const report = await callEdge(payload)
-        const body = report.body
-
-        if (!report.ok || !body.ok) {
-            restrictedStatus.textContent = "ACCESS DENIED"
-            restrictedContent.textContent = body.message || "Denied."
-            return
-        }
-
-        restrictedStatus.textContent = "ACCESS GRANTED"
-        restrictedContent.innerHTML = body.content || body.message || "<p>Clearance accepted. No content returned.</p>"
-    }
-    catch (error) {
-        restrictedStatus.textContent = "request blocked / network failed"
-        restrictedContent.textContent = String(error)
     }
 }
 
