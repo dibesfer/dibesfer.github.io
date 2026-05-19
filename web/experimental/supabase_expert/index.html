@@ -57,6 +57,30 @@
     <br>
     <hr>
     <br>
+
+    <section id="edgeSection" class="edge-panel">
+        <h3>Edge Function Gate</h3>
+        <p class="edge-note">Prepared endpoint: <code>fortress_ping</code></p>
+        <p>Status: <span id="edgeStatus">standby</span></p>
+
+        <div class="edge-grid">
+            <div>
+                <p>Payload preview</p>
+                <pre id="edgePayload">{}</pre>
+            </div>
+            <div>
+                <p>Function response</p>
+                <pre id="edgeResponse">No signal sent yet.</pre>
+            </div>
+        </div>
+
+        <button onclick="prepareEdgePayload()">prepare payload</button>
+        <button onclick="invokeEdgeFunction()">invoke edge</button>
+    </section>
+
+    <br>
+    <hr>
+    <br>
     <h3>Technologies used:</h3>
     <ol>
         <li>Tables</li>
@@ -66,6 +90,7 @@
         </ol>
         <li>Presence</li>
         <li>Auth</li>
+        <li>Edge Functions</li>
     </ol>
     <footer>
 
@@ -210,6 +235,7 @@
         let TheUser
         async function setUser(){
             TheUser = await getUser()
+            prepareEdgePayload()
         }
         setUser()
         
@@ -232,6 +258,50 @@
             let { error } = await database.auth.signOut()
             if (!error) location.reload()
         }
+
+        //EDGE FUNCTIONS
+
+        const edgeFunctionName = "fortress_ping"
+
+        function buildEdgePayload() {
+            return {
+                mission: "website_fortress",
+                function_name: edgeFunctionName,
+                canonical_site: "https://dibesfer.github.io",
+                user: TheUser ? TheUser.email : "Anonymous",
+                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                local_visits: Number(localStorage.getItem("sb_LocalVisits") || 0),
+                browser_time: new Date().toISOString()
+            }
+        }
+
+        function prepareEdgePayload() {
+            const payload = buildEdgePayload()
+            edgePayload.textContent = JSON.stringify(payload, null, 2)
+            edgeStatus.textContent = "payload ready"
+            return payload
+        }
+
+        async function invokeEdgeFunction() {
+            const payload = prepareEdgePayload()
+            edgeStatus.textContent = "transmitting"
+            edgeResponse.textContent = "Calling Supabase Edge Function..."
+
+            const { data, error } = await database.functions.invoke(edgeFunctionName, {
+                body: payload
+            })
+
+            if (error) {
+                edgeStatus.textContent = "function offline / not deployed"
+                edgeResponse.textContent = error.message
+                return
+            }
+
+            edgeStatus.textContent = "response received"
+            edgeResponse.textContent = JSON.stringify(data, null, 2)
+        }
+
+        prepareEdgePayload()
 
         //PRESENCE
 
@@ -268,6 +338,7 @@
 
         displayLocalvisits.textContent = localVisits
         localStorage.setItem("sb_LocalVisits", localVisits)
+        prepareEdgePayload()
 
 
     </script>
