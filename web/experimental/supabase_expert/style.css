@@ -176,24 +176,28 @@ label,
 footer p,
 li,
 span,
-.edge-note {
+.edge-note,
+.restricted-note {
     color: var(--muted);
 }
 
 #displayUsername,
 #displayUsersonline,
 #displayLocalvisits,
-#edgeStatus {
+#edgeStatus,
+#restrictedStatus {
     color: var(--strong);
 }
 
 .edge-panel,
-.capabilities-panel {
+.capabilities-panel,
+.restricted-panel {
     position: relative;
 }
 
 .edge-panel::before,
-.capabilities-panel::before {
+.capabilities-panel::before,
+.restricted-panel::before {
     position: absolute;
     top: 10px;
     right: 12px;
@@ -208,6 +212,23 @@ span,
 
 .capabilities-panel::before {
     content: "FREE TIER BRIEFING";
+}
+
+.restricted-panel {
+    background: #000;
+    border-color: #2f332b;
+}
+
+.restricted-panel::before {
+    content: "CLASSIFIED";
+}
+
+.restricted-content {
+    min-height: 120px;
+    margin: 10px 0;
+    padding: 12px;
+    border: 1px solid #2f332b;
+    background: #050505;
 }
 
 .edge-grid,
