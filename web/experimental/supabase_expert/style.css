@@ -4,15 +4,15 @@
 }
 
 :root {
-    --bg: #050806;
-    --panel: #0b120d;
-    --panel-soft: #101a13;
-    --text: #b7ffbf;
-    --muted: #6f9d78;
-    --line: #245b32;
-    --strong: #d8ffe0;
-    --danger: #ff6b6b;
-    --glow: rgba(78, 255, 120, 0.18);
+    --bg: #11130f;
+    --panel: #181c15;
+    --panel-soft: #20261c;
+    --text: #d5d8c8;
+    --muted: #90967f;
+    --line: #4b5541;
+    --strong: #f0f2df;
+    --danger: #b55f55;
+    --accent: #9fa876;
 }
 
 html {
@@ -26,14 +26,9 @@ body {
     padding: 14px;
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
     font-size: 1rem;
-    line-height: 1.7;
+    line-height: 1.65;
     color: var(--text);
-    background:
-        linear-gradient(rgba(80, 255, 120, 0.035) 50%, rgba(0, 0, 0, 0.08) 50%),
-        radial-gradient(circle at top, rgba(40, 255, 90, 0.12), transparent 42%),
-        var(--bg);
-    background-size: 100% 4px, 100% 100%, auto;
-    text-shadow: 0 0 8px var(--glow);
+    background: var(--bg);
 }
 
 body::before {
@@ -43,7 +38,7 @@ body::before {
     padding: 6px 10px;
     border: 1px solid var(--line);
     color: var(--muted);
-    background: rgba(0, 0, 0, 0.3);
+    background: #0d0f0b;
     letter-spacing: 0.08em;
     text-align: center;
 }
@@ -57,8 +52,7 @@ footer,
 section,
 .panel {
     border: 1px solid var(--line);
-    background: linear-gradient(180deg, var(--panel), rgba(5, 8, 6, 0.88));
-    box-shadow: 0 0 24px rgba(0, 255, 80, 0.06) inset;
+    background: var(--panel);
 }
 
 header,
@@ -80,51 +74,48 @@ h3 {
 }
 
 h1::before {
-    content: "▲ ";
-    color: var(--muted);
+    content: "▰ ";
+    color: var(--accent);
 }
 
 h1::after {
-    content: " ▲";
-    color: var(--muted);
+    content: " ▰";
+    color: var(--accent);
 }
 
 a {
     color: var(--strong);
     text-decoration: none;
-    border-bottom: 1px dashed var(--line);
+    border-bottom: 1px solid var(--line);
 }
 
 a:hover,
 button:hover {
-    filter: brightness(1.25);
+    background: #293120;
 }
 
 hr {
     border: 0;
     border-top: 1px solid var(--line);
-    box-shadow: 0 0 12px var(--glow);
 }
 
 #demo {
     height: 320px;
     overflow: auto;
     border: 1px solid var(--line);
-    background:
-        linear-gradient(rgba(0, 0, 0, 0.18), rgba(0, 0, 0, 0)),
-        var(--panel);
+    background: #0d0f0b;
 }
 
 .message {
     display: flex;
     gap: 10px;
     padding: 10px;
-    border-bottom: 1px solid rgba(36, 91, 50, 0.8);
-    background: rgba(0, 0, 0, 0.18);
+    border-bottom: 1px solid var(--line);
+    background: rgba(255, 255, 255, 0.02);
 }
 
 .message:nth-child(even) {
-    background: rgba(20, 60, 28, 0.16);
+    background: rgba(255, 255, 255, 0.04);
 }
 
 .message_img {
@@ -137,7 +128,7 @@ hr {
     aspect-ratio: 1;
     object-fit: cover;
     border: 1px solid var(--line);
-    filter: grayscale(1) contrast(1.5) brightness(0.9) sepia(1) hue-rotate(70deg) saturate(2);
+    filter: grayscale(1) contrast(1.1) brightness(0.85);
 }
 
 .message_text {
@@ -160,8 +151,7 @@ input {
 }
 
 input:focus {
-    border-color: var(--strong);
-    box-shadow: 0 0 0 2px var(--glow);
+    border-color: var(--accent);
 }
 
 button {
@@ -202,8 +192,8 @@ span,
     position: relative;
 }
 
-.edge-panel::before {
-    content: "EDGE READY";
+.edge-panel::before,
+.capabilities-panel::before {
     position: absolute;
     top: 10px;
     right: 12px;
@@ -212,14 +202,12 @@ span,
     letter-spacing: 0.12em;
 }
 
+.edge-panel::before {
+    content: "EDGE READY";
+}
+
 .capabilities-panel::before {
     content: "FREE TIER BRIEFING";
-    position: absolute;
-    top: 10px;
-    right: 12px;
-    color: var(--muted);
-    font-size: 0.75rem;
-    letter-spacing: 0.12em;
 }
 
 .edge-grid,
@@ -232,8 +220,8 @@ span,
 
 .capabilities-grid article {
     padding: 10px;
-    border: 1px solid rgba(36, 91, 50, 0.75);
-    background: rgba(0, 0, 0, 0.22);
+    border: 1px solid var(--line);
+    background: rgba(0, 0, 0, 0.16);
 }
 
 .capabilities-grid strong {
@@ -250,14 +238,14 @@ span,
 .capability-emoji {
     display: inline-block;
     margin-right: 6px;
-    filter: grayscale(0.35);
+    filter: grayscale(0.5);
 }
 
 code,
 pre {
     color: var(--strong);
-    background: rgba(0, 0, 0, 0.32);
-    border: 1px solid rgba(36, 91, 50, 0.75);
+    background: #0d0f0b;
+    border: 1px solid var(--line);
 }
 
 code {
