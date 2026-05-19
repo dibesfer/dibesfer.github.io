@@ -87,7 +87,6 @@ async function getUser() {
 async function setUser() {
     TheUser = await getUser()
     updateJwtAwareness()
-    prepareEdgePayload()
 }
 
 async function login() {
@@ -106,7 +105,7 @@ async function logout() {
     if (!error) location.reload()
 }
 
-function buildEdgePayload(attempt = "[hidden]", slug = null) {
+function buildEdgePayload(attempt, slug = null) {
     return {
         mission: "website_fortress_checkpoint",
         attempt,
@@ -117,13 +116,6 @@ function buildEdgePayload(attempt = "[hidden]", slug = null) {
         local_visits: Number(localStorage.getItem("sb_LocalVisits") || 0),
         browser_time: new Date().toISOString()
     }
-}
-
-function prepareEdgePayload() {
-    const payload = buildEdgePayload("[hidden]", restrictedSlug)
-    edgePayload.textContent = JSON.stringify(payload, null, 2)
-    edgeStatus.textContent = "anon checkpoint ready"
-    return payload
 }
 
 function updateJwtAwareness() {
@@ -198,14 +190,12 @@ async function invokeEdgeFunction() {
     }
 
     if (attempt.trim() === "") {
-        edgePayload.textContent = JSON.stringify(buildEdgePayload("[empty rejected locally]", restrictedSlug), null, 2)
         edgeStatus.textContent = "anon rejected locally"
         edgeResponse.textContent = "No. Empty or whitespace passwords are impossible."
         return
     }
 
     const payload = buildEdgePayload(attempt, restrictedSlug)
-    edgePayload.textContent = JSON.stringify(buildEdgePayload("[hidden]", restrictedSlug), null, 2)
     edgeStatus.textContent = "sending anon password"
     edgeResponse.textContent = "Calling Edge Function..."
 
@@ -278,7 +268,6 @@ function init() {
     updateJwtAwareness()
     readTable()
     setUser()
-    prepareEdgePayload()
 }
 
 init()
