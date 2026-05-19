@@ -192,13 +192,34 @@ function showRestrictedArea() {
     restrictedBreakC.classList.remove("invisible")
 }
 
+function renderRestrictedRecord(data) {
+    const safeData = JSON.stringify(data, null, 2)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+
+    restrictedContent.innerHTML = `
+        <p><b>slug:</b> ${data.slug}</p>
+        <p><b>title:</b> ${data.title}</p>
+        <p><b>type:</b> ${data.type}</p>
+        <p><b>storage_path:</b> ${data.storage_path || "null"}</p>
+        <p><b>required_role:</b> ${data.required_role || "null"}</p>
+        <p><b>created_at:</b> ${data.created_at}</p>
+        <hr>
+        <p><b>content render:</b></p>
+        <div class="restricted-rendered-content">${data.content || "<p>null</p>"}</div>
+        <p><b>raw record:</b></p>
+        <pre>${safeData}</pre>
+    `
+}
+
 async function loadRestrictedResource() {
     restrictedStatus.textContent = "loading resource"
     restrictedContent.innerHTML = "<p>Reading protected_resources...</p>"
 
     const { data, error } = await database
         .from("protected_resources")
-        .select("slug,title,type,content")
+        .select("*")
         .eq("slug", restrictedSlug)
         .single()
 
@@ -209,7 +230,7 @@ async function loadRestrictedResource() {
     }
 
     restrictedStatus.textContent = "resource loaded"
-    restrictedContent.innerHTML = data.content || "<p>Resource exists. No content.</p>"
+    renderRestrictedRecord(data)
 }
 
 async function unlockRestrictedArea() {
