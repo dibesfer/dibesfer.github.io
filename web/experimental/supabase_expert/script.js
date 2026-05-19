@@ -139,10 +139,11 @@ async function logout() {
 const edgeFunctionName = "fortress_ping"
 const restrictedSlug = "private-test"
 
-function buildEdgePayload(attempt = "[hidden]") {
+function buildEdgePayload(attempt = "[hidden]", slug = null) {
     return {
         mission: "website_fortress_checkpoint",
         attempt,
+        slug,
         canonical_site: "https://dibesfer.github.io",
         user: TheUser ? TheUser.email : "Anonymous",
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
@@ -152,7 +153,7 @@ function buildEdgePayload(attempt = "[hidden]") {
 }
 
 function prepareEdgePayload() {
-    const payload = buildEdgePayload()
+    const payload = buildEdgePayload("[hidden]", restrictedSlug)
     edgePayload.textContent = JSON.stringify(payload, null, 2)
     edgeStatus.textContent = "checkpoint ready"
     return payload
@@ -192,50 +193,42 @@ function showRestrictedArea() {
     restrictedBreakC.classList.remove("invisible")
 }
 
-function renderRestrictedRecord(data) {
-    const safeData = JSON.stringify(data, null, 2)
+function renderValue(value) {
+    if (value === null || value === undefined || value === "") return "—"
+    return String(value)
         .replaceAll("&", "&amp;")
         .replaceAll("<", "&lt;")
         .replaceAll(">", "&gt;")
+}
 
+function renderRestrictedRecord(data) {
     restrictedContent.innerHTML = `
-        <p><b>slug:</b> ${data.slug}</p>
-        <p><b>title:</b> ${data.title}</p>
-        <p><b>type:</b> ${data.type}</p>
-        <p><b>storage_path:</b> ${data.storage_path || "null"}</p>
-        <p><b>required_role:</b> ${data.required_role || "null"}</p>
-        <p><b>created_at:</b> ${data.created_at}</p>
-        <hr>
-        <p><b>content render:</b></p>
-        <div class="restricted-rendered-content">${data.content || "<p>null</p>"}</div>
-        <p><b>raw record:</b></p>
-        <pre>${safeData}</pre>
+        <div class="restricted-resource-card">
+            <p class="restricted-kicker">PRIVATE RESOURCE</p>
+            <h4>${renderValue(data.title)}</h4>
+            <p class="restricted-subtitle">${renderValue(data.slug)} · ${renderValue(data.type)}</p>
+
+            <dl class="restricted-fields">
+                <div><dt>slug</dt><dd>${renderValue(data.slug)}</dd></div>
+                <div><dt>title</dt><dd>${renderValue(data.title)}</dd></div>
+                <div><dt>type</dt><dd>${renderValue(data.type)}</dd></div>
+                <div><dt>storage_path</dt><dd>${renderValue(data.storage_path)}</dd></div>
+                <div><dt>required_role</dt><dd>${renderValue(data.required_role)}</dd></div>
+                <div><dt>created_at</dt><dd>${renderValue(data.created_at)}</dd></div>
+            </dl>
+
+            <div class="restricted-html-block">
+                <p class="restricted-kicker">HTML CONTENT</p>
+                <div class="restricted-rendered-content">${data.content || "<p>—</p>"}</div>
+            </div>
+        </div>
     `
 }
 
-async function loadRestrictedResource() {
-    restrictedStatus.textContent = "loading resource"
-    restrictedContent.innerHTML = "<p>Reading protected_resources...</p>"
-
-    const { data, error } = await database
-        .from("protected_resources")
-        .select("*")
-        .eq("slug", restrictedSlug)
-        .single()
-
-    if (error) {
-        restrictedStatus.textContent = "resource read failed"
-        restrictedContent.textContent = error.message
-        return
-    }
-
-    restrictedStatus.textContent = "resource loaded"
-    renderRestrictedRecord(data)
-}
-
-async function unlockRestrictedArea() {
+async function unlockRestrictedArea(resource) {
     showRestrictedArea()
-    await loadRestrictedResource()
+    restrictedStatus.textContent = "resource loaded"
+    renderRestrictedRecord(resource)
 }
 
 async function invokeEdgeFunction() {
@@ -248,14 +241,14 @@ async function invokeEdgeFunction() {
     }
 
     if (attempt.trim() === "") {
-        edgePayload.textContent = JSON.stringify(buildEdgePayload("[empty rejected locally]"), null, 2)
+        edgePayload.textContent = JSON.stringify(buildEdgePayload("[empty rejected locally]", restrictedSlug), null, 2)
         edgeStatus.textContent = "checkpoint rejected locally"
         edgeResponse.textContent = "No. Empty or whitespace passwords are impossible."
         return
     }
 
-    const payload = buildEdgePayload(attempt)
-    edgePayload.textContent = JSON.stringify(buildEdgePayload("[hidden]"), null, 2)
+    const payload = buildEdgePayload(attempt, restrictedSlug)
+    edgePayload.textContent = JSON.stringify(buildEdgePayload("[hidden]", restrictedSlug), null, 2)
     edgeStatus.textContent = "transmitting password attempt"
     edgeResponse.textContent = "Calling Supabase Edge Function..."
 
@@ -266,8 +259,13 @@ async function invokeEdgeFunction() {
         edgeStatus.textContent = accessGranted ? "ACCESS GRANTED" : "ACCESS DENIED / CHECK RESPONSE"
         edgeResponse.textContent = JSON.stringify(report, null, 2)
 
-        if (accessGranted) {
-            await unlockRestrictedArea()
+        if (accessGranted && report.body.resource) {
+            await unlockRestrictedArea(report.body.resource)
+        }
+        else if (accessGranted) {
+            showRestrictedArea()
+            restrictedStatus.textContent = "resource missing"
+            restrictedContent.textContent = "ACCESS GRANTED, but Edge returned no resource."
         }
     }
     catch (error) {
