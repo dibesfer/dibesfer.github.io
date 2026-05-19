@@ -300,7 +300,6 @@
                 const response = await fetch(`${supabaseUrl}/functions/v1/${edgeFunctionName}`, {
                     method: "POST",
                     headers: {
-                        "Authorization": `Bearer ${supabaseKey}`,
                         "apikey": supabaseKey,
                         "Content-Type": "application/json"
                     },
