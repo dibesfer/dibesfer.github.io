@@ -172,7 +172,7 @@ function renderRestrictedRecord(data) {
             <iframe
                 class="restricted-iframe"
                 title="${renderValue(data.title)}"
-                sandbox="allow-scripts allow-popups allow-forms allow-downloads allow-modals"
+                sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox allow-forms allow-downloads allow-modals"
                 allowfullscreen
             ></iframe>
 
