@@ -153,9 +153,11 @@ function renderValue(value) {
 function renderRestrictedRecord(data) {
     restrictedContent.innerHTML = `
         <div class="restricted-resource-card">
-            <div class="restricted-main-content">
-                ${data.content || "<p>—</p>"}
-            </div>
+            <iframe
+                class="restricted-iframe"
+                title="${renderValue(data.title)}"
+                sandbox="allow-scripts"
+            ></iframe>
 
             <details class="restricted-row-details">
                 <summary>Show row data</summary>
@@ -170,6 +172,9 @@ function renderRestrictedRecord(data) {
             </details>
         </div>
     `
+
+    const iframe = restrictedContent.querySelector(".restricted-iframe")
+    iframe.srcdoc = data.content || "<p>—</p>"
 }
 
 async function unlockRestrictedArea(resource) {
