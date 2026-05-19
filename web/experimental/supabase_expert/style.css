@@ -225,7 +225,7 @@ span,
 }
 
 .restricted-content {
-    min-height: 320px;
+    min-height: 420px;
     margin: 16px 0 6px;
     padding: 0;
     border: 1px solid #2f332b;
@@ -233,40 +233,15 @@ span,
 }
 
 .restricted-resource-card {
-    min-height: 320px;
+    min-height: 420px;
 }
 
-.restricted-main-content {
-    min-height: 260px;
-    padding: 26px;
-    color: var(--text);
-    background: #020202;
-}
-
-.restricted-main-content > * + * {
-    margin-top: 1rem;
-}
-
-.restricted-main-content h1,
-.restricted-main-content h2,
-.restricted-main-content h3,
-.restricted-main-content h4 {
-    color: var(--strong);
-    letter-spacing: 0.04em;
-}
-
-.restricted-main-content p {
-    max-width: 68ch;
-}
-
-.restricted-main-content img,
-.restricted-main-content video,
-.restricted-main-content canvas,
-.restricted-main-content iframe {
+.restricted-iframe {
     display: block;
-    max-width: 100%;
-    margin: 16px 0;
-    border: 1px solid #2f332b;
+    width: 100%;
+    min-height: 520px;
+    border: 0;
+    background: #fff;
 }
 
 .restricted-row-details {
@@ -393,9 +368,8 @@ ol {
         padding: 14px;
     }
 
-    .restricted-main-content {
-        min-height: 220px;
-        padding: 18px;
+    .restricted-iframe {
+        min-height: 460px;
     }
 
     input,
