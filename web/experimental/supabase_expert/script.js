@@ -138,10 +138,11 @@ async function logout() {
 // EDGE FUNCTIONS
 const edgeFunctionName = "fortress_ping"
 
-function buildEdgePayload(attempt = "[hidden]") {
+function buildEdgePayload(attempt = "[hidden]", slug = null) {
     return {
         mission: "website_fortress_checkpoint",
         attempt,
+        slug,
         canonical_site: "https://dibesfer.github.io",
         user: TheUser ? TheUser.email : "Anonymous",
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
@@ -155,6 +156,33 @@ function prepareEdgePayload() {
     edgePayload.textContent = JSON.stringify(payload, null, 2)
     edgeStatus.textContent = "checkpoint ready"
     return payload
+}
+
+async function callEdge(payload) {
+    const response = await fetch(`${supabaseUrl}/functions/v1/${edgeFunctionName}`, {
+        method: "POST",
+        headers: {
+            "apikey": supabaseKey,
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+    })
+
+    const responseText = await response.text()
+    let responseBody = responseText
+
+    try {
+        responseBody = JSON.parse(responseText)
+    }
+    catch (error) {
+        // Keep raw response text when Edge does not return JSON.
+    }
+
+    return {
+        http_status: response.status,
+        ok: response.ok,
+        body: responseBody
+    }
 }
 
 async function invokeEdgeFunction() {
@@ -179,37 +207,51 @@ async function invokeEdgeFunction() {
     edgeResponse.textContent = "Calling Supabase Edge Function..."
 
     try {
-        const response = await fetch(`${supabaseUrl}/functions/v1/${edgeFunctionName}`, {
-            method: "POST",
-            headers: {
-                "apikey": supabaseKey,
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(payload)
-        })
-
-        const responseText = await response.text()
-        let responseBody = responseText
-
-        try {
-            responseBody = JSON.parse(responseText)
-        }
-        catch (error) {
-            // Keep raw response text when Edge does not return JSON.
-        }
-
-        const report = {
-            http_status: response.status,
-            ok: response.ok,
-            body: responseBody
-        }
-
-        edgeStatus.textContent = response.ok && responseBody.ok ? "ACCESS GRANTED" : "ACCESS DENIED / CHECK RESPONSE"
+        const report = await callEdge(payload)
+        edgeStatus.textContent = report.ok && report.body.ok ? "ACCESS GRANTED" : "ACCESS DENIED / CHECK RESPONSE"
         edgeResponse.textContent = JSON.stringify(report, null, 2)
     }
     catch (error) {
         edgeStatus.textContent = "request blocked / network failed"
         edgeResponse.textContent = String(error)
+    }
+}
+
+async function requestRestrictedArea() {
+    const attempt = prompt("Restricted Area password?")
+
+    if (attempt === null) {
+        restrictedStatus.textContent = "request cancelled"
+        restrictedContent.innerHTML = "<p>No signal sent.</p>"
+        return
+    }
+
+    if (attempt.trim() === "") {
+        restrictedStatus.textContent = "request rejected locally"
+        restrictedContent.innerHTML = "<p>No. Empty or whitespace passwords are impossible.</p>"
+        return
+    }
+
+    const payload = buildEdgePayload(attempt, "private-test")
+    restrictedStatus.textContent = "requesting clearance"
+    restrictedContent.innerHTML = "<p>Contacting Edge guard...</p>"
+
+    try {
+        const report = await callEdge(payload)
+        const body = report.body
+
+        if (!report.ok || !body.ok) {
+            restrictedStatus.textContent = "ACCESS DENIED"
+            restrictedContent.textContent = body.message || "Denied."
+            return
+        }
+
+        restrictedStatus.textContent = "ACCESS GRANTED"
+        restrictedContent.innerHTML = body.content || body.message || "<p>Clearance accepted. No content returned.</p>"
+    }
+    catch (error) {
+        restrictedStatus.textContent = "request blocked / network failed"
+        restrictedContent.textContent = String(error)
     }
 }
 
