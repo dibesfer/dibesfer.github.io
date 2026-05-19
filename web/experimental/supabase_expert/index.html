@@ -60,7 +60,7 @@
 
     <section id="edgeSection" class="edge-panel">
         <h3>Edge Function Gate</h3>
-        <p class="edge-note">Prepared endpoint: <code>fortress_ping</code></p>
+        <p class="edge-note">Protected endpoint: <code>fortress_ping</code></p>
         <p>Status: <span id="edgeStatus">standby</span></p>
 
         <div class="edge-grid">
@@ -70,12 +70,12 @@
             </div>
             <div>
                 <p>Function response</p>
-                <pre id="edgeResponse">No signal sent yet.</pre>
+                <pre id="edgeResponse">No checkpoint request sent yet.</pre>
             </div>
         </div>
 
-        <button onclick="prepareEdgePayload()">prepare payload</button>
-        <button onclick="invokeEdgeFunction()">invoke edge</button>
+        <button onclick="prepareEdgePayload()">prepare checkpoint</button>
+        <button onclick="invokeEdgeFunction()">ask edge password</button>
     </section>
 
     <br>
@@ -263,10 +263,10 @@
 
         const edgeFunctionName = "fortress_ping"
 
-        function buildEdgePayload() {
+        function buildEdgePayload(attempt = "[hidden]") {
             return {
-                mission: "website_fortress",
-                function_name: edgeFunctionName,
+                mission: "website_fortress_checkpoint",
+                attempt,
                 canonical_site: "https://dibesfer.github.io",
                 user: TheUser ? TheUser.email : "Anonymous",
                 timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
@@ -278,13 +278,22 @@
         function prepareEdgePayload() {
             const payload = buildEdgePayload()
             edgePayload.textContent = JSON.stringify(payload, null, 2)
-            edgeStatus.textContent = "payload ready"
+            edgeStatus.textContent = "checkpoint ready"
             return payload
         }
 
         async function invokeEdgeFunction() {
-            const payload = prepareEdgePayload()
-            edgeStatus.textContent = "transmitting"
+            const attempt = prompt("Which password opens the fortress?")
+
+            if (attempt === null) {
+                edgeStatus.textContent = "checkpoint cancelled"
+                edgeResponse.textContent = "No signal sent."
+                return
+            }
+
+            const payload = buildEdgePayload(attempt)
+            edgePayload.textContent = JSON.stringify(buildEdgePayload("[hidden]"), null, 2)
+            edgeStatus.textContent = "transmitting password attempt"
             edgeResponse.textContent = "Calling Supabase Edge Function..."
 
             const { data, error } = await database.functions.invoke(edgeFunctionName, {
@@ -292,12 +301,12 @@
             })
 
             if (error) {
-                edgeStatus.textContent = "function offline / not deployed"
+                edgeStatus.textContent = "function offline / request failed"
                 edgeResponse.textContent = error.message
                 return
             }
 
-            edgeStatus.textContent = "response received"
+            edgeStatus.textContent = data && data.ok ? "ACCESS GRANTED" : "ACCESS DENIED"
             edgeResponse.textContent = JSON.stringify(data, null, 2)
         }
 
