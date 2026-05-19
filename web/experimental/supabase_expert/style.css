@@ -217,6 +217,7 @@ span,
 .restricted-panel {
     background: #000;
     border-color: #2f332b;
+    padding: 22px;
 }
 
 .restricted-panel::before {
@@ -224,33 +225,69 @@ span,
 }
 
 .restricted-content {
-    min-height: 120px;
-    margin: 10px 0;
-    padding: 12px;
+    min-height: 320px;
+    margin: 16px 0 6px;
+    padding: 0;
     border: 1px solid #2f332b;
     background: #050505;
 }
 
-.restricted-resource-card h4 {
-    margin: 4px 0;
-    color: var(--strong);
-    font-size: 1.35rem;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
+.restricted-resource-card {
+    min-height: 320px;
 }
 
-.restricted-kicker,
-.restricted-subtitle {
+.restricted-main-content {
+    min-height: 260px;
+    padding: 26px;
+    color: var(--text);
+    background: #020202;
+}
+
+.restricted-main-content > * + * {
+    margin-top: 1rem;
+}
+
+.restricted-main-content h1,
+.restricted-main-content h2,
+.restricted-main-content h3,
+.restricted-main-content h4 {
+    color: var(--strong);
+    letter-spacing: 0.04em;
+}
+
+.restricted-main-content p {
+    max-width: 68ch;
+}
+
+.restricted-main-content img,
+.restricted-main-content video,
+.restricted-main-content canvas,
+.restricted-main-content iframe {
+    display: block;
+    max-width: 100%;
+    margin: 16px 0;
+    border: 1px solid #2f332b;
+}
+
+.restricted-row-details {
+    border-top: 1px solid #2f332b;
+    background: #080808;
+}
+
+.restricted-row-details summary {
+    padding: 10px 12px;
     color: var(--muted);
-    letter-spacing: 0.08em;
+    cursor: pointer;
     text-transform: uppercase;
+    letter-spacing: 0.08em;
 }
 
 .restricted-fields {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
-    margin: 12px 0;
+    margin: 0;
+    padding: 0 12px 12px;
 }
 
 .restricted-fields div {
@@ -269,18 +306,6 @@ span,
     margin: 0;
     color: var(--strong);
     word-break: break-word;
-}
-
-.restricted-html-block {
-    margin-top: 12px;
-    padding: 10px;
-    border: 1px solid #2f332b;
-    background: #000;
-}
-
-.restricted-rendered-content {
-    margin-top: 8px;
-    color: var(--text);
 }
 
 .edge-grid,
@@ -362,6 +387,15 @@ ol {
     .capabilities-grid,
     .restricted-fields {
         grid-template-columns: 1fr;
+    }
+
+    .restricted-panel {
+        padding: 14px;
+    }
+
+    .restricted-main-content {
+        min-height: 220px;
+        padding: 18px;
     }
 
     input,
