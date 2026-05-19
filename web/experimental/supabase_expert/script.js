@@ -1,30 +1,8 @@
-// Using Supabase Webochi project.
-const supabaseUrl = 'https://kalidybwmoxhcwlfeftc.supabase.co'
-const supabaseKey = 'sb_publishable__jr8YglR8G9zZQQfLPLzqw_GxL2RA-A'
-const database = supabase.createClient(supabaseUrl, supabaseKey)
-
+// UI operations for the Webochi Supabase Expert page.
 let tableRows = 1
 let TheUser
 
-// REALTIME
-const handleInserts = (payload) => {
-    getOnlyLastMessage(payload.new)
-}
-
-const handleDeletes = () => {
-    readTable()
-}
-
-database
-    .channel('supabase_expert')
-    .on('postgres_changes',
-        { schema: 'public', table: 'supabase_expert', event: '*' },
-        (payload) => {
-            if (payload.eventType === 'INSERT') handleInserts(payload)
-            if (payload.eventType === 'DELETE') handleDeletes(payload)
-        }
-    )
-    .subscribe()
+const restrictedSlug = "private-test"
 
 function formatMessage(time, message, timezone, username) {
     if (!username) {
@@ -47,9 +25,7 @@ function formatMessage(time, message, timezone, username) {
 }
 
 async function readTable() {
-    const { data, error } = await database
-        .from('supabase_expert')
-        .select()
+    const { data, error } = await SupabaseExpert.readChatRows()
 
     if (error) {
         console.error(error)
@@ -84,13 +60,11 @@ async function writeTable() {
     const myMessage = myInput.value
 
     if (myMessage != "") {
-        const { error } = await database
-            .from('supabase_expert')
-            .insert({
-                message: myMessage,
-                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-                username: myUsername
-            })
+        const { error } = await SupabaseExpert.insertChatMessage({
+            message: myMessage,
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            username: myUsername
+        })
 
         if (!error) {
             myInput.value = ""
@@ -98,9 +72,8 @@ async function writeTable() {
     }
 }
 
-// AUTH
 async function getUser() {
-    const { data: { user } } = await database.auth.getUser()
+    const { user } = await SupabaseExpert.getUser()
 
     if (user) {
         displayUsername.textContent = user.email
@@ -117,10 +90,7 @@ async function setUser() {
 }
 
 async function login() {
-    let { data, error } = await database.auth.signInWithPassword({
-        email: userEmail.value,
-        password: userPass.value
-    })
+    let { data, error } = await SupabaseExpert.login(userEmail.value, userPass.value)
 
     if (error) {
         consola.textContent = error.message
@@ -131,13 +101,9 @@ async function login() {
 }
 
 async function logout() {
-    let { error } = await database.auth.signOut()
+    let { error } = await SupabaseExpert.logout()
     if (!error) location.reload()
 }
-
-// EDGE FUNCTIONS
-const edgeFunctionName = "fortress_ping"
-const restrictedSlug = "private-test"
 
 function buildEdgePayload(attempt = "[hidden]", slug = null) {
     return {
@@ -157,33 +123,6 @@ function prepareEdgePayload() {
     edgePayload.textContent = JSON.stringify(payload, null, 2)
     edgeStatus.textContent = "checkpoint ready"
     return payload
-}
-
-async function callEdge(payload) {
-    const response = await fetch(`${supabaseUrl}/functions/v1/${edgeFunctionName}`, {
-        method: "POST",
-        headers: {
-            "apikey": supabaseKey,
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify(payload)
-    })
-
-    const responseText = await response.text()
-    let responseBody = responseText
-
-    try {
-        responseBody = JSON.parse(responseText)
-    }
-    catch (error) {
-        // Keep raw response text when Edge does not return JSON.
-    }
-
-    return {
-        http_status: response.status,
-        ok: response.ok,
-        body: responseBody
-    }
 }
 
 function showRestrictedArea() {
@@ -253,7 +192,7 @@ async function invokeEdgeFunction() {
     edgeResponse.textContent = "Calling Supabase Edge Function..."
 
     try {
-        const report = await callEdge(payload)
+        const report = await SupabaseExpert.callEdge(payload)
         const accessGranted = report.ok && report.body.ok
 
         edgeStatus.textContent = accessGranted ? "ACCESS GRANTED" : "ACCESS DENIED / CHECK RESPONSE"
@@ -274,39 +213,33 @@ async function invokeEdgeFunction() {
     }
 }
 
-// PRESENCE
-const channel = database.channel("online-users", {
-    config: {
-        presence: { key: 0 }
+function setupLocalVisits() {
+    let localVisits = localStorage.getItem("sb_LocalVisits")
+    if (localVisits == null || localVisits <= 0) {
+        localVisits = 1
     }
-})
+    else {
+        localVisits++
+    }
 
-channel
-    .on("presence", { event: "sync" }, () => {
-        const count = Object.keys(channel.presenceState()).length
+    displayLocalvisits.textContent = localVisits
+    localStorage.setItem("sb_LocalVisits", localVisits)
+}
+
+function init() {
+    SupabaseExpert.subscribeToChat({
+        onInsert: getOnlyLastMessage,
+        onDelete: readTable
+    })
+
+    SupabaseExpert.subscribeToPresence((count) => {
         displayUsersonline.textContent = count
     })
-    .subscribe(async (status) => {
-        if (status === "SUBSCRIBED") {
-            await channel.track({
-                user_id: "Anonymous",
-                username: "Anonymous"
-            })
-        }
-    })
 
-// LOCAL STORAGE
-let localVisits = localStorage.getItem("sb_LocalVisits")
-if (localVisits == null || localVisits <= 0) {
-    localVisits = 1
-}
-else {
-    localVisits++
+    setupLocalVisits()
+    readTable()
+    setUser()
+    prepareEdgePayload()
 }
 
-displayLocalvisits.textContent = localVisits
-localStorage.setItem("sb_LocalVisits", localVisits)
-
-readTable()
-setUser()
-prepareEdgePayload()
+init()
