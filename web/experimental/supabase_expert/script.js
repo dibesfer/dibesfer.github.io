@@ -86,6 +86,7 @@ async function getUser() {
 
 async function setUser() {
     TheUser = await getUser()
+    updateJwtAwareness()
     prepareEdgePayload()
 }
 
@@ -121,8 +122,25 @@ function buildEdgePayload(attempt = "[hidden]", slug = null) {
 function prepareEdgePayload() {
     const payload = buildEdgePayload("[hidden]", restrictedSlug)
     edgePayload.textContent = JSON.stringify(payload, null, 2)
-    edgeStatus.textContent = "checkpoint ready"
+    edgeStatus.textContent = "anon checkpoint ready"
     return payload
+}
+
+function updateJwtAwareness() {
+    const hasJwt = Boolean(TheUser)
+    jwtStatus.textContent = hasJwt ? "present" : "none"
+
+    if (hasJwt) {
+        loggedPasswordButton.classList.remove("invisible")
+    }
+    else {
+        loggedPasswordButton.classList.add("invisible")
+    }
+}
+
+function mockLoggedPassword() {
+    edgeStatus.textContent = "JWT detected"
+    edgeResponse.textContent = "Logged Password route acknowledged. Not wired to Edge yet."
 }
 
 function showRestrictedArea() {
@@ -171,31 +189,31 @@ async function unlockRestrictedArea(resource) {
 }
 
 async function invokeEdgeFunction() {
-    const attempt = prompt("Which password opens the fortress?")
+    const attempt = prompt("Anon password?")
 
     if (attempt === null) {
-        edgeStatus.textContent = "checkpoint cancelled"
-        edgeResponse.textContent = "No signal sent."
+        edgeStatus.textContent = "anon checkpoint cancelled"
+        edgeResponse.textContent = "No request sent."
         return
     }
 
     if (attempt.trim() === "") {
         edgePayload.textContent = JSON.stringify(buildEdgePayload("[empty rejected locally]", restrictedSlug), null, 2)
-        edgeStatus.textContent = "checkpoint rejected locally"
+        edgeStatus.textContent = "anon rejected locally"
         edgeResponse.textContent = "No. Empty or whitespace passwords are impossible."
         return
     }
 
     const payload = buildEdgePayload(attempt, restrictedSlug)
     edgePayload.textContent = JSON.stringify(buildEdgePayload("[hidden]", restrictedSlug), null, 2)
-    edgeStatus.textContent = "transmitting password attempt"
-    edgeResponse.textContent = "Calling Supabase Edge Function..."
+    edgeStatus.textContent = "sending anon password"
+    edgeResponse.textContent = "Calling Edge Function..."
 
     try {
         const report = await SupabaseExpert.callEdge(payload)
         const accessGranted = report.ok && report.body.ok
 
-        edgeStatus.textContent = accessGranted ? "ACCESS GRANTED" : "ACCESS DENIED / CHECK RESPONSE"
+        edgeStatus.textContent = accessGranted ? "ACCESS GRANTED" : "ACCESS DENIED"
         edgeResponse.textContent = JSON.stringify(report, null, 2)
 
         if (accessGranted && report.body.resource) {
@@ -257,6 +275,7 @@ function init() {
 
     setupKeyboardSubmit()
     setupLocalVisits()
+    updateJwtAwareness()
     readTable()
     setUser()
     prepareEdgePayload()
