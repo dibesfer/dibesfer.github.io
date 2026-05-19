@@ -231,6 +231,58 @@ span,
     background: #050505;
 }
 
+.restricted-resource-card h4 {
+    margin: 4px 0;
+    color: var(--strong);
+    font-size: 1.35rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.restricted-kicker,
+.restricted-subtitle {
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.restricted-fields {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    margin: 12px 0;
+}
+
+.restricted-fields div {
+    padding: 8px;
+    border: 1px solid #2f332b;
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.restricted-fields dt {
+    color: var(--muted);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+}
+
+.restricted-fields dd {
+    margin: 0;
+    color: var(--strong);
+    word-break: break-word;
+}
+
+.restricted-html-block {
+    margin-top: 12px;
+    padding: 10px;
+    border: 1px solid #2f332b;
+    background: #000;
+}
+
+.restricted-rendered-content {
+    margin-top: 8px;
+    color: var(--text);
+}
+
 .edge-grid,
 .capabilities-grid {
     display: grid;
@@ -307,7 +359,8 @@ ol {
     }
 
     .edge-grid,
-    .capabilities-grid {
+    .capabilities-grid,
+    .restricted-fields {
         grid-template-columns: 1fr;
     }
 
