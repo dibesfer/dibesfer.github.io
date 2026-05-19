@@ -76,22 +76,24 @@
 
     <section id="edgeSection" class="edge-panel">
         <h3>Edge Function Gate</h3>
-        <p class="edge-note">Protected endpoint: <code>fortress_ping</code></p>
+        <p class="edge-note">Endpoint: <code>fortress_ping</code></p>
         <p>Status: <span id="edgeStatus">standby</span></p>
+        <p>JWT: <span id="jwtStatus">none</span></p>
 
         <div class="edge-grid">
             <div>
-                <p>Payload preview</p>
+                <p>Anon payload</p>
                 <pre id="edgePayload">{}</pre>
             </div>
             <div>
-                <p>Function response</p>
-                <pre id="edgeResponse">No checkpoint request sent yet.</pre>
+                <p>Response</p>
+                <pre id="edgeResponse">No request sent yet.</pre>
             </div>
         </div>
 
-        <button onclick="prepareEdgePayload()">prepare checkpoint</button>
-        <button onclick="invokeEdgeFunction()">ask edge password</button>
+        <button onclick="prepareEdgePayload()">prepare anon</button>
+        <button onclick="invokeEdgeFunction()">Anon Password</button>
+        <button id="loggedPasswordButton" class="invisible" onclick="mockLoggedPassword()">Logged Password</button>
     </section>
 
     <br>
