@@ -80,18 +80,9 @@
         <p>Status: <span id="edgeStatus">standby</span></p>
         <p>JWT: <span id="jwtStatus">none</span></p>
 
-        <div class="edge-grid">
-            <div>
-                <p>Anon payload</p>
-                <pre id="edgePayload">{}</pre>
-            </div>
-            <div>
-                <p>Response</p>
-                <pre id="edgeResponse">No request sent yet.</pre>
-            </div>
-        </div>
+        <p>Output</p>
+        <pre id="edgeResponse">No request sent yet.</pre>
 
-        <button onclick="prepareEdgePayload()">prepare anon</button>
         <button onclick="invokeEdgeFunction()">Anon Password</button>
         <button id="loggedPasswordButton" class="invisible" onclick="mockLoggedPassword()">Logged Password</button>
     </section>
