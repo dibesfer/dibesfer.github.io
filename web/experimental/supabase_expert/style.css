@@ -244,6 +244,18 @@ span,
     background: #fff;
 }
 
+.restricted-iframe:fullscreen {
+    width: 100vw;
+    height: 100vh;
+    min-height: 100vh;
+}
+
+.restricted-fullscreen-button {
+    width: 100%;
+    border-left: 0;
+    border-right: 0;
+}
+
 .restricted-row-details {
     border-top: 1px solid #2f332b;
     background: #080808;
