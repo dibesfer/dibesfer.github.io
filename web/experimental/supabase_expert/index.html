@@ -59,6 +59,20 @@
     <hr>
     <br>
 
+    <section id="restrictedSection" class="restricted-panel invisible">
+        <h3>RESTRICTED AREA</h3>
+        <p class="restricted-note">Protected resource: <code>private-test</code></p>
+        <p>Status: <span id="restrictedStatus">sealed</span></p>
+
+        <div id="restrictedContent" class="restricted-content">
+            <p>No clearance. No content.</p>
+        </div>
+    </section>
+
+    <br id="restrictedBreakA" class="invisible">
+    <hr id="restrictedBreakB" class="invisible">
+    <br id="restrictedBreakC" class="invisible">
+
     <section id="edgeSection" class="edge-panel">
         <h3>Edge Function Gate</h3>
         <p class="edge-note">Protected endpoint: <code>fortress_ping</code></p>
@@ -77,22 +91,6 @@
 
         <button onclick="prepareEdgePayload()">prepare checkpoint</button>
         <button onclick="invokeEdgeFunction()">ask edge password</button>
-    </section>
-
-    <br>
-    <hr>
-    <br>
-
-    <section id="restrictedSection" class="restricted-panel">
-        <h3>RESTRICTED AREA</h3>
-        <p class="restricted-note">Protected resource: <code>private-test</code></p>
-        <p>Status: <span id="restrictedStatus">sealed</span></p>
-
-        <div id="restrictedContent" class="restricted-content">
-            <p>No clearance. No content.</p>
-        </div>
-
-        <button onclick="requestRestrictedArea()">request access</button>
     </section>
 
     <br>
