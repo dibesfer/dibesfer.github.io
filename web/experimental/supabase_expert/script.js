@@ -150,14 +150,33 @@ function renderValue(value) {
         .replaceAll(">", "&gt;")
 }
 
+function openRestrictedFullscreen() {
+    const iframe = restrictedContent.querySelector(".restricted-iframe")
+
+    if (!iframe) {
+        restrictedStatus.textContent = "iframe unavailable"
+        return
+    }
+
+    if (iframe.requestFullscreen) {
+        iframe.requestFullscreen()
+    }
+    else {
+        restrictedStatus.textContent = "fullscreen unavailable"
+    }
+}
+
 function renderRestrictedRecord(data) {
     restrictedContent.innerHTML = `
         <div class="restricted-resource-card">
             <iframe
                 class="restricted-iframe"
                 title="${renderValue(data.title)}"
-                sandbox="allow-scripts"
+                sandbox="allow-scripts allow-popups allow-forms allow-downloads allow-modals"
+                allowfullscreen
             ></iframe>
+
+            <button class="restricted-fullscreen-button" onclick="openRestrictedFullscreen()">Fullscreen</button>
 
             <details class="restricted-row-details">
                 <summary>Show row data</summary>
