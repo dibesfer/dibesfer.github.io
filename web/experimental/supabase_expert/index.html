@@ -83,6 +83,22 @@
     <hr>
     <br>
 
+    <section id="restrictedSection" class="restricted-panel">
+        <h3>RESTRICTED AREA</h3>
+        <p class="restricted-note">Protected resource: <code>private-test</code></p>
+        <p>Status: <span id="restrictedStatus">sealed</span></p>
+
+        <div id="restrictedContent" class="restricted-content">
+            <p>No clearance. No content.</p>
+        </div>
+
+        <button onclick="requestRestrictedArea()">request access</button>
+    </section>
+
+    <br>
+    <hr>
+    <br>
+
     <section id="capabilitiesSection" class="capabilities-panel">
         <h3>Capabilities</h3>
         <p class="edge-note">Supabase Free Tier operational limits. Time window marked. No fantasy numbers.</p>
