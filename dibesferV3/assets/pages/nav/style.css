@@ -1,0 +1,64 @@
+
+body {
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
+}
+
+header , footer {
+    margin: unset;
+}
+
+main {
+    flex: 1;
+    overflow: auto;
+    position: relative;
+}
+
+#headBar , #bottomBar {
+    display: flex;
+    justify-content: space-between;
+}
+
+#myIframe {
+    display: block;
+    background-color: white;
+    width: 100%;
+    height: 100%;
+}
+
+#navBars {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    z-index: 2;
+    overflow: hidden;
+}
+
+#leftBar {
+    position: absolute;
+    left: -200px;
+    background-color: blue;
+}
+
+#rightBar{
+    position: absolute;
+    background-color: red;
+    right: -200px;
+
+}
+
+.leftBarOpen {
+    left: 0 !important;
+    
+}
+
+.rightBarOpen {
+    right: 0 !important;
+}
+
+#leftBar , #rightBar {
+    width: 200px;
+    height: 100%;
+    transition: 0.2s;
+}
