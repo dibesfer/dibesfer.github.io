@@ -20,7 +20,7 @@ function loadRouteFromURL() {
   if (page && ROUTES[page]) {
     changeIframeSrc(ROUTES[page]);
   } else {
-    changeIframeSrc(ROUTES.gallery);
+    changeIframeSrc("../non");
   }
 }
 
