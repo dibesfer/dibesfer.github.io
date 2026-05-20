@@ -76,6 +76,13 @@ hr {
 
 }
 
+.textCenter {
+    text-align: center;
+}
+
+.pixel {
+    image-rendering: pixelated;
+}
 
 
 /* DARK MODE */

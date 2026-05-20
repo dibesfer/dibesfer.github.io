@@ -1,11 +1,11 @@
-
 body {
     display: flex;
     flex-direction: column;
     height: 100dvh;
 }
 
-header , footer {
+header,
+footer {
     margin: unset;
 }
 
@@ -15,7 +15,8 @@ main {
     position: relative;
 }
 
-#headBar , #bottomBar {
+#headBar,
+#bottomBar {
     display: flex;
     justify-content: space-between;
 }
@@ -38,27 +39,59 @@ main {
 #leftBar {
     position: absolute;
     left: -200px;
-    background-color: blue;
 }
 
-#rightBar{
+#rightBar {
     position: absolute;
-    background-color: red;
     right: -200px;
 
 }
 
 .leftBarOpen {
     left: 0 !important;
-    
+
 }
 
 .rightBarOpen {
     right: 0 !important;
 }
 
-#leftBar , #rightBar {
+#leftBar,
+#rightBar {
     width: 200px;
     height: 100%;
     transition: 0.2s;
+    padding: 10px;
+    backdrop-filter: blur(5px);
+}
+
+/* RESPONSIVE */
+/* phone */
+
+@media only screen and (max-width: 600px) {
+
+    #leftBar,
+    #rightBar {
+        width: 50%;
+    }
+
+    #leftBar {
+
+        left: -50%;
+    }
+
+    #rightBar {
+
+        right: -50%;
+
+    }
+
+    .leftBarOpen {
+        left: 0 !important;
+
+    }
+
+    .rightBarOpen {
+        right: 0 !important;
+    }
 }
