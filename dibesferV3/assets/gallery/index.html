@@ -7,16 +7,23 @@
     <title>Gallery</title>
     <link rel="stylesheet" href="../../style.css">
     <style>
-        #galleryFlex{
+        #galleryFlex {
             display: flex;
             flex-wrap: wrap;
         }
 
-        #galleryFlex > div {
+        #galleryFlex>div {
             flex: 33%;
             width: 33%;
             aspect-ratio: 1;
             border: 3px solid;
+            background-color: rgba(65, 65, 65, 0.506);
+        }
+
+        #galleryFlex>div>img {
+            display: block;
+            height: 100%;
+            object-fit: cover;
         }
     </style>
 </head>
@@ -25,19 +32,20 @@
     <main>
         <div class="maxWidth">
             <h2>Gallery</h2>
-        
+
             <div id="galleryFlex">
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
+                <div><img src="/assets/art/dibesfer/coleccion.jpg" alt=""></div>
+                <div><img src="/assets/art/minetest/minitest.png" alt=""></div>
+                <div><img src="/assets/art/pixelArt/mandala-mastodon.png" alt=""></div>
+                <div><img src="/assets/branding/fergames-logo.png" alt=""></div>
+                <div><img src="/assets/gif/sketch2026.gif" alt="dibesfer gif collection of sketches"></div>
+                <div><img src="/assets/branding/monochat-logo.png" alt=""></div>
+                <div><img src="/assets/art/dibesfer/meeting.jpg" alt=""></div>
+                <div><img src="/assets/art/mandalas/unum.png" alt=""></div>
+
+                <div><img src="/assets/art/dibesfer/mandala.jpg" alt=""></div>
             </div>
-            
+
         </div>
 
     </main>
