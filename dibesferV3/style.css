@@ -123,11 +123,13 @@ hr {
     .flexo3 {
         justify-content: center;
     }
-
-
     .flexo3>div {
         flex: 50%;
         max-width: 50%;
+    }
+
+    .onlyDesktop {
+        display: none;
     }
 }
 

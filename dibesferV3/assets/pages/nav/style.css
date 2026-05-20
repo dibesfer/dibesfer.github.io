@@ -47,8 +47,12 @@ main {
     line-height: 3;
 }
 
+#leftBar a {
+    color: unset;
+}
+
 #leftBar > div::before {
-    content: "-> ";
+    content: "> ";
 }
 
 #rightBar {
