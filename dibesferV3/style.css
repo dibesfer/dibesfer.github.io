@@ -1,0 +1,135 @@
+* {
+    margin: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: sans-serif;
+
+}
+
+img,
+iframe {
+    max-width: 100%;
+}
+
+a {
+    text-decoration: none;
+    color: purple;
+}
+
+header,
+footer {
+    text-align: center;
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+main,
+footer {
+    line-height: 2;
+}
+
+h2 {
+    font-variant: small-caps;
+}
+
+hr {
+    border-width: 2px;
+    border-color: black;
+    border-style: solid;
+}
+
+.icon {
+    height: 3rem;
+}
+
+.maxWidth {
+    max-width: 800px;
+    margin: auto;
+    /* padding: 10px; */
+}
+
+.flexo3 {
+    display: flex;
+    justify-content: space-evenly;
+    flex-wrap: wrap;
+    ;
+
+
+}
+
+.flexo3>div {
+    flex: 33%;
+    max-width: 33%;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+}
+
+.displayMain {
+    border: solid 3px rgb(61, 61, 61);
+    aspect-ratio: 16/9;
+    object-fit: cover;
+    width: 100%;
+    height: auto;
+
+}
+
+
+
+/* DARK MODE */
+
+@media (prefers-color-scheme: dark) {
+    body {
+        background: black;
+        color: white;
+    }
+
+    a {
+        color: gold;
+    }
+
+    hr {
+        border-color: white;
+    }
+
+    .invertable {
+        filter: invert(1);
+    }
+
+    .displayMain {
+        border-color: white;
+    }
+
+}
+
+/* RESPONSIVE */
+/* and (orientation: landscape)  */
+
+/* tablet */
+@media only screen and (max-width: 800px) {
+    .flexo3 {
+        justify-content: center;
+    }
+
+
+    .flexo3>div {
+        flex: 50%;
+        max-width: 50%;
+    }
+}
+
+/* phone */
+
+@media only screen and (max-width: 600px) {
+
+    .flexo3 {
+        justify-content: unset;
+    }
+
+    .flexo3>div {
+        flex: 100%;
+        max-width: 100%;
+    }
+}
