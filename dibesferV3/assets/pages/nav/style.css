@@ -44,6 +44,11 @@ main {
 #leftBar {
     position: absolute;
     left: -200px;
+    line-height: 3;
+}
+
+#leftBar > div::before {
+    content: "-> ";
 }
 
 #rightBar {
@@ -70,6 +75,7 @@ main {
     backdrop-filter: blur(15px);
     overflow: auto;
     pointer-events: auto;
+    background-color: rgba(255, 255, 255, 0.5);
 }
 
 #bottomBar {
@@ -84,6 +90,15 @@ main {
 .clickable {
     user-select: none;
     cursor: pointer;
+}
+
+@media (prefers-color-scheme: dark) {
+
+    #leftBar, #rightBar {
+         background-color: rgba(0, 0, 0, 0.5);
+    }
+
+
 }
 
 /* RESPONSIVE */
