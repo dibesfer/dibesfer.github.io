@@ -1,8 +1,10 @@
-hit(window.location.pathname);
-
-getCount().then((count) => {
+hit(window.location.pathname).then((res) => {
   const el = document.getElementById("visitsDisplay");
   if (!el) return;
 
-  el.textContent = typeof count === "number" ? count : "";
+  if (typeof res.count === "number") {
+    el.textContent = res.count;
+  } else {
+    el.textContent = "";
+  }
 });
