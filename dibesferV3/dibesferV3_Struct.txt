@@ -3,13 +3,13 @@ Folder name: dibesferV3
 Output file: dibesferV3_Struct.txt
 Author: fer
 Mode: Godot sane struct
-Last modification: 2026-05-20 14:58:57.818715496
+Last modification: 2026-05-20 15:02:24.823847684
 ___Stats___
 Total size: 4.64MB
 6 directories, 17 files
 Content files: 4
-Content lines: 240
-Content characters: 4933
+Content lines: 238
+Content characters: 4733
 Ignored: .git, node_modules, .godot, .import, android, build, dist, venv, __pycache__, *.uid, *.import
 ___Ordered Lists___
 
@@ -54,9 +54,9 @@ File size:
     index.html = 2.29KB
     assets/branding/favicon512.ico = 2.27KB
     style.css = 1.59KB
-    sb.js = 769B
+    sb.js = 532B
     assets/branding/dibesfer-pixel-title.png = 271B
-    script.js = 198B
+    script.js = 235B
 
 === TREE ===
 .
@@ -299,41 +299,39 @@ hr {
 const SB_ENDPOINT =
   "https://qugihsopwjemzakhrbvw.supabase.co/functions/v1/visit_v3";
 
-const COUNT_ENDPOINT =
-  "https://qugihsopwjemzakhrbvw.supabase.co/functions/v1/visit_v3_count";
-
-// fire & forget write
-function hit(path) {
-  fetch(SB_ENDPOINT, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ path }),
-    keepalive: true,
-  }).catch(() => {});
-}
-
-// read total count
-async function getCount() {
+async function hit(path) {
   try {
-    const res = await fetch(COUNT_ENDPOINT);
-    if (!res.ok) return null;
-    const data = await res.json();
-    return typeof data.count === "number" ? data.count : null;
+    const res = await fetch(SB_ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ path }),
+      keepalive: true,
+    });
+
+    const data = await res.json().catch(() => null);
+
+    return {
+      ok: res.ok,
+      count: data?.count ?? null,
+    };
   } catch {
-    return null;
+    return {
+      ok: false,
+      count: null,
+    };
   }
 }
 
-// expose globally (NO modules, no import/export)
 window.hit = hit;
-window.getCount = getCount;
 
 ### ./script.js ###
-hit(window.location.pathname);
-
-getCount().then((count) => {
+hit(window.location.pathname).then((res) => {
   const el = document.getElementById("visitsDisplay");
   if (!el) return;
 
-  el.textContent = typeof count === "number" ? count : "";
+  if (typeof res.count === "number") {
+    el.textContent = res.count;
+  } else {
+    el.textContent = "";
+  }
 });

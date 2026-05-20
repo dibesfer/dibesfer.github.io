@@ -10,17 +10,9 @@ async function hit(path) {
       keepalive: true,
     });
 
-    const data = await res.json().catch(() => null);
-
-    return {
-      ok: res.ok,
-      count: data?.count ?? null,
-    };
+    return await res.json();
   } catch {
-    return {
-      ok: false,
-      count: null,
-    };
+    return { count: null };
   }
 }
 
