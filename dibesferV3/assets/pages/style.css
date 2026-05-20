@@ -1,0 +1,20 @@
+
+body {
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
+}
+
+header , footer {
+    margin: unset;
+}
+
+main {
+    flex: 1;
+}
+
+#myIframe {
+    background-color: white;
+    width: 100%;
+    height: 100%;
+}
