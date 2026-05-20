@@ -21,6 +21,7 @@ main {
     justify-content: space-between;
     align-items: center;
     padding: 7.5px;
+    
 }
 
 #myIframe {
@@ -79,6 +80,11 @@ main {
   pointer-events: auto;
 }
 
+
+.clickable {
+    user-select: none;
+    cursor: pointer;
+}
 
 /* RESPONSIVE */
 /* phone */

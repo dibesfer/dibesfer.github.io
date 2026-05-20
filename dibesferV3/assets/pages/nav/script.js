@@ -75,7 +75,7 @@ function updateGoButton() {
   const y = scrollY(w);
 
   // FIX: lógica correcta
-  if (y <= 200) {
+  if (y <= 500) {
     goBtn.textContent = "▼";
   } else {
     goBtn.textContent = "▲";
