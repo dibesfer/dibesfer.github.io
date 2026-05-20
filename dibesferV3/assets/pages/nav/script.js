@@ -76,9 +76,9 @@ function updateGoButton() {
 
   // FIX: lógica correcta
   if (y <= 200) {
-    goBtn.textContent = "DOWN";
+    goBtn.textContent = "▼";
   } else {
-    goBtn.textContent = "UP";
+    goBtn.textContent = "▲";
   }
 }
 

@@ -19,7 +19,8 @@ main {
 #bottomBar {
     display: flex;
     justify-content: space-between;
-    padding: 5px;
+    align-items: center;
+    padding: 7.5px;
 }
 
 #myIframe {
@@ -66,6 +67,8 @@ main {
     transition: 0.2s;
     padding: 10px;
     backdrop-filter: blur(15px);
+    overflow: auto;
+    pointer-events: auto;
 }
 
 #bottomBar {
