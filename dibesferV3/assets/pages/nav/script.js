@@ -108,23 +108,7 @@ function attachScroll() {
   w.addEventListener("scroll", updateGoButton);
 }
 
-// --- KEYBOARD ---
-window.addEventListener("keydown", (e) => {
-  const w = win();
-  if (!w) return;
 
-  if (e.key === "ArrowUp") {
-    w.scrollBy({ top: -w.innerHeight, behavior: "smooth" });
-  }
-
-  if (e.key === "ArrowDown") {
-    w.scrollBy({ top: w.innerHeight, behavior: "smooth" });
-  }
-
-  if (e.key === "f") {
-    toggleFullscreen();
-  }
-});
 
 // --- INIT ---
 iframe.addEventListener("load", () => {
