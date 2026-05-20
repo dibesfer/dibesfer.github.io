@@ -4,8 +4,6 @@ const leftBarBtn = document.getElementById("leftBarBtn");
 const rightBar = document.getElementById("rightBar");
 const rightBarBtn = document.getElementById("rightBarBtn");
 
-const bottomBar = document.getElementById("bottomBar");
-
 const iframe = document.getElementById("myIframe");
 
 // --- SIDE BARS ---
@@ -17,7 +15,7 @@ rightBarBtn.addEventListener("click", () => {
   rightBar.classList.toggle("rightBarOpen");
 });
 
-// --- FULLSCREEN ---
+// --- FULLSCREEN SAFE ---
 function toggleFullscreen() {
   if (!document.fullscreenElement) {
     document.documentElement.requestFullscreen();
@@ -26,81 +24,110 @@ function toggleFullscreen() {
   }
 }
 
-// FULLSCREEN solo si no es UP/DOWN
-bottomBar.addEventListener("click", (e) => {
-  const txt = e.target.textContent.trim();
+const fullBtn = document.getElementById("fullScreenBtn");
+const goBtn = document.getElementById("goDownBtn");
 
-  if (txt === "UP" || txt === "DOWN") return;
+// FULLSCREEN
+if (fullBtn) {
+  fullBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    toggleFullscreen();
+  });
+}
 
-  toggleFullscreen();
-});
-
-// --- IFRAME SCROLL CORE ---
-function getIframeWindow() {
+// --- IFRAME CORE ---
+function win() {
   return iframe?.contentWindow;
 }
 
-function scrollIframe(amount) {
-  const win = getIframeWindow();
-  if (!win) return;
+function scrollY(w) {
+  return w.scrollY || w.document.documentElement.scrollTop || 0;
+}
 
-  win.scrollBy({
-    top: amount,
-    behavior: "smooth",
-  });
+function scrollBottom(w) {
+  const doc = w.document.documentElement;
+  return doc.scrollHeight - w.innerHeight;
+}
+
+function scrollIframe(amount) {
+  const w = win();
+  if (!w) return;
+  w.scrollBy({ top: amount, behavior: "smooth" });
 }
 
 function scrollIframeTop() {
-  const win = getIframeWindow();
-  if (!win) return;
+  const w = win();
+  if (!w) return;
+  w.scrollTo({ top: 0, behavior: "smooth" });
+}
 
-  win.scrollTo({
-    top: 0,
-    behavior: "smooth",
+function scrollIframeBottom() {
+  const w = win();
+  if (!w) return;
+  w.scrollTo({ top: scrollBottom(w), behavior: "smooth" });
+}
+
+// --- STATE: TOP vs NOT TOP ---
+function updateGoButton() {
+  const w = win();
+  if (!w || !goBtn) return;
+
+  const y = scrollY(w);
+
+  // FIX: lógica correcta
+  if (y <= 200) {
+    goBtn.textContent = "DOWN";
+  } else {
+    goBtn.textContent = "UP";
+  }
+}
+
+// --- CLICK BEHAVIOR (single button dual state) ---
+if (goBtn) {
+  goBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+
+    const w = win();
+    if (!w) return;
+
+    const y = scrollY(w);
+
+    if (y <= 200) {
+      scrollIframeBottom();
+    } else {
+      scrollIframeTop();
+    }
   });
 }
 
-// detect UP / DOWN (solo 2 botones reales)
-const buttons = bottomBar.querySelectorAll("div");
-const upBtn = buttons[1];
-const downBtn = buttons[2];
+// --- SCROLL LISTENER ---
+function attachScroll() {
+  const w = win();
+  if (!w) return;
 
-upBtn.addEventListener("click", (e) => {
-  e.stopPropagation();
+  w.addEventListener("scroll", updateGoButton);
+}
 
-  const win = getIframeWindow();
-  if (!win) return;
-
-  const y = win.scrollY || win.document.documentElement.scrollTop;
-
-  if (y > 200) {
-    scrollIframeTop();
-  } else {
-    scrollIframe(-win.innerHeight);
-  }
-});
-
-downBtn.addEventListener("click", (e) => {
-  e.stopPropagation();
-
-  const win = getIframeWindow();
-  if (!win) return;
-
-  scrollIframe(win.innerHeight);
-});
-
-// keyboard controls (iframe-aware)
+// --- KEYBOARD ---
 window.addEventListener("keydown", (e) => {
-  const win = getIframeWindow();
-  if (!win) return;
+  const w = win();
+  if (!w) return;
 
   if (e.key === "ArrowUp") {
-    win.scrollBy({ top: -win.innerHeight, behavior: "smooth" });
+    w.scrollBy({ top: -w.innerHeight, behavior: "smooth" });
   }
 
   if (e.key === "ArrowDown") {
-    win.scrollBy({ top: win.innerHeight, behavior: "smooth" });
+    w.scrollBy({ top: w.innerHeight, behavior: "smooth" });
   }
 
-  if (e.key === "f") toggleFullscreen();
+  if (e.key === "f") {
+    toggleFullscreen();
+  }
+});
+
+// --- INIT ---
+iframe.addEventListener("load", () => {
+  attachScroll();
+  updateGoButton();
 });
