@@ -8,7 +8,9 @@ async function unlockVault() {
       "https://kalidybwmoxhcwlfeftc.supabase.co/functions/v1/downloadStorage",
       {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
           password,
           slug: "textWeb",
@@ -16,19 +18,60 @@ async function unlockVault() {
       }
     );
 
-    const data = await res.json();
+    const raw = await res.text();
 
-    if (!data.ok) {
-      vaultOutput.textContent = data.message;
+    let data;
+    try {
+      data = JSON.parse(raw);
+    } catch {
+      vaultOutput.textContent = raw;
       return;
     }
 
+    if (!res.ok || !data.ok) {
+      vaultOutput.textContent = data.message || "request failed";
+      return;
+    }
+
+    const fileMap = new Map();
+
+    for (const file of data.files || []) {
+      const bytes = new Uint8Array(file.bytes || []);
+
+      const blob = new Blob([bytes], {
+        type: file.type || "application/octet-stream",
+      });
+
+      fileMap.set(file.path, URL.createObjectURL(blob));
+    }
+
+    const indexPath = "textWeb/index.html";
+    const indexBlobUrl = fileMap.get(indexPath);
+
+    if (!indexBlobUrl) {
+      vaultOutput.textContent = "missing index.html";
+      return;
+    }
+
+    let html = await fetch(indexBlobUrl).then((r) => r.text());
+
+    // normalize replacement pass (ORDER MATTERS now)
+    for (const [path, blobUrl] of fileMap.entries()) {
+      const relative = path.replace("textWeb/", "");
+
+      html = html
+        .replaceAll(path, blobUrl)
+        .replaceAll(`./${relative}`, blobUrl)
+        .replaceAll(relative, blobUrl);
+    }
+
     const iframe = document.createElement("iframe");
+
     iframe.style.width = "100%";
     iframe.style.height = "100vh";
     iframe.style.border = "0";
 
-    iframe.srcdoc = data.html;
+    iframe.srcdoc = html;
 
     vaultOutput.innerHTML = "";
     vaultOutput.appendChild(iframe);
@@ -37,7 +80,6 @@ async function unlockVault() {
     vaultOutput.textContent = String(err);
   }
 }
-
 // UI operations for the Webochi Supabase Expert page.
 let tableRows = 1
 let TheUser
