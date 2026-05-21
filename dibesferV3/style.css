@@ -88,6 +88,10 @@ hr {
     image-rendering: pixelated;
 }
 
+.invisible {
+    visibility: hidden;
+}
+
 
 /* DARK MODE */
 

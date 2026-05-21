@@ -5,10 +5,27 @@ const ROUTES = {
   fonish: "../../../../web/conlang/fonish"
 };
 
+// --- ELEMENTS ---
+
+let allIframeLinks = document.querySelectorAll("[data-iframe-link]");
+let selectedIframeLink;
+
 // --- CORE ---
-function changeIframeSrc(src) {
+function changeIframeSrc(src, selectedEl = null) {
   if (!iframe || !src) return;
 
+  // clear previous selection
+  allIframeLinks.forEach(el => {
+    el.classList.remove("selectedLinkIframe");
+  });
+
+  // apply new selection
+  if (selectedEl) {
+    selectedEl.classList.add("selectedLinkIframe");
+    selectedIframeLink = selectedEl;
+  }
+
+  // change iframe
   iframe.src = src;
 }
 
@@ -19,17 +36,21 @@ function loadRouteFromURL() {
   const page = params.get("page");
 
   if (page && ROUTES[page]) {
-    changeIframeSrc(ROUTES[page]);
+
+    const selectedEl = document.querySelector(
+      `[data-iframe-link="${page}"]`
+    );
+
+    changeIframeSrc(ROUTES[page], selectedEl);
+
   } else {
+
     changeIframeSrc("/web/experimental/armillary");
+
   }
 }
 
 // --- CLICKABLE ELEMENTS ---
-
-let allIframeLinks = document.querySelectorAll("[data-iframe-link]")
-
-
 allIframeLinks.forEach(el => {
 
   el.classList.add("clickable");
@@ -40,16 +61,14 @@ allIframeLinks.forEach(el => {
 
     if (!routeName || !ROUTES[routeName]) return;
 
-    // iframe
-    changeIframeSrc(ROUTES[routeName]);
-    leftBar.classList.toggle("leftBarOpen")
+    // iframe + visual state
+    changeIframeSrc(ROUTES[routeName], el);
 
-    allIframeLinks.forEach(el => {
-      el.classList.remove("selectedLinkIframe")
-    })
+    // optional ui
+    if (typeof leftBar !== "undefined") {
+      leftBar.classList.toggle("leftBarOpen");
+    }
 
-    el.classList.toggle("selectedLinkIframe")
-    
     // url
     const url = new URL(window.location);
 
@@ -57,9 +76,10 @@ allIframeLinks.forEach(el => {
 
     window.history.pushState({}, "", url);
   });
-
-  
 });
+
+// --- BROWSER NAVIGATION ---
+window.addEventListener("popstate", loadRouteFromURL);
 
 // --- INIT ---
 loadRouteFromURL();
