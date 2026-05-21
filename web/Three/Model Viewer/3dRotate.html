@@ -91,25 +91,29 @@ loader.load(MODEL_SRC, (gltf) => {
 
   model = gltf.scene;
 
-  // STEP 1: compute bounding box
+  // 🔥 STEP 0: neutralize GLTF root transforms (IMPORTANT)
+  model.updateMatrixWorld(true);
+  model.position.set(0, 0, 0);
+  model.rotation.set(0, 0, 0);
+  model.scale.set(1, 1, 1);
+
+  // 🔥 STEP 1: compute clean bounding box AFTER reset
   const box = new THREE.Box3().setFromObject(model);
   const center = box.getCenter(new THREE.Vector3());
   const size = box.getSize(new THREE.Vector3());
 
-  // STEP 2: move MODEL so its CENTER aligns with pivot (0,0,0)
-  model.position.x -= center.x;
-  model.position.y -= center.y;
-  model.position.z -= center.z;
+  // 🔥 STEP 2: shift model so geometry center sits at origin
+  model.position.sub(center);
 
-  // STEP 3: attach to pivot
+  // 🔥 STEP 3: attach to pivot (true rotation parent)
   pivot.add(model);
 
-  // STEP 4: material grab
+  // 🔥 STEP 4: lock material
   model.traverse((o) => {
     if (o.isMesh && !material) material = o.material;
   });
 
-  // STEP 5: camera = stable fixed framing
+  // 🔥 STEP 5: camera framing based on clean size
   const maxDim = Math.max(size.x, size.y, size.z);
   camera.position.set(0, 0, maxDim * 2.2);
   camera.lookAt(0, 0, 0);
@@ -130,9 +134,9 @@ function animate(){
   const t = clock.getElapsedTime();
 
   if(model){
-    model.rotation.x += 0.005;
-    model.rotation.y += 0.01;
-    model.rotation.z += 0.003;
+      pivot.rotation.x += 0.005;
+  pivot.rotation.y += 0.01;
+  pivot.rotation.z += 0.003;
   }
 
   if(t > nextSwap){
