@@ -148,18 +148,27 @@ function swapTexture(){
   material.needsUpdate = true;
 }
 
-/* 🧠 NEW MOTION SYSTEM */
-let rotSpeed = new THREE.Vector3(
-  0.003,
-  0.01,
-  0.002
-);
+/* 🧠 IMPULSE ROTATION SYSTEM (NEW) */
 
-let rotTarget = new THREE.Vector3(
-  0.005,
-  0.012,
-  0.004
-);
+// current angular velocity
+let velocity = new THREE.Vector3(0.002, 0.005, 0.001);
+
+// target velocity (goal state)
+let target = new THREE.Vector3();
+
+// time control
+let nextImpulse = 0;
+
+/* generates strong directional “push” */
+function randomImpulse(){
+  const strength = 0.02 + Math.random() * 0.03;
+
+  target.set(
+    (Math.random() - 0.5) * strength,
+    (Math.random() - 0.5) * strength * 2,
+    (Math.random() - 0.5) * strength
+  );
+}
 
 /* LOOP */
 function animate(){
@@ -168,21 +177,18 @@ function animate(){
 
   if(model){
 
-    // smooth acceleration / deceleration
-    rotSpeed.lerp(rotTarget, 0.02);
+    // decay + inertia
+    velocity.lerp(target, 0.03);
 
-    // apply motion
-    pivot.rotation.x += rotSpeed.x;
-    pivot.rotation.y += rotSpeed.y;
-    pivot.rotation.z += rotSpeed.z;
+    // apply rotation
+    pivot.rotation.x += velocity.x;
+    pivot.rotation.y += velocity.y;
+    pivot.rotation.z += velocity.z;
 
-    // random drift updates
-    if(Math.random() < 0.01){
-      rotTarget.set(
-        (Math.random() - 0.5) * 0.01,
-        (Math.random() - 0.5) * 0.02,
-        (Math.random() - 0.5) * 0.01
-      );
+    // impulse bursts (less frequent, stronger meaning)
+    if(t > nextImpulse){
+      randomImpulse();
+      nextImpulse = t + (0.8 + Math.random() * 2.5);
     }
   }
 
