@@ -26,7 +26,11 @@ function loadRouteFromURL() {
 }
 
 // --- CLICKABLE ELEMENTS ---
-document.querySelectorAll("[data-iframe-link]").forEach(el => {
+
+let allIframeLinks = document.querySelectorAll("[data-iframe-link]")
+
+
+allIframeLinks.forEach(el => {
 
   el.classList.add("clickable");
 
@@ -38,7 +42,14 @@ document.querySelectorAll("[data-iframe-link]").forEach(el => {
 
     // iframe
     changeIframeSrc(ROUTES[routeName]);
+    leftBar.classList.toggle("leftBarOpen")
 
+    allIframeLinks.forEach(el => {
+      el.classList.remove("selectedLinkIframe")
+    })
+
+    el.classList.toggle("selectedLinkIframe")
+    
     // url
     const url = new URL(window.location);
 
@@ -46,6 +57,8 @@ document.querySelectorAll("[data-iframe-link]").forEach(el => {
 
     window.history.pushState({}, "", url);
   });
+
+  
 });
 
 // --- INIT ---

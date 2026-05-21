@@ -47,11 +47,17 @@ main {
     line-height: 3;
 }
 
+.selectedLinkIframe::before {
+    color: turquoise;
+    content: "> ";
+}
+
 #leftBar a {
     color: unset;
 }
 
-#leftBar > div::before {
+#leftBar > div:hover{
+    color: turquoise;
     content: "> ";
 }
 
@@ -70,6 +76,9 @@ main {
     right: 0 !important;
 }
 
+#leftBarBtn, #rightBarBtn {
+    transition: 0.2s;
+}
 #leftBar,
 #rightBar {
     width: 200px;
@@ -95,6 +104,18 @@ main {
     user-select: none;
     cursor: pointer;
 }
+
+/* ANIMATIONS*/
+
+.rotateRight {
+    transform: rotate(360deg);
+}
+
+.rotateLeft {
+    transform: rotate(-360deg);
+}
+
+
 
 @media (prefers-color-scheme: dark) {
 

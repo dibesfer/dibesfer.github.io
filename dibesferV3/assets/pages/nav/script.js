@@ -9,10 +9,12 @@ const iframe = document.getElementById("myIframe");
 // --- SIDE BARS ---
 leftBarBtn.addEventListener("click", () => {
   leftBar.classList.toggle("leftBarOpen");
+  leftBarBtn.classList.toggle("rotateRight")
 });
 
 rightBarBtn.addEventListener("click", () => {
   rightBar.classList.toggle("rightBarOpen");
+  rightBarBtn.classList.toggle("rotateLeft")
 });
 
 // --- FULLSCREEN SAFE ---
