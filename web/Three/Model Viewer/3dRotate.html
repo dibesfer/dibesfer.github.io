@@ -75,7 +75,9 @@ function loadTex(path){
 const textures = [
   loadTex("assets/Cuban/cuban_texture.png"),
   loadTex("assets/Cuban/cuban_texture2.png"),
-  loadTex("assets/Cuban/cuban_texture3.png")
+  loadTex("assets/Cuban/cuban_texture3.png"),
+  loadTex("assets/Cuban/cuban_texture_4.png"),
+   loadTex("assets/Cuban/cuban_texture_5.png")
 ];
 
 let texIndex = Math.floor(Math.random() * textures.length);
@@ -134,6 +136,9 @@ loader.load(MODEL_SRC, (gltf) => {
   });
 
   material.map = textures[texIndex];
+  material.transparent = true;
+  //material.alphaTest = 0.01; // opcional si quieres recorte limpio
+   material.depthWrite = false; // solo si ves glitches de orden
   material.needsUpdate = true;
 
   requestAnimationFrame(applyLayout);
