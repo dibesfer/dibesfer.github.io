@@ -73,6 +73,32 @@ const clock = new THREE.Clock();
 let modelCenterY = 1;
 let modelHeight = 2;
 
+// --------------------
+// DRIFT SYSTEM (kept subtle, unused for now if needed later)
+// --------------------
+function drift(t) {
+  return (
+    Math.sin(t * 0.37) * 0.6 +
+    Math.sin(t * 0.91) * 0.3 +
+    Math.sin(t * 1.73) * 0.1
+  );
+}
+
+// --------------------
+// ROTATION BREATH SYSTEM
+// --------------------
+let currentSpeed = 0.01;
+let targetSpeed = 0.01;
+let nextChange = 0;
+
+function lerp(a, b, t) {
+  return a + (b - a) * t;
+}
+
+function randSpeed() {
+  return 0.003 + Math.random() * 0.02;
+}
+
 const loader = new GLTFLoader();
 
 loader.load(MODEL_SRC, (gltf) => {
@@ -81,7 +107,6 @@ loader.load(MODEL_SRC, (gltf) => {
 
   console.log("Animaciones encontradas:", gltf.animations.map(a => a.name));
 
-  // 🔥 ANIMACIÓN
   mixer = new THREE.AnimationMixer(root);
 
   const clip = THREE.AnimationClip.findByName(gltf.animations, "show");
@@ -93,7 +118,6 @@ loader.load(MODEL_SRC, (gltf) => {
     console.warn("Animación 'show' no encontrada");
   }
 
-  // escala
   const box = new THREE.Box3().setFromObject(root);
   const size = box.getSize(new THREE.Vector3());
 
@@ -101,7 +125,6 @@ loader.load(MODEL_SRC, (gltf) => {
   const scale = 2 / maxSize;
   root.scale.setScalar(scale);
 
-  // cámara centrada
   const finalBox = new THREE.Box3().setFromObject(root);
   const finalSize = finalBox.getSize(new THREE.Vector3());
   const finalCenter = finalBox.getCenter(new THREE.Vector3());
@@ -121,13 +144,22 @@ function fitCameraToModel() {
 
 function animate() {
   const delta = clock.getDelta();
+  const t = clock.getElapsedTime();
 
-  if (mixer) {
-    mixer.update(delta); // 🔥 animación interna
-  }
+  if (mixer) mixer.update(delta);
 
   if (root) {
-    root.rotation.y += 0.01; // 🔥 rotación global
+
+    // change target every 1–5 seconds
+    if (t > nextChange) {
+      targetSpeed = randSpeed() * (Math.random() < 0.5 ? -1 : 1);
+      nextChange = t + (1 + Math.random() * 4);
+    }
+
+    // smooth acceleration / deceleration
+    currentSpeed = lerp(currentSpeed, targetSpeed, 0.02);
+
+    root.rotation.y += currentSpeed;
   }
 
   renderer.render(scene, camera);
