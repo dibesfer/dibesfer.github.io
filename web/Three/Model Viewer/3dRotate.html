@@ -33,27 +33,24 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
 const MODEL_SRC = "assets/Cuban/Cuban.glb";
 
-// scene
+let CAMERA_OFFSET = 3;
+
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x111111);
 
-// camera
 const camera = new THREE.PerspectiveCamera(40, innerWidth / innerHeight, 0.1, 1000);
 
-// renderer
-const renderer = new THREE.WebGLRenderer({ antialias: true });
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 renderer.setSize(innerWidth, innerHeight);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 document.body.appendChild(renderer.domElement);
 
-// light
 scene.add(new THREE.AmbientLight(0xffffff, 1.2));
 const light = new THREE.DirectionalLight(0xffffff, 2);
 light.position.set(3, 5, 4);
 scene.add(light);
 
-// TRUE pivot (origin of universe)
 const pivot = new THREE.Group();
 scene.add(pivot);
 
@@ -62,10 +59,7 @@ const clock = new THREE.Clock();
 let model = null;
 let material = null;
 
-let texIndex = 0;
-let nextSwap = 0;
-
-// textures
+/* TEXTURES */
 const texLoader = new THREE.TextureLoader();
 
 function loadTex(path){
@@ -84,8 +78,11 @@ const textures = [
   loadTex("assets/Cuban/cuban_texture3.png")
 ];
 
-/*resize*/
-function fitCameraToObject(camera, object, offset = 1.2) {
+let texIndex = Math.floor(Math.random() * textures.length);
+let nextSwap = 5 + Math.random() * 5;
+
+/* CAMERA FIT */
+function fitCamera(object) {
 
   const box = new THREE.Box3().setFromObject(object);
   const size = box.getSize(new THREE.Vector3());
@@ -93,51 +90,56 @@ function fitCameraToObject(camera, object, offset = 1.2) {
 
   const maxSize = Math.max(size.x, size.y, size.z);
 
-  const fov = camera.fov * (Math.PI / 180);
+  const fov = camera.fov * Math.PI / 180;
   let cameraZ = Math.abs(maxSize / 2 / Math.tan(fov / 2));
 
-  cameraZ *= offset;
+  cameraZ *= CAMERA_OFFSET;
 
   camera.position.set(center.x, center.y, cameraZ);
-
   camera.lookAt(center);
 
   camera.updateProjectionMatrix();
 }
 
-// LOAD
+/* RESIZE + LOAD SYNC */
+function applyLayout() {
+  renderer.setSize(innerWidth, innerHeight);
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+
+  if (model) fitCamera(model);
+}
+
+/* GLTF LOAD */
 const loader = new GLTFLoader();
 
 loader.load(MODEL_SRC, (gltf) => {
 
   model = gltf.scene;
 
-  // 🔥 STEP 0: neutralize GLTF root transforms (IMPORTANT)
   model.updateMatrixWorld(true);
   model.position.set(0, 0, 0);
   model.rotation.set(0, 0, 0);
   model.scale.set(1, 1, 1);
 
-  // 🔥 STEP 1: compute clean bounding box AFTER reset
   const box = new THREE.Box3().setFromObject(model);
   const center = box.getCenter(new THREE.Vector3());
-  const size = box.getSize(new THREE.Vector3());
 
-  // 🔥 STEP 2: shift model so geometry center sits at origin
   model.position.sub(center);
 
-  // 🔥 STEP 3: attach to pivot (true rotation parent)
   pivot.add(model);
 
-  // 🔥 STEP 4: lock material
   model.traverse((o) => {
     if (o.isMesh && !material) material = o.material;
   });
 
-  fitCameraToObject(camera, model, 1.4);
+  material.map = textures[texIndex];
+  material.needsUpdate = true;
+
+  requestAnimationFrame(applyLayout);
 });
 
-// swap
+/* TEXTURE SWAP */
 function swapTexture(){
   if(!material) return;
 
@@ -146,20 +148,47 @@ function swapTexture(){
   material.needsUpdate = true;
 }
 
-// loop
+/* 🧠 NEW MOTION SYSTEM */
+let rotSpeed = new THREE.Vector3(
+  0.003,
+  0.01,
+  0.002
+);
+
+let rotTarget = new THREE.Vector3(
+  0.005,
+  0.012,
+  0.004
+);
+
+/* LOOP */
 function animate(){
 
   const t = clock.getElapsedTime();
 
   if(model){
-      pivot.rotation.x += 0.005;
-  pivot.rotation.y += 0.01;
-  pivot.rotation.z += 0.003;
+
+    // smooth acceleration / deceleration
+    rotSpeed.lerp(rotTarget, 0.02);
+
+    // apply motion
+    pivot.rotation.x += rotSpeed.x;
+    pivot.rotation.y += rotSpeed.y;
+    pivot.rotation.z += rotSpeed.z;
+
+    // random drift updates
+    if(Math.random() < 0.01){
+      rotTarget.set(
+        (Math.random() - 0.5) * 0.01,
+        (Math.random() - 0.5) * 0.02,
+        (Math.random() - 0.5) * 0.01
+      );
+    }
   }
 
   if(t > nextSwap){
     swapTexture();
-    nextSwap = t + (5 + Math.random()*5);
+    nextSwap = t + (5 + Math.random() * 5);
   }
 
   renderer.render(scene, camera);
@@ -167,18 +196,9 @@ function animate(){
 
 renderer.setAnimationLoop(animate);
 
-// resize
-window.addEventListener("resize", () => {
+/* RESIZE */
+window.addEventListener("resize", applyLayout);
 
-  camera.aspect = innerWidth / innerHeight;
-  camera.updateProjectionMatrix();
-
-  renderer.setSize(innerWidth, innerHeight);
-
-  if (model) {
-    fitCameraToObject(camera, model, 1.4);
-  }
-});
 </script>
 </body>
 </html>
