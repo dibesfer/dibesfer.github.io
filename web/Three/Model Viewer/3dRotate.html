@@ -13,14 +13,19 @@ html, body {
   overflow: hidden;
   background: #111;
 }
-canvas { width: 100%; height: 100%; display: block; }
+
+canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
 </style>
 
 <script type="importmap">
 {
   "imports": {
-    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+    "three": "https://unpkg.com/three@0.183.2/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.183.2/examples/jsm/"
   }
 }
 </script>
@@ -28,29 +33,72 @@ canvas { width: 100%; height: 100%; display: block; }
 
 <body>
 <script type="module">
+
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
 const MODEL_SRC = "assets/Cuban/Cuban.glb";
 
-let CAMERA_OFFSET = 2;
+/* ⚙️ CONTROL PANEL */
+const CONFIG = {
 
+  /* render */
+  antialias: true,
+  dprMax: 2,
+
+  /* camera */
+  cameraFov: 72,
+  cameraOffset: 4,
+
+  /* textures */
+  swapMin: 3,
+  swapMax: 6,
+
+  /* motion */
+  rotationLerp: 0.08,
+  rotationStrength: 0.08,
+  rotationSpeed: 0.3,
+
+  /* 🎯 target switching rhythm */
+  targetStepMin: 2,
+  targetStepMax: 5,
+
+  /* 💥 burst system */
+  impulseMin: 1.5,
+  impulseMax: 2.5,
+  impulseMultiplierMin: 1.0,
+  impulseMultiplierMax: 1.5,
+
+  /* visual */
+  clearColor: 0x111111
+};
+
+/* 🧠 CORE */
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x111111);
+scene.background = new THREE.Color(CONFIG.clearColor);
 
-const camera = new THREE.PerspectiveCamera(40, innerWidth / innerHeight, 0.1, 1000);
+const camera = new THREE.PerspectiveCamera(
+  CONFIG.cameraFov,
+  1,
+  0.1,
+  100
+);
 
-const renderer = new THREE.WebGLRenderer({ preserveDrawingBuffer: true });
-renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-renderer.setSize(innerWidth, innerHeight);
+const renderer = new THREE.WebGLRenderer({
+  antialias: CONFIG.antialias
+});
+
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 document.body.appendChild(renderer.domElement);
 
-scene.add(new THREE.AmbientLight(0xffffff, 1.2));
-const light = new THREE.DirectionalLight(0xffffff, 3);
-light.position.set(3, 5, 4);
+/* 💡 LIGHT */
+scene.add(new THREE.AmbientLight(0xffffff, 1));
+
+const light = new THREE.DirectionalLight(0xffffff, 4);
+light.position.set(10, 10, 10);
 scene.add(light);
 
+/* 🎯 PIVOT */
 const pivot = new THREE.Group();
 scene.add(pivot);
 
@@ -59,16 +107,19 @@ const clock = new THREE.Clock();
 let model = null;
 let material = null;
 
-/* TEXTURES */
+/* 🎨 TEXTURES */
 const texLoader = new THREE.TextureLoader();
 
 function loadTex(path){
+
   const t = texLoader.load(path);
+
   t.colorSpace = THREE.SRGBColorSpace;
   t.generateMipmaps = false;
   t.minFilter = THREE.NearestFilter;
   t.magFilter = THREE.NearestFilter;
   t.flipY = false;
+
   return t;
 }
 
@@ -77,52 +128,56 @@ const textures = [
   loadTex("assets/Cuban/cuban_texture2.png"),
   loadTex("assets/Cuban/cuban_texture3.png"),
   loadTex("assets/Cuban/cuban_texture_4.png"),
-   loadTex("assets/Cuban/cuban_texture_5.png")
+  loadTex("assets/Cuban/cuban_texture_5.png")
 ];
 
-let texIndex = Math.floor(Math.random() * textures.length);
-let nextSwap = 5 + Math.random() * 5;
+let texIndex = 0;
+let nextSwap = 0;
 
-/* CAMERA FIT */
+/* 📷 CAMERA FIT */
 function fitCamera(object) {
 
   const box = new THREE.Box3().setFromObject(object);
   const size = box.getSize(new THREE.Vector3());
-  const center = box.getCenter(new THREE.Vector3());
 
   const maxSize = Math.max(size.x, size.y, size.z);
 
-  const fov = camera.fov * Math.PI / 180;
-  let cameraZ = Math.abs(maxSize / 2 / Math.tan(fov / 2));
+  const fov = CONFIG.cameraFov * Math.PI / 180;
 
-  cameraZ *= CAMERA_OFFSET;
+  const distance =
+    (maxSize / 2) /
+    Math.tan(fov / 2) *
+    CONFIG.cameraOffset;
 
-  camera.position.set(center.x, center.y, cameraZ);
-  camera.lookAt(center);
+  camera.position.set(0, 0, distance);
+
+  camera.lookAt(0, 0, 0);
 
   camera.updateProjectionMatrix();
 }
 
-/* RESIZE + LOAD SYNC */
-function applyLayout() {
-  renderer.setSize(innerWidth, innerHeight);
-  camera.aspect = innerWidth / innerHeight;
-  camera.updateProjectionMatrix();
+/* 📐 RESIZE */
+function resize() {
 
-  if (model) fitCamera(model);
+  const w = innerWidth;
+  const h = innerHeight;
+
+  const dpr = Math.min(
+    devicePixelRatio,
+    CONFIG.dprMax
+  );
+
+  renderer.setPixelRatio(dpr);
+  renderer.setSize(w, h, false);
+
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
 }
 
-/* GLTF LOAD */
-const loader = new GLTFLoader();
-
-loader.load(MODEL_SRC, (gltf) => {
+/* 🧊 LOAD MODEL */
+new GLTFLoader().load(MODEL_SRC, (gltf) => {
 
   model = gltf.scene;
-
-  model.updateMatrixWorld(true);
-  model.position.set(0, 0, 0);
-  model.rotation.set(0, 0, 0);
-  model.scale.set(1, 1, 1);
 
   const box = new THREE.Box3().setFromObject(model);
   const center = box.getCenter(new THREE.Vector3());
@@ -131,75 +186,128 @@ loader.load(MODEL_SRC, (gltf) => {
 
   pivot.add(model);
 
+  fitCamera(model);
+
   model.traverse((o) => {
-    if (o.isMesh && !material) material = o.material;
+
+    if (o.isMesh && !material) {
+      material = o.material;
+    }
+
   });
 
-  material.map = textures[texIndex];
+  material.map = textures[0];
   material.transparent = true;
-  //material.alphaTest = 0.01; // opcional si quieres recorte limpio
-   material.depthWrite = false; // solo si ves glitches de orden
-  material.needsUpdate = true;
+  material.depthWrite = false;
 
-  requestAnimationFrame(applyLayout);
+  resize();
 });
 
-/* TEXTURE SWAP */
-function swapTexture(){
-  if(!material) return;
+/* 🔁 TEXTURE SWAP */
+function swapTexture() {
+
+  if (!material) return;
 
   texIndex = (texIndex + 1) % textures.length;
+
   material.map = textures[texIndex];
-  material.needsUpdate = true;
 }
 
-/* 🧠 IMPULSE ROTATION SYSTEM (NEW) */
-
-// current angular velocity
-let velocity = new THREE.Vector3(0.002, 0.005, 0.001);
-
-// target velocity (goal state)
+/* 🧠 ROTATION STATE */
+let velocity = new THREE.Vector3();
 let target = new THREE.Vector3();
 
-// time control
-let nextImpulse = 0;
+/* 🎯 TARGET SWITCHING */
+let nextTargetStep = 0;
 
-/* generates strong directional “push” */
-function randomImpulse(){
-  const strength = 0.02 + Math.random() * 0.03;
+function scheduleNextTarget(t) {
+
+  nextTargetStep =
+    t +
+    CONFIG.targetStepMin +
+    Math.random() *
+    (CONFIG.targetStepMax - CONFIG.targetStepMin);
+}
+
+function randomTarget() {
+
+  const s = CONFIG.rotationStrength;
 
   target.set(
-    (Math.random() - 0.5) * strength,
-    (Math.random() - 0.5) * strength * 2,
-    (Math.random() - 0.5) * strength
+    (Math.random() - 0.5) * s,
+    (Math.random() - 0.5) * s,
+    (Math.random() - 0.5) * s
   );
 }
 
-/* LOOP */
-function animate(){
+/* 💥 IMPULSE TIMER */
+let nextImpulse = 0;
+
+/* 🚀 LOOP */
+function animate() {
 
   const t = clock.getElapsedTime();
 
-  if(model){
+  if (model) {
 
-    // decay + inertia
-    velocity.lerp(target, 0.03);
+    /* 🎯 target state changes */
+    if (t > nextTargetStep) {
 
-    // apply rotation
-    pivot.rotation.x += velocity.x;
-    pivot.rotation.y += velocity.y;
-    pivot.rotation.z += velocity.z;
+      randomTarget();
 
-    // impulse bursts (less frequent, stronger meaning)
-    if(t > nextImpulse){
-      randomImpulse();
-      nextImpulse = t + (0.8 + Math.random() * 2.5);
+      scheduleNextTarget(t);
+    }
+
+    /* 🧠 smooth velocity follow */
+    velocity.lerp(
+      target,
+      CONFIG.rotationLerp
+    );
+
+    /* 🎮 visible motion speed */
+    pivot.rotation.x +=
+      velocity.x * CONFIG.rotationSpeed;
+
+    pivot.rotation.y +=
+      velocity.y * CONFIG.rotationSpeed;
+
+    pivot.rotation.z +=
+      velocity.z * CONFIG.rotationSpeed;
+
+    /* 💥 occasional aggression burst */
+    if (t > nextImpulse) {
+
+      const boost =
+        CONFIG.impulseMultiplierMin +
+        Math.random() *
+        (
+          CONFIG.impulseMultiplierMax -
+          CONFIG.impulseMultiplierMin
+        );
+
+      target.multiplyScalar(boost);
+
+      nextImpulse =
+        t +
+        CONFIG.impulseMin +
+        Math.random() *
+        (
+          CONFIG.impulseMax -
+          CONFIG.impulseMin
+        );
     }
   }
 
-  if(t > nextSwap){
+  /* 🎨 texture cycle */
+  if (t > nextSwap) {
+
     swapTexture();
-    nextSwap = t + (5 + Math.random() * 5);
+
+    nextSwap =
+      t +
+      CONFIG.swapMin +
+      Math.random() *
+      (CONFIG.swapMax - CONFIG.swapMin);
   }
 
   renderer.render(scene, camera);
@@ -207,8 +315,7 @@ function animate(){
 
 renderer.setAnimationLoop(animate);
 
-/* RESIZE */
-window.addEventListener("resize", applyLayout);
+window.addEventListener("resize", resize);
 
 </script>
 </body>
