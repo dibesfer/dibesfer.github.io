@@ -1,3 +1,30 @@
+async function unlockVault() {
+  const password = vaultPass.value;
+
+  vaultOutput.textContent = "requesting...";
+
+  const res = await fetch(
+    "https://kalidybwmoxhcwlfeftc.supabase.co/functions/v1/downloadStorage",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        password,
+        slug: "textWeb"
+      }),
+    }
+  );
+
+  const html = await res.text();
+
+  vaultOutput.innerHTML = `
+    <iframe style="width:100%;height:100vh;border:0;"></iframe>
+  `;
+
+  const iframe = vaultOutput.querySelector("iframe");
+  iframe.srcdoc = html;
+}
+
 // UI operations for the Webochi Supabase Expert page.
 let tableRows = 1
 let TheUser
