@@ -84,6 +84,27 @@ const textures = [
   loadTex("assets/Cuban/cuban_texture3.png")
 ];
 
+/*resize*/
+function fitCameraToObject(camera, object, offset = 1.2) {
+
+  const box = new THREE.Box3().setFromObject(object);
+  const size = box.getSize(new THREE.Vector3());
+  const center = box.getCenter(new THREE.Vector3());
+
+  const maxSize = Math.max(size.x, size.y, size.z);
+
+  const fov = camera.fov * (Math.PI / 180);
+  let cameraZ = Math.abs(maxSize / 2 / Math.tan(fov / 2));
+
+  cameraZ *= offset;
+
+  camera.position.set(center.x, center.y, cameraZ);
+
+  camera.lookAt(center);
+
+  camera.updateProjectionMatrix();
+}
+
 // LOAD
 const loader = new GLTFLoader();
 
@@ -113,10 +134,7 @@ loader.load(MODEL_SRC, (gltf) => {
     if (o.isMesh && !material) material = o.material;
   });
 
-  // 🔥 STEP 5: camera framing based on clean size
-  const maxDim = Math.max(size.x, size.y, size.z);
-  camera.position.set(0, 0, maxDim * 2.2);
-  camera.lookAt(0, 0, 0);
+  fitCameraToObject(camera, model, 1.4);
 });
 
 // swap
@@ -151,9 +169,15 @@ renderer.setAnimationLoop(animate);
 
 // resize
 window.addEventListener("resize", () => {
+
   camera.aspect = innerWidth / innerHeight;
   camera.updateProjectionMatrix();
+
   renderer.setSize(innerWidth, innerHeight);
+
+  if (model) {
+    fitCameraToObject(camera, model, 1.4);
+  }
 });
 </script>
 </body>
