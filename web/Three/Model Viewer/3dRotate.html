@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>3dRotate GLB Viewer</title>
+<link rel="shortcut icon" href="/assets/branding/favicon512.ico" type="image/x-icon">
+
+<style>
+html, body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #111;
+}
+canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+</style>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+</head>
+
+<body>
+<script type="module">
+import * as THREE from "three";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+
+const MODEL_SRC = "assets/Cuban/Cuban.glb";
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x111111);
+
+const camera = new THREE.PerspectiveCamera(40, innerWidth / innerHeight, 0.1, 1000);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+renderer.setSize(innerWidth, innerHeight);
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+document.body.appendChild(renderer.domElement);
+
+scene.add(new THREE.AmbientLight(0xffffff, 1.2));
+
+const light = new THREE.DirectionalLight(0xffffff, 2);
+light.position.set(3, 5, 4);
+scene.add(light);
+
+// true rotation core
+const pivot = new THREE.Group();
+scene.add(pivot);
+
+let mixer = null;
+const clock = new THREE.Clock();
+
+// --------------------
+// math noise rotation engine
+// --------------------
+function lerp(a, b, t) {
+  return a + (b - a) * t;
+}
+
+function randSpeed() {
+  return 0.003 + Math.random() * 0.02;
+}
+
+const axes = {
+  x: { c: 0.005, t: 0.005, n: 0 },
+  y: { c: 0.01,  t: 0.01,  n: 0 },
+  z: { c: 0.003, t: 0.003, n: 0 }
+};
+
+function updateAxis(k, t) {
+  const a = axes[k];
+
+  if (t > a.n) {
+    a.t = randSpeed() * (Math.random() < 0.5 ? -1 : 1);
+    a.n = t + (1 + Math.random() * 4);
+  }
+
+  a.c = lerp(a.c, a.t, 0.02);
+}
+
+// --------------------
+// LOAD
+// --------------------
+const loader = new GLTFLoader();
+
+loader.load(MODEL_SRC, (gltf) => {
+  const model = gltf.scene;
+
+  // force update world matrices first (important for GLTF quirks)
+  model.updateMatrixWorld(true);
+
+  const box = new THREE.Box3().setFromObject(model);
+  const center = box.getCenter(new THREE.Vector3());
+  const size = box.getSize(new THREE.Vector3());
+
+  const maxSize = Math.max(size.x, size.y, size.z);
+  model.scale.setScalar(2 / maxSize);
+
+  // re-evaluate AFTER scaling (important for cube / weird pivots)
+  model.updateMatrixWorld(true);
+
+  const box2 = new THREE.Box3().setFromObject(model);
+  const center2 = box2.getCenter(new THREE.Vector3());
+
+  // shift geometry into true origin space
+  model.position.sub(center2);
+
+  pivot.add(model);
+
+  camera.position.set(0, 0, Math.max(3, size.y * 0.5));
+  camera.lookAt(0, 0, 0);
+});
+
+// --------------------
+// LOOP
+// --------------------
+function animate() {
+  const dt = clock.getDelta();
+  const t = clock.getElapsedTime();
+
+  if (mixer) mixer.update(dt);
+
+  updateAxis("x", t);
+  updateAxis("y", t);
+  updateAxis("z", t);
+
+  pivot.rotation.x += axes.x.c;
+  pivot.rotation.y += axes.y.c;
+  pivot.rotation.z += axes.z.c;
+
+  renderer.render(scene, camera);
+}
+
+renderer.setAnimationLoop(animate);
+
+window.addEventListener("resize", () => {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+</script>
+</body>
+</html>
