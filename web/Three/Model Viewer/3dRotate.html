@@ -1,27 +1,29 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>GLB Texture Cycle</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GLB Texture Cycle</title>
 
-<style>
-html, body {
-  margin: 0;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  background: #111;
-}
+  <style>
+    html,
+    body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #111;
+    }
 
-canvas {
-  display: block;
-  width: 100%;
-  height: 100%;
-}
-</style>
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+  </style>
 
-<script type="importmap">
+  <script type="importmap">
 {
   "imports": {
     "three": "https://unpkg.com/three@0.183.2/build/three.module.js",
@@ -32,291 +34,346 @@ canvas {
 </head>
 
 <body>
-<script type="module">
+  <script type="module">
 
-import * as THREE from "three";
-import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+    import * as THREE from "three";
+    import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
-const MODEL_SRC = "assets/Cuban/Cuban.glb";
+    const MODEL_SRC = "assets/Cuban/Cuban.glb";
 
-/* ⚙️ CONTROL PANEL */
-const CONFIG = {
+    /* ⚙️ CONTROL PANEL */
+    const CONFIG = {
 
-  /* render */
-  antialias: true,
-  dprMax: 2,
+      /* render */
+      antialias: false,
+      dprMax: 1.5,
 
-  /* camera */
-  cameraFov: 72,
-  cameraOffset: 4,
+      /* camera */
+      cameraFov: 72,
+      cameraOffset: 4,
 
-  /* textures */
-  swapMin: 3,
-  swapMax: 6,
+      /* textures */
+      swapMin: 3,
+      swapMax: 6,
 
-  /* motion */
-  rotationLerp: 0.08,
-  rotationStrength: 0.08,
-  rotationSpeed: 0.3,
+      /* motion */
+      rotationLerp: 0.08,
+      rotationStrength: 0.08,
+      rotationSpeed: 0.3,
 
-  /* 🎯 target switching rhythm */
-  targetStepMin: 2,
-  targetStepMax: 5,
+      /* 🎯 target switching rhythm */
+      targetStepMin: 2,
+      targetStepMax: 5,
 
-  /* 💥 burst system */
-  impulseMin: 1.5,
-  impulseMax: 2.5,
-  impulseMultiplierMin: 1.0,
-  impulseMultiplierMax: 1.5,
+      /* 💥 burst system */
+      impulseMin: 1.5,
+      impulseMax: 2.5,
+      impulseMultiplierMin: 1.0,
+      impulseMultiplierMax: 1.5,
 
-  /* visual */
-  clearColor: 0x111111
-};
+      /* visual */
+      clearColor: 0x3B3B3B
+    };
 
-/* 🧠 CORE */
-const scene = new THREE.Scene();
-scene.background = new THREE.Color(CONFIG.clearColor);
+    /* 🧠 CORE */
+    const scene = new THREE.Scene();
 
-const camera = new THREE.PerspectiveCamera(
-  CONFIG.cameraFov,
-  1,
-  0.1,
-  100
-);
+    function updateBackgroundCover() {
 
-const renderer = new THREE.WebGLRenderer({
-  antialias: CONFIG.antialias
-});
+      const canvasAspect = innerWidth / innerHeight;
+      const imageAspect = bg.image.width / bg.image.height;
 
-renderer.outputColorSpace = THREE.SRGBColorSpace;
-document.body.appendChild(renderer.domElement);
+      const aspect = imageAspect / canvasAspect;
 
-/* 💡 LIGHT */
-scene.add(new THREE.AmbientLight(0xffffff, 1));
+      bg.offset.x = aspect > 1
+        ? (1 - 1 / aspect) / 2
+        : 0;
 
-const light = new THREE.DirectionalLight(0xffffff, 4);
-light.position.set(10, 10, 10);
-scene.add(light);
+      bg.repeat.x = aspect > 1
+        ? 1 / aspect
+        : 1;
 
-/* 🎯 PIVOT */
-const pivot = new THREE.Group();
-scene.add(pivot);
+      bg.offset.y = aspect > 1
+        ? 0
+        : (1 - aspect) / 2;
 
-const clock = new THREE.Clock();
-
-let model = null;
-let material = null;
-
-/* 🎨 TEXTURES */
-const texLoader = new THREE.TextureLoader();
-
-function loadTex(path){
-
-  const t = texLoader.load(path);
-
-  t.colorSpace = THREE.SRGBColorSpace;
-  t.generateMipmaps = false;
-  t.minFilter = THREE.NearestFilter;
-  t.magFilter = THREE.NearestFilter;
-  t.flipY = false;
-
-  return t;
-}
-
-const textures = [
-  loadTex("assets/Cuban/cuban_texture.png"),
-  loadTex("assets/Cuban/cuban_texture2.png"),
-  loadTex("assets/Cuban/cuban_texture3.png"),
-  loadTex("assets/Cuban/cuban_texture_4.png"),
-  loadTex("assets/Cuban/cuban_texture_5.png")
-];
-
-let texIndex = 0;
-let nextSwap = 0;
-
-/* 📷 CAMERA FIT */
-function fitCamera(object) {
-
-  const box = new THREE.Box3().setFromObject(object);
-  const size = box.getSize(new THREE.Vector3());
-
-  const maxSize = Math.max(size.x, size.y, size.z);
-
-  const fov = CONFIG.cameraFov * Math.PI / 180;
-
-  const distance =
-    (maxSize / 2) /
-    Math.tan(fov / 2) *
-    CONFIG.cameraOffset;
-
-  camera.position.set(0, 0, distance);
-
-  camera.lookAt(0, 0, 0);
-
-  camera.updateProjectionMatrix();
-}
-
-/* 📐 RESIZE */
-function resize() {
-
-  const w = innerWidth;
-  const h = innerHeight;
-
-  const dpr = Math.min(
-    devicePixelRatio,
-    CONFIG.dprMax
-  );
-
-  renderer.setPixelRatio(dpr);
-  renderer.setSize(w, h, false);
-
-  camera.aspect = w / h;
-  camera.updateProjectionMatrix();
-}
-
-/* 🧊 LOAD MODEL */
-new GLTFLoader().load(MODEL_SRC, (gltf) => {
-
-  model = gltf.scene;
-
-  const box = new THREE.Box3().setFromObject(model);
-  const center = box.getCenter(new THREE.Vector3());
-
-  model.position.sub(center);
-
-  pivot.add(model);
-
-  fitCamera(model);
-
-  model.traverse((o) => {
-
-    if (o.isMesh && !material) {
-      material = o.material;
+      bg.repeat.y = aspect > 1
+        ? 1
+        : aspect;
     }
 
-  });
-
-  material.map = textures[0];
-  material.transparent = true;
-  material.depthWrite = false;
-
-  resize();
-});
-
-/* 🔁 TEXTURE SWAP */
-function swapTexture() {
-
-  if (!material) return;
-
-  texIndex = (texIndex + 1) % textures.length;
-
-  material.map = textures[texIndex];
-}
-
-/* 🧠 ROTATION STATE */
-let velocity = new THREE.Vector3();
-let target = new THREE.Vector3();
-
-/* 🎯 TARGET SWITCHING */
-let nextTargetStep = 0;
-
-function scheduleNextTarget(t) {
-
-  nextTargetStep =
-    t +
-    CONFIG.targetStepMin +
-    Math.random() *
-    (CONFIG.targetStepMax - CONFIG.targetStepMin);
-}
-
-function randomTarget() {
-
-  const s = CONFIG.rotationStrength;
-
-  target.set(
-    (Math.random() - 0.5) * s,
-    (Math.random() - 0.5) * s,
-    (Math.random() - 0.5) * s
-  );
-}
-
-/* 💥 IMPULSE TIMER */
-let nextImpulse = 0;
-
-/* 🚀 LOOP */
-function animate() {
-
-  const t = clock.getElapsedTime();
-
-  if (model) {
-
-    /* 🎯 target state changes */
-    if (t > nextTargetStep) {
-
-      randomTarget();
-
-      scheduleNextTarget(t);
-    }
-
-    /* 🧠 smooth velocity follow */
-    velocity.lerp(
-      target,
-      CONFIG.rotationLerp
+    const bg = new THREE.TextureLoader().load(
+      "https://upload.wikimedia.org/wikipedia/commons/9/92/Hubble_Peers_at_the_Heart_of_a_Spiral_Galaxy_%2813310082333%29.jpg",
+      updateBackgroundCover
     );
 
-    /* 🎮 visible motion speed */
-    pivot.rotation.x +=
-      velocity.x * CONFIG.rotationSpeed;
+    bg.colorSpace = THREE.SRGBColorSpace;
 
-    pivot.rotation.y +=
-      velocity.y * CONFIG.rotationSpeed;
+    scene.background = bg;
 
-    pivot.rotation.z +=
-      velocity.z * CONFIG.rotationSpeed;
+    //scene.background = new THREE.Color(CONFIG.clearColor);
 
-    /* 💥 occasional aggression burst */
-    if (t > nextImpulse) {
+    const camera = new THREE.PerspectiveCamera(
+      CONFIG.cameraFov,
+      1,
+      0.1,
+      100
+    );
 
-      const boost =
-        CONFIG.impulseMultiplierMin +
-        Math.random() *
-        (
-          CONFIG.impulseMultiplierMax -
-          CONFIG.impulseMultiplierMin
-        );
+    const renderer = new THREE.WebGLRenderer({
+      antialias: CONFIG.antialias,
+      preserveDrawingBuffer: true
+    });
 
-      target.multiplyScalar(boost);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    document.body.appendChild(renderer.domElement);
 
-      nextImpulse =
-        t +
-        CONFIG.impulseMin +
-        Math.random() *
-        (
-          CONFIG.impulseMax -
-          CONFIG.impulseMin
-        );
+    /* 💡 LIGHT */
+    scene.add(new THREE.AmbientLight(0xffffff, 10));
+    scene.environment = bg;
+
+    const light = new THREE.DirectionalLight(0xffffff, 10);
+    light.position.set(2, 2, 4);
+    scene.add(light);
+
+
+
+    /* 🎯 PIVOT */
+    const pivot = new THREE.Group();
+    scene.add(pivot);
+
+    const clock = new THREE.Clock();
+
+    let model = null;
+    let material = null;
+
+    /* 🎨 TEXTURES */
+    const texLoader = new THREE.TextureLoader();
+
+    function loadTex(path) {
+
+      const t = texLoader.load(path);
+
+      t.colorSpace = THREE.SRGBColorSpace;
+      t.generateMipmaps = false;
+      t.minFilter = THREE.NearestFilter;
+      t.magFilter = THREE.NearestFilter;
+      t.flipY = false;
+
+      return t;
     }
-  }
 
-  /* 🎨 texture cycle */
-  if (t > nextSwap) {
+    const textures = [
+      loadTex("assets/Cuban/cuban_texture.png"),
+      loadTex("assets/Cuban/cuban_texture2.png"),
+      loadTex("assets/Cuban/cuban_texture3.png"),
+      loadTex("assets/Cuban/cuban_texture_4.png"),
+      loadTex("assets/Cuban/cuban_texture_5.png")
+    ];
 
-    swapTexture();
+    let texIndex = Math.floor(Math.random() * textures.length);
+    let nextSwap = 0;
 
-    nextSwap =
-      t +
-      CONFIG.swapMin +
-      Math.random() *
-      (CONFIG.swapMax - CONFIG.swapMin);
-  }
+    /* 📷 CAMERA FIT */
+    function fitCamera(object) {
 
-  renderer.render(scene, camera);
-}
+      const box = new THREE.Box3().setFromObject(object);
+      const size = box.getSize(new THREE.Vector3());
 
-renderer.setAnimationLoop(animate);
+      const maxSize = Math.max(size.x, size.y, size.z);
 
-window.addEventListener("resize", resize);
+      const fov = CONFIG.cameraFov * Math.PI / 180;
 
-</script>
+      const distance =
+        (maxSize / 2) /
+        Math.tan(fov / 2) *
+        CONFIG.cameraOffset;
+
+      camera.position.set(0, 0, distance);
+
+      camera.lookAt(0, 0, 0);
+
+      camera.updateProjectionMatrix();
+    }
+
+    /* 📐 RESIZE */
+    function resize() {
+
+
+      const w = innerWidth;
+      const h = innerHeight;
+
+      const dpr = Math.min(
+        devicePixelRatio,
+        CONFIG.dprMax
+      );
+
+      updateBackgroundCover();
+
+      renderer.setPixelRatio(dpr);
+      renderer.setSize(w, h, false);
+
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+    }
+
+    /* 🧊 LOAD MODEL */
+    new GLTFLoader().load(MODEL_SRC, (gltf) => {
+
+      model = gltf.scene;
+
+      const box = new THREE.Box3().setFromObject(model);
+      const center = box.getCenter(new THREE.Vector3());
+
+      model.position.sub(center);
+
+      pivot.add(model);
+
+      fitCamera(model);
+
+      model.traverse((o) => {
+
+        if (o.isMesh && !material) {
+          material = o.material;
+        }
+
+      });
+
+      material.map = textures[texIndex];
+      material.metalness = 0.6;
+      material.roughness = 0.5;
+      material.emissive = new THREE.Color(0x88ccff);
+material.emissiveIntensity = 0.005;
+      material.transparent = true;
+      material.depthWrite = false;
+
+      resize();
+    });
+
+    /* 🔁 TEXTURE SWAP */
+    function swapTexture() {
+
+      if (!material) return;
+
+      let next;
+
+      do {
+        next = Math.floor(Math.random() * textures.length);
+      }
+      while (next === texIndex);
+
+      texIndex = next;
+
+      material.map = textures[texIndex];
+    }
+
+    /* 🧠 ROTATION STATE */
+    let velocity = new THREE.Vector3();
+    let target = new THREE.Vector3();
+
+    /* 🎯 TARGET SWITCHING */
+    let nextTargetStep = 0;
+
+    function scheduleNextTarget(t) {
+
+      nextTargetStep =
+        t +
+        CONFIG.targetStepMin +
+        Math.random() *
+        (CONFIG.targetStepMax - CONFIG.targetStepMin);
+    }
+
+    function randomTarget() {
+
+      const s = CONFIG.rotationStrength;
+
+      target.set(
+        (Math.random() - 0.5) * s,
+        (Math.random() - 0.5) * s,
+        (Math.random() - 0.5) * s
+      );
+    }
+
+    /* 💥 IMPULSE TIMER */
+    let nextImpulse = 0;
+
+    /* 🚀 LOOP */
+    function animate() {
+
+      const t = clock.getElapsedTime();
+
+
+
+      if (model) {
+
+        /* 🎯 target state changes */
+        if (t > nextTargetStep) {
+
+          randomTarget();
+
+          scheduleNextTarget(t);
+        }
+
+        /* 🧠 smooth velocity follow */
+        velocity.lerp(
+          target,
+          CONFIG.rotationLerp
+        );
+
+        /* 🎮 visible motion speed */
+        pivot.rotation.x +=
+          velocity.x * CONFIG.rotationSpeed;
+
+        pivot.rotation.y +=
+          velocity.y * CONFIG.rotationSpeed;
+
+        pivot.rotation.z +=
+          velocity.z * CONFIG.rotationSpeed;
+
+        /* 💥 occasional aggression burst */
+        if (t > nextImpulse) {
+
+          const boost =
+            CONFIG.impulseMultiplierMin +
+            Math.random() *
+            (
+              CONFIG.impulseMultiplierMax -
+              CONFIG.impulseMultiplierMin
+            );
+
+          target.multiplyScalar(boost);
+
+          nextImpulse =
+            t +
+            CONFIG.impulseMin +
+            Math.random() *
+            (
+              CONFIG.impulseMax -
+              CONFIG.impulseMin
+            );
+        }
+      }
+
+      /* 🎨 texture cycle */
+      if (t > nextSwap) {
+
+        swapTexture();
+
+        nextSwap =
+          t +
+          CONFIG.swapMin +
+          Math.random() *
+          (CONFIG.swapMax - CONFIG.swapMin);
+      }
+
+      renderer.render(scene, camera);
+    }
+
+    renderer.setAnimationLoop(animate);
+
+    window.addEventListener("resize", resize);
+
+  </script>
 </body>
+
 </html>
