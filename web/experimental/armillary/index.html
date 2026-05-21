@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -15,9 +16,9 @@
         }
 
         div {
-            width: 100%;
+            aspect-ratio: 16 / 9;
+            width: min(100vw, 177.77vh);
             height: 100%;
-            aspect-ratio: 16/9;
         }
 
         #myCanvas {
@@ -30,6 +31,7 @@
         }
     </style>
 </head>
+
 <body>
 
     <div>
@@ -236,4 +238,5 @@
         requestAnimationFrame(render);
     </script>
 </body>
+
 </html>
