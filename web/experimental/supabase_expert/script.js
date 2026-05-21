@@ -3,35 +3,39 @@ async function unlockVault() {
 
   vaultOutput.textContent = "requesting...";
 
-  const res = await fetch(
-    "https://kalidybwmoxhcwlfeftc.supabase.co/functions/v1/downloadStorage",
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        password,
-        slug: "textWeb",
-      }),
+  try {
+    const res = await fetch(
+      "https://kalidybwmoxhcwlfeftc.supabase.co/functions/v1/downloadStorage",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          password,
+          slug: "textWeb",
+        }),
+      }
+    );
+
+    const data = await res.json();
+
+    if (!data.ok) {
+      vaultOutput.textContent = data.message;
+      return;
     }
-  );
 
-  if (!res.ok) {
-    vaultOutput.textContent = await res.text();
-    return;
+    const iframe = document.createElement("iframe");
+    iframe.style.width = "100%";
+    iframe.style.height = "100vh";
+    iframe.style.border = "0";
+
+    iframe.srcdoc = data.html;
+
+    vaultOutput.innerHTML = "";
+    vaultOutput.appendChild(iframe);
+
+  } catch (err) {
+    vaultOutput.textContent = String(err);
   }
-
-  const html = await res.text();
-
-  const iframe = document.createElement("iframe");
-  iframe.style.width = "100%";
-  iframe.style.height = "100vh";
-  iframe.style.border = "0";
-
-  // 🪖 critical: isolate vault world safely
-  iframe.srcdoc = html;
-
-  vaultOutput.innerHTML = "";
-  vaultOutput.appendChild(iframe);
 }
 
 // UI operations for the Webochi Supabase Expert page.
