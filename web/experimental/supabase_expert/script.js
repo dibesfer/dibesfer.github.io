@@ -10,19 +10,28 @@ async function unlockVault() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         password,
-        slug: "textWeb"
+        slug: "textWeb",
       }),
     }
   );
 
+  if (!res.ok) {
+    vaultOutput.textContent = await res.text();
+    return;
+  }
+
   const html = await res.text();
 
-  vaultOutput.innerHTML = `
-    <iframe style="width:100%;height:100vh;border:0;"></iframe>
-  `;
+  const iframe = document.createElement("iframe");
+  iframe.style.width = "100%";
+  iframe.style.height = "100vh";
+  iframe.style.border = "0";
 
-  const iframe = vaultOutput.querySelector("iframe");
+  // 🪖 critical: isolate vault world safely
   iframe.srcdoc = html;
+
+  vaultOutput.innerHTML = "";
+  vaultOutput.appendChild(iframe);
 }
 
 // UI operations for the Webochi Supabase Expert page.
