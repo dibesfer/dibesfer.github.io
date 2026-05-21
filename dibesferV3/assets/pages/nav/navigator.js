@@ -67,6 +67,7 @@ allIframeLinks.forEach(el => {
     // optional ui
     if (typeof leftBar !== "undefined") {
       leftBar.classList.toggle("leftBarOpen");
+      leftBarBtn.classList.toggle("rotateRight")
     }
 
     // url
