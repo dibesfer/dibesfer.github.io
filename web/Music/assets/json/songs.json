@@ -1,0 +1,64 @@
+[
+    {
+            "exampleTemplate" : "Do not Overwrite",
+            "name" : "Song Title",
+            "author" : "Anonymous",
+            "src" : "./assets/songs/example.mp3",
+            "link" : "https://pixabay.com/music/..."
+    },
+
+    {
+            "name" : "Mind Techno - Ibiza Loop",
+            "author" : "Sonican",
+            "src" : "assets/songs/sonican-mind-techno-ibiza-loop-198703.mp3",
+            "link" : "https://pixabay.com/music/house-mind-techno-ibiza-loop-198703/"
+    },
+
+    {
+            "name" : "Galactic UFO Hunters",
+            "author" : "SlimeyFox",
+            "src" : "assets/songs/slimeyfox-galactic-ufo-hunters-527702.mp3",
+            "link" : "https://pixabay.com/music/dance-galactic-ufo-hunters-527702/"
+    },
+
+    {
+            "name" : "Techno Hip-Hop Fusion for Stealth Games",
+            "author" : "nickpanekAIassets",
+            "src" : "assets/songs/nickpanekaiassets-techno-hip-hop-fusion-for-stealth-games-288984.mp3",
+            "link" : "https://pixabay.com/music/upbeat-techno-hip-hop-fusion-for-stealth-games-288984/"
+    },
+    {
+            "name" : "Deep Relaxation Music",
+            "author" : "Low_Atmos",
+            "src" : "assets/songs/low_atmos-deep-relaxation-music-533629.mp3",
+            "link" : "https://pixabay.com/es/music/meditaci%C3%B3n-espiritual-deep-relaxation-music-533629/"
+    },
+
+    {
+            "name" : "Crystal Cave (song18)",
+            "author" : "cynicmusic",
+            "src" : "assets/songs/song18.mp3",
+            "link" : "https://opengameart.org/content/crystal-cave-song18"
+    },
+
+    {
+            "name" : "The Field Of Dreams",
+            "author" : "pauliuw",
+            "src" : "assets/songs/the_field_of_dreams.mp3",
+            "link" : "https://opengameart.org/content/the-field-of-dreams"
+    },
+    {
+            "name" : "Cave Theme",
+            "author" : "Brandon75689",
+            "src" : "assets/songs/cave themeb4.ogg",
+            "link" : "https://opengameart.org/content/cave-theme"
+    },
+    {
+            "name" : "Mystical Theme",
+            "author" : "Alexandr Zhelanov",
+            "src" : "assets/songs/мистичная тема.mp3",
+            "link" : "https://soundcloud.com/alexandr-zhelanov"
+    }
+
+    
+]
