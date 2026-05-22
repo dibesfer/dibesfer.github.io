@@ -2,7 +2,8 @@ const ROUTES = {
   gallery: "../../gallery",
   games: "../../games",
   web: "../../web",
-  fonish: "../../../../web/conlang/fonish"
+  fonish: "../../../../web/conlang/fonish",
+  dibesGallery: "../../web/dibesgallery"
 };
 
 // --- ELEMENTS ---
