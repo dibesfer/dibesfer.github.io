@@ -62,7 +62,11 @@ async function unlockVault() {
       html = html
         .replaceAll(path, blobUrl)
         .replaceAll(`./${relative}`, blobUrl)
-        .replaceAll(relative, blobUrl);
+        .replaceAll(relative, blobUrl)
+        .replaceAll(`href="${relative}"`, `href="${blobUrl}"`)
+        .replaceAll(`href="./${relative}"`, `href="${blobUrl}"`)
+        .replaceAll(`src="${relative}"`, `src="${blobUrl}"`)
+        .replaceAll(`src="./${relative}"`, `src="${blobUrl}"`);
     }
 
     const iframe = document.createElement("iframe");
