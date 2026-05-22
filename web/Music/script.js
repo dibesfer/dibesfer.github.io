@@ -24,6 +24,7 @@ async function readJSON() {
             console.log(songs)
 
             music = new Audio(songs[0].src)
+            music.controls = true
             
             music.addEventListener('ended', changeSong);
 

@@ -53,5 +53,34 @@
                 "author": "Alexandr Zhelanov",
                 "src": "assets/songs/мистичная тема.mp3",
                 "link": "https://soundcloud.com/alexandr-zhelanov"
+        },
+        {
+                "name": "Abstract Experimental",
+                "author": "The_Mountain",
+                "src": "assets/songs/the_mountain-abstract-experimental-132323.mp3",
+                "link": "https://pixabay.com/es/music/corporativo-abstract-experimental-132323/"
+        },
+        {
+                "name": "My Xylophone",
+                "author": "Ivantraveso",
+                "src": "assets/songs/ivantraveso-my-xylophone-13262.mp3",
+                "link": "https://pixabay.com/es/music/melod%C3%ADas-para-ni%C3%B1os-felices-my-xylophone-13262/"
+        },
+        {
+                "name": "The Chase Begins",
+                "author": "MMAudio",
+                "src": "assets/songs/mmaudio-the-chase-begins-512528.mp3",
+                "link": "https://pixabay.com/es/music/melod%C3%ADas-para-ni%C3%B1os-felices-the-chase-begins-512528/"
+        },
+        {
+                "name": "Xylophone and Forest",
+                "author": "ManDaKiMDK",
+                "src": "assets/songs/mandakimdk-xylophone-and-forest-307174.mp3",
+                "link": "https://pixabay.com/es/music/instrumentos-solistas-xylophone-and-forest-307174/"
         }
+
+
+        
+
+        
 ]
