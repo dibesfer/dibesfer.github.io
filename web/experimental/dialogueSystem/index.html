@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>dialogueSystem</title>
+  <script src="/ferscript.js"></script>
+</head>
+<body>
+  <h1>Dialogue System</h1>
+  <p>Creates random typewritten dialogues</p>
+  <div id="output">
+
+  </div>
+
+  <script>
+
+    let dialogues = [
+      "hey",
+      "sup?",
+      "bye",
+      "the universe is vast",
+      "this is a test dialogue",
+      "el orden no altera el producto",
+      "más sabe el diablo por viejo, que por diablo",
+      "isn't this the song you tried to remember?"
+    ]
+
+    let norepeat
+    
+    function write(){
+
+      let randomNum = randomInt(0,dialogues.length-1)
+
+      while (randomNum == norepeat){
+        randomNum = randomInt(0,dialogues.length-1)
+      }
+
+      output.textContent = dialogues[randomNum]
+  
+      norepeat = randomNum
+
+      setTimeout(write, 500);
+
+    }
+    write()
+
+  </script>
+
+</body>
+</html>
