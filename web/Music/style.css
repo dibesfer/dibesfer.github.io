@@ -55,6 +55,11 @@ a {
     border-radius: 24%;
     margin: 0 5px;
 }
+
+#playBtn:hover, #stopBtn:hover, #skipBtn:hover{
+    filter: brightness(2);
+    border: solid 2px gray;
+}
 #playBtn {
     background-color: limegreen;
 
