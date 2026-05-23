@@ -1,34 +1,90 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>dibesGallery</title>
-    <link rel="stylesheet" href="../../../style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>dibesGallery</title>
+  <link rel="stylesheet" href="../../../style.css">
 </head>
-
 <body>
-    <header>
-        <h1>The dibesGallery</h1>
-        <p>Dev&Art Museum</p>
-    </header>
-    <main>
-        <div class="maxWidth">
-            <h2>What it is?</h2>
-            <p>The dibesGallery is a private collection of artwork made by dibesfer and other artists.</p>
-            <p>It is accessible only with a password code</p>
-            <p>In order to get the code you must send an email to dibesfer@gmail.com using this format</p>
-            <pre>
+  <header>
+    <h1>The dibesGallery</h1>
+    <p>Dev&Art Museum</p>
+  </header>
+  <main>
+    <div class="maxWidth">
+      <h2>What it is?</h2>
+      <p>The dibesGallery is a private collection of artwork made by dibesfer and other artists.</p>
+      <p>It is accessible only with a password code</p>
+      <p>In order to get the code you must send an email to dibesfer@gmail.com using this format</p>
+      <pre>
 Subject: dibesGallery register
     name: John Smith
     email: johnsmith@example.com
-        </pre>
-            <p>I manage registrations manually, store them in an email white list and send them password code on
-                convenience.</p>
-            <button>Enter dibesGallery</button>
-        </div>
-    </main>
-</body>
+      </pre>
+      <p>I manage registrations manually, store them in an email white list and send them password code on convenience.</p>
 
+      <button id="enterBtn">Enter dibesGallery</button>
+
+      <div id="gallery" style="display:none;">
+        <br>
+        <img width="100px" data-slot="dosum" alt="dosum"><br>
+        <img width="100px" data-slot="petalia" alt="petalia"><br>
+        <img width="100px" data-slot="plantalia" alt="plantalia"><br>
+        <img width="100px" data-slot="unum" alt="unum"><br>
+        <img width="100px" data-slot="1" alt="dosum"><br>
+        <img width="100px" data-slot="2" alt="petalia"><br>
+        <img width="100px" data-slot="3" alt="plantalia"><br>
+        <img width="100px" data-slot="4" alt="unum"><br>
+        <img width="100px" data-slot="x" alt="dosum"><br>
+        <img width="100px" data-slot="d" alt="petalia"><br>
+        <img width="100px" data-slot="d" alt="plantalia"><br>
+        <img width="100px" data-slot="3" alt="unum"><br>
+      
+    </div>
+
+      <p id="message"></p>
+    </div>
+  </main>
+
+  <script>
+    const EDGE_URL = "https://kalidybwmoxhcwlfeftc.supabase.co/functions/v1/dibesGallery";
+
+    document.getElementById("enterBtn").addEventListener("click", async () => {
+      const password = prompt("Enter your gallery password:");
+      if (!password) return;
+
+      const message = document.getElementById("message");
+      message.textContent = "Verifying...";
+
+      try {
+        const res = await fetch(EDGE_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ password }),
+        });
+
+        const data = await res.json();
+
+        if (!data.ok) {
+          message.textContent = data.message || "Access denied.";
+          return;
+        }
+
+        // populate images
+        document.querySelectorAll("img[data-slot]").forEach(img => {
+          const slot = img.dataset.slot;
+          if (data.urls[slot]) img.src = data.urls[slot];
+        });
+
+        document.getElementById("gallery").style.display = "block";
+        document.getElementById("enterBtn").style.display = "none";
+        message.textContent = "";
+
+      } catch (e) {
+        document.getElementById("message").textContent = "Something went wrong.";
+      }
+    });
+  </script>
+</body>
 </html>
