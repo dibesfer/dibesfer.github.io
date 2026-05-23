@@ -22,7 +22,7 @@ a {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    height: 3rem;
+    height: 3.3rem;
 }
 
 #app > * {
@@ -53,6 +53,7 @@ a {
 
 #playBtn, #stopBtn, #skipBtn{
     border-radius: 24%;
+    margin: 0 5px;
 }
 #playBtn {
     background-color: limegreen;
@@ -60,7 +61,7 @@ a {
 }
 
 #stopBtn {
-    background-color: red;
+    background-color: rgb(255, 107, 44);
 }
 
 #skipBtn {

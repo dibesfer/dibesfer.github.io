@@ -77,18 +77,21 @@ function playToggle() {
 function play(){
  music.play();
         playBtn.src = "assets/icons/pause.svg"
+        playBtn.style = "background-color:lime"
         playing = true
 }
 
 function pause(){
     music.pause();
     playBtn.src = "assets/icons/play.svg"
+    playBtn.style = "background-color:limegreen"
     playing = false
 }
 
 function stop(){
     music.pause();           // Stops the music
     playBtn.src = "assets/icons/play.svg"
+    playBtn.style = "background-color:limegreen"
     playing = false
     music.currentTime = 0;
 }
