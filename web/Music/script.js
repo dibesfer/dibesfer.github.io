@@ -6,7 +6,7 @@ let music
 let songs = []
 let songCounter = 0
 
-// --- Firefox background fix ---
+// --- AudioContext + MediaSession (Firefox background / iframe fix) ---
 let audioCtx
 let sourceNode
 
@@ -27,8 +27,9 @@ function setupMediaSession() {
     navigator.mediaSession.setActionHandler("play", play)
     navigator.mediaSession.setActionHandler("pause", pause)
     navigator.mediaSession.setActionHandler("nexttrack", changeSong)
+    navigator.mediaSession.setActionHandler("previoustrack", prevSong)
 }
-// ------------------------------
+// --------------------------------------------------------------------
 
 async function readJSON() {
     await fetch('assets/json/songs.json')
@@ -43,8 +44,7 @@ async function readJSON() {
             music.controls = true
             music.addEventListener('ended', changeSong)
 
-            let UIOptions = { author: songs[0].author, name: songs[0].name, link: songs[0].link }
-            fillUI(UIOptions)
+            fillUI({ author: songs[0].author, name: songs[0].name, link: songs[0].link })
         })
 }
 
@@ -52,9 +52,17 @@ function changeSong() {
     songCounter = (songCounter < songs.length - 1) ? songCounter + 1 : 0
     music.src = songs[songCounter].src
     play()
-    let UIOptions = { author: songs[songCounter].author, name: songs[songCounter].name, link: songs[songCounter].link }
-    fillUI(UIOptions)
-    setupMediaSession()     // update OS media controls on skip
+    fillUI({ author: songs[songCounter].author, name: songs[songCounter].name, link: songs[songCounter].link })
+    setupMediaSession()
+    title.scrollLeft = 0
+}
+
+function prevSong() {
+    songCounter = (songCounter > 0) ? songCounter - 1 : songs.length - 1
+    music.src = songs[songCounter].src
+    play()
+    fillUI({ author: songs[songCounter].author, name: songs[songCounter].name, link: songs[songCounter].link })
+    setupMediaSession()
     title.scrollLeft = 0
 }
 
@@ -75,7 +83,7 @@ function playToggle() {
 }
 
 function play() {
-    initAudioContext()          // must be triggered by user gesture
+    initAudioContext()
     if (audioCtx.state === "suspended") audioCtx.resume()
     music.play()
     playBtn.src = "assets/icons/pause.svg"
