@@ -1,6 +1,5 @@
 async function unlockVault() {
   const password = vaultPass.value;
-
   vaultOutput.textContent = "requesting...";
 
   try {
@@ -8,66 +7,26 @@ async function unlockVault() {
       "https://kalidybwmoxhcwlfeftc.supabase.co/functions/v1/downloadStorage",
       {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           password,
+          file: "index.html",
           slug: "textWeb",
         }),
       }
     );
 
-    const raw = await res.text();
-
-    let data;
-    try {
-      data = JSON.parse(raw);
-    } catch {
-      vaultOutput.textContent = raw;
+    if (!res.ok) {
+      const err = await res.text();
+      vaultOutput.textContent = err;
       return;
     }
 
-    if (!res.ok || !data.ok) {
-      vaultOutput.textContent = data.message || "request failed";
-      return;
-    }
-
-    const fileMap = new Map();
-
-    for (const file of data.files || []) {
-      const bytes = new Uint8Array(file.bytes || []);
-
-      const blob = new Blob([bytes], {
-        type: file.type || "application/octet-stream",
-      });
-
-      fileMap.set(file.path, URL.createObjectURL(blob));
-    }
-
-    const indexPath = "textWeb/index.html";
-    const indexBlobUrl = fileMap.get(indexPath);
-
-    if (!indexBlobUrl) {
-      vaultOutput.textContent = "missing index.html";
-      return;
-    }
-
-    let html = await fetch(indexBlobUrl).then((r) => r.text());
-
-    // normalize replacement pass (ORDER MATTERS now)
-    for (const [path, blobUrl] of fileMap.entries()) {
-      const relative = path.replace("textWeb/", "");
-
-      html = html
-        .replaceAll(path, blobUrl)
-        .replaceAll(`./${relative}`, blobUrl)
-        .replaceAll(relative, blobUrl)
-        .replaceAll(`href="${relative}"`, `href="${blobUrl}"`)
-        .replaceAll(`href="./${relative}"`, `href="${blobUrl}"`)
-        .replaceAll(`src="${relative}"`, `src="${blobUrl}"`)
-        .replaceAll(`src="./${relative}"`, `src="${blobUrl}"`);
-    }
+    // 🧿 THIS is the key change
+    const htmlBlob = await res.blob();
+    const htmlUrl = URL.createObjectURL(
+      new Blob([htmlBlob], { type: "text/html" })
+    );
 
     const iframe = document.createElement("iframe");
 
@@ -75,7 +34,7 @@ async function unlockVault() {
     iframe.style.height = "100vh";
     iframe.style.border = "0";
 
-    iframe.srcdoc = html;
+    iframe.src = htmlUrl;
 
     vaultOutput.innerHTML = "";
     vaultOutput.appendChild(iframe);
