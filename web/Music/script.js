@@ -6,48 +6,56 @@ let music
 let songs = []
 let songCounter = 0
 
-async function readJSON() {
+// --- Firefox background fix ---
+let audioCtx
+let sourceNode
 
+function initAudioContext() {
+    if (audioCtx) return
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)()
+    sourceNode = audioCtx.createMediaElementSource(music)
+    sourceNode.connect(audioCtx.destination)
+}
+
+function setupMediaSession() {
+    if (!("mediaSession" in navigator)) return
+    navigator.mediaSession.metadata = new MediaMetadata({
+        title: songs[songCounter].name,
+        artist: songs[songCounter].author,
+        album: "Free Music Player"
+    })
+    navigator.mediaSession.setActionHandler("play", play)
+    navigator.mediaSession.setActionHandler("pause", pause)
+    navigator.mediaSession.setActionHandler("nexttrack", changeSong)
+}
+// ------------------------------
+
+async function readJSON() {
     await fetch('assets/json/songs.json')
         .then((response) => response.json())
         .then((json) => {
-            let songID
-            //we start for 1 because 0 is a template entry
             for (let i = 1; i < json.length; i++) {
-                console.log()
-                songs.push(
-                    json[i]
-                )
+                songs.push(json[i])
             }
-
             songs = shuffle(songs)
-            console.log(songs)
 
             music = new Audio(songs[0].src)
             music.controls = true
-            
-            music.addEventListener('ended', changeSong);
+            music.addEventListener('ended', changeSong)
 
             let UIOptions = { author: songs[0].author, name: songs[0].name, link: songs[0].link }
             fillUI(UIOptions)
-
-
-        });
+        })
 }
 
-function changeSong(){
-    if (songCounter < songs.length-1){
-        songCounter++
-    }
-    else {
-        songCounter = 0
-    }
+function changeSong() {
+    songCounter = (songCounter < songs.length - 1) ? songCounter + 1 : 0
     music.src = songs[songCounter].src
     play()
     let UIOptions = { author: songs[songCounter].author, name: songs[songCounter].name, link: songs[songCounter].link }
     fillUI(UIOptions)
- title.scrollLeft = 0
-    
+    setupMediaSession()     // update OS media controls on skip
+    title.scrollLeft = 0
 }
 
 readJSON()
@@ -58,42 +66,35 @@ function fillUI(options = {}) {
     linkDisplay.href = options.link ?? "#unknown"
 }
 
-
 playBtn.addEventListener("click", playToggle)
 stopBtn.addEventListener("click", stop)
 skipBtn.addEventListener("click", changeSong)
 
 function playToggle() {
-    if (playing) {
-        // pause
-        pause()
-    }
-    else {
-        play()
-       
-    }
+    playing ? pause() : play()
 }
 
-function play(){
- music.play();
-        playBtn.src = "assets/icons/pause.svg"
-        playBtn.style = "background-color:lime"
-        playing = true
+function play() {
+    initAudioContext()          // must be triggered by user gesture
+    if (audioCtx.state === "suspended") audioCtx.resume()
+    music.play()
+    playBtn.src = "assets/icons/pause.svg"
+    playBtn.style = "background-color:lime"
+    playing = true
+    setupMediaSession()
 }
 
-function pause(){
-    music.pause();
+function pause() {
+    music.pause()
     playBtn.src = "assets/icons/play.svg"
     playBtn.style = "background-color:limegreen"
     playing = false
 }
 
-function stop(){
-    music.pause();           // Stops the music
+function stop() {
+    music.pause()
     playBtn.src = "assets/icons/play.svg"
     playBtn.style = "background-color:limegreen"
     playing = false
-    music.currentTime = 0;
+    music.currentTime = 0
 }
-
-
