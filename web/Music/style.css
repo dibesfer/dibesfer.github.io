@@ -3,9 +3,6 @@
     box-sizing: border-box;
 }
 
-body {
-    padding: 10px;
-}
 img {
     max-width: 100%;
 }
@@ -35,7 +32,7 @@ a {
 .icon {
     height: 100%;
     user-select: none;
-    filter: brightness(0);
+    
 }
 
 #title {
@@ -52,4 +49,20 @@ a {
     padding: 0 10px;
     color: white;
     
+}
+
+#playBtn, #stopBtn, #skipBtn{
+    border-radius: 24%;
+}
+#playBtn {
+    background-color: limegreen;
+
+}
+
+#stopBtn {
+    background-color: red;
+}
+
+#skipBtn {
+    background-color: yellow;
 }
