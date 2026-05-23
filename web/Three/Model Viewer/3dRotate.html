@@ -79,27 +79,17 @@
     const scene = new THREE.Scene();
 
     function updateBackgroundCover() {
+      if (!bg.image) return;
 
       const canvasAspect = innerWidth / innerHeight;
       const imageAspect = bg.image.width / bg.image.height;
 
       const aspect = imageAspect / canvasAspect;
 
-      bg.offset.x = aspect > 1
-        ? (1 - 1 / aspect) / 2
-        : 0;
-
-      bg.repeat.x = aspect > 1
-        ? 1 / aspect
-        : 1;
-
-      bg.offset.y = aspect > 1
-        ? 0
-        : (1 - aspect) / 2;
-
-      bg.repeat.y = aspect > 1
-        ? 1
-        : aspect;
+      bg.offset.x = aspect > 1 ? (1 - 1 / aspect) / 2 : 0;
+      bg.repeat.x = aspect > 1 ? 1 / aspect : 1;
+      bg.offset.y = aspect > 1 ? 0 : (1 - aspect) / 2;
+      bg.repeat.y = aspect > 1 ? 1 : aspect;
     }
 
     const bg = new THREE.TextureLoader().load(
@@ -108,14 +98,11 @@
     );
 
     bg.colorSpace = THREE.SRGBColorSpace;
-
     scene.background = bg;
-
-    //scene.background = new THREE.Color(CONFIG.clearColor);
 
     const camera = new THREE.PerspectiveCamera(
       CONFIG.cameraFov,
-      1,
+      innerWidth / innerHeight, // ✅ FIX 1: correct aspect from the start, not 1
       0.1,
       100
     );
@@ -136,8 +123,6 @@
     light.position.set(2, 2, 4);
     scene.add(light);
 
-
-
     /* 🎯 PIVOT */
     const pivot = new THREE.Group();
     scene.add(pivot);
@@ -151,15 +136,12 @@
     const texLoader = new THREE.TextureLoader();
 
     function loadTex(path) {
-
       const t = texLoader.load(path);
-
       t.colorSpace = THREE.SRGBColorSpace;
       t.generateMipmaps = false;
       t.minFilter = THREE.NearestFilter;
       t.magFilter = THREE.NearestFilter;
       t.flipY = false;
-
       return t;
     }
 
@@ -174,48 +156,39 @@
     let texIndex = Math.floor(Math.random() * textures.length);
     let nextSwap = 0;
 
-    /* 📷 CAMERA FIT */
+    /* 📷 CAMERA FIT — now takes current camera aspect as given, just sets distance */
     function fitCamera(object) {
-
       const box = new THREE.Box3().setFromObject(object);
       const size = box.getSize(new THREE.Vector3());
-
       const maxSize = Math.max(size.x, size.y, size.z);
-
       const fov = CONFIG.cameraFov * Math.PI / 180;
-
-      const distance =
-        (maxSize / 2) /
-        Math.tan(fov / 2) *
-        CONFIG.cameraOffset;
-
+      const distance = (maxSize / 2) / Math.tan(fov / 2) * CONFIG.cameraOffset;
       camera.position.set(0, 0, distance);
-
       camera.lookAt(0, 0, 0);
-
       camera.updateProjectionMatrix();
     }
 
-    /* 📐 RESIZE */
+    /* 📐 RESIZE — ✅ FIX 2: true so Three.js owns canvas CSS sizing */
     function resize() {
-
-
       const w = innerWidth;
       const h = innerHeight;
-
-      const dpr = Math.min(
-        devicePixelRatio,
-        CONFIG.dprMax
-      );
+      const dpr = Math.min(devicePixelRatio, CONFIG.dprMax);
 
       updateBackgroundCover();
 
       renderer.setPixelRatio(dpr);
-      renderer.setSize(w, h, false);
+      renderer.setSize(w, h, true); // ✅ true: Three.js sets canvas CSS width/height
 
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
+
+      // ✅ FIX 3: re-fit camera on every resize so aspect is correct before fitting
+      if (model) fitCamera(model);
     }
+
+    // ✅ FIX 4: call resize() immediately after appending the canvas,
+    //    before the model loads, so renderer + camera are correct on frame 0
+    resize();
 
     /* 🧊 LOAD MODEL */
     new GLTFLoader().load(MODEL_SRC, (gltf) => {
@@ -224,46 +197,36 @@
 
       const box = new THREE.Box3().setFromObject(model);
       const center = box.getCenter(new THREE.Vector3());
-
       model.position.sub(center);
 
       pivot.add(model);
 
+      // aspect is already correct here — fitCamera gets clean numbers
       fitCamera(model);
 
       model.traverse((o) => {
-
         if (o.isMesh && !material) {
           material = o.material;
         }
-
       });
 
       material.map = textures[texIndex];
       material.metalness = 0.6;
       material.roughness = 0.5;
       material.emissive = new THREE.Color(0x88ccff);
-material.emissiveIntensity = 0.005;
+      material.emissiveIntensity = 0.005;
       material.transparent = true;
       material.depthWrite = false;
-
-      resize();
     });
 
     /* 🔁 TEXTURE SWAP */
     function swapTexture() {
-
       if (!material) return;
-
       let next;
-
       do {
         next = Math.floor(Math.random() * textures.length);
-      }
-      while (next === texIndex);
-
+      } while (next === texIndex);
       texIndex = next;
-
       material.map = textures[texIndex];
     }
 
@@ -275,18 +238,14 @@ material.emissiveIntensity = 0.005;
     let nextTargetStep = 0;
 
     function scheduleNextTarget(t) {
-
       nextTargetStep =
         t +
         CONFIG.targetStepMin +
-        Math.random() *
-        (CONFIG.targetStepMax - CONFIG.targetStepMin);
+        Math.random() * (CONFIG.targetStepMax - CONFIG.targetStepMin);
     }
 
     function randomTarget() {
-
       const s = CONFIG.rotationStrength;
-
       target.set(
         (Math.random() - 0.5) * s,
         (Math.random() - 0.5) * s,
@@ -299,78 +258,50 @@ material.emissiveIntensity = 0.005;
 
     /* 🚀 LOOP */
     function animate() {
-
       const t = clock.getElapsedTime();
-
-
 
       if (model) {
 
         /* 🎯 target state changes */
         if (t > nextTargetStep) {
-
           randomTarget();
-
           scheduleNextTarget(t);
         }
 
         /* 🧠 smooth velocity follow */
-        velocity.lerp(
-          target,
-          CONFIG.rotationLerp
-        );
+        velocity.lerp(target, CONFIG.rotationLerp);
 
         /* 🎮 visible motion speed */
-        pivot.rotation.x +=
-          velocity.x * CONFIG.rotationSpeed;
-
-        pivot.rotation.y +=
-          velocity.y * CONFIG.rotationSpeed;
-
-        pivot.rotation.z +=
-          velocity.z * CONFIG.rotationSpeed;
+        pivot.rotation.x += velocity.x * CONFIG.rotationSpeed;
+        pivot.rotation.y += velocity.y * CONFIG.rotationSpeed;
+        pivot.rotation.z += velocity.z * CONFIG.rotationSpeed;
 
         /* 💥 occasional aggression burst */
         if (t > nextImpulse) {
-
           const boost =
             CONFIG.impulseMultiplierMin +
-            Math.random() *
-            (
-              CONFIG.impulseMultiplierMax -
-              CONFIG.impulseMultiplierMin
-            );
-
+            Math.random() * (CONFIG.impulseMultiplierMax - CONFIG.impulseMultiplierMin);
           target.multiplyScalar(boost);
-
           nextImpulse =
             t +
             CONFIG.impulseMin +
-            Math.random() *
-            (
-              CONFIG.impulseMax -
-              CONFIG.impulseMin
-            );
+            Math.random() * (CONFIG.impulseMax - CONFIG.impulseMin);
         }
       }
 
       /* 🎨 texture cycle */
       if (t > nextSwap) {
-
         swapTexture();
-
         nextSwap =
           t +
           CONFIG.swapMin +
-          Math.random() *
-          (CONFIG.swapMax - CONFIG.swapMin);
+          Math.random() * (CONFIG.swapMax - CONFIG.swapMin);
       }
 
       renderer.render(scene, camera);
     }
 
     renderer.setAnimationLoop(animate);
-
     window.addEventListener("resize", resize);
 
   </script>
