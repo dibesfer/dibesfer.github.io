@@ -77,6 +77,27 @@
                 "author": "ManDaKiMDK",
                 "src": "assets/songs/mandakimdk-xylophone-and-forest-307174.mp3",
                 "link": "https://pixabay.com/es/music/instrumentos-solistas-xylophone-and-forest-307174/"
+        },
+
+        {
+                "name": "Magic Forest",
+                "author": "DomartiStudios",
+                "src": "assets/songs/domartistudios-magic-forest-473582.mp3",
+                "link": "https://pixabay.com/es/music/misterio-magic-forest-473582/"
+        },
+
+        {
+                "name": "Celtic Sound track",
+                "author": "RickBeck",
+                "src": "assets/songs/rickbeck-celtic-sound-track-112183.mp3",
+                "link": "https://pixabay.com/es/music/titulo-principal-celtic-sound-track-112183/"
+        },
+
+        {
+                "name": "Epic Eagle Flight - Celtic - Medieval - Nordic - Background Music",
+                "author": "JuliusH",
+                "src": "assets/songs/juliush-epic-eagle-flight-celtic-medieval-nordic-background-music-440117.mp3",
+                "link": "https://pixabay.com/es/music/gente-epic-eagle-flight-celtic-medieval-nordic-background-music-440117/"
         }
 
 
