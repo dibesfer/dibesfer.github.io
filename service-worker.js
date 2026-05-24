@@ -1,4 +1,4 @@
-const CACHE_NAME = "v4";
+const CACHE_NAME = "v5";
 const FILES = [
   "/",
   "/index.html",
@@ -43,13 +43,13 @@ self.addEventListener("fetch", event => {
   // HTML pages: network first.
   if (req.mode === "navigate" || req.destination === "document") {
     event.respondWith(
-      fetch(req)
-        .then(res => {
+      (async () => {
+        try {
+          const res = await fetch(req);
           const copy = res.clone();
           caches.open(CACHE_NAME).then(cache => cache.put(req, copy));
           return res;
-        })
-        .catch(async () => {
+        } catch {
           return (
             (await caches.match(req)) ||
             (await caches.match("/index.html")) ||
@@ -58,27 +58,29 @@ self.addEventListener("fetch", event => {
               headers: { "Content-Type": "text/plain" }
             })
           );
-        })
+        }
+      })()
     );
     return;
   }
 
   // Assets: network first, cache fallback.
   event.respondWith(
-    fetch(req)
-      .then(res => {
+    (async () => {
+      try {
+        const res = await fetch(req);
         // solo cachear respuestas válidas
         if (res.ok) {
           const copy = res.clone();
           caches.open(CACHE_NAME).then(cache => cache.put(req, copy));
         }
         return res;
-      })
-      .catch(async () => {
+      } catch {
         const cached = await caches.match(req);
         if (cached) return cached;
         // no hay caché → dejar fallar limpiamente
         return Response.error();
-      })
+      }
+    })()
   );
 });
