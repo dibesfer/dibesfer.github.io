@@ -1,5 +1,4 @@
 const CACHE_NAME = "v3";
-
 const FILES = [
   "/",
   "/index.html",
@@ -11,10 +10,10 @@ const FILES = [
 
 self.addEventListener("install", event => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(FILES))
+    caches.open(CACHE_NAME)
+      .then(cache => cache.addAll(FILES))
+      .then(() => self.skipWaiting())
   );
-
-  self.skipWaiting();
 });
 
 self.addEventListener("activate", event => {
@@ -25,10 +24,8 @@ self.addEventListener("activate", event => {
           .filter(key => key !== CACHE_NAME)
           .map(key => caches.delete(key))
       )
-    )
+    ).then(() => self.clients.claim())
   );
-
-  self.clients.claim();
 });
 
 self.addEventListener("fetch", event => {
@@ -36,7 +33,6 @@ self.addEventListener("fetch", event => {
   const url = new URL(req.url);
 
   if (req.method !== "GET") return;
-
   // Only handle this same site.
   if (url.origin !== self.location.origin) return;
 
@@ -46,11 +42,7 @@ self.addEventListener("fetch", event => {
       fetch(req)
         .then(res => {
           const copy = res.clone();
-
-          caches.open(CACHE_NAME).then(cache => {
-            cache.put(req, copy);
-          });
-
+          caches.open(CACHE_NAME).then(cache => cache.put(req, copy));
           return res;
         })
         .catch(async () => {
@@ -59,14 +51,11 @@ self.addEventListener("fetch", event => {
             (await caches.match("/index.html")) ||
             new Response("Offline", {
               status: 503,
-              headers: {
-                "Content-Type": "text/plain"
-              }
+              headers: { "Content-Type": "text/plain" }
             })
           );
         })
     );
-
     return;
   }
 
@@ -88,4 +77,4 @@ self.addEventListener("fetch", event => {
         return Response.error();
       })
   );
-}); // ← esta faltaba
+});
