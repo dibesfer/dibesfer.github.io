@@ -117,15 +117,22 @@ hr {
 }
 
 .adTxt {
-    text-overflow: ellipsis;
     overflow: auto;
     white-space: nowrap;
-    height: 2rem;
+    height: 2.5rem;
+    min-width: 0;
+
+    mask-image: linear-gradient(to right, white 80%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to right, white 80%, transparent 100%);
+    
 }
 
+
+.adTxt:after {
+    content: "⠀⠀";
+}
 .adImg{
     height: 3.5rem;
-    
 }
 
 /* DARK MODE */
