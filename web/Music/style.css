@@ -22,44 +22,50 @@ a {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    height: 3.3rem;
+    height: 3.5rem;
 }
 
-#app > * {
-    
-}
+#app>* {}
 
 .icon {
     height: 100%;
     user-select: none;
-    
+
 }
 
 #title {
     white-space: nowrap;
-    text-overflow: ellipsis;
     text-align: center;
     overflow: auto;
     flex: 1;
     height: 2rem;
     line-height: 2;
-    width: max-content;
+    min-width: 0;
+
+    mask-image: linear-gradient(to right, white 90%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to right, white 90%, transparent 100%);
     background-color: rgba(85, 85, 85, 0.646);
     border-radius: 10px;
     padding: 0 10px;
     color: white;
-    
+    transition: all 0.3s;
+
 }
 
-#playBtn, #stopBtn, #skipBtn{
+#playBtn,
+#stopBtn,
+#skipBtn {
     border-radius: 24%;
     margin: 0 5px;
 }
 
-#playBtn:hover, #stopBtn:hover, #skipBtn:hover{
+#playBtn:hover,
+#stopBtn:hover,
+#skipBtn:hover {
     filter: brightness(2);
     border: solid 2px gray;
 }
+
 #playBtn {
     background-color: limegreen;
 
