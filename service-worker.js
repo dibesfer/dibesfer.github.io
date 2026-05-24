@@ -70,26 +70,21 @@ self.addEventListener("fetch", event => {
     return;
   }
 
-  // Assets: network first, cache fallback.
-  event.respondWith(
-    fetch(req)
-      .then(res => {
+// Assets: network first, cache fallback.
+event.respondWith(
+  fetch(req)
+    .then(res => {
+      // solo cachear respuestas válidas
+      if (res.ok) {
         const copy = res.clone();
-
-        caches.open(CACHE_NAME).then(cache => {
-          cache.put(req, copy);
-        });
-
-        return res;
-      })
-      .catch(async () => {
-        return (
-          (await caches.match(req)) ||
-          new Response("", {
-            status: 504,
-            statusText: "Offline and not cached"
-          })
-        );
-      })
-  );
-});
+        caches.open(CACHE_NAME).then(cache => cache.put(req, copy));
+      }
+      return res;
+    })
+    .catch(async () => {
+      const cached = await caches.match(req);
+      if (cached) return cached;
+      // no hay caché → dejar fallar limpiamente
+      return Response.error();
+    })
+);
