@@ -6,7 +6,7 @@ const MEMORY_KEY = "dibesferV3_localVisits";
 const url = new URLSearchParams(window.location.search).get("url")
   || window.location.href;
 
-// --- SB ---
+  // --- SB ---
 async function hit(url) {
   try {
     const res = await fetch(SB_ENDPOINT, {
@@ -37,4 +37,5 @@ hit(url).then(res => {
 
 let local = parseInt(loadLocal()) || 0;
 local++;
+console.log("Local visits: " + local)
 saveLocal(local);
