@@ -6,13 +6,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>dibesfer ads</title>
     <link rel="stylesheet" href="/dibesferV3/style.css">
+    <script src="/ferscript.js"></script>
     <style>
-
         * {
             margin: 0;
             box-sizing: border-box;
         }
-        
+
         .ad {
             width: 100%;
             height: 6rem;
@@ -49,8 +49,9 @@
             -webkit-mask-image: linear-gradient(to right, white 80%, transparent 100%);
 
         }
+
         .adTxt:after {
-            content: "⠀⠀";
+            content: "⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀";
         }
 
         .adImg {
@@ -64,22 +65,14 @@
 <body>
     <div class="ad">
         <div style="display: flex; justify-content: space-between;">
-            <div>Ad</div>
+            <div style="color: gray;font-size: 0.75rem;">Ethical Ads</div>
             <div style="color: gray;font-size: 0.75rem;">Advertise <a href="">here</a></div>
         </div>
         <div class="flexo">
-            <img class="adImg"
-                src="https://upload.wikimedia.org/wikipedia/commons/1/1b/Integrated_circuit_on_microchip.jpg"
-                alt="microchip">
+            <img class="adImg">
             <div class="flexo2">
-                <div class="adTitle"><a href="" target="_blank">NVIDIA</a></div>
-                <div class="adTxt">Buy microchips now <a href="" target="_blank">here</a> and Lorem ipsum
-                    dolor sit amet
-                    consectetur
-                    adipisicing elit. Itaque quas nihil doloremque laborum eaque nam a corporis corrupti,
-                    sint
-                    ipsa,
-                    totam ad necessitatibus odio dignissimos. Illo molestias eveniet culpa cupiditate?</div>
+                <div class="adTitle"><a href="" target="_blank"></a></div>
+                <div class="adTxt"></div>
             </div>
         </div>
     </div>
@@ -90,7 +83,6 @@
         let myAdImg = document.querySelector(".adImg")
         let myAdTxt = document.querySelector(".adTxt")
         let myAdTitle = document.querySelector(".adTitle")
-        console.log(myAdTitle)
 
         let ads = [
             {
@@ -101,14 +93,54 @@
             {
                 adTitle: "<a href='https://fedoraproject.org' target='_blank'>Fedora</a>",
                 adImg: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/Fedora_logo.svg/960px-Fedora_logo.svg.png",
-                adTxt: `Fedora es una de las distribuciones de Linux más populares y avanzadas`,
+                adTxt: `One of the most advanced and popular Linux distributions`,
+            },
+            {
+                adTitle: "<a href='https://www.gimp.org/' target='_blank'>GIMP</a>",
+                adImg: "https://www.gimp.org/images/frontpage/wilber-big.png",
+                adTxt: `GNU Image Manipulation Program. It is a freely distributed program for such tasks as photo retouching, image composition and image authoring`,
+            },
+            {
+                adTitle: "<a href='https://www.luanti.org' target='_blank'>Luanti</a>",
+                adImg: "https://www.luanti.org/media/icon.svg",
+                adTxt: `An open-source voxel game creation platform. Play one of our many games solo or together. Mod a game as you see fit, or make your own. `,
+            },
+            {
+                adTitle: "<a href='https://www.blockbench.net/' target='_blank'>BlockBench</a>",
+                adImg: "https://www.blockbench.net/_nuxt/blockbench_logo_text_white.DTwUYmza.svg",
+                adTxt: `A low-poly 3D model editor`,
             }
+
+            
         ]
 
-        myAdTitle.innerHTML = ads[1].adTitle
-        myAdImg.src = ads[1].adImg
-        myAdTxt.innerHTML = ads[1].adTxt
-        
+        let norepeat = localStorage.getItem("dibesfer_ad_norepeat_random_number")
+
+        if (norepeat == null){
+            norepeat = localStorage.setItem("dibesfer_ad_norepeat_random_number", null)
+        }
+
+        function selectRandomAd() {
+
+            let randomNum = randomInt(0, ads.length - 1)
+
+            while (randomNum == norepeat) {
+                randomNum = randomInt(0, ads.length - 1)
+            }
+
+            myAdTitle.innerHTML = ads[randomNum].adTitle
+            myAdImg.src = ads[randomNum].adImg
+            myAdTxt.innerHTML = ads[randomNum].adTxt
+
+            norepeat = localStorage.setItem("dibesfer_ad_norepeat_random_number", randomNum)
+
+        }
+        selectRandomAd()
+
+        let intervalVar = setInterval(() => {
+            selectRandomAd()
+ 
+        }, 5000);
 
     </script>
 </body>
