@@ -22,8 +22,9 @@
       font-family: monospace;
       font-size: 1.123rem;
       color: white;
-      text-shadow: 0 0 2.5px white;
       overflow-y: auto;
+      filter: contrast(2) saturate(3);
+
     }
   </style>
   <script src="/ferscript.js"></script>
@@ -52,7 +53,9 @@
     function write() {
 
       stopTypeWrite()
-      
+      let randomColor = getRandomColor()
+      output.style = "color: " + randomColor + 
+      ";text-shadow: 0 0 2.5px " + randomColor + ";"
       output.textContent = ""
 
       let randomNum = randomInt(0, dialogues.length - 1)
@@ -70,7 +73,15 @@
     }
     write()
 
-    
+    function getRandomColor(){
+      let color = [
+        randomInt(127,200),
+        randomInt(127,200),
+        randomInt(127,200)
+      ]
+
+      return "rgb(" + color[0] + "," + color[1] + "," + + color[2]+ ")"
+    }
 
 
     async function writeSequence(el, frases) {
