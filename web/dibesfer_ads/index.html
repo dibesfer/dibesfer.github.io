@@ -90,12 +90,14 @@
             </div>
         </div>
 
-         <div id="EthicalAds" class="hidden">
-            <p class="discreteInfo">Ethical ads is a compendium of software I personally use and recommend to you. You can be advertised here if you have something cool to share. Advertise to <a href="mailto:dibesfer@gmail.com">dibesfer@gmail.com</a></p>
+        <div id="EthicalAds" class="hidden">
+            <p class="discreteInfo">Ethical ads is a compendium of software I personally use and recommend to you. You
+                can be advertised here if you have something cool to share. Advertise to <a
+                    href="mailto:dibesfer@gmail.com">dibesfer@gmail.com</a></p>
         </div>
     </div>
 
-   
+
 
     <script>
 
@@ -107,7 +109,7 @@
         let EthicalAds = document.getElementById("EthicalAds")
         let adContent = document.getElementById("adContent")
         console.log("hye")
-        function toggleEthicalAds(){
+        function toggleEthicalAds() {
             EthicalAds.classList.toggle("hidden")
             adContent.classList.toggle("hidden")
             console.log("hey")
@@ -142,12 +144,12 @@
                 adTxt: `A low-poly 3D model editor`,
             }
 
-            
+
         ]
 
         let norepeat = localStorage.getItem("dibesfer_ad_norepeat_random_number")
 
-        if (norepeat == null){
+        if (norepeat == null) {
             norepeat = localStorage.setItem("dibesfer_ad_norepeat_random_number", null)
         }
 
@@ -170,8 +172,16 @@
 
         let intervalVar = setInterval(() => {
             selectRandomAd()
- 
+
         }, 5000);
+
+        setTimeout(() => {
+            const adContent = document.querySelector('#adContent');
+            // uBlock vacía src o elimina el elemento
+            if (!adContent || !adContent.src || adContent.naturalWidth === 0) {
+                showUblockMessage();
+            }
+        }, 1000);
 
     </script>
 </body>
