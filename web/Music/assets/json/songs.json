@@ -98,7 +98,30 @@
                 "author": "JuliusH",
                 "src": "assets/songs/juliush-epic-eagle-flight-celtic-medieval-nordic-background-music-440117.mp3",
                 "link": "https://pixabay.com/es/music/gente-epic-eagle-flight-celtic-medieval-nordic-background-music-440117/"
+        },
+
+        {
+                "name": "Magic Space",
+                "author": "CodeManu",
+                "src": "assets/songs/magic space.mp3",
+                "link": "https://opengameart.org/content/magic-space"
+        },
+
+        {
+                "name": "Mysterious Ambience (song21)",
+                "author": "cynicmusic",
+                "src": "assets/songs/song21.mp3",
+                "link": "https://opengameart.org/content/mysterious-ambience-song21"
+        },
+
+        {
+                "name": "Fast fight / battle music (looped)",
+                "author": "XCVG",
+                "src": "assets/songs/fight_looped.wav",
+                "link": "https://opengameart.org/content/fast-fight-battle-music-looped"
         }
+
+        
 
 
         

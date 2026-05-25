@@ -1,14 +1,36 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>dialogueSystem</title>
+  <meta name="description" content="Creates random typewritten dialogues">
+  <style>
+    * {
+      margin: 0;
+      box-sizing: border-box;
+    }
+
+    #output {
+      width: 100%;
+      height: 100dvh;
+      text-align: center;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: monospace;
+      font-size: 1.123rem;
+      color: white;
+      text-shadow: 0 0 2.5px white;
+      overflow-y: auto;
+    }
+  </style>
   <script src="/ferscript.js"></script>
 </head>
+
 <body>
-  <h1>Dialogue System</h1>
-  <p>Creates random typewritten dialogues</p>
+
   <div id="output">
 
   </div>
@@ -16,36 +38,52 @@
   <script>
 
     let dialogues = [
-      "hey",
-      "sup?",
-      "bye",
-      "the universe is vast",
-      "this is a test dialogue",
-      "el orden no altera el producto",
-      "más sabe el diablo por viejo, que por diablo",
-      "isn't this the song you tried to remember?"
+      "Welcome stranger",
+      "The Youniverse is vast",
+      "No space is limitted if ideas fit in",
+      "you are in dibesfer.github.io",
+      "What am A.I?",
+      "Where do I come from and go to?",
+      "Nothing's really as it seems, its so wonderfully different."
     ]
 
     let norepeat
-    
-    function write(){
 
-      let randomNum = randomInt(0,dialogues.length-1)
+    function write() {
 
-      while (randomNum == norepeat){
-        randomNum = randomInt(0,dialogues.length-1)
+      stopTypeWrite()
+      
+      output.textContent = ""
+
+      let randomNum = randomInt(0, dialogues.length - 1)
+
+      while (randomNum == norepeat) {
+        randomNum = randomInt(0, dialogues.length - 1)
       }
 
-      output.textContent = dialogues[randomNum]
-  
+      typeWrite(dialogues[randomNum], output )
+
       norepeat = randomNum
 
-      setTimeout(write, 500);
+      setTimeout(write, 5000);
 
     }
     write()
 
+    
+
+
+    async function writeSequence(el, frases) {
+      for (let f of frases) {
+        await typeWriter(f, el);
+        displayer.innerHTML += "<br><br>";
+      }
+    }
+
+    //writeSequence(displayer, myLongText);
+
   </script>
 
 </body>
+
 </html>

@@ -35,13 +35,17 @@ function needsazero(number) {
 function decimalTwo(num) {
   return (Math.round(num * 100) / 100).toFixed(2);
 }
+
+
 let typeWriteCount = 0
+
+let interval
 
 function typeWrite(what, where, speed) {
 
   if (!speed) speed = 75
 
-  let interval = setInterval(type, speed)
+  interval = setInterval(type, speed)
 
   function type() {
     if (typeWriteCount < what.length) {
@@ -49,9 +53,15 @@ function typeWrite(what, where, speed) {
       else console.log(what[typeWriteCount])
       typeWriteCount++;
     }
-    else clearInterval(interval)
+    else {
+      stopTypeWrite()
+    }
   }
+}
 
+function stopTypeWrite(){
+      typeWriteCount=0
+      clearInterval(interval)
 }
 
 function thousandDot(number) {
@@ -107,7 +117,7 @@ function toggleFullscreen(toggleFull) {
     closeFullscreen()
     if (toggleFull)
       toggleFull.src = "/assets/icons/fullscreen.png"
-      //toggleFull.textContent = "Full"
+    //toggleFull.textContent = "Full"
   }
   else {
     console.log("no full")
