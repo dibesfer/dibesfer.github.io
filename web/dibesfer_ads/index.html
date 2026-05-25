@@ -22,13 +22,18 @@
         .ad {
             width: 100%;
             height: 6rem;
-            border: solid 3px white;
+            
+            background-color: rgb(39, 39, 39);
             line-height: 1.5;
             overflow: hidden;
             padding: 5px 10px;
             display: flex;
             flex-direction: column;
             color: white;
+        }
+
+        a {
+            color:lightblue
         }
 
         .flexo {
@@ -63,6 +68,10 @@
             height: 3rem;
             aspect-ratio: 1;
             object-fit: cover;
+            filter: drop-shadow(0 0 5px rgba(220, 220, 220, 0.5))
+
+;
+       
         }
 
         .discreteInfo {
@@ -108,7 +117,7 @@
 
         let EthicalAds = document.getElementById("EthicalAds")
         let adContent = document.getElementById("adContent")
-        console.log("hye")
+
         function toggleEthicalAds() {
             EthicalAds.classList.toggle("hidden")
             adContent.classList.toggle("hidden")
@@ -166,14 +175,14 @@
             myAdTxt.innerHTML = ads[randomNum].adTxt
 
             norepeat = localStorage.setItem("dibesfer_ad_norepeat_random_number", randomNum)
-
+            norepeat = randomNum
         }
         selectRandomAd()
 
         let intervalVar = setInterval(() => {
             selectRandomAd()
 
-        }, 5000);
+        }, 15000);
 
     </script>
 </body>
