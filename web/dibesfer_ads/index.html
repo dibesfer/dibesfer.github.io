@@ -13,13 +13,19 @@
             box-sizing: border-box;
         }
 
+        #EthicalAds {
+            color: black;
+            padding: 5px;
+            overflow: auto;
+        }
+
         .ad {
             width: 100%;
             height: 6rem;
             border: solid 3px white;
             line-height: 1.5;
             overflow: hidden;
-            padding: 5px;
+            padding: 5px 10px;
             display: flex;
             flex-direction: column;
             color: white;
@@ -44,20 +50,28 @@
             white-space: nowrap;
             height: 2.5rem;
             min-width: 0;
-
-            mask-image: linear-gradient(to right, white 80%, transparent 100%);
-            -webkit-mask-image: linear-gradient(to right, white 80%, transparent 100%);
+            mask-image: linear-gradient(to right, white 95%, transparent 100%);
+            -webkit-mask-image: linear-gradient(to right, white 95%, transparent 100%);
 
         }
 
         .adTxt:after {
-            content: "⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀";
+            content: "⠀⠀⠀⠀⠀⠀⠀";
         }
 
         .adImg {
             height: 3rem;
-            aspect-ratio: 16/9;
-            object-fit: contain;
+            aspect-ratio: 1;
+            object-fit: cover;
+        }
+
+        .discreteInfo {
+            color: gray;
+            font-size: 0.75rem;
+        }
+
+        .hidden {
+            display: none;
         }
     </style>
 </head>
@@ -65,17 +79,23 @@
 <body>
     <div class="ad">
         <div style="display: flex; justify-content: space-between;">
-            <div style="color: gray;font-size: 0.75rem;">Ethical Ads</div>
-            <div style="color: gray;font-size: 0.75rem;">Advertise <a href="">here</a></div>
+            <div class="discreteInfo" id="EthicalAds_button">Ethical Ads</div>
+            <div class="discreteInfo"></div>
         </div>
-        <div class="flexo">
+        <div id="adContent" class="flexo">
             <img class="adImg">
             <div class="flexo2">
                 <div class="adTitle"><a href="" target="_blank"></a></div>
                 <div class="adTxt"></div>
             </div>
         </div>
+
+         <div id="EthicalAds" class="hidden">
+            <p class="discreteInfo">Ethical ads is a compendium of software I personally use and recommend to you. You can be advertised here if you have something cool to share. Advertise to <a href="mailto:dibesfer@gmail.com">dibesfer@gmail.com</a></p>
+        </div>
     </div>
+
+   
 
     <script>
 
@@ -84,11 +104,22 @@
         let myAdTxt = document.querySelector(".adTxt")
         let myAdTitle = document.querySelector(".adTitle")
 
+        let EthicalAds = document.getElementById("EthicalAds")
+        let adContent = document.getElementById("adContent")
+        console.log("hye")
+        function toggleEthicalAds(){
+            EthicalAds.classList.toggle("hidden")
+            adContent.classList.toggle("hidden")
+            console.log("hey")
+        }
+
+        EthicalAds_button.addEventListener("click", toggleEthicalAds)
+
         let ads = [
             {
-                adTitle: "Debian",
+                adTitle: "<a href='https://debian.org' target='_blank'>Debian</a>",
                 adImg: "https://www.debian.org/Pics/debian-logo-1024x576.png",
-                adTxt: `El sistema operativo universal. The universal operating system. Visit <a href="https://www.debian.org/" target="_blank">here</a> Debian is a complete Free Operating System!`,
+                adTxt: `El sistema operativo universal. The <b>universal</b> and <i>free</i> operating system.`,
             },
             {
                 adTitle: "<a href='https://fedoraproject.org' target='_blank'>Fedora</a>",
@@ -107,7 +138,7 @@
             },
             {
                 adTitle: "<a href='https://www.blockbench.net/' target='_blank'>BlockBench</a>",
-                adImg: "https://www.blockbench.net/_nuxt/blockbench_logo_text_white.DTwUYmza.svg",
+                adImg: "https://www.blockbench.net/images/logos/icon.png",
                 adTxt: `A low-poly 3D model editor`,
             }
 
