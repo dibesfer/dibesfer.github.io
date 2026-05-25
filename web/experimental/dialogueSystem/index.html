@@ -6,6 +6,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>dialogueSystem</title>
   <meta name="description" content="Creates random typewritten dialogues">
+  <script src="/ferscript.js"></script>
+  <script src="/web/FakeLanguage/script.js"></script>
+
   <style>
     * {
       margin: 0;
@@ -27,7 +30,7 @@
 
     }
   </style>
-  <script src="/ferscript.js"></script>
+  
 </head>
 
 <body>
@@ -39,14 +42,21 @@
   <script>
 
     let dialogues = [
-      "Welcome stranger",
+      "Welcome stranger :-)",
       "The Youniverse is vast",
       "No space is limitted if ideas fit in",
       "you are in dibesfer.github.io",
       "What am A.I?",
-      "Where do I come from and go to?",
-      "Nothing's really as it seems, its so wonderfully different."
+      "Where do I come from?",
+      "Where am I going to?",
+      "Nothing's really as it seems, its so wonderfully different.",
+      "Box, Cube, Hexaedron, Voxel, Block..."
     ]
+
+    dialogues.push(fillASentence(6))
+    dialogues.push(fillASentence(6))
+    dialogues.push(fillASentence(6))
+    dialogues.push(fillASentence(6))
 
     let norepeat
 
