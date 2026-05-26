@@ -3,6 +3,7 @@ const SB_URL = "https://qugihsopwjemzakhrbvw.supabase.co";
 const SB_KEY = "sb_publishable_pjIVdSrJflHIiUvT-5WDog_dCUpU8DC";
 const SB_ENDPOINT = `${SB_URL}/functions/v1/visit_v3`;
 const MEMORY_KEY = "dibesferV3_localVisits";
+const DEVICE_KEY = "dibesferV3_deviceId";
 
 // --- URL ---
 const url = new URLSearchParams(window.location.search).get("url")
@@ -27,11 +28,21 @@ async function hit(url) {
 function loadLocal() { return localStorage.getItem(MEMORY_KEY); }
 function saveLocal(val) { localStorage.setItem(MEMORY_KEY, val); }
 
+// --- DEVICE ID ---
+function getDeviceId() {
+  let id = localStorage.getItem(DEVICE_KEY);
+  if (!id) {
+    id = crypto.randomUUID();
+    localStorage.setItem(DEVICE_KEY, id);
+  }
+  return id;
+}
+
 // --- PRESENCE ---
 function subscribeToPresence(onCountChange) {
   const client = supabase.createClient(SB_URL, SB_KEY);
   const channel = client.channel("online-users", {
-    config: { presence: { key: 0 } }
+    config: { presence: { key: getDeviceId() } }
   });
 
   channel
@@ -41,7 +52,7 @@ function subscribeToPresence(onCountChange) {
     })
     .subscribe(async (status) => {
       if (status === "SUBSCRIBED") {
-        await channel.track({ user_id: "anon" });
+        await channel.track({ user_id: getDeviceId() });
       }
     });
 
