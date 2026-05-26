@@ -77,10 +77,12 @@ function updateGoButton() {
   const y = scrollY(w);
 
   // FIX: lógica correcta
-  if (y <= 500) {
-    goBtn.textContent = "▼";
+  if (y <= 200) {
+   
+    goBtn.classList.remove("rotated180")
   } else {
-    goBtn.textContent = "▲";
+    
+    goBtn.classList.add("rotated180")
   }
 }
 
