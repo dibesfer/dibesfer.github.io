@@ -2,13 +2,13 @@
 Folder name: supabase_expert
 Output file: supabase_expert_Struct.txt
 Author: fer
-Last modification: 2026-05-23 11:21:14.787415822
+Last modification: 2026-05-24 14:14:06.234103095
 ___Stats___
-Total size: 24.26KB
+Total size: 23,62KB
 0 directories, 4 files
 Content files: 4
-Content lines: 1034
-Content characters: 24812
+Content lines: 1013
+Content characters: 24157
 Ignored: .git, node_modules, .godot, .import, android, build, dist, venv, __pycache__, *.uid, *.import
 ___Ordered Lists___
 
@@ -26,17 +26,12 @@ Folder's files:
 
 File size:
     Top 30 files only
-    script.js = 10.02KB
-    style.css = 5.98KB
-    index.html = 5.06KB
-    expert_sp.js = 3.19KB
+    script.js = 9,38KB
+    style.css = 5,98KB
+    index.html = 5,06KB
+    expert_sp.js = 3,19KB
 
 === TREE ===
-.
-├── expert_sp.js
-├── index.html
-├── script.js
-└── style.css
 
 === CONTENT ===
 
@@ -159,173 +154,348 @@ const SupabaseExpert = (() => {
 })()
 
 
-### ./index.html ###
-<!DOCTYPE html>
-<html lang="en">
+### ./script.js ###
+async function unlockVault() {
+  const password = vaultPass.value;
+  vaultOutput.textContent = "requesting...";
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Supabase Expert</title>
-    <link rel="icon" type="image/x-icon" href="/assets/branding/favicon512.ico">
-    <link rel="stylesheet" href="./style.css">
+  try {
+    const res = await fetch(
+      "https://kalidybwmoxhcwlfeftc.supabase.co/functions/v1/downloadStorage",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          password,
+          file: "index.html",
+          slug: "textWeb",
+        }),
+      }
+    );
 
-    <!-- SUPABASE cdn -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-    <script src="./expert_sp.js" defer></script>
-    <script src="./script.js" defer></script>
-</head>
+    if (!res.ok) {
+      const err = await res.text();
+      vaultOutput.textContent = err;
+      return;
+    }
 
-<body>
-    <header>
-        <h1>SP-X</h1>
-    </header>
+    // 🧿 THIS is the key change
+    const htmlBlob = await res.blob();
+    const htmlUrl = URL.createObjectURL(
+      new Blob([htmlBlob], { type: "text/html" })
+    );
 
-    <section>
-        <h3>Vault Gate</h3>
+    const iframe = document.createElement("iframe");
 
-        <input id="vaultPass" type="password" placeholder="enter password" />
-        <button onclick="unlockVault()">UNLOCK</button>
+    iframe.style.width = "100%";
+    iframe.style.height = "100vh";
+    iframe.style.border = "0";
 
-        <pre id="vaultOutput">Awaiting for input. Result will be diplayed here.</pre>
-    </section>
+    iframe.src = htmlUrl;
 
-    <br>
-    <hr>
-    <br>
+    vaultOutput.innerHTML = "";
+    vaultOutput.appendChild(iframe);
 
-    <div id="demo"></div>
-    <br>
-    <input id="myInput" type="text" name="" maxlength="250">
-    <button id="writeTable()" onclick="writeTable()">send</button>
-    <br>
+  } catch (err) {
+    vaultOutput.textContent = String(err);
+  }
+}
+// UI operations for the Webochi Supabase Expert page.
+let tableRows = 1
+let TheUser
 
-    <br>
-    <hr>
-    <br>
+const restrictedSlug = "private-test"
 
-    <div>
+function formatMessage(time, message, timezone, username) {
+    if (!username) {
+        username = "Anonymous"
+    }
+    else username = username.split("@")[0]
 
-        <h3>Log in</h3>
-        <p>You are now <span id="displayUsername">Anonymous</span></p>
+    const myDate = new Date(time).toISOString().slice(0, 10) + " " + new Date(time).toISOString().slice(11, 19)
 
-        <div id="loginDiv">
-            <label for="">Email</label>
-            <input type="text" id="userEmail">
-
-            <br>
-            <label for="">Password</label>
-
-            <input type="password" id="userPass">
-
-            <p id="consola">Fill both fields</p>
-            <button onclick="login()">Log in</button>
+    return `
+        <div class="message">
+            <div class="message_img">
+                <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRxJpQCWWBAh3ksKDVo-QPx2obmf8QlmSvUsg&s">
+            </div>
+            <div class="message_text">
+                <p>(${tableRows}) ${myDate} (${timezone})<br><b>${username}</b>: ${message}</p>
+            </div>
         </div>
-        <div id="logoutDiv" class="invisible">
-            <button onclick="logout()">Log out</button>
+    `
+}
+
+async function readTable() {
+    const { data, error } = await SupabaseExpert.readChatRows()
+
+    if (error) {
+        console.error(error)
+        return
+    }
+
+    let myHTML = ""
+    tableRows = 1
+
+    for (let i = 0; i < data.length; i++) {
+        const element = data[i]
+        myHTML += formatMessage(element.created_at, element.message, element.timezone, element.username)
+        tableRows++
+    }
+
+    demo.innerHTML = myHTML
+    demo.scrollTo(0, demo.scrollHeight)
+}
+
+function getOnlyLastMessage(newInsert) {
+    demo.innerHTML += formatMessage(newInsert.created_at, newInsert.message, newInsert.timezone, newInsert.username)
+    tableRows++
+    demo.scrollTo(0, demo.scrollHeight)
+}
+
+async function writeTable() {
+    let myUsername = "Anonymous"
+    if (TheUser) {
+        myUsername = TheUser.email
+    }
+
+    const myMessage = myInput.value
+
+    if (myMessage != "") {
+        const { error } = await SupabaseExpert.insertChatMessage({
+            message: myMessage,
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            username: myUsername
+        })
+
+        if (!error) {
+            myInput.value = ""
+        }
+    }
+}
+
+async function getUser() {
+    const { user } = await SupabaseExpert.getUser()
+
+    if (user) {
+        displayUsername.textContent = user.email
+        consola.textContent = "Logged in"
+        loginDiv.classList.toggle("invisible")
+        logoutDiv.classList.toggle("invisible")
+        return user
+    }
+}
+
+async function setUser() {
+    TheUser = await getUser()
+    updateJwtAwareness()
+}
+
+async function login() {
+    let { data, error } = await SupabaseExpert.login(userEmail.value, userPass.value)
+
+    if (error) {
+        consola.textContent = error.message
+    }
+    else {
+        setUser()
+    }
+}
+
+async function logout() {
+    let { error } = await SupabaseExpert.logout()
+    if (!error) location.reload()
+}
+
+function buildEdgePayload(attempt, slug = null) {
+    return {
+        mission: "website_fortress_checkpoint",
+        attempt,
+        slug,
+        canonical_site: "https://dibesfer.github.io",
+        user: TheUser ? TheUser.email : "Anonymous",
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        local_visits: Number(localStorage.getItem("sb_LocalVisits") || 0),
+        browser_time: new Date().toISOString()
+    }
+}
+
+function updateJwtAwareness() {
+    const hasJwt = Boolean(TheUser)
+    jwtStatus.textContent = hasJwt ? "present" : "none"
+
+    if (hasJwt) {
+        loggedPasswordButton.classList.remove("invisible")
+    }
+    else {
+        loggedPasswordButton.classList.add("invisible")
+    }
+}
+
+function mockLoggedPassword() {
+    edgeStatus.textContent = "JWT detected"
+    edgeResponse.textContent = "Logged Password route acknowledged. Not wired to Edge yet."
+}
+
+function showRestrictedArea() {
+    restrictedSection.classList.remove("invisible")
+    restrictedBreakA.classList.remove("invisible")
+    restrictedBreakB.classList.remove("invisible")
+    restrictedBreakC.classList.remove("invisible")
+}
+
+function renderValue(value) {
+    if (value === null || value === undefined || value === "") return "—"
+    return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+}
+
+function openRestrictedFullscreen() {
+    const iframe = restrictedContent.querySelector(".restricted-iframe")
+
+    if (!iframe) {
+        restrictedStatus.textContent = "iframe unavailable"
+        return
+    }
+
+    if (iframe.requestFullscreen) {
+        iframe.requestFullscreen()
+    }
+    else {
+        restrictedStatus.textContent = "fullscreen unavailable"
+    }
+}
+
+function renderRestrictedRecord(data) {
+    restrictedContent.innerHTML = `
+        <div class="restricted-resource-card">
+            <iframe
+                class="restricted-iframe"
+                title="${renderValue(data.title)}"
+                sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox allow-forms allow-downloads allow-modals"
+                allowfullscreen
+            ></iframe>
+
+            <button class="restricted-fullscreen-button" onclick="openRestrictedFullscreen()">Fullscreen</button>
+
+            <details class="restricted-row-details">
+                <summary>Show row data</summary>
+                <dl class="restricted-fields">
+                    <div><dt>slug</dt><dd>${renderValue(data.slug)}</dd></div>
+                    <div><dt>title</dt><dd>${renderValue(data.title)}</dd></div>
+                    <div><dt>type</dt><dd>${renderValue(data.type)}</dd></div>
+                    <div><dt>storage_path</dt><dd>${renderValue(data.storage_path)}</dd></div>
+                    <div><dt>required_role</dt><dd>${renderValue(data.required_role)}</dd></div>
+                    <div><dt>created_at</dt><dd>${renderValue(data.created_at)}</dd></div>
+                </dl>
+            </details>
         </div>
+    `
 
-    </div>
+    const iframe = restrictedContent.querySelector(".restricted-iframe")
+    iframe.srcdoc = data.content || "<p>—</p>"
+}
 
-    <br>
-    <hr>
-    <br>
+async function unlockRestrictedArea(resource) {
+    showRestrictedArea()
+    restrictedStatus.textContent = "resource loaded"
+    renderRestrictedRecord(resource)
+}
 
-    <section id="restrictedSection" class="restricted-panel invisible">
-        <h3>RESTRICTED AREA</h3>
-        <p class="restricted-note">Protected resource: <code>private-test</code></p>
-        <p>Status: <span id="restrictedStatus">sealed</span></p>
+async function invokeEdgeFunction() {
+    const attempt = prompt("Anon password?")
 
-        <div id="restrictedContent" class="restricted-content">
-            <p>No clearance. No content.</p>
-        </div>
-    </section>
+    if (attempt === null) {
+        edgeStatus.textContent = "anon checkpoint cancelled"
+        edgeResponse.textContent = "No request sent."
+        return
+    }
 
-    <br id="restrictedBreakA" class="invisible">
-    <hr id="restrictedBreakB" class="invisible">
-    <br id="restrictedBreakC" class="invisible">
+    if (attempt.trim() === "") {
+        edgeStatus.textContent = "anon rejected locally"
+        edgeResponse.textContent = "No. Empty or whitespace passwords are impossible."
+        return
+    }
 
-    <section id="edgeSection" class="edge-panel">
-        <h3>Edge Function Gate</h3>
-        <p class="edge-note">Endpoint: <code>fortress_ping</code></p>
-        <p>Status: <span id="edgeStatus">standby</span></p>
-        <p>JWT: <span id="jwtStatus">none</span></p>
+    const payload = buildEdgePayload(attempt, restrictedSlug)
+    edgeStatus.textContent = "sending anon password"
+    edgeResponse.textContent = "Calling Edge Function..."
 
-        <p>Output</p>
-        <pre id="edgeResponse">No request sent yet.</pre>
+    try {
+        const report = await SupabaseExpert.callEdge(payload)
+        const accessGranted = report.ok && report.body.ok
 
-        <button onclick="invokeEdgeFunction()">Anon Password</button>
-        <button id="loggedPasswordButton" class="invisible" onclick="mockLoggedPassword()">Logged Password</button>
-    </section>
+        edgeStatus.textContent = accessGranted ? "ACCESS GRANTED" : "ACCESS DENIED"
+        edgeResponse.textContent = JSON.stringify(report, null, 2)
 
-    <br>
-    <hr>
-    <br>
+        if (accessGranted && report.body.resource) {
+            await unlockRestrictedArea(report.body.resource)
+        }
+        else if (accessGranted) {
+            showRestrictedArea()
+            restrictedStatus.textContent = "resource missing"
+            restrictedContent.textContent = "ACCESS GRANTED, but Edge returned no resource."
+        }
+    }
+    catch (error) {
+        edgeStatus.textContent = "request blocked / network failed"
+        edgeResponse.textContent = String(error)
+    }
+}
 
-    <section id="capabilitiesSection" class="capabilities-panel">
-        <h3>Capabilities</h3>
-        <p class="edge-note">Supabase Free Tier operational limits. Time window marked. No fantasy numbers.</p>
+function setupKeyboardSubmit() {
+    myInput.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+            event.preventDefault()
+            writeTable()
+        }
+    })
 
-        <div class="capabilities-grid">
-            <article>
-                <span class="capability-emoji">🪖</span>
-                <strong>50k Auth MAU / month</strong>
-                <p>Monthly active user ceiling. Identity force limit.</p>
-            </article>
-            <article>
-                <span class="capability-emoji">📡</span>
-                <strong>200 Realtime connections / live</strong>
-                <p>Concurrent Presence / Broadcast field capacity. Same-time troops.</p>
-            </article>
-            <article>
-                <span class="capability-emoji">💬</span>
-                <strong>2M Realtime messages / month</strong>
-                <p>Monthly radio traffic allowance. Chat, presence signals, broadcast fire.</p>
-            </article>
-            <article>
-                <span class="capability-emoji">🚀</span>
-                <strong>500k Edge invocations / month</strong>
-                <p>Monthly server-side launches. Password gates, private checks, command logic.</p>
-            </article>
-            <article>
-                <span class="capability-emoji">🧠</span>
-                <strong>256 MB Edge memory / instance</strong>
-                <p>Runtime payload capacity. Fit the mission. Do not drag monsters.</p>
-            </article>
-            <article>
-                <span class="capability-emoji">🧱</span>
-                <strong>500 MB database / total</strong>
-                <p>Storage bunker limit. Logs, users, resources. Count the weight.</p>
-            </article>
-        </div>
-    </section>
+    userEmail.addEventListener("keydown", submitLoginOnEnter)
+    userPass.addEventListener("keydown", submitLoginOnEnter)
+}
 
-    <br>
-    <hr>
-    <br>
-    <h3>Technologies used:</h3>
-    <ol>
-        <li>Tables</li>
-        <ol>
-            <li>RLS Policies</li>
-            <li>Realtime</li>
-        </ol>
-        <li>Presence</li>
-        <li>Auth</li>
-        <li>Edge Functions</li>
-    </ol>
-    <footer>
+function submitLoginOnEnter(event) {
+    if (event.key === "Enter") {
+        event.preventDefault()
+        login()
+    }
+}
 
-        <br>
-        <hr>
-        <br>
-        <p>Users online: <span id="displayUsersonline">1</span></p>
-        <p>Local visits: <span id="displayLocalvisits"></span></p>
-        <p>made by <a href="https://dibesfer.github.io">dibesfer</a></p>
-    </footer>
-</body>
+function setupLocalVisits() {
+    let localVisits = localStorage.getItem("sb_LocalVisits")
+    if (localVisits == null || localVisits <= 0) {
+        localVisits = 1
+    }
+    else {
+        localVisits++
+    }
 
-</html>
+    displayLocalvisits.textContent = localVisits
+    localStorage.setItem("sb_LocalVisits", localVisits)
+}
+
+function init() {
+    SupabaseExpert.subscribeToChat({
+        onInsert: getOnlyLastMessage,
+        onDelete: readTable
+    })
+
+    SupabaseExpert.subscribeToPresence((count) => {
+        displayUsersonline.textContent = count
+    })
+
+    setupKeyboardSubmit()
+    setupLocalVisits()
+    updateJwtAwareness()
+    readTable()
+    setUser()
+}
+
+init()
+
 
 ### ./style.css ###
 * {
@@ -722,366 +892,170 @@ ol {
 }
 
 
-### ./script.js ###
-async function unlockVault() {
-  const password = vaultPass.value;
-  vaultOutput.textContent = "requesting...";
+### ./index.html ###
+<!DOCTYPE html>
+<html lang="en">
 
-  try {
-    const res = await fetch(
-      "https://kalidybwmoxhcwlfeftc.supabase.co/functions/v1/downloadStorage",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          password,
-          slug: "textWeb",
-        }),
-      }
-    );
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supabase Expert</title>
+    <link rel="icon" type="image/x-icon" href="/assets/branding/favicon512.ico">
+    <link rel="stylesheet" href="./style.css">
 
-    const data = await res.json().catch(() => null);
+    <!-- SUPABASE cdn -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+    <script src="./expert_sp.js" defer></script>
+    <script src="./script.js" defer></script>
+</head>
 
-    console.log("VAULT RESPONSE:", data);
+<body>
+    <header>
+        <h1>SP-X</h1>
+    </header>
 
-    if (!res.ok || !data?.ok) {
-      vaultOutput.textContent = data?.message || "request failed";
-      return;
-    }
+    <section>
+        <h3>Vault Gate</h3>
 
-    const files = data.files || {};
-    const fileEntries = Object.entries(files);
+        <input id="vaultPass" type="password" placeholder="enter password" />
+        <button onclick="unlockVault()">UNLOCK</button>
 
-    const fileMap = new Map(fileEntries); 
-    // path -> signedUrl
+        <pre id="vaultOutput">Awaiting for input. Result will be diplayed here.</pre>
+    </section>
 
-    const indexPath = "textWeb/index.html";
-    const indexUrl = fileMap.get(indexPath);
+    <br>
+    <hr>
+    <br>
 
-    if (!indexUrl) {
-      vaultOutput.textContent = "missing index.html";
-      return;
-    }
+    <div id="demo"></div>
+    <br>
+    <input id="myInput" type="text" name="" maxlength="250">
+    <button id="writeTable()" onclick="writeTable()">send</button>
+    <br>
 
-    let html = await fetch(indexUrl).then(r => r.text());
+    <br>
+    <hr>
+    <br>
 
-    for (const [path, url] of fileMap.entries()) {
-      const relative = path.replace("textWeb/", "");
+    <div>
 
-      html = html
-        .replaceAll(path, url)
-        .replaceAll(`./${relative}`, url)
-        .replaceAll(relative, url)
-        .replaceAll(`src="${relative}"`, `src="${url}"`)
-        .replaceAll(`href="${relative}"`, `href="${url}"`);
-    }
+        <h3>Log in</h3>
+        <p>You are now <span id="displayUsername">Anonymous</span></p>
 
-    const iframe = document.createElement("iframe");
-    iframe.style.width = "100%";
-    iframe.style.height = "100vh";
-    iframe.style.border = "0";
-    iframe.srcdoc = html;
+        <div id="loginDiv">
+            <label for="">Email</label>
+            <input type="text" id="userEmail">
 
-    vaultOutput.innerHTML = "";
-    vaultOutput.appendChild(iframe);
+            <br>
+            <label for="">Password</label>
 
-  } catch (err) {
-    vaultOutput.textContent = String(err);
-  }
-}
-// UI operations for the Webochi Supabase Expert page.
-let tableRows = 1
-let TheUser
+            <input type="password" id="userPass">
 
-const restrictedSlug = "private-test"
-
-function formatMessage(time, message, timezone, username) {
-    if (!username) {
-        username = "Anonymous"
-    }
-    else username = username.split("@")[0]
-
-    const myDate = new Date(time).toISOString().slice(0, 10) + " " + new Date(time).toISOString().slice(11, 19)
-
-    return `
-        <div class="message">
-            <div class="message_img">
-                <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRxJpQCWWBAh3ksKDVo-QPx2obmf8QlmSvUsg&s">
-            </div>
-            <div class="message_text">
-                <p>(${tableRows}) ${myDate} (${timezone})<br><b>${username}</b>: ${message}</p>
-            </div>
+            <p id="consola">Fill both fields</p>
+            <button onclick="login()">Log in</button>
         </div>
-    `
-}
-
-async function readTable() {
-    const { data, error } = await SupabaseExpert.readChatRows()
-
-    if (error) {
-        console.error(error)
-        return
-    }
-
-    let myHTML = ""
-    tableRows = 1
-
-    for (let i = 0; i < data.length; i++) {
-        const element = data[i]
-        myHTML += formatMessage(element.created_at, element.message, element.timezone, element.username)
-        tableRows++
-    }
-
-    demo.innerHTML = myHTML
-    demo.scrollTo(0, demo.scrollHeight)
-}
-
-function getOnlyLastMessage(newInsert) {
-    demo.innerHTML += formatMessage(newInsert.created_at, newInsert.message, newInsert.timezone, newInsert.username)
-    tableRows++
-    demo.scrollTo(0, demo.scrollHeight)
-}
-
-async function writeTable() {
-    let myUsername = "Anonymous"
-    if (TheUser) {
-        myUsername = TheUser.email
-    }
-
-    const myMessage = myInput.value
-
-    if (myMessage != "") {
-        const { error } = await SupabaseExpert.insertChatMessage({
-            message: myMessage,
-            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-            username: myUsername
-        })
-
-        if (!error) {
-            myInput.value = ""
-        }
-    }
-}
-
-async function getUser() {
-    const { user } = await SupabaseExpert.getUser()
-
-    if (user) {
-        displayUsername.textContent = user.email
-        consola.textContent = "Logged in"
-        loginDiv.classList.toggle("invisible")
-        logoutDiv.classList.toggle("invisible")
-        return user
-    }
-}
-
-async function setUser() {
-    TheUser = await getUser()
-    updateJwtAwareness()
-}
-
-async function login() {
-    let { data, error } = await SupabaseExpert.login(userEmail.value, userPass.value)
-
-    if (error) {
-        consola.textContent = error.message
-    }
-    else {
-        setUser()
-    }
-}
-
-async function logout() {
-    let { error } = await SupabaseExpert.logout()
-    if (!error) location.reload()
-}
-
-function buildEdgePayload(attempt, slug = null) {
-    return {
-        mission: "website_fortress_checkpoint",
-        attempt,
-        slug,
-        canonical_site: "https://dibesfer.github.io",
-        user: TheUser ? TheUser.email : "Anonymous",
-        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-        local_visits: Number(localStorage.getItem("sb_LocalVisits") || 0),
-        browser_time: new Date().toISOString()
-    }
-}
-
-function updateJwtAwareness() {
-    const hasJwt = Boolean(TheUser)
-    jwtStatus.textContent = hasJwt ? "present" : "none"
-
-    if (hasJwt) {
-        loggedPasswordButton.classList.remove("invisible")
-    }
-    else {
-        loggedPasswordButton.classList.add("invisible")
-    }
-}
-
-function mockLoggedPassword() {
-    edgeStatus.textContent = "JWT detected"
-    edgeResponse.textContent = "Logged Password route acknowledged. Not wired to Edge yet."
-}
-
-function showRestrictedArea() {
-    restrictedSection.classList.remove("invisible")
-    restrictedBreakA.classList.remove("invisible")
-    restrictedBreakB.classList.remove("invisible")
-    restrictedBreakC.classList.remove("invisible")
-}
-
-function renderValue(value) {
-    if (value === null || value === undefined || value === "") return "—"
-    return String(value)
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-}
-
-function openRestrictedFullscreen() {
-    const iframe = restrictedContent.querySelector(".restricted-iframe")
-
-    if (!iframe) {
-        restrictedStatus.textContent = "iframe unavailable"
-        return
-    }
-
-    if (iframe.requestFullscreen) {
-        iframe.requestFullscreen()
-    }
-    else {
-        restrictedStatus.textContent = "fullscreen unavailable"
-    }
-}
-
-function renderRestrictedRecord(data) {
-    restrictedContent.innerHTML = `
-        <div class="restricted-resource-card">
-            <iframe
-                class="restricted-iframe"
-                title="${renderValue(data.title)}"
-                sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox allow-forms allow-downloads allow-modals"
-                allowfullscreen
-            ></iframe>
-
-            <button class="restricted-fullscreen-button" onclick="openRestrictedFullscreen()">Fullscreen</button>
-
-            <details class="restricted-row-details">
-                <summary>Show row data</summary>
-                <dl class="restricted-fields">
-                    <div><dt>slug</dt><dd>${renderValue(data.slug)}</dd></div>
-                    <div><dt>title</dt><dd>${renderValue(data.title)}</dd></div>
-                    <div><dt>type</dt><dd>${renderValue(data.type)}</dd></div>
-                    <div><dt>storage_path</dt><dd>${renderValue(data.storage_path)}</dd></div>
-                    <div><dt>required_role</dt><dd>${renderValue(data.required_role)}</dd></div>
-                    <div><dt>created_at</dt><dd>${renderValue(data.created_at)}</dd></div>
-                </dl>
-            </details>
+        <div id="logoutDiv" class="invisible">
+            <button onclick="logout()">Log out</button>
         </div>
-    `
 
-    const iframe = restrictedContent.querySelector(".restricted-iframe")
-    iframe.srcdoc = data.content || "<p>—</p>"
-}
+    </div>
 
-async function unlockRestrictedArea(resource) {
-    showRestrictedArea()
-    restrictedStatus.textContent = "resource loaded"
-    renderRestrictedRecord(resource)
-}
+    <br>
+    <hr>
+    <br>
 
-async function invokeEdgeFunction() {
-    const attempt = prompt("Anon password?")
+    <section id="restrictedSection" class="restricted-panel invisible">
+        <h3>RESTRICTED AREA</h3>
+        <p class="restricted-note">Protected resource: <code>private-test</code></p>
+        <p>Status: <span id="restrictedStatus">sealed</span></p>
 
-    if (attempt === null) {
-        edgeStatus.textContent = "anon checkpoint cancelled"
-        edgeResponse.textContent = "No request sent."
-        return
-    }
+        <div id="restrictedContent" class="restricted-content">
+            <p>No clearance. No content.</p>
+        </div>
+    </section>
 
-    if (attempt.trim() === "") {
-        edgeStatus.textContent = "anon rejected locally"
-        edgeResponse.textContent = "No. Empty or whitespace passwords are impossible."
-        return
-    }
+    <br id="restrictedBreakA" class="invisible">
+    <hr id="restrictedBreakB" class="invisible">
+    <br id="restrictedBreakC" class="invisible">
 
-    const payload = buildEdgePayload(attempt, restrictedSlug)
-    edgeStatus.textContent = "sending anon password"
-    edgeResponse.textContent = "Calling Edge Function..."
+    <section id="edgeSection" class="edge-panel">
+        <h3>Edge Function Gate</h3>
+        <p class="edge-note">Endpoint: <code>fortress_ping</code></p>
+        <p>Status: <span id="edgeStatus">standby</span></p>
+        <p>JWT: <span id="jwtStatus">none</span></p>
 
-    try {
-        const report = await SupabaseExpert.callEdge(payload)
-        const accessGranted = report.ok && report.body.ok
+        <p>Output</p>
+        <pre id="edgeResponse">No request sent yet.</pre>
 
-        edgeStatus.textContent = accessGranted ? "ACCESS GRANTED" : "ACCESS DENIED"
-        edgeResponse.textContent = JSON.stringify(report, null, 2)
+        <button onclick="invokeEdgeFunction()">Anon Password</button>
+        <button id="loggedPasswordButton" class="invisible" onclick="mockLoggedPassword()">Logged Password</button>
+    </section>
 
-        if (accessGranted && report.body.resource) {
-            await unlockRestrictedArea(report.body.resource)
-        }
-        else if (accessGranted) {
-            showRestrictedArea()
-            restrictedStatus.textContent = "resource missing"
-            restrictedContent.textContent = "ACCESS GRANTED, but Edge returned no resource."
-        }
-    }
-    catch (error) {
-        edgeStatus.textContent = "request blocked / network failed"
-        edgeResponse.textContent = String(error)
-    }
-}
+    <br>
+    <hr>
+    <br>
 
-function setupKeyboardSubmit() {
-    myInput.addEventListener("keydown", (event) => {
-        if (event.key === "Enter") {
-            event.preventDefault()
-            writeTable()
-        }
-    })
+    <section id="capabilitiesSection" class="capabilities-panel">
+        <h3>Capabilities</h3>
+        <p class="edge-note">Supabase Free Tier operational limits. Time window marked. No fantasy numbers.</p>
 
-    userEmail.addEventListener("keydown", submitLoginOnEnter)
-    userPass.addEventListener("keydown", submitLoginOnEnter)
-}
+        <div class="capabilities-grid">
+            <article>
+                <span class="capability-emoji">🪖</span>
+                <strong>50k Auth MAU / month</strong>
+                <p>Monthly active user ceiling. Identity force limit.</p>
+            </article>
+            <article>
+                <span class="capability-emoji">📡</span>
+                <strong>200 Realtime connections / live</strong>
+                <p>Concurrent Presence / Broadcast field capacity. Same-time troops.</p>
+            </article>
+            <article>
+                <span class="capability-emoji">💬</span>
+                <strong>2M Realtime messages / month</strong>
+                <p>Monthly radio traffic allowance. Chat, presence signals, broadcast fire.</p>
+            </article>
+            <article>
+                <span class="capability-emoji">🚀</span>
+                <strong>500k Edge invocations / month</strong>
+                <p>Monthly server-side launches. Password gates, private checks, command logic.</p>
+            </article>
+            <article>
+                <span class="capability-emoji">🧠</span>
+                <strong>256 MB Edge memory / instance</strong>
+                <p>Runtime payload capacity. Fit the mission. Do not drag monsters.</p>
+            </article>
+            <article>
+                <span class="capability-emoji">🧱</span>
+                <strong>500 MB database / total</strong>
+                <p>Storage bunker limit. Logs, users, resources. Count the weight.</p>
+            </article>
+        </div>
+    </section>
 
-function submitLoginOnEnter(event) {
-    if (event.key === "Enter") {
-        event.preventDefault()
-        login()
-    }
-}
+    <br>
+    <hr>
+    <br>
+    <h3>Technologies used:</h3>
+    <ol>
+        <li>Tables</li>
+        <ol>
+            <li>RLS Policies</li>
+            <li>Realtime</li>
+        </ol>
+        <li>Presence</li>
+        <li>Auth</li>
+        <li>Edge Functions</li>
+    </ol>
+    <footer>
 
-function setupLocalVisits() {
-    let localVisits = localStorage.getItem("sb_LocalVisits")
-    if (localVisits == null || localVisits <= 0) {
-        localVisits = 1
-    }
-    else {
-        localVisits++
-    }
+        <br>
+        <hr>
+        <br>
+        <p>Users online: <span id="displayUsersonline">1</span></p>
+        <p>Local visits: <span id="displayLocalvisits"></span></p>
+        <p>made by <a href="https://dibesfer.github.io">dibesfer</a></p>
+    </footer>
+</body>
 
-    displayLocalvisits.textContent = localVisits
-    localStorage.setItem("sb_LocalVisits", localVisits)
-}
-
-function init() {
-    SupabaseExpert.subscribeToChat({
-        onInsert: getOnlyLastMessage,
-        onDelete: readTable
-    })
-
-    SupabaseExpert.subscribeToPresence((count) => {
-        displayUsersonline.textContent = count
-    })
-
-    setupKeyboardSubmit()
-    setupLocalVisits()
-    updateJwtAwareness()
-    readTable()
-    setUser()
-}
-
-init()
-
+</html>
