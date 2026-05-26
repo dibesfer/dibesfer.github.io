@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>dibesfer - miniprogress</title>
+<style>
+* {
+  user-select: none;
+  margin: 0;
+  box-sizing: border-box;
+}
+body {
+  font-size: 1rem;
+  font-family: monospace;
+  line-height: 1.5;
+  cursor: none;
+  min-height: 100vh;
+  box-shadow: inset 0 0 80px 20px rgba(255,255,255,0.85);
+  overflow: hidden;
+}
+#counterUnit {
+  filter: grayscale(1) brightness(0);
+}
+button {
+  font: unset;
+  border: unset;
+  padding: 10px;
+  border: solid 3px black;
+}
+#restartBtn {
+  background-color: red;
+  position: absolute;
+  bottom: 15px;
+  right: 15px;
+}
+#gameUI {
+  position: absolute;
+  top: 15px;
+  left: 15px;
+}
+.invisible {
+  display: none;
+}
+#cursorImg {
+  position: fixed;
+  width: 48px;
+  height: 48px;
+  pointer-events: none;
+  transform: translate(-50%, -50%) scale(1);
+  transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
+  z-index: 9999;
+  display: none;
+}
+#cursorImg.zoom {
+  transform: translate(-50%, -50%) scale(0.5);
+}
+</style>
+</head>
+<body>
+
+<div id="screen">
+  <div id="consola"></div>
+  <div id="gameUI">
+    <div id="counter">
+      <span id="counterDisplay">0</span><span id="counterUnit">⭐</span>
+    </div>
+    <fieldset id="miniFieldset" class="invisible">
+      <legend>Legend</legend>
+      <p>Per load: +1</p>
+      <p>Per second: +2</p>
+      <p>Per click: +3</p>
+    </fieldset>
+  </div>
+  <br>
+  <button id="restartBtn" onclick="restart()">Restart</button>
+</div>
+
+<img id="cursorImg" src="https://dibesfer.github.io/assets/branding/dibesfer-logo.png" alt="" draggable="false">
+
+<script>
+// --- cursorVisuals ---
+const cursorImg = document.getElementById("cursorImg");
+
+function showCursor(x, y) {
+  cursorImg.style.left = x + "px";
+  cursorImg.style.top = y + "px";
+  cursorImg.style.display = "block";
+}
+
+function hideCursor() {
+  cursorImg.style.display = "none";
+  cursorImg.classList.remove("zoom");
+}
+
+// Mouse — listen on documentElement for reliable boundary detection
+const isMouse = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+if (isMouse) {
+  document.documentElement.addEventListener("mousemove", (e) => {
+    showCursor(e.clientX, e.clientY);
+  });
+  document.documentElement.addEventListener("mouseleave", hideCursor);
+  document.documentElement.addEventListener("mousedown", () => cursorImg.classList.add("zoom"));
+  document.documentElement.addEventListener("mouseup", () => cursorImg.classList.remove("zoom"));
+}
+
+// Touch (drag only)
+document.addEventListener("touchstart", (e) => {
+  const t = e.touches[0];
+  showCursor(t.clientX, t.clientY);
+  cursorImg.classList.add("zoom");
+}, { passive: true });
+
+document.addEventListener("touchmove", (e) => {
+  const t = e.touches[0];
+  showCursor(t.clientX, t.clientY);
+}, { passive: true });
+
+document.addEventListener("touchend", hideCursor);
+document.addEventListener("touchcancel", hideCursor);
+
+// --- miniprogress ---
+let miniCounter = Number(localStorage.getItem("dibesfer_miniCounter")) || 0;
+
+function numberConversor(n) {
+  if (n == null || typeof n !== "number") return "";
+  const tiers = [
+    [1_000_000_000, "B"],
+    [1_000_000, "M"],
+    [1_000, "K"],
+  ];
+  for (const [threshold, suffix] of tiers) {
+    if (n >= threshold) {
+      const val = Math.floor((n / threshold) * 10) / 10;
+      return val + suffix;
+    }
+  }
+  return String(n);
+}
+
+function miniCounterPush(value) {
+  miniCounter += value;
+  localStorage.setItem("dibesfer_miniCounter", miniCounter);
+  counterDisplay.textContent = numberConversor(miniCounter);
+}
+
+function main() {
+  if (!localStorage.getItem("dibesfer_miniCounter")) {
+    miniCounter = 1;
+    localStorage.setItem("dibesfer_miniCounter", miniCounter);
+  } else {
+    miniCounter++;
+    localStorage.setItem("dibesfer_miniCounter", miniCounter);
+  }
+  counterDisplay.textContent = miniCounter;
+}
+
+function showLegend() {
+  miniFieldset.classList.toggle("invisible");
+}
+
+counter.addEventListener("click", showLegend);
+document.addEventListener("click", () => miniCounterPush(1));
+
+function restart() {
+  miniCounter = 0;
+  localStorage.removeItem("dibesfer_miniCounter");
+  counterDisplay.textContent = 0;
+}
+
+main();
+let miniInterval = setInterval(() => miniCounterPush(1), 1000);
+</script>
+</body>
+</html>
