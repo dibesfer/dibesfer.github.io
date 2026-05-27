@@ -125,19 +125,16 @@
             cursorImg.classList.remove("zoom");
         }
 
-        function isOutOfBounds(x, y) {
-            return x <= 0 || y <= 0
-                || x >= window.innerWidth || y >= window.innerHeight;
-        }
-
         // --- unified input ---
         let isPressing = false;
+        let pressId = 0;
         let holdTimeout = null;
         let holdInterval = null;
 
         function onPress(x, y) {
             if (isPressing) return;
             isPressing = true;
+            const myId = ++pressId;
 
             showCursor(x, y);
             cursorImg.classList.add("zoom");
@@ -146,21 +143,21 @@
             miniCounterPush(1);
 
             holdTimeout = setTimeout(() => {
-                holdInterval = setInterval(() => miniCounterPush(1), 250);
+                if (pressId !== myId) return;
+                holdInterval = setInterval(() => {
+                    if (pressId !== myId) { clearInterval(holdInterval); return; }
+                    miniCounterPush(1);
+                }, 250);
             }, 250);
         }
 
         function onMove(x, y) {
-            if (isOutOfBounds(x, y)) {
-                hideCursor();
-                onRelease();
-                return;
-            }
             showCursor(x, y);
         }
 
-        function onRelease() {
+        function onRelease(id = null) {
             if (!isPressing) return;
+            if (id !== null && id !== pressId) return;
             isPressing = false;
 
             cursorImg.classList.remove("zoom");
@@ -176,9 +173,9 @@
         const isMouse = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
         if (isMouse) {
             document.documentElement.addEventListener("mousemove", (e) => onMove(e.clientX, e.clientY));
-            document.documentElement.addEventListener("mouseleave", () => { hideCursor(); onRelease(); });
+            document.documentElement.addEventListener("mouseleave", () => { hideCursor(); onRelease(pressId); });
             document.documentElement.addEventListener("mousedown", (e) => onPress(e.clientX, e.clientY));
-            document.documentElement.addEventListener("mouseup", onRelease);
+            document.documentElement.addEventListener("mouseup", () => onRelease(pressId));
         }
 
         // Touch
@@ -192,14 +189,14 @@
             onMove(t.clientX, t.clientY);
         }, { passive: true });
 
-        document.addEventListener("touchend", () => { hideCursor(); onRelease(); });
-        document.addEventListener("touchcancel", () => { hideCursor(); onRelease(); });
+        document.addEventListener("touchend", () => { hideCursor(); onRelease(pressId); });
+        document.addEventListener("touchcancel", () => { hideCursor(); onRelease(pressId); });
 
         // Safety net — orphaned hold state
         document.addEventListener("visibilitychange", () => {
-            if (document.hidden) { hideCursor(); onRelease(); }
+            if (document.hidden) { hideCursor(); onRelease(pressId); }
         });
-        window.addEventListener("blur", () => { hideCursor(); onRelease(); });
+        window.addEventListener("blur", () => { hideCursor(); onRelease(pressId); });
 
         // --- miniprogress ---
         let miniCounter = Number(localStorage.getItem("dibesfer_miniCounter")) || 0;
@@ -227,10 +224,8 @@
         }
 
         function main() {
-            if (!localStorage.getItem("dibesfer_miniCounter")) {
-                miniCounter = 0;
-                localStorage.setItem("dibesfer_miniCounter", miniCounter);
-            }
+            miniCounter = Number(localStorage.getItem("dibesfer_miniCounter")) || 0;
+            counterDisplay.textContent = numberConversor(miniCounter) || miniCounter;
             miniCounterPush(1);
         }
 
@@ -242,7 +237,7 @@
 
         function restart() {
             miniCounter = 0;
-            localStorage.removeItem("dibesfer_miniCounter");
+            localStorage.setItem("dibesfer_miniCounter", "0");
             counterDisplay.textContent = 0;
         }
 
