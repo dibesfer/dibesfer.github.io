@@ -171,6 +171,7 @@ main {
 
 #goDownBtn {
     transition: 0.2s;
+    width: 3rem;
 }
 
 .rotated180{
