@@ -45,7 +45,7 @@ function loadRouteFromURL() {
     changeIframeSrc(ROUTES[page], selectedEl);
 
   } else {
-
+    // TODO change to 404.html
     changeIframeSrc("/web/experimental/armillary");
 
   }

@@ -15,8 +15,8 @@ a {
 #app {
     font-family: monospace;
     font-size: 1rem;
-    border-radius: 10px;
-    border: black 2px solid;
+    
+    
     padding: 10px;
     background-color: rgb(82, 82, 82);
     display: flex;
@@ -49,7 +49,7 @@ a {
 }
 
 #title::after{
-    content: "⠀⠀";
+    content: "⠀⠀⠀⠀⠀⠀";
 }
 
 #playBtn,

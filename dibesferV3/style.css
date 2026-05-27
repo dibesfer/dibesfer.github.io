@@ -151,6 +151,10 @@ hr {
 
 @media only screen and (max-width: 600px) {
 
+
+    #cuboid {
+        aspect-ratio: 1 !important;
+    }
     .flexo3 {
         justify-content: unset;
     }
