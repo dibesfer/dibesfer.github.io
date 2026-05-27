@@ -145,13 +145,12 @@ hr {
     .onlyDesktop {
         display: none;
     }
+    
 }
 
 /* phone */
 
 @media only screen and (max-width: 600px) {
-
-
     #cuboid {
         aspect-ratio: 1 !important;
     }
