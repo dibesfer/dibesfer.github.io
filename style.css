@@ -71,6 +71,8 @@ hr {
 
 .ad ins {
   width: 100% !important;
+  height: 90px !important;
+  overflow: hidden !important;
   display: block !important;
 }
 
