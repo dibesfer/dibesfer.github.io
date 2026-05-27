@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" width="775" height="775" id="svg3037" version="1.1" inkscape:version="0.48.2 r9819" sodipodi:docname="kreestar.svg">
+  <defs id="defs3039"/>
+  <sodipodi:namedview inkscape:document-units="in" pagecolor="#ffffff" bordercolor="#666666" borderopacity="1.0" inkscape:pageopacity="0" inkscape:pageshadow="2" inkscape:zoom="0.50892334" inkscape:cx="323.31515" inkscape:cy="354.64353" inkscape:current-layer="layer1" id="namedview3041" showgrid="false" inkscape:snap-global="true" showguides="true" inkscape:window-width="1364" inkscape:window-height="718" inkscape:window-x="0" inkscape:window-y="1" inkscape:window-maximized="0" units="in" showborder="true" inkscape:showpageshadow="false" fit-margin-left="0.3" fit-margin-top="0.3" fit-margin-bottom="0.3" fit-margin-right="0.3">
+    <inkscape:grid type="xygrid" id="grid3046" empspacing="5" visible="true" enabled="true" snapvisiblegridlinesonly="true"/>
+  </sodipodi:namedview>
+  <metadata id="metadata3043">
+    <rdf:RDF>
+      <cc:Work rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+        <dc:title/>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g inkscape:label="Layer 1" inkscape:groupmode="layer" id="layer1" transform="translate(3.570135,-84.46494)">
+    <path style="fill:#ffff00;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" d="M 383.92985,111.96494 335.71174,355.55612 183.92986,271.96493 267.52104,423.74683 23.929865,471.96495 267.52104,520.18306 183.92986,671.96493 335.71175,588.37376 383.92987,831.96494 432.14798,588.37376 583.92986,671.96493 500.33868,520.18305 743.92986,471.96493 500.33868,423.74682 583.92986,271.96493 432.14797,355.55612 z" inkscape:connector-curvature="0" sodipodi:nodetypes="ccccccccccccccccc"/>
+  </g>
+</svg>
