@@ -36,18 +36,20 @@
         button {
             font: unset;
             border: unset;
-            padding: 10px;
-            border: solid 3px white;
+            padding: 5px;
             cursor: unset;
             transition: 0.2s;
         }
 
         #restartBtn {
-            background-color: red;
+            line-height: 0;
+            border-radius: 50%;
+            background-color: rgb(255, 83, 83);
             color: white;
             position: absolute;
             top: 15px;
             right: 15px;
+            filter: contrast(2);
         }
 
         #restartBtn:hover {
@@ -83,6 +85,19 @@
         #cursorImg.zoom {
             transform: translate(-50%, -50%) scale(0.5);
         }
+
+        #miniFieldset {
+            border: 1px solid white;
+            font-size: 0.75rem;
+            line-height: 1;
+            background-color: rgb(62, 62, 62);
+        }
+
+        #miniFieldset>legend {
+            background-color: rgb(62, 62, 62);
+            border: 1px solid white;
+            padding: 5px;
+        }
     </style>
 </head>
 
@@ -103,7 +118,8 @@
             </fieldset>
         </div>
         <br>
-        <button id="restartBtn" onclick="restart()">Restart</button>
+        <button id="restartBtn" onclick="restart()"><img width="20px" height="20px" style="height: 100%;" src="Power_off_icon.svg"
+                alt="Power off icon"></button>
     </div>
 
     <img id="cursorImg" src="Chaos_star.svg" draggable="false">
