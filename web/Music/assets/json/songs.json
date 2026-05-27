@@ -30,32 +30,72 @@
                 "src": "assets/songs/мистичная тема.mp3",
                 "link": "https://soundcloud.com/alexandr-zhelanov"
         },
-
         {
                 "name": "Magic Space",
                 "author": "CodeManu",
                 "src": "assets/songs/magic space.mp3",
                 "link": "https://opengameart.org/content/magic-space"
         },
-
         {
                 "name": "Mysterious Ambience (song21)",
                 "author": "cynicmusic",
                 "src": "assets/songs/song21.mp3",
                 "link": "https://opengameart.org/content/mysterious-ambience-song21"
         },
-
         {
                 "name": "Fast fight / battle music (looped)",
                 "author": "XCVG",
                 "src": "assets/songs/fight_looped.wav",
                 "link": "https://opengameart.org/content/fast-fight-battle-music-looped"
+        },
+        {
+                "name": "Western",
+                "author": "shalpin",
+                "src": "assets/songs/western.mp3",
+                "link": "https://opengameart.org/content/western"
+        },
+        {
+                "name": "Xeon Theme Remastered",
+                "author": "bart",
+                "src": "assets/songs/xeon6.ogg",
+                "link": "https://opengameart.org/content/xeon-theme-remastered"
+        },
+        {
+                "name": "Sonar Tuning Electro Track",
+                "author": "SouljahdeShiva",
+                "src": "assets/songs/enchantmentinstumental_sonartuning.mp3",
+                "link": "https://opengameart.org/content/sonar-tuning-electro-track"
+        },
+        {
+                "name": "Space Music: Out There",
+                "author": "yd",
+                "src": "assets/songs/OutThere.ogg",
+                "link": "https://opengameart.org/content/sonar-tuning-electro-track"
+        },
+        {
+                "name": "Last Cyber Dance",
+                "author": "neocrey",
+                "src": "assets/songs/neocrey - Last Cyber Dance.ogg",
+                "link": "https://opengameart.org/content/last-cyber-dance"
+        },
+        {
+                "name": "Keith",
+                "author": "shalpin",
+                "src": "assets/songs/keith.mp3",
+                "link": "https://opengameart.org/content/keith"
+        },
+        {
+                "name": "Puzzle tune 1",
+                "author": "rezoner",
+                "src": "assets/songs/puzzle-1-a.mp3",
+                "link": "https://opengameart.org/content/puzzle-tune-1"
+        },
+        {
+                "name": "Artblock",
+                "author": "Jan125",
+                "src": "assets/songs/artblock.ogg",
+                "link": "https://opengameart.org/content/artblock"
         }
-
-        
-
-
-        
 
         
 ]
