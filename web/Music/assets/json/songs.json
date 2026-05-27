@@ -4,31 +4,7 @@
                 "name": "Song Title",
                 "author": "Anonymous",
                 "src": "./assets/songs/example.mp3",
-                "link": "https://pixabay.com/music/..."
-        },
-        {
-                "name": "Mind Techno - Ibiza Loop",
-                "author": "Sonican",
-                "src": "assets/songs/sonican-mind-techno-ibiza-loop-198703.mp3",
-                "link": "https://pixabay.com/music/house-mind-techno-ibiza-loop-198703/"
-        },
-        {
-                "name": "Galactic UFO Hunters",
-                "author": "SlimeyFox",
-                "src": "assets/songs/slimeyfox-galactic-ufo-hunters-527702.mp3",
-                "link": "https://pixabay.com/music/dance-galactic-ufo-hunters-527702/"
-        },
-        {
-                "name": "Techno Hip-Hop Fusion for Stealth Games",
-                "author": "nickpanekAIassets",
-                "src": "assets/songs/nickpanekaiassets-techno-hip-hop-fusion-for-stealth-games-288984.mp3",
-                "link": "https://pixabay.com/music/upbeat-techno-hip-hop-fusion-for-stealth-games-288984/"
-        },
-        {
-                "name": "Deep Relaxation Music",
-                "author": "Low_Atmos",
-                "src": "assets/songs/low_atmos-deep-relaxation-music-533629.mp3",
-                "link": "https://pixabay.com/es/music/meditaci%C3%B3n-espiritual-deep-relaxation-music-533629/"
+                "link": "https://opengameart.org/musicName..."
         },
         {
                 "name": "Crystal Cave (song18)",
@@ -53,51 +29,6 @@
                 "author": "Alexandr Zhelanov",
                 "src": "assets/songs/мистичная тема.mp3",
                 "link": "https://soundcloud.com/alexandr-zhelanov"
-        },
-        {
-                "name": "Abstract Experimental",
-                "author": "The_Mountain",
-                "src": "assets/songs/the_mountain-abstract-experimental-132323.mp3",
-                "link": "https://pixabay.com/es/music/corporativo-abstract-experimental-132323/"
-        },
-        {
-                "name": "My Xylophone",
-                "author": "Ivantraveso",
-                "src": "assets/songs/ivantraveso-my-xylophone-13262.mp3",
-                "link": "https://pixabay.com/es/music/melod%C3%ADas-para-ni%C3%B1os-felices-my-xylophone-13262/"
-        },
-        {
-                "name": "The Chase Begins",
-                "author": "MMAudio",
-                "src": "assets/songs/mmaudio-the-chase-begins-512528.mp3",
-                "link": "https://pixabay.com/es/music/melod%C3%ADas-para-ni%C3%B1os-felices-the-chase-begins-512528/"
-        },
-        {
-                "name": "Xylophone and Forest",
-                "author": "ManDaKiMDK",
-                "src": "assets/songs/mandakimdk-xylophone-and-forest-307174.mp3",
-                "link": "https://pixabay.com/es/music/instrumentos-solistas-xylophone-and-forest-307174/"
-        },
-
-        {
-                "name": "Magic Forest",
-                "author": "DomartiStudios",
-                "src": "assets/songs/domartistudios-magic-forest-473582.mp3",
-                "link": "https://pixabay.com/es/music/misterio-magic-forest-473582/"
-        },
-
-        {
-                "name": "Celtic Sound track",
-                "author": "RickBeck",
-                "src": "assets/songs/rickbeck-celtic-sound-track-112183.mp3",
-                "link": "https://pixabay.com/es/music/titulo-principal-celtic-sound-track-112183/"
-        },
-
-        {
-                "name": "Epic Eagle Flight - Celtic - Medieval - Nordic - Background Music",
-                "author": "JuliusH",
-                "src": "assets/songs/juliush-epic-eagle-flight-celtic-medieval-nordic-background-music-440117.mp3",
-                "link": "https://pixabay.com/es/music/gente-epic-eagle-flight-celtic-medieval-nordic-background-music-440117/"
         },
 
         {
