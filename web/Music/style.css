@@ -23,8 +23,6 @@ a {
     height: 4rem;
 }
 
-#app>* {}
-
 .icon {
     height: 100%;
     user-select: none;
