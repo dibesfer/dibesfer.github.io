@@ -33,7 +33,9 @@
       margin: 5px;
     }
 
-    button , input{
+    button,
+    input {
+      text-align: center;
       font: unset;
       background: unset;
       border: 2px rgb(110, 102, 252) solid;
@@ -49,38 +51,44 @@
     <p>Dev & Art Museum</p>
   </header>
   <main>
+    <div class="maxWidth" style="text-align: center;">
 
-    <div style="text-align: center;">
 
       <input type="password" name="inputPassword" id="dibesgalleryPassword">
       <br>
-       <p id="message"></p>
+      <p id="message"></p>
       <br>
 
-       <button id="enterBtn">Enter </button>
-      
-    </div>
-    <div class="maxWidth">
-      <h2 class="serif">What is this?</h2>
-      <p>The Dibesgallery is a private collection of artwork</p>
+      <button id="enterBtn">Enter </button>
 
-      <details>
-        <summary>More info</summary>
-        <p>It is accessible only with a password code</p>
-        <p>In order to get the code you must send an email to dibesfer@gmail.com using this format</p>
-        <pre>
+      <br><br>
+      <div style="text-align: left;">
+        <h3 class="serif">What is this?</h3>
+        <p>The Dibesgallery is a private collection of artwork</p>
+
+        <h3 class="serif">When was it made?</h3>
+        <p>25 May of 2026</p>
+
+        <h3 class="serif">Who made it?</h3>
+        <p>Fer Minero, alias dibesfer</p>
+
+        <details>
+          <summary>More info</summary>
+          <p>It is accessible only with a password code</p>
+          <p>In order to get the code you must send an email to dibesfer@gmail.com using this format</p>
+          <pre>
 Subject: dibesGallery register
     name: John Smith
     email: johnsmith@example.com
       </pre>
-        <p>I manage registrations manually, store them in an email white list and send them password code on
-          convenience.</p>
-        <p>You can do the paypal payment <a href="https://www.paypal.com/ncp/payment/LTKF4EN6EMZZS"
-            target="_blank">here</a></p>
+          <p>I manage registrations manually, store them in an email white list and send them password code on
+            convenience.</p>
+          <p>You can do the paypal payment <a href="https://www.paypal.com/ncp/payment/LTKF4EN6EMZZS"
+              target="_blank">here</a></p>
 
-      </details>
+        </details>
 
-     
+      </div>
 
       <div id="gallery" style="display:none;">
         <img width="100px" data-slot="dosum" alt="dosum">
@@ -91,11 +99,11 @@ Subject: dibesGallery register
         <img width="100px" data-slot="2" alt="petalia">
         <img width="100px" data-slot="3" alt="plantalia">
         <img width="100px" data-slot="4" alt="unum">
-
-
       </div>
 
-     
+
+
+
     </div>
   </main>
 
@@ -106,9 +114,9 @@ Subject: dibesGallery register
 
     document.getElementById("enterBtn").addEventListener("click", async () => {
       // keep history: const password = prompt("Enter your gallery password:");
-      
+
       const password = dibesgalleryPassword.value;
-            if (!password) return;
+      if (!password) return;
 
       const message = document.getElementById("message");
       message.textContent = "Verifying...";
