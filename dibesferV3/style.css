@@ -99,10 +99,18 @@ hr {
 }
 
 
+.serif {
+    font-family: serif;
+}
 
 /* DARK MODE */
 @media (prefers-color-scheme: dark) {
     body {
+        background: black;
+        color: white;
+    }
+
+    button , input  {
         background: black;
         color: white;
     }
