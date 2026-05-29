@@ -20,6 +20,7 @@
       font-weight: 700;
       font-size: 5rem;
       font-style: normal;
+      
     }
 
     #gallery {
@@ -42,12 +43,21 @@
       padding: 5px 25px;
       box-shadow: 0 0 5px purple;
     }
+
+    #title {
+      user-select: none;
+      transition: 0.2s ease-in;
+    }
+
+    #title:hover {
+      text-shadow: 0 0 10px white;
+    }
   </style>
 </head>
 
 <body>
   <header>
-    <h1 class="tangerine-bold">The Dibesgallery</h1>
+    <h1 id="title" class="tangerine-bold">The Dibesgallery</h1>
     <p>Dev & Art Museum</p>
   </header>
   <main>
