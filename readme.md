@@ -20,6 +20,6 @@ My motto is: No space is limited if ideas fit in
 
 You can contact me at dibesfer@gmail.com 
 
-Any support helps me keep creating 💜
+Any support is appreciated and it helps me keep creating 💜
 
 ![dibesfer logo](https://dibesfer.github.io/assets/branding/dibesfer-logo.svg)
