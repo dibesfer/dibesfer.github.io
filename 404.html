@@ -7,7 +7,7 @@
   <title>dibesfer</title>
   <link rel="icon" type="image/x-icon" href="/assets/branding/favicon512.ico">
   <link rel="stylesheet" href="/style.css">
-  <link rel="stylesheet" href="assets/web/aa_amor/style.css">
+  <link rel="stylesheet" href="/assets/web/aa_amor/style.css">
 
   <!-- FERSCRIPT.JS -->
   <script src="/ferscript.js"></script>
@@ -26,11 +26,27 @@
         <h2>404 - Not found</h2>
         <p>There is no <span id="showHref"></span> page</p>
         <p>May want to come back <a href="/" target="_parent">home</a>?</p>
-        <div class="zoomableimage" style="padding: 0;">
-          <img width="100%"
-            src="https://upload.wikimedia.org/wikipedia/commons/c/c3/NGC_4414_%28NASA-med%29.jpg">
+
+        <div style="
+              position: relative;
+              border-radius: 50%;
+              border: 1px solid white;
+              overflow: hidden;
+              " >
+          <div>
+            <img width="100%" src="https://upload.wikimedia.org/wikipedia/commons/c/c3/NGC_4414_%28NASA-med%29.jpg">
+          </div>
+
+          <iframe style="
+              position: absolute;
+              top: 0;
+              left: 0;
+            height: 100%;
+
+          " width="100%" src="/assets/web/experimental/armillary/" frameborder="0"></iframe>
         </div>
         <p>Where are we? What is me? Where are we going to?</p>
+
 
       </div>
 
@@ -40,7 +56,7 @@
 
   <footer></footer>
   <script>
-    showHref.textContent = window.location.href.split("https://dibesfer.com")[1]
+    showHref.textContent = window.location.href.split("https://dibesfer.com")[1] || "404"
   </script>
   <script src="/assets/web/aa_amor/script.js"></script>
   <script src="/assets/scripts/supabase.js"></script>
