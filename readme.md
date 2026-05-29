@@ -14,8 +14,12 @@ Under this name and signature I publish online:
 
 I post all my work in [dibesfer.github.io](https://dibesfer.github.io)
 
+![fer logo](https://dibesfer.github.io/assets/branding/fer-logo.svg)
+
 My motto is: No space is limited if ideas fit in
 
-![fer logo](https://dibesfer.github.io/assets/branding/fer-logo.svg)
+You can contact me at dibesfer@gmail.com 
+
+Any support helps me keep creating 💜
 
 ![dibesfer logo](https://dibesfer.github.io/assets/branding/dibesfer-logo.svg)
