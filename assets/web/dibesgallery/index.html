@@ -20,7 +20,7 @@
       font-weight: 700;
       font-size: 5rem;
       font-style: normal;
-      
+
     }
 
     #gallery {
@@ -75,16 +75,18 @@
         <img width="100px" data-slot="4" alt="unum">
       </div>
 
-      <input type="password" name="inputPassword" id="dibesgalleryPassword">
-      <br>
-      <p id="message"></p>
-      <br>
+      <div id="form">
+        <input type="password" name="inputPassword" id="dibesgalleryPassword">
+        <br>
+        <p id="message"></p>
+        <br>
 
-      <button id="enterBtn">Enter </button>
+        <button id="enterBtn">Enter </button>
 
 
 
-      <br><br>
+        <br><br>
+      </div>
       <div style="text-align: left;">
         <h3 class="serif">What is this?</h3>
         <p>The Dibesgallery is a private collection of artwork</p>
@@ -113,7 +115,7 @@ Subject: dibesGallery register
 
       </div>
 
-      
+
     </div>
   </main>
 
@@ -152,10 +154,10 @@ Subject: dibesGallery register
         });
 
         document.getElementById("gallery").style.display = "inline-flex";
-        document.getElementById("enterBtn").style.display = "none";
-        dibesgalleryPassword.style.display = "none";
+        
+        document.getElementById("form").style.display = "none";
         message.textContent = "";
-        message.style.display = "none";
+        
 
 
       } catch (e) {
