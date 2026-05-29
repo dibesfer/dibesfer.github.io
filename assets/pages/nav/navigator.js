@@ -46,7 +46,7 @@ function loadRouteFromURL() {
 
   } else {
     // TODO change to 404.html
-    changeIframeSrc("/web/experimental/armillary");
+    changeIframeSrc("/assets/web/experimental/armillary");
 
   }
 }
