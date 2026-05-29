@@ -54,12 +54,25 @@
     <div class="maxWidth" style="text-align: center;">
 
 
+      <div id="gallery" style="display:none;">
+        <img width="100px" data-slot="dosum" alt="dosum">
+        <img width="100px" data-slot="petalia" alt="petalia">
+        <img width="100px" data-slot="plantalia" alt="plantalia">
+        <img width="100px" data-slot="unum" alt="unum">
+        <img width="100px" data-slot="1" alt="dosum">
+        <img width="100px" data-slot="2" alt="petalia">
+        <img width="100px" data-slot="3" alt="plantalia">
+        <img width="100px" data-slot="4" alt="unum">
+      </div>
+
       <input type="password" name="inputPassword" id="dibesgalleryPassword">
       <br>
       <p id="message"></p>
       <br>
 
       <button id="enterBtn">Enter </button>
+
+
 
       <br><br>
       <div style="text-align: left;">
@@ -90,16 +103,7 @@ Subject: dibesGallery register
 
       </div>
 
-      <div id="gallery" style="display:none;">
-        <img width="100px" data-slot="dosum" alt="dosum">
-        <img width="100px" data-slot="petalia" alt="petalia">
-        <img width="100px" data-slot="plantalia" alt="plantalia">
-        <img width="100px" data-slot="unum" alt="unum">
-        <img width="100px" data-slot="1" alt="dosum">
-        <img width="100px" data-slot="2" alt="petalia">
-        <img width="100px" data-slot="3" alt="plantalia">
-        <img width="100px" data-slot="4" alt="unum">
-      </div>
+      
     </div>
   </main>
 
@@ -139,9 +143,10 @@ Subject: dibesGallery register
 
         document.getElementById("gallery").style.display = "inline-flex";
         document.getElementById("enterBtn").style.display = "none";
-        document.getElementById("dibesgalleryPassword").style.display = "none";
-        
+        dibesgalleryPassword.style.display = "none";
         message.textContent = "";
+        message.style.display = "none";
+
 
       } catch (e) {
         document.getElementById("message").textContent = "Something went wrong.";
