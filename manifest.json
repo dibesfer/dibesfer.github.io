@@ -11,14 +11,12 @@
     {
       "src": "assets/branding/dibesfer-logo-whiteinside192.png",
       "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "maskable any"
+      "type": "image/png"
     },
     {
       "src": "assets/branding/dibesfer-logo-whiteinside512.png",
       "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable any"
+      "type": "image/png"
   
     }
   ]
