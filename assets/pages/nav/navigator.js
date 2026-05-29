@@ -71,8 +71,8 @@ function loadRouteFromURL() {
     <div><a href="/assets/pages/nav/?page=games" class="leftBarLink" target="_top">Games</a></div>
     <div><a href="/assets/pages/nav/?page=web" class="leftBarLink" target="_top">Web</a></div>
 
-    <div><a href="https://liberapay.com/dibesfer" class="leftBarLink">Donate</a></div>
-    <div><a href="https://discord.gg/tUHBS9eERn" class="leftBarLink">Discord</a></div>
+    <div><a href="https://liberapay.com/dibesfer" target="_top" class="leftBarLink">Donate</a></div>
+    <div><a href="https://discord.gg/tUHBS9eERn" target="_top" class="leftBarLink">Discord</a></div>
     </div>
 
 
