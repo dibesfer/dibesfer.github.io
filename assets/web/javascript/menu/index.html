@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Menú Lateral Izquierdo</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+    }
+      
+    /* Botón para abrir el menú */
+    .botonMenu {
+      font-size: 20px;
+      cursor: pointer;
+      background-color: #111;
+      color: white;
+      padding: 10px 15px;
+      border: none;
+      position:relative;
+      top: 0px;
+      left: 0px;
+      height: 50px;
+    }
+      
+    /* Estilo del menú lateral */
+    .menu {
+      height: 100%;
+      width: 250px;
+      position: fixed;
+      top: 50;
+      left: -250px;
+      background-color: #111;
+      color: white;
+      overflow-x: hidden;
+      transition: 0.3s;
+      padding-top: 60px;
+    }
+
+    .menu a {
+      padding: 15px 25px;
+      text-decoration: none;
+      font-size: 18px;
+      color: white;
+      display: block;
+      transition: 0.3s;
+    }
+
+    .menu a:hover {
+      background-color: #575757;
+    }
+
+    /* Contenido principal */
+    .contenido {
+      margin-left: 0;
+      padding: 20px;
+      transition: margin-left 0.3s;
+    }
+
+
+    .menu.mostrar, .contenido.mostrar {
+      margin-left: 250px;
+    }
+  </style>
+</head>
+<body>
+
+<button class="botonMenu" onclick="cambiarMenu();">Menú</button>
+
+<div class="menu" id="menu">
+  <a href="#">Inicio</a>
+  <a href="#">Servicios</a>
+  <a href="#">Sobre Nosotros</a>
+  <a href="#">Contacto</a>
+</div>
+
+<div class="contenido" id="contenido">
+  <h1>Contenido Principal</h1>
+  <p>Este es el contenido de la página.</p>
+</div>
+
+<script>
+
+    function cambiarMenu(){
+        let menu = document.getElementById("menu")
+        menu.classList.toggle("mostrar")
+        let contenido = document.getElementById("contenido")
+        contenido.classList.toggle("mostrar")
+    }
+
+</script>
+
+</body>
+</html>

@@ -2,192 +2,85 @@
 <html lang="en">
 
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>dibesfer</title>
-  <link rel="icon" type="image/x-icon" href="/assets/branding/favicon512.ico">
-  <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="/web/aa_amor/style.css">
-  <link rel="stylesheet" href="/ferstyle.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>dibesferV3</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="shortcut icon" href="assets/branding/favicon512.ico" type="image/x-icon">
 
-  <!-- PWA App manifest -->
-  <link rel="manifest" href="/manifest.json">
+    <!-- seo -->
+    <meta name="description" content="dibesfer - dibujos y escritos de Fer - Dev Illustrauthor">
+    <meta name="author" content="dibesfer - Ferrán Minero">
+    <meta name="keywords" content="dibesfer, fer, illustration, indie games, web dev, worldbuilding">
 
-  <!-- FERSCRIPT.JS -->
-  <script src="/ferscript.js"></script>
-
-  <!-- SEO -->
-  <meta name="author" content="dibesfer - Ferrán Minero" />
-  <meta name="description" content="Dibujos y escritos de Fer." />
-  <meta name="keywords"
-    content="dibesfer github info information información página web website. Ferrán Minero. Developer Illustrator Writer. Dev Illustrauthor. Symbocracy." />
-
-  <!--#region META  -->
-  <!-- Meta imágen y descripción que aparecerá embebida en algunas redes sociales -->
-  <meta property='og:image' content='https://dibesfer.github.io/assets/branding/dibesfer-title.png' />
-  <meta property='og:description'
-    content='Dibujos y escritos de Fer. Dev Illustrauthor. Ningún espacio es limitado si caben ideas en él.' />
-  <meta property="og:title" content="dibesfer">
-  <!--#endregion  -->
-
-  <!-- SUPABASE cdn -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-
-    <!-- Google Ads -->
-     <!-- Google Ads -->
-<script src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js" defer></script>
-  <!-- <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9244841916029231"
-    crossorigin="anonymous"></script> -->
+    <!-- og embeddable -->
+    <meta property="og:title" content="dibesfer">
+    <meta property="og:description" content="Dev Illustrauthor">
 
 </head>
 
-<body class="google-anno-skip">
-
-  <header></header>
-
-  <main>
-    <!-- <p style="text-align:center;"><b>Dib</b>ujos y <u>es</u>critos de <i>Fer</i></p> -->
-    <!-- <div class="franjawrapper">
-      <img width="100%" class="invert" src="franja7.png">
-    </div> -->
-    <!-- SPACER -->
-    <div class="notForMobile" style="padding:40px"></div>
-    <div class="flexgrid">
-      <div class="flexgriditem">
-        <a href="/gallery/">
-          <div>
-            <h2>🖌️Gallery</h2>
-            <div class="zoomableimage">
-              <img width="100%" src="gallery/assets/Alan Moore - 2019Ja23.jpg">
-            </div>
-            <div class="flexgriditem_desc">
-              <p>Paper and digital artwork</p>
-            </div>
-          </div>
+<body>
+    <header>
+        <a href="">
+            <img class="invertable icon" src="/assets/branding/dibesfer-logo.svg" alt="logo">
+            <h1>
+                <img class="invertable icon" style="color: black;" src="assets/branding/dibesfer-title.png"
+                    alt="dibesfer">
+            </h1>
         </a>
-      </div>
-      <div class="flexgriditem">
-        <a href="/games/index.html">
-          <div>
-            <h2>🎮Games</h2>
-            <div class="zoomableimage">
-              <img height="100%" width="100%" src="games/assets/colorlandia-spawn.png">
+        <!-- <p><b>Dib</b>ujos y <u>es</u>critos de <i>Fer</i></p> -->
+        <p><span id="desc" class="invisible">Dibujos y escritos de Fer</span></p>
+    </header>
+
+    <main>
+        <div class="onlyDesktop maxWidth">
+            <br>
+            <hr><br>
+        </div>
+        <div class="flexo3">
+            <div>
+                <a href="assets/pages/nav/?page=gallery">
+                    <h2>Gallery</h2>
+                    <img class="displayMain" src="assets/gallery/azamshir-y-amigos.png" alt="Azamshir and friends">
+                    <p>Digital and physical art</p>
+                </a>
             </div>
-            <div class="flexgriditem_desc">
-              <p>Unity, Unreal, Roblox, Godot, Luanti, Threejs</p>
+            <div>
+                <a href="assets/pages/nav/?page=games">
+                    <h2>Games</h2>
+                    <img class="displayMain" src="assets/games/colorlandia-spawn.png" alt="colorlandia spawn">
+                    <p>JS, Unity, Luanti, Godot, Unreal...</p>
+                </a>
             </div>
-          </div>
-        </a>
-      </div>
-      <div class="flexgriditem">
-        <a style="z-index: 2;" href="web/">
-          <div>
-            <h2>🌐Web</h2>
-            <div class="zoomableimage">
-              <iframe style="height: 100%; width: 100%;pointer-events: none;" src="/web/experimental/armillary"
-                frameborder="0">
-                <img width="100%" src="/assets/images/web.png">
-              </iframe>
+            <div>
+                <a href="assets/pages/nav/?page=web">
+                    <h2>Web</h2>
+                    <img class="displayMain" src="assets/web/web.png" alt="web showcase">
+                    <p>HTML, CSS and JS</p>
+                </a>
             </div>
-            <div class="flexgriditem_desc">
-              <p>HTML, CSS and Javascript</p>
-            </div>
-          </div>
-        </a>
-      </div>
+        </div>
+        <br>
+        <div class="maxWidth" style="height: 6rem;">
+            <iframe width="100%" style="height: 6rem;" src="/web/dibesfer_ads/" frameborder="0"></iframe>
+        </div>
+        <div class="onlyDesktop maxWidth">
+            <br>
+            <hr><br>
+        </div>
+    </main>
 
+    <footer>
+        <img class="invertable icon" src="/assets/branding/fer-logo.svg" alt="">
+        <p><a target="_blank" href="https://liberapay.com/dibesfer">donate</a></p>
+        <iframe width="100%" src="/dibesferV3/assets/components/counter/?url=gallery" frameborder="0"
+            style="border:none; height:3rem;"></iframe>
+        <p>dibesfer@gmail.com</p>
+    </footer>
 
-    </div>
+    <script src="assets/code/sb.js"></script>
+    <script type="module" src="script.js"></script>
 
-    <br>
-
-    <div id="screenImgWrapper">
-      <img id="screenImg" style="width: 100%; aspect-ratio: 16/9; object-fit: cover;" src="" alt="">
-    </div>
-
-    <br><br>
-    <div class="ad notForMobile">
-      <p>Ad</p>
-
-      <!-- LeaderBoardEuropa -->
-      <ins class="adsbygoogle" style="display:inline-block;width:800px;height:90px"
-        data-ad-client="ca-pub-9244841916029231" data-ad-slot="6354852250"></ins>
-      <script>
-        (adsbygoogle = window.adsbygoogle || []).push({});
-      </script>
-    </div>
-
-    <div class="ad notForDesktop">
-      <p>Ad</p>
-
-      <!-- Anuncio 400x90 -->
-      <ins class="adsbygoogle" style="display:inline-block;width:400px;height:90px"
-        data-ad-client="ca-pub-9244841916029231" data-ad-slot="8740708336"></ins>
-      <script>
-        (adsbygoogle = window.adsbygoogle || []).push({});
-      </script>
-    </div>
-
-
-    <!-- SPACER -->
-    <div class="notForMobile" style="padding:40px"></div>
-  </main>
-
-  <footer>
-  </footer>
-  <!-- <script>
-
-    let chatHTML = ''
-
-    function openChat(){
-      
-      let file = "/web/javascript/chat"
-        fetch (file)
-        .then(x => x.text())
-        .then(y => document.write(y));
-
-    }
-  </script> -->
-  <script src="/web/aa_amor/script.js"></script>
-  <script src="assets/scripts/supabase.js"></script>
-  <!-- 6. ADD LOAD SCRIPT -->
-  <script>
-
-    async function load(id, file) {
-      fetch(file)
-        .then(r => r.text())
-        .then(html => gettag(id).innerHTML = html)
-        .then(() => {
-
-          fetch("/web/aa_amor/components/leftMenu.html")
-            .then(a => a.text())
-            .then(html => {
-              gettag(id).innerHTML += html
-
-              fetch("/web/aa_amor/components/rightMenu.html")
-                .then(a => a.text())
-                .then(html => {
-                  gettag(id).innerHTML += html
-
-
-                  fetch("/web/aa_amor/components/footer.html")
-                    .then(a => a.text())
-                    .then(html => {
-                      gettag("footer").innerHTML = html
-                    }).then(() => {
-                      app()
-                    })
-                })
-            })
-
-        });
-    }
-
-    load("header", "/web/aa_amor/components/header-main.html");
-
-  </script>
-
-  <!-- <script src="/assets/scripts/loadModules.js"></script> -->
 </body>
 
 </html>

@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+	<title>
+		FMF Mi primera web
+	</title>
+	<!-- FAVICON  -->
+	<link rel="icon" type="image/x-icon" href="assets/favicon/favicon.ico">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="empresa" content="PAU CASALS">
+	<meta name="author" content="dibesfer">
+	<meta name="description" content="Mi primera página web. Una página web de ejemplo">
+	<meta charset="UTF-8">
+	<link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+	<header id="homeLink">
+		<p id="consolaLocalhost"></p>
+		<h1 id="mainTitle"><a href="">TECWEB-Fer</a></h1>
+		<p>👋 Bienvenido máquina 🤖</p>
+
+		<h3 style="font-family: Oregano;"><em>A mi primera p&aacute;gina web</em></h3>
+		<p>Hoy es <span id="diadehoy"></span></p>
+
+	</header>
+	<div id="layoutsSticky">
+		<p><small>Sticky menu</small></p>
+		<nav><a href="#homeLink">Home</a> | <a href="#supermenu">Supermenu</a> | &lt;Contact&gt; | <a
+				href="#creditsTitle">Credits</a></nav>
+	</div>
+
+	<div class="pattern-background"></div>
+	<hr>
+
+
+	<main>
+		<div class="containedWidth">
+			<h2>¡Hola Mundo!🌍 Hello World! 🌎 你好世界! 🌏</h2>
+			<img style="float:left" height="100px"
+				src="https://upload.wikimedia.org/wikipedia/commons/7/7f/Rotating_earth_animated_transparent.gif">
+
+			<p><strong>Buenos días España 🇪🇸</strong>. Hola caracola. 🐚<b>Hola caracola.</b> <i>Hola caracola.</i>
+			</p>
+			<p>Hola caracola. Espacio en blanco &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+				Espacio en blanco</p>
+			<p>Probando, probando, un dos tres, probando, probando. <em>¿Se me oye?</em></p>
+
+			<button onclick="botoncito()">Click on me!</button><span id="botoncitodecir"></span>
+			<br><br>
+
+			<!-- TABLAS -->
+
+			<style>
+				table {
+					width: 100%;
+					border-spacing: 0;
+					/* border-collapse: collapse; */
+					table-layout: fixed;
+				}
+
+				tr {
+					max-height: 1000px;
+					overflow: auto;
+				}
+
+				td,
+				th {
+					border: solid 3px black;
+					background-color: rgba(131, 224, 255, 0.521);
+					overflow: auto;
+					transition: 0.1s;
+
+				}
+
+
+
+				td:not(tr > td:first-of-type):hover {
+					border: solid 3px red;
+				}
+
+
+
+				tr>td:first-of-type {
+					background-color: rgb(146, 255, 146);
+				}
+
+				tr:hover {
+					background-color: blue;
+				}
+
+				tr:hover>td:first-of-type {
+					background-color: rgb(17, 119, 30);
+					color: white;
+				}
+
+
+
+				th {
+					background-color: rgb(145, 145, 255);
+				}
+
+				table:has(.col1:hover) .col1,
+				table:has(.col2:hover) .col2,
+				table:has(.col3:hover) .col3,
+				table:has(.col4:hover) .col4
+				 {
+					background-color: rgba(0, 255, 200, 0.493) ;
+				}
+				
+			</style>
+			<div>
+				<h2>Tablas</h2>
+
+				<table>
+					<caption>Notas Curso x Alumno</caption>
+					<colgroup>
+						<col>
+						<col>
+						<col>
+						<col>	
+
+					</colgroup>
+					<tr>
+						<th class="col1">CURSO</th>
+						<th class="col2">Web</th>
+						<th class="col3">Word</th>
+						<th class="col4">Excel</th>
+					</tr>
+					<tr>
+						<td class="col1">Examen 1</td>
+						<td class="col2">6</td>
+						<td class="col3">4</td>
+						<td class="col4">8</td>
+					</tr>
+					<tr>
+						<td class="col1">Examen 2</td>
+						<td class="col2">2</td>
+						<td class="col3">9</td>
+						<td class="col4">7</td>
+					</tr>
+					<tr>
+						<td class="col1">Examen 3</td>
+						<td class="col2">6</td>
+						<td class="col3">5</td>
+						<td class="col4">5</td>
+					</tr>
+					<tr>
+						<td class="col1">NOTA FINAL</td>
+						<td class="col2">Suficiente sadas das d asd as d as das da ssdas das d</td>
+						<td class="col3">Bien</td>
+						<td class="col4">Notable</td>
+					</tr>
+
+
+				</table>
+
+
+				<br>
+
+				<table>
+
+					<tr>
+						<th>&nbsp;</th>
+						<th colspan="2">Delegación A</th>
+						<th colspan="2">Delegación B</th>
+
+					</tr>
+					<tr>
+						<td>Meses</td>
+						<td>Enero</td>
+						<td>Febrero</td>
+						<td>Enero</td>
+						<td>Febrero</td>
+					</tr>
+					<tr>
+						<td>Ventas</td>
+						<td>50</td>
+						<td>60</td>
+						<td>45</td>
+						<td>30</td>
+					</tr>
+					<tr>
+						<td>Total:</td>
+						<td colspan="2">110</td>
+						<td colspan="2">75</td>
+
+					</tr>
+
+
+				</table>
+				<br>
+
+				<table>
+					<caption align="bottom">Delegaciones</caption>
+					<tr>
+						<th>&nbsp;</th>
+						<th colspan="2">Delegación A</th>
+						<th colspan="2">Delegación B</th>
+					</tr>
+					<tr>
+						<td rowspan="3" style="writing-mode: vertical-lr; text-orientation: upright;">Meses</td>
+						<td>Enero</td>
+						<td>Febrero</td>
+						<td>Enero</td>
+						<td>Febrero</td>
+					</tr>
+					<tr>
+						<td>Ventas</td>
+						<td>50</td>
+						<td>60</td>
+						<td>45</td>
+						<td>30</td>
+					</tr>
+					<tr>
+						<td>Total:</td>
+						<td colspan="2">110</td>
+						<td colspan="2">75</td>
+
+					</tr>
+					<tr>
+						<td>hola</td>
+					</tr>
+
+
+				</table>
+
+
+			</div>
+			<hr><br>
+			<div>
+				<h2>Listas</h2>
+				<ol type="I" start="0" >
+					<li>Julio César</li>
+					<li>Claudio</li>
+					<li>Augusto</li>
+					<li>Marco Aurelio</li>
+					<li></li>
+				</ol>
+				<ul >
+					<li type="square" >hola</li>
+					<li></li>
+					<li ></li>
+					<li></li>
+					
+
+						<ol>
+							<li></li>
+							<li></li>
+							<li></li>
+							<ol>
+							<li></li>
+							<li></li>
+							<li></li>
+						</ol>
+						</ol>
+
+					
+				</ul>
+			</div>
+
+			<!-- ANIMATION KEYFRAMES -->
+
+			<style>
+				/*  A N I M A T I O N S KEYFRAMES */
+
+				#animationDiv {
+					background-color: rgb(121, 121, 169);
+					height: 200px;
+					display: flex;
+					justify-content: center;
+					text-align: center;
+
+				}
+
+
+
+				@keyframes rotation {
+					from {
+
+						left: 0;
+					}
+
+					to {
+
+						/* left: 50%; */
+						/* font-size: 40px; */
+						transform: rotate(360deg);
+					}
+				}
+
+				@keyframes colorize {
+					from {
+						/* width: 25%; */
+						color: black;
+						border: 3px solid rgba(255, 217, 0, 0);
+					}
+
+					to {
+						/* width: 100%; */
+						color: red;
+						border: 12px solid rgba(255, 217, 0, 0);
+					}
+				}
+
+				@keyframes movimiento {
+					0% {
+						/* width: 25%; */
+						left: 0;
+						transform: scale(1);
+					}
+
+					25% {
+						left: 100px;
+						transform: rotate(0);
+					}
+
+					35% {
+						transform: rotate(180deg) scale(1);
+					}
+
+					75% {
+						left: -100px;
+						transform: rotate(180deg);
+					}
+
+					85% {
+						transform: rotate(0);
+					}
+
+					100% {
+						/* width: 100%; */
+						left: 0;
+						transform: rotate(0deg) scale(1);
+
+
+					}
+				}
+
+				@keyframes movimientoY {
+					0% {
+						/* width: 25%; */
+						top: 0;
+						transform: rotate(90deg);
+					}
+
+					25% {
+						top: 100px;
+						transform: rotate(90deg);
+					}
+
+					35% {
+						transform: rotate(270deg);
+					}
+
+					75% {
+						top: -100px;
+						transform: rotate(270deg);
+					}
+
+					85% {
+						transform: rotate(90deg);
+					}
+
+					100% {
+						/* width: 100%; */
+						top: 0;
+						transform: rotate(90deg);
+
+					}
+				}
+
+				#animatedDiv {
+					background-image: url("https://static.vecteezy.com/system/resources/previews/009/589/903/non_2x/clock-transparent-free-png.png");
+					background-size: 130%;
+					background-position: center;
+
+					display: flex;
+					justify-content: center;
+					align-items: center;
+					aspect-ratio: 1;
+					background-color: lightblue;
+					position: relative;
+					/* animation-name: rotation;
+					animation-duration: 4s;
+					animation-iteration-count: infinite;
+					animation-timing-function: linear;
+					animation-fill-mode: forwards; */
+
+					/* animation: skew 2000ms linear infinite,
+               					opacity 4000ms linear infinite; */
+
+					animation: rotation 5s linear infinite forwards,
+						colorize 1s linear infinite alternate;
+
+					border: solid 3px gold;
+					border-radius: 50%;
+				}
+
+				#animatedSubDiv {
+
+
+					border: solid 3px green;
+					width: 70px;
+					height: 70px;
+					/* background-color: blue; */
+					position: relative;
+
+
+					display: flex;
+					justify-content: center;
+					align-items: center;
+
+					position: relative;
+
+				}
+
+
+
+				/* #animatedDiv::before {
+					content: "#";
+				} */
+
+				/* .test {
+					width: 50px;
+					height: 50px;
+					background-color: blue;
+					transition: 4s;
+					transition-delay: 1s;
+				}
+				.test:empty{
+					width: 100px;
+					height: 50px;
+					background-color: red;
+				} */
+
+				.centerOfTheUniverse {
+					position: relative;
+					background-color: rgba(0, 0, 255, 0.55);
+					border-radius: 50%;
+					width: 100%;
+					height: 100%;
+					display: flex;
+					justify-content: center;
+					align-items: center;
+				}
+
+				.centerOfTheUniverse>img {
+
+					position: absolute;
+					width: 100%;
+				}
+			</style>
+
+			<h2>Animation @keyframes</h2>
+			<div id="animationDiv">
+				<div id="animatedDiv">
+					<div id="animatedSubDiv">
+						<div class="centerOfTheUniverse">
+							<img style="animation: movimiento 2s linear infinite ;"
+								src="https://static.vecteezy.com/system/resources/thumbnails/049/515/113/small/bright-red-arrow-drawn-on-white-background-pointing-to-the-right-cut-out-transparent-png.png"
+								alt="">
+							<img style=" animation: movimientoY 2s linear infinite "
+								src="https://static.vecteezy.com/system/resources/thumbnails/049/515/113/small/bright-red-arrow-drawn-on-white-background-pointing-to-the-right-cut-out-transparent-png.png"
+								alt="">
+						</div>
+
+
+					</div>
+				</div>
+			</div>
+
+			<p>acuerdate de esto</p>
+			<pre>
+position: absolute;
+top: 50%;
+left: 50%;
+transform: translate(-50%, -50%);
+			</pre>
+			<!-- CALENDARIO -->
+			<h2>Calendar</h2>
+			<iframe scrolling="no" style="width: 100%;aspect-ratio: 1;border: none; overflow: hidden;"
+				src="../TECWEB-Fer/p/Calendar/" frameborder="0"></iframe>
+
+			<br>
+			<!-- FLEX 3 PICTURES -->
+			<div class="flex3x3">
+				<div>
+					<img class="decoImage" style="clear: both ; width: 200px;"
+						src="https://blz-contentstack-images.akamaized.net/v3/assets/blt3452e3b114fab0cd/blt5fc24cb2747b0d21/6169fe9f35f1b36b742c74a0/0L3WGRUB75G31578518302792.png"
+						alt="">
+				</div>
+				<div>
+					<img class="decoImage" style="clear: both ; width: 200px; border-radius: 50%;"
+						src="https://blz-contentstack-images.akamaized.net/v3/assets/blt3452e3b114fab0cd/bltf98f9b287fd259db/616a0201bdc5454d581ba20f/1S1T3ZP0XYGV1552513933946.png"
+						alt="">
+				</div>
+
+				<div>
+					<img class="decoImage" style="clear: both ; width: 200px;"
+						src="https://blz-contentstack-images.akamaized.net/v3/assets/blt3452e3b114fab0cd/bltf92062bb8562399a/616a01d15e87796834fb5b0a/V4R3T5LFVXXQ1607718423211.png"
+						alt="">
+				</div>
+			</div>
+
+			<hr>
+
+			<div class="pinkBox">
+
+				<p style="text-align:center">Entidades con ampersand & <br> &Atilde; &Auml; &Acirc; &Aacute; &Agrave;
+					&amp;
+					&copy; & &reg;</p>
+
+
+			</div>
+
+			<br>
+			<div class="blueBox">
+
+				<p style="text-align:center">🟦Blue Box<br>Caja azul <br>Caixa blau</p>
+
+
+			</div>
+
+			<section>
+				<article>
+					<h2>Etiquetas especiales</h2>
+					<p>bdo: <bdo dir="rtl">Texto al revés</bdo></p>
+					<p>kbd: Para copiar <kbd>CTRL</kbd> + <kbd>C</kbd>, para pegar <kbd>CTRL</kbd> + <kbd>V</kbd></p>
+					<p>mark: <mark>importante</mark></p>
+					<p>small: <small>pequeñito</small></p>
+					<p>code:</p>
+					<code>
+			echo "Hello World!";
+			</code>
+					<p>xmp: <del>deprecated</del></p>
+					<!--<p>xmp:</p>
+				 Deprecated Better use JS object.textContent = "<html>" <xmp>
+					<!DOCTYPE html>
+				</xmp> -->
+
+					<p>del e ins: Ofertón <del>100€</del> <ins>90€</ins></p>
+					<p>sub y sup: <sub>sub</sub> - normal - <sup>sup</sup></p>
+					<p>abbr: <abbr title="HyperText Markup Language">HTML</abbr></p>
+					<p>address:
+					<address>L'Hospitalet de Llobregat, C/ Muntanya 1, 08901</address>
+					</p>
+					<p>time: <time datetime="2025-05-30">30-05-2025</time></p>
+					<p></p>
+					<p></p>
+				</article>
+
+				<article>
+					<h2>Junio</h2>
+					<p>Descripción de los proyectos que haremos en junio</p>
+				</article>
+
+			</section>
+
+			<div>
+				<h2>Fetch text from file</h2>
+				<div id="fetchedText"></div>
+			</div>
+
+			<div>
+				<p>https://www.w3.org/wiki/images/a/af/Cssed_borderstyles.png</p>
+				<h2>Supermenu</h2>
+				<div id="supermenu">
+					<nav>
+						<ul>
+							<li>Portada</li>
+							<li>Presentación</li>
+							<li>Índice</li>
+							<li>Galería</li>
+							<li>Sobre mí</li>
+							<li>Enlaces</li>
+							<li>Contacta</li>
+							<li>Salir &rarr;</li>
+						</ul>
+					</nav>
+				</div>
+			</div>
+
+
+
+			<!-- LAYOUTS / DISPOSICIONES -->
+			<div>
+				<h2>LAYOUTS / DISPOSICIONES</h2>
+
+				<div id="layoutsFixed">🍪 We don't have cookies here.
+				</div>
+				<div id="layoutsAbsolute">I am absolute</div>
+				<div id="layoutsRelative">I am relative</div>
+
+
+			</div>
+
+			<!-- HACKING ATTACK -->
+			<div id="hackingContainer">
+				<h2>Hacking</h2>
+				<img id="hackingImage" src="assets/images/lacaixa_Captura de pantalla 2025-06-03 125634.png" alt="">
+			</div>
+
+		</div>
+		<!-- BEAUTICARD -->
+		<h2>Beauticard <span id="bc-counter"></span></h2>
+		<p>Ideas: csv db, tinder swipe</p>
+		<div id="bc-container" class="beauticard-container">
+
+		</div>
+
+		<div class="containedWidth">
+			<!-- F L E X -->
+			<div>
+				<h2>The Flex</h2>
+				<div class="flexText">
+
+					<div>
+						<div>
+							<p>1. Title</p>
+							<p>image</p>
+							<p>Description</p>
+							<p>*extra information</p>
+						</div>
+					</div>
+					<div>
+						<div>2</div>
+					</div>
+					<div>
+						<div>3<br>2 <br>1</div>
+					</div>
+					<div>
+						<div><img style="filter: invert(1);" width="75%"
+								src="https://marketplace.canva.com/HwJxw/MAFYBRHwJxw/1/tl/canva-phone-icon-illustration-MAFYBRHwJxw.png"
+								alt=""></div>
+					</div>
+					<div>
+						<div>5</div>
+					</div>
+					<div>
+						<div>6</div>
+					</div>
+					<div>
+						<div>7</div>
+					</div>
+					<div>
+						<div>8</div>
+					</div>
+					<div>
+						<div>9</div>
+					</div>
+
+
+				</div>
+			</div>
+
+		</div>
+
+
+	</main>
+	<hr>
+	<div class="pattern-background"></div>
+	<footer>
+
+		<br>
+		<div>
+			<img class="logo" height="75px" src="https://upload.wikimedia.org/wikipedia/commons/b/b7/Flag_of_Europe.svg"
+				title="Unión Europea">
+			<img class="logo" height="75px"
+				src="https://upload.wikimedia.org/wikipedia/commons/7/7d/Escudo_de_Espa%C3%B1a_%28variant%29.svg"
+				title="Reino de España">
+			<img class="logo" height="75px"
+				src="https://upload.wikimedia.org/wikipedia/commons/0/0f/Escut_de_Catalunya_%28apuntat%29.svg"
+				title="Escudo de Cataluña">
+			<img class="logo" height="75px"
+				src="https://upload.wikimedia.org/wikipedia/commons/1/1a/Escut_de_L%27Hospitalet_de_Llobregat.svg"
+				title="Hospitalet de Llobregat">
+		</div>
+		<img style="background-color: rgb(132, 226, 229);padding:5px; border-radius: 15px;"
+			src="https://www.paucasals.com/imagen/logo.png" alt="logotipo de la escuela" title="Logotipo de la escuela"
+			width="50%">
+		<!-- filter: drop-shadow(5px 5px 5px white); -->
+		<p>Curso: Desarrollo de Aplicaciones con Tecnologías Web - IFCD0210</p>
+		<address>L'Hospitalet de Llobregat, C/ Muntanya 1, 08901</address>
+		<!-- <iframe
+			src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2994.5009285586707!2d2.108042464057572!3d41.36320021503825!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x12a498e0b8e2afdf%3A0xb5df9d184e54032a!2sCarrer%20de%20la%20Muntanya%2C%201%2C%2008901%20L&#39;Hospitalet%20de%20Llobregat%2C%20Barcelona!5e0!3m2!1sca!2ses!4v1748607634195!5m2!1sca!2ses"
+			width="400" height="200" style="border:0;" allowfullscreen="" loading="lazy"
+			referrerpolicy="no-referrer-when-downgrade"></iframe> -->
+		<!--<iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2994.5059267134143!2d2.1098341999999968!3d41.3630916!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x12a498e0b8e2afdf%3A0xb5df9d184e54032a!2sCarrer%20de%20la%20Muntanya%2C%201%2C%2008901%20L&#39;Hospitalet%20de%20Llobregat%2C%20Barcelona!5e0!3m2!1ses!2ses!4v1748533248777!5m2!1ses!2ses" width="600" height="300" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>-->
+
+		<p class="greatWord">上帝</p>
+		<p> Shàngdì = Dios en chino</p>
+		<!-- CREDITS -->
+		<div id="credits">
+			<h2 id="creditsTitle">Credits</h2>
+			<div id="creditsList">
+				<ul>
+					<li>Font: · Ubuntu <a href="https://fonts.google.com/specimen/Ubuntu">link</a> · Oregano <a
+							href="https://fonts.google.com/specimen/Oregano">link</a></li>
+					<li>Hosting: Github Pages <a href="https://pages.github.com/">link</a></li>
+					<li>Source Code: Github <a href="https://github.com/dibesfer/TECWEB-Fer">link</a></li>
+					<li>Author: dibesfer <a href="https://dibesfer.github.io">link</a> Mail: <a
+							href="mailto:dibesfer@gmail.com">dibesfer@gmail.com</a></li>
+					<li>Favicon made with <a href="https://favicon.io/favicon-generator/">favicon.io</a> with Zain font
+					</li>
+					<li>Made by Ferrán Minero &copy; 2025-05-29</li>
+				</ul>
+			</div>
+		</div>
+		<br><br>
+	</footer>
+
+
+	<script>
+
+		var norepeat
+
+		var frases = [
+			"Hola",
+			"Hola Caracola",
+			"Adiós",
+			"Muy buenas",
+			"¿Qué tal?",
+			"¿Cómo va el día?",
+			"¿Cuál es el orígen del universo?",
+			"¿Crees en Dios?",
+			"¿Qué opinas de la integración de China en el mercado internacional?",
+			"Wabba labba dub dub! Nena! Soy Rick Sanchez nena!"
+		];
+
+		function randomInt(min, max) {
+
+			var newnumber = Math.floor(Math.random() * (max - min + 1)) + min;
+
+			if (newnumber == norepeat) {
+				newnumber = Math.floor(Math.random() * (max - min + 1)) + min;
+			}
+			norepeat = newnumber
+
+			return newnumber
+
+		}
+
+		function addZero(i) {
+			if (i < 10) { i = "0" + i }
+			return i;
+		}
+
+		function botoncito() {
+			botoncitodecir.textContent = " " + frases[randomInt(0, frases.length - 1)]
+		}
+
+		var now = new Date()
+		var horas = now.getHours()
+		// var day = now.getDay()
+		var dia = now.toLocaleDateString('es-ES')
+		var diadelasemana = now.toLocaleDateString('es-ES', { weekday: 'long' })
+		var mes = now.toLocaleDateString('es-ES', { month: 'long' })
+		var diadentrodelmes = now.getDate()
+		diadehoy.innerHTML = diadelasemana + " " + diadentrodelmes + " de " + mes + " del " + now.getFullYear() + "<br><span style='text-align:right'><b>" + dia + "</b></span>";
+
+
+
+		let h = addZero(now.getHours());
+		let m = addZero(now.getMinutes());
+		let s = addZero(now.getSeconds());
+		let time = h + ":" + m + ":" + s;
+		diadehoy.innerHTML += " - " + time;
+
+		// https://datos.gob.es/apidata/catalog/dataset/a09002970-acciones-formativas-programadas-por-el-consorci-per-a-la-formacio-continua-de-catalunya
+
+		fetch("text.txt")
+			.then(response => response.text())
+			.then((response) => {
+				fetchedText.textContent = response
+			})
+			.catch(err => console.log(err))
+
+		var address = window.location.href
+		//alert(address)
+		if (address.startsWith("http://127.0.0.1")) {
+			consolaLocalhost.textContent = " - - - You are on LOCALHOST - - - "
+		}
+
+
+		// XML PARSER
+
+		// V.1
+		//var persons = []
+		// persons["name"] = {"nombre" : "juan"}
+		// persons["name"] = "John Doe"
+		// persons["age"] = 30
+		// persons["city"] = "New York"
+		// console.log("JSON " + persons.length)
+
+		// V.2
+		var persons = []
+
+		var persona = {
+			"name": "John Doe",
+			"age": 30,
+			"city": "New York"
+		}
+
+		persons.push(persona)
+		console.log(persons)
+
+
+		fetch("assets/xml/basic-structure.xml")
+			.then((response) => response.text())
+			.then((text) => {
+				const parser = new DOMParser();
+				const doc = parser.parseFromString(text, "text/xml");
+				// Obtener todos los elementos (etiquetas) del XML
+				const elementos = doc.getElementsByTagName("*");
+
+				// VERSION 1
+				// for (let i = 0; i < elementos.length; i++) {
+				//   const texto = elementos[i].textContent.trim();
+				//   if (texto) {
+				//     console.log(texto);
+				//   }
+				// }
+				// 	});
+				// VERSION 2
+				// for (let i = 0; i < elementos.length; i++) {
+				// 	const etiqueta = elementos[i].nodeName;
+				// 	const contenido = elementos[i].textContent.trim();
+
+				// 	if (contenido) {
+				// 		console.log(`Nombre de etiqueta: ${etiqueta}, Contenido de etiqueta: ${contenido}`);
+				// 	}
+				// }
+				// VERSION 3
+				for (let i = 0; i < elementos.length; i++) {
+					const elem = elementos[i];
+					const etiqueta = elem.nodeName;
+
+					// Verificamos si tiene hijos que sean elementos (etiquetas)
+					const tieneHijosElementos = Array.from(elem.childNodes).some(
+						nodo => nodo.nodeType === Node.ELEMENT_NODE
+					);
+
+					if (tieneHijosElementos) {
+						// Solo mostramos el nombre de la etiqueta
+						console.log(`Nombre de etiqueta: ${etiqueta}`);
+					} else {
+						// No tiene hijos etiquetas, mostramos nombre y contenido
+						const contenido = elem.textContent.trim();
+						if (contenido) {
+							console.log(`Nombre de etiqueta: ${etiqueta}, Contenido de etiqueta: ${contenido}`);
+						}
+					}
+				}
+			});
+	</script>
+	<script src="assets/scripts/beauticard.js"></script>
+</body>
+
+</html>

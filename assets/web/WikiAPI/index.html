@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🦉 Wiki API</title>
+    <!-- <link rel="stylesheet" href="https://en.wikipedia.org/w/load.php?modules=mediawiki.skinning.content&only=styles"> -->
+    <!-- <link rel="stylesheet" href="/w/load.php?lang=es&amp;modules=ext.uls.interlanguage%7Cext.visualEditor.desktopArticleTarget.noscript%7Cext.wikimediamessages.styles%7Cskins.vector.icons%2Cstyles%7Cskins.vector.search.codex.styles%7Cwikibase.client.init&amp;only=styles&amp;skin=vector-2022"> -->
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            max-width: 800px;
+            margin: auto;
+        }
+
+        @media screen and (max-width:800px) {
+            body {
+                margin: 10px
+            }
+        }
+
+        #supertitle {
+            display: flex;
+            align-items: center;
+            
+        }
+        .displayer {
+            height: 200px;
+            border: 1px solid black;
+            overflow: auto;
+        }
+
+        input,
+        button {
+            font: unset;
+            border: solid 1px black;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div id="supertitle">
+            <img width="50px" height="50px" src="https://upload.wikimedia.org/wikipedia/commons/5/53/Wikimedia-logo.png" alt="">
+            <h1> Wiki API 🦉</h1>
+        </div>
+
+        <p>Knowledge by Demand</p>
+        <p><a href="#Wikipedia">Wikipedia</a> | <a href="#Wikimedia">Wikimedia</a> | <a
+                href="#Wiktionary">Wiktionary</a></p>
+    </header>
+    <hr>
+    <main>
+
+
+        <h1 id="Wikipedia">Wikipedia</h1>
+
+        <h2>Read an article extract </h2>
+        <input autocomplete="off" id="inputRead" type="text" value="Darth Vader"><button
+            onclick="wikiRead()">Search</button>
+        <div id="displayRead" class="displayer"></div>
+
+        <h2>Read all article html</h2>
+        <input autocomplete="off" id="inputReadAll" type="text" value="List of Spanish flags"><button
+            onclick="wikiReadHTML()">Search</button>
+        <div id="displayReadAll" class="displayer"></div>
+
+        <h2>Search by name</h2>
+        <input autocomplete="off" id="inputSearch" type="text" value="Open Source"><button
+            onclick="wikiSearch()">Search</button>
+        <div id="displaySearch" class="displayer"></div>
+
+        <h2>Search categories</h2>
+        <input autocomplete="off" id="inputCategory" type="text" value="programming"><button
+            onclick="wikiCategories()">Search</button>
+        <div id="displayCategories" class="displayer"></div>
+
+        <h2>Search articles by category</h2>
+        <input autocomplete="off" id="inputCatArt" type="text" value="programming games"><button
+            onclick="wikiCatArt()">Search</button>
+        <div id="displayCatArt" class="displayer"></div>
+
+        <h1 id="Wikimedia">Wikimedia</h1>
+
+        <h2>Read HTML</h2>
+        <input autocomplete="off" id="inputWikimediaHTML" type="text" value="Gallery of armed forces flags"><button
+            onclick="wikimediaHTML()">Search</button>
+        <div id="displayWikimediaHTML" class="displayer"></div>
+
+        <h2>Search images by category</h2>
+        <input autocomplete="off" id="inputWikimediaImages" type="text" value="flowers"><button
+            onclick="wikimediaImages()">Search</button>
+        <div id="displayWikimediaImages" class="displayer"></div>
+
+        <h1 id="Wiktionary">Wiktionary</h1>
+
+        <h2>Search</h2>
+        <input autocomplete="off" id="inputWiktionary" type="text" value="Pokémon"><button
+            onclick="wiktionary()">Search</button>
+        <div id="displayWiktionary" class="displayer"></div>
+
+        <h2>Find</h2>
+        <input autocomplete="off" id="inputWiktionaryFind" type="text" value="humility"><button
+            onclick="wiktionaryFind()">Search</button>
+        <div id="displayWiktionaryFind" class="displayer"></div>
+
+        <br>
+        <details>
+            <summary>Documentation</summary>
+            <p>All api calls go to <code>https://en.wikipedia.org/w/api.php</code></p>
+        </details>
+
+    </main>
+    <hr>
+    <footer>
+        <p>by dibesfer with wikimedia.org</p>
+    </footer>
+
+    <script>
+
+        async function wikiRead(title) {
+
+
+            //Only text
+            //const url = `https://es.wikipedia.org/w/api.php?action=query&prop=extracts&explaintext=1&titles=${encodeURIComponent(title)}&format=json&origin=*`;
+
+            if (!title) title = inputRead.value
+
+            const url = `https://en.wikipedia.org/w/api.php?action=query&format=json&prop=extracts|info|pageimages&inprop=url&piprop=thumbnail&pithumbsize=600&explaintext=1&titles=${encodeURIComponent(title)}&origin=*&exintro=1`;
+
+            /*
+
+            https://en.wikipedia.org/w/api.php
+            ?action=query
+            &format=json
+            &prop=extracts|info|pageimages
+            &inprop=url
+            &piprop=thumbnail
+            &pithumbsize=600
+            &explaintext=1
+            &titles=${encodeURIComponent(title)}
+            &origin=*
+            &exintro=1 IT GETS THE FIRST SECTION
+
+            */
+
+            const res = await fetch(url);
+            const data = await res.json();
+            const page = Object.values(data.query.pages)[0];
+
+            //console.log(page)
+            displayRead.innerHTML = ""
+            displayRead.innerHTML = `
+            
+            <h2>${page.title}</h2>`
+
+            if (page.thumbnail) {
+                displayRead.innerHTML += `
+                <img width="100px" src="${page.thumbnail.source}">
+                `
+            }
+            displayRead.innerHTML += `
+            <p>${page.extract}</p>
+            
+            `
+
+            return page.extract; // Aquí tienes TODO el contenido
+        }
+
+        async function wikiReadHTML() {
+
+            let name = inputReadAll.value
+            const url = `https://en.wikipedia.org/w/api.php?action=parse&page=${name}&format=json&origin=*`;
+
+            fetch(url)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.parse) {
+                        const html = data.parse.text["*"];
+                        displayReadAll.innerHTML = "<h1>" + data.parse.title + "</h1>" + html // Todo el HTML de la página
+                    }
+                    else {
+                        displayReadAll.innerHTML = data.error.code + ": " + data.error.info
+                    }
+                })
+                .catch(err => {
+                    displayReadAll.innerHTML = err
+                });
+        }
+
+        async function wikiSearch(q) {
+
+            if (!q) q = inputSearch.value
+
+            // action = opensearch
+            //const url = `https://es.wikipedia.org/w/api.php?origin=*&action=opensearch&search=${encodeURIComponent(q)}&limit=50&format=json`;
+
+
+            const url = `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(q)}&format=json&origin=*`;
+
+            /*
+            
+            https://es.wikipedia.org/w/api.php
+            ?action=query
+            &list=search
+            &srsearch=${encodeURIComponent(q)}
+            &format=json
+            &origin=*
+            
+            */
+
+            const res = await fetch(url);
+            const data = await res.json();
+            displaySearch.innerHTML = ""
+            data.query.search.forEach(element => {
+                displaySearch.innerHTML += `
+                
+                <h3>${element.title}</h3>
+                <p>${element.snippet}</p>
+                
+                `
+            });
+
+            return data.query.search; // Lista de artículos
+        }
+
+        async function wikiCategories(category) {
+
+            if (!category) category = inputCategory.value
+
+            // prop = categories
+            //  const url = `https://es.wikipedia.org/w/api.php?origin=*&action=query&format=json&prop=categories&titles=${encodeURIComponent(title)}`;
+
+            const url = `https://en.wikipedia.org/w/api.php?action=query&list=allcategories&acprefix=${encodeURIComponent(category)}&format=json&origin=*`;
+
+            /*
+            https://en.wikipedia.org/w/api.php
+            ?action=query
+            &list=allcategories
+            &acprefix=${encodeURIComponent(prefix)}
+            &format=json
+            &origin=*
+            */
+
+            const res = await fetch(url);
+            const data = await res.json();
+
+            displayCategories.innerHTML = ""
+            data.query.allcategories.forEach(element => {
+
+
+                displayCategories.innerHTML += `
+                
+                <h3>${element["*"]}</h3>
+                
+                
+                `
+            });
+
+            return data.query.allcategories; // lista de categorías
+        }
+
+        async function wikiCatArt(cat) {
+
+            if (!cat) cat = inputCatArt.value
+
+            const url = `https://en.wikipedia.org/w/api.php?action=query&list=categorymembers&cmtitle=Category:${encodeURIComponent(cat)}&format=json&origin=*`;
+
+            /*
+            
+            https://en.wikipedia.org/w/api.php
+            ?action=query
+            &list=categorymembers
+            &cmtitle=Category:${encodeURIComponent(cat)}
+            &format=json
+            &origin=*
+            
+            */
+
+            const res = await fetch(url);
+            const data = await res.json();
+            displayCatArt.innerHTML = ""
+            if (data.query.categorymembers.length > 0) {
+                data.query.categorymembers.forEach(element => {
+
+
+                    displayCatArt.innerHTML += `
+                
+                <h3>${element.title}</h3>
+                
+                
+                `
+                });
+            }
+            else {
+                displayCatArt.innerHTML = "Not found"
+            }
+
+
+            return data.query.categorymembers;
+        }
+
+        // WIKIMEDIA API
+
+        async function wikimediaHTML() {
+            fetch("https://commons.wikimedia.org/w/api.php?action=parse&page=Gallery_of_armed_forces_flags&prop=text&format=json&origin=*")
+                .then(r => r.json())
+                .then(d => {
+                    displayWikimediaHTML.innerHTML = d.parse.text["*"]
+
+                });
+        }
+
+        async function wikimediaImages(category) {
+
+            if (!category) category = inputWikimediaImages.value
+
+            const url = `https://commons.wikimedia.org/w/api.php?origin=*&action=query&format=json&generator=categorymembers&gcmtitle=Category:${encodeURIComponent(category)}&gcmtype=file&gcmlimit=10&prop=imageinfo&iiprop=url`;
+
+            const res = await fetch(url);
+            const data = await res.json();
+
+
+
+            if (data.query == undefined) {
+                displayWikimediaImages.innerHTML = "Not found"
+                return
+            }
+            const pages = data.query.pages;
+            const urls = Object.values(pages).map(p => p.imageinfo[0].url);
+
+            displayWikimediaImages.innerHTML = ""
+            urls.forEach(element => {
+                displayWikimediaImages.innerHTML += `
+                <img height="100%"" src="${element}">
+                `
+            });
+
+            return urls;
+        }
+
+        async function wiktionary() {
+            const word = inputWiktionary.value;
+            const url = `https://en.wiktionary.org/w/api.php?action=query&list=search&srsearch=${word}&format=json&origin=*`;
+
+            fetch(url)
+                .then(res => res.json())
+                .then(data => {
+                    //console.log(data.query.search);
+                    let words = data.query.search
+
+                    displayWiktionary.innerHTML = ""
+
+
+                    words.forEach((element) => {
+                        displayWiktionary.innerHTML += `
+                        <h3>${element.title}</h3>
+                        <p>${element.snippet}<p>
+                        `
+                    })
+
+                })
+                .catch(err => console.error(err));
+        }
+
+        async function wiktionaryFind() {
+            const word = inputWiktionaryFind.value;
+            const url = `https://en.wiktionary.org/w/api.php?action=parse&page=${word}&format=json&origin=*`;
+
+            fetch(url)
+                .then(res => res.json())
+                .then(data => {
+
+                    let result = data.parse
+                    console.log(result)
+                    displayWiktionaryFind.innerHTML = ""
+
+                    displayWiktionaryFind.innerHTML = `
+                    
+                    <h1>${result.title}</h1>
+                    ${result.text["*"]}
+
+                    `
+                })
+                .catch(err => console.error(err));
+        }
+
+
+        function main() {
+            wikiRead()
+            wikiReadHTML()
+            wikiSearch()
+            wikiCategories()
+            wikiCatArt()
+            wikimediaHTML()
+            wikimediaImages()
+            wiktionary()
+            wiktionaryFind()
+        }
+        main()
+    </script>
+
+</body>
+
+</html>

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Narrativa</title>
+    <script src="/ferscript.js"></script>
+    <style>
+        * {
+            margin: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: black;
+            color: white;
+            height: 100vh;
+            
+
+        }
+        .prevent-select {
+  -webkit-user-select: none; /* Safari */
+  -ms-user-select: none; /* IE 10 and IE 11 */
+  user-select: none; /* Standard syntax */
+}
+        main {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            border: solid 3px white;
+        }
+
+        @media screen and (min-width: 800px) {
+            body {
+                font-size: larger;
+            }
+        }
+
+        .invisible {
+            display: none;
+        }
+
+        div {
+            transition: 0.2s;
+        }
+    </style>
+</head>
+
+<body onclick="passPage()" class="prevent-select">
+    
+    <main>
+
+    </main>
+    
+
+    <script>
+        var main = gettag("main")
+        var counter = 0
+        var chapters = [
+            `<div>
+        <h1>Narrativa</h1>
+        <h3>A new way to tell stories</h3>
+        <p>Are you entertained yet?</p>
+        <p>This page works with javascript</p>
+    </div>`,
+            `<div>
+        <h2>Summary</h2>
+        <p>Well I thought it would be appealing to just discover new chapters as you click</p>
+    </div>`,
+            `<div>
+        <h2>Chapter 3</h2>
+        <p>I've run out of ideas.</p>
+    </div>`,
+        ]
+
+        main.innerHTML = chapters[0] + `<p>Page ${counter+1}</p>`
+
+        function passPage() {
+            if (counter < chapters.length-1){
+            counter++
+            }
+            else {
+                counter = 0
+            }
+            main.innerHTML = chapters[counter] + `<p>Page ${counter+1}</p>`
+        }
+    </script>
+</body>
+
+</html>

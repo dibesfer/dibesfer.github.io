@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digimon-dex</title>
+    <style>
+
+        * {
+            margin: 0;
+            box-sizing: border-box;
+        }
+        body{
+            line-height: 2;
+            font-family: sans-serif;
+        }
+        img {
+            max-width: 100%;
+        }
+
+        header , footer {
+            background-color: blue;
+            color: gold;
+            text-align: center;
+            padding: 20px;
+        }
+        a {
+            text-decoration: none;
+            color: lightskyblue;
+        }
+        main {
+            background-color: gray;
+        }
+
+        .flex {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+        }
+
+        .box-outer {
+            padding: 10px;
+            flex: 1;
+            min-width: 250px;
+            
+        }
+
+        .box {
+            border-radius: 15px;
+            box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.569);
+            border: solid 3px rgb(157, 134, 0);
+            padding: 10px;
+            line-height: 2;
+            text-align: center;
+            flex: 1;
+            aspect-ratio: 6/8;
+            background-image: radial-gradient(rgb(249, 255, 130), rgb(199, 185, 0));
+        }
+
+        .box > h3 {
+            font-variant: small-caps;
+        }
+
+        .box > img {
+            aspect-ratio: 1;
+            object-fit: contain;
+            width: 100%;
+            border: solid 3px rgb(157, 134, 0);
+           
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>Digimon-dex</h1>
+        <h3 id="information"></h3>
+    </header>
+    <main>
+
+        <div id="displayer" class="flex">
+
+        </div>
+
+    </main>
+    <footer>by <a href="https://dibesfer.github.io">dibesfer</a> with <a href="https://digimon-api.vercel.app/">Digimon
+            Api</a></footer>
+
+    <script>
+
+        fetch("https://digimon-api.vercel.app/api/digimon")
+            .then(x => x.json())
+            .then(y => {
+                information.textContent = y.length + " digimons!"
+                console.log(y)
+                for (let i = 0; i < y.length; i++) {
+                    const element = y[i];
+                    displayer.innerHTML += `
+                    
+                    <div class="box-outer">
+                        <div class="box">
+                            <h3>${i+1}. ${element.name}</h3>
+                            <img src="${element.img}">
+                            <p>${element.level}</p>
+                        </div>
+                    </div>
+                    
+                    `
+                    
+                }
+            });
+
+    </script>
+
+</body>
+
+</html>

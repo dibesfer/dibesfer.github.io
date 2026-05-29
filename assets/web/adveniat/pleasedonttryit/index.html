@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>dbf - PDTI</title>
+    <link rel="stylesheet" href="style.css">
+<!-- SUPABASE CDN -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+
+</head>
+
+<body>
+    <header>
+        <p><a href="/web/adveniat/">Adveniat</a></p>
+
+        <div>
+            <button id="buttonLogOut" style="display:none" onclick="logOut()">Log out</button>
+            <button id="buttonLogIn" onclick="logIn()">Log in</button>
+            <button id="saveBtn" style="background-color: green; color: white;" onclick="save()">save </button>
+            <button style="background-color: yellow;" onclick="run()">run</button>
+        </div>
+
+    </header>
+
+    <div class="flexo">
+        <div id="result">
+            <iframe id="myIframe" src="" frameborder="0"></iframe>
+        </div>
+
+        <div id="script">
+            <!-- https://stackoverflow.com/questions/67865463/disable-tabbing-out-of-textarea : onkeydown="handleTab.call(this, event)" -->
+            <textarea spellcheck="false" id="myTextArea" name="" ></textarea>
+        </div>
+
+    </div>
+
+
+
+
+    <script src="script.js"></script>
+</body>
+
+</html>

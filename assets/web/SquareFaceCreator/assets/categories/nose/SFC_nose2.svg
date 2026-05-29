@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 320">
+  <!-- Clean line art keeps the nose readable and flexible over many face styles. -->
+  <g fill="none" stroke="#2a1815" stroke-linecap="round" stroke-linejoin="round">
+    <path
+      d="M166 58
+         C150 102 145 145 149 186
+         C152 214 167 233 188 241"
+      stroke-width="14"/>
+    <path
+      d="M130 213
+         C147 229 175 234 198 224"
+      stroke-width="14"/>
+    <path
+      d="M124 218
+         C128 208 136 203 147 206"
+      stroke-width="12"/>
+    <path
+      d="M191 224
+         C201 225 210 219 214 210"
+      stroke-width="12"/>
+  </g>
+</svg>

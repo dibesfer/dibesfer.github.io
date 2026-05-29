@@ -1,0 +1,392 @@
+* {
+    margin: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --bg: #11130f;
+    --panel: #181c15;
+    --panel-soft: #20261c;
+    --text: #d5d8c8;
+    --muted: #90967f;
+    --line: #4b5541;
+    --strong: #f0f2df;
+    --danger: #b55f55;
+    --accent: #9fa876;
+}
+
+html {
+    background: var(--bg);
+}
+
+body {
+    min-height: 100vh;
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 14px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-size: 1rem;
+    line-height: 1.65;
+    color: var(--text);
+    background: var(--bg);
+}
+
+body::before {
+    content: "dibesfer Supabase Fortress";
+    display: block;
+    margin-bottom: 12px;
+    padding: 6px 10px;
+    border: 1px solid var(--line);
+    color: var(--muted);
+    background: #0d0f0b;
+    letter-spacing: 0.08em;
+    text-align: center;
+}
+
+img {
+    max-width: 100%;
+}
+
+header,
+footer,
+section,
+.panel {
+    border: 1px solid var(--line);
+    background: var(--panel);
+}
+
+header,
+footer,
+section {
+    padding: 14px;
+}
+
+header,
+footer {
+    text-align: center;
+}
+
+h1,
+h3 {
+    color: var(--strong);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+h1::before {
+    content: "▰ ";
+    color: var(--accent);
+}
+
+h1::after {
+    content: " ▰";
+    color: var(--accent);
+}
+
+a {
+    color: var(--strong);
+    text-decoration: none;
+    border-bottom: 1px solid var(--line);
+}
+
+a:hover,
+button:hover {
+    background: #293120;
+}
+
+hr {
+    border: 0;
+    border-top: 1px solid var(--line);
+}
+
+#demo {
+    height: 320px;
+    overflow: auto;
+    border: 1px solid var(--line);
+    background: #0d0f0b;
+}
+
+.message {
+    display: flex;
+    gap: 10px;
+    padding: 10px;
+    border-bottom: 1px solid var(--line);
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.message:nth-child(even) {
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.message_img {
+    line-height: 0;
+}
+
+.message_img > img {
+    width: 4rem;
+    height: 4rem;
+    aspect-ratio: 1;
+    object-fit: cover;
+    border: 1px solid var(--line);
+    filter: grayscale(1) contrast(1.1) brightness(0.85);
+}
+
+.message_text {
+    flex: 1;
+    word-break: break-word;
+}
+
+input,
+button {
+    border: 1px solid var(--line);
+    color: var(--text);
+    background: var(--panel-soft);
+    font: inherit;
+}
+
+input {
+    width: min(100%, 620px);
+    padding: 8px 10px;
+    outline: none;
+}
+
+input:focus {
+    border-color: var(--accent);
+}
+
+button {
+    padding: 8px 14px;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+button::before {
+    content: "[ ";
+    color: var(--muted);
+}
+
+button::after {
+    content: " ]";
+    color: var(--muted);
+}
+
+label,
+#consola,
+footer p,
+li,
+span,
+.edge-note,
+.restricted-note {
+    color: var(--muted);
+}
+
+#displayUsername,
+#displayUsersonline,
+#displayLocalvisits,
+#edgeStatus,
+#restrictedStatus {
+    color: var(--strong);
+}
+
+.edge-panel,
+.capabilities-panel,
+.restricted-panel {
+    position: relative;
+}
+
+.edge-panel::before,
+.capabilities-panel::before,
+.restricted-panel::before {
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    color: var(--muted);
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+}
+
+.edge-panel::before {
+    content: "EDGE READY";
+}
+
+.capabilities-panel::before {
+    content: "FREE TIER BRIEFING";
+}
+
+.restricted-panel {
+    background: #000;
+    border-color: #2f332b;
+    padding: 22px;
+}
+
+.restricted-panel::before {
+    content: "CLASSIFIED";
+}
+
+.restricted-content {
+    min-height: 420px;
+    margin: 16px 0 6px;
+    padding: 0;
+    border: 1px solid #2f332b;
+    background: #050505;
+}
+
+.restricted-resource-card {
+    min-height: 420px;
+}
+
+.restricted-iframe {
+    display: block;
+    width: 100%;
+    min-height: 520px;
+    border: 0;
+    background: #fff;
+}
+
+.restricted-iframe:fullscreen {
+    width: 100vw;
+    height: 100vh;
+    min-height: 100vh;
+}
+
+.restricted-fullscreen-button {
+    width: 100%;
+    border-left: 0;
+    border-right: 0;
+}
+
+.restricted-row-details {
+    border-top: 1px solid #2f332b;
+    background: #080808;
+}
+
+.restricted-row-details summary {
+    padding: 10px 12px;
+    color: var(--muted);
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.restricted-fields {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    margin: 0;
+    padding: 0 12px 12px;
+}
+
+.restricted-fields div {
+    padding: 8px;
+    border: 1px solid #2f332b;
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.restricted-fields dt {
+    color: var(--muted);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+}
+
+.restricted-fields dd {
+    margin: 0;
+    color: var(--strong);
+    word-break: break-word;
+}
+
+.edge-grid,
+.capabilities-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin: 10px 0;
+}
+
+.capabilities-grid article {
+    padding: 10px;
+    border: 1px solid var(--line);
+    background: rgba(0, 0, 0, 0.16);
+}
+
+.capabilities-grid strong {
+    display: block;
+    color: var(--strong);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.capabilities-grid p {
+    color: var(--muted);
+}
+
+.capability-emoji {
+    display: inline-block;
+    margin-right: 6px;
+    filter: grayscale(0.5);
+}
+
+code,
+pre {
+    color: var(--strong);
+    background: #0d0f0b;
+    border: 1px solid var(--line);
+}
+
+code {
+    padding: 1px 5px;
+}
+
+pre {
+    min-height: 140px;
+    max-height: 240px;
+    overflow: auto;
+    padding: 10px;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+ol {
+    padding-left: 28px;
+}
+
+.invisible {
+    display: none;
+}
+
+::selection {
+    color: var(--bg);
+    background: var(--text);
+}
+
+@media (max-width: 560px) {
+    body {
+        padding: 10px;
+        font-size: 0.92rem;
+    }
+
+    .message_img > img {
+        width: 3rem;
+        height: 3rem;
+    }
+
+    .edge-grid,
+    .capabilities-grid,
+    .restricted-fields {
+        grid-template-columns: 1fr;
+    }
+
+    .restricted-panel {
+        padding: 14px;
+    }
+
+    .restricted-iframe {
+        min-height: 460px;
+    }
+
+    input,
+    button {
+        width: 100%;
+        margin-top: 6px;
+    }
+}

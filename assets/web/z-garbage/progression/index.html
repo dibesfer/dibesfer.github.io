@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📈Progression🚀</title>
+    <script src="/ferscript.js"></script>
+    <style>
+        * {
+            margin: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: black;
+            color: white;
+            text-align: center;
+            line-height: 2;
+            font-size: larger;
+            font-family: sans-serif;
+        }
+
+        button {
+            font: unset;
+            border: solid 3px white;
+            background-color: black;
+            color: white;
+            padding: 0 15px;
+
+        }
+
+        button:active {
+            background-color: white;
+            color: black;
+        }
+
+        #rewards , .container {
+            border: solid 3px white;
+            padding: 15px;
+        }
+
+        ::selection {
+            background: gray;
+            color: black;
+        }
+
+        hr {
+            border: solid 3px white;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>📈Progression🚀</h1>
+    <h2>Counter: <span id="displayCounter">0</span></h2>
+
+    <div class="container">
+        <h1>Welcome to the progression game</h1>
+        <p>You have to either wait or click to increase the counter.</p>
+        <p>Content will change each time you reach a threshold like multiples of 100.</p>
+    </div>
+    <div id="rewards"></div>
+
+    <h3>⏳Time: <span id="displaySeconds"></span></h3>
+    <h3>👆Clicks: <span id="displayClicks"></span></h3>
+    <h3>👣 Visits: <span id="displayVisits"></span></h3>
+    <button onclick="clickSum()">Click</button>
+    <br><br>
+    <br><br><br><br><br>
+    <hr><br>
+    <button onclick="restart()" style="border: red solid 3px; color: red">Restart</button>
+
+    </div>
+
+    <script>
+        var counter = 0;
+
+        var displayCounter = getid("displayCounter")
+        var rewards = getid("rewards")
+        var displayVisits = getid("displayVisits")
+        var visits = localStorage.getItem("progressionVisits")
+
+        if (visits == null) {
+            visits == 0
+        }
+        visits++
+        localStorage.setItem("progressionVisits", visits)
+        displayVisits.textContent = visits
+
+        counter++
+        displayCounter.textContent = counter
+
+
+        var displaySeconds = getid("displaySeconds")
+        var seconds = localStorage.getItem("progressionSeconds")
+
+        if (seconds == null) {
+            seconds == 0
+        }
+        localStorage.setItem("progressionSeconds", seconds)
+        displaySeconds.textContent = seconds
+
+        var myInterval = setInterval(intervalFunction, 1000)
+
+        function intervalFunction() {
+            seconds++
+            localStorage.setItem("progressionSeconds", seconds)
+            displaySeconds.textContent = seconds
+            counter++
+            displayCounter.textContent = counter
+            checkForRewards()
+        }
+
+        var displayClicks = getid("displayClicks")
+        var clicks = localStorage.getItem("progressionClicks")
+
+        if (clicks == null) {
+            clicks == 0
+        }
+        localStorage.setItem("progressionClicks", clicks)
+        displayClicks.textContent = clicks
+
+        function clickSum() {
+            clicks++
+            localStorage.setItem("progressionClicks", clicks)
+            displayClicks.textContent = clicks
+            checkForRewards()
+            counter++
+            displayCounter.textContent = counter
+        }
+        checkForRewards()
+        function checkForRewards() {
+
+            if (counter >= 0) {
+                rewards.innerHTML = `
+            
+            <h1>C'mon buddy, you can make it!</h1>
+
+            `
+            }
+
+
+            if (counter >= 100) {
+                rewards.innerHTML = `
+            
+            <h1>Welcome to the progression game</h1>
+
+            `
+            }
+
+            if (counter >= 200) {
+                rewards.innerHTML = `
+            
+            <h1>200 counter</h1>
+
+            `
+            }
+
+            if (counter >= 400) {
+                rewards.innerHTML = `
+            
+            <h1>400 counter</h1>
+            <p>Expeliarmus!</p>
+
+            `
+            }
+
+            if (counter >= 500) {
+                rewards.innerHTML = `
+            
+            <h1>500 clicks</h1>
+            <p>You've reached far enough!</p>
+
+            `
+            }
+        }
+
+
+        counter = localStorage.getItem("progressionCounter")
+
+        if (counter == null) {
+            counter == 0
+        }
+        counter = Number(seconds) + Number(clicks) + Number(visits)
+        localStorage.setItem("progressionCounter", counter)
+        displayCounter.textContent = counter
+
+
+        function restart() {
+            visits = 0;
+            localStorage.setItem("progressionVisits", visits)
+            clicks = 0;
+            localStorage.setItem("progressionClicks", clicks)
+            seconds = 0;
+            localStorage.setItem("progressionSeconds", seconds)
+            window.location.href = "/p/web/garbage/progression/index.html"
+        }
+
+    </script>
+</body>
+
+</html>

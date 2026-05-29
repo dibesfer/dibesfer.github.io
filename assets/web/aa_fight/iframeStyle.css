@@ -1,0 +1,52 @@
+* {
+    margin: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: sans-serif;
+    line-height: 2;
+}
+
+h1 {
+    padding: 20px;
+}
+
+img , iframe {
+    max-width: 100%;
+}
+
+a {
+    text-decoration: none;
+    color: purple;
+}
+
+@media (prefers-color-scheme: dark) {
+    body {
+        background-color: black;
+        color: white;
+    }
+
+    a {
+        color: gold;
+    }
+
+    .invertable {
+        filter: invert(1);
+    }
+}
+
+
+.flexo3 {
+    display: flex;
+    flex-wrap: wrap;
+    width: 100%;
+    line-height: 0;
+}
+
+.flexo3 > div {
+    flex: 33%;
+    width: 33%;
+    aspect-ratio: 1;
+    border: solid 3px;
+}

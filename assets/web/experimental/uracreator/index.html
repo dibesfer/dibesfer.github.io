@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>uracreator</title>
+    <style>
+        * {
+            margin: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: purple;
+
+            font-family: sans-serif;
+            color: white;
+            height: 100dvh;
+            line-height: 2;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+
+            background: radial-gradient(rgb(145, 83, 129), purple, rgb(78, 2, 78));
+        }
+
+        header , footer {
+            text-align: center;
+            padding: 20px;
+        }
+
+        main {
+            padding: 15px;
+        }
+
+        h2 {
+            font-variant: small-caps;
+        }
+        hr {
+            border: 3px solid white;
+        }
+
+        a {
+            text-decoration: none;
+            color: gold
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>uracreator</h1>
+        <p>You are a Creator</p>
+    </header>
+    <hr>
+
+    <main>
+
+        <h2>Subtitle</h2>
+        <p>Lorem ipsum, dolor sit amet consectetur adipisicing elit. Sed culpa officiis accusamus. Quos, repudiandae,
+            minus, nisi iusto voluptas harum nihil consequatur quisquam facere molestias voluptate debitis voluptatem
+            similique maiores. Accusantium.</p>
+        
+
+    </main>
+
+    <hr>
+    <footer>
+        <p>Contact <a href="mailto:dibesfer@gmail.com">dibesfer@gmail.com</a></p>
+        <p>by <a href="https://dibesfer.github.io">dibesfer</a></p>
+    </footer>
+</body>
+
+</html>

@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>dibesGallery</title>
+  <link rel="stylesheet" href="../../../style.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Tangerine:wght@400;700&display=swap');
+
+    .tangerine-regular {
+      font-family: "Tangerine", cursive;
+      font-weight: 400;
+      font-style: normal;
+    }
+
+    .tangerine-bold {
+      font-family: "Tangerine", cursive;
+      font-weight: 700;
+      font-size: 5rem;
+      font-style: normal;
+      
+    }
+
+    #gallery {
+      flex-wrap: wrap;
+    }
+
+    #gallery img {
+      display: inline-block;
+      flex: 20%;
+      width: 20%;
+      margin: 5px;
+    }
+
+    button,
+    input {
+      text-align: center;
+      font: unset;
+      background: unset;
+      border: 2px rgb(110, 102, 252) solid;
+      padding: 5px 25px;
+      box-shadow: 0 0 5px purple;
+    }
+
+    #title {
+      user-select: none;
+      transition: 0.2s ease-in;
+    }
+
+    #title:hover {
+      text-shadow: 0 0 10px white;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1 id="title" class="tangerine-bold">The Dibesgallery</h1>
+    <p>Dev & Art Museum</p>
+  </header>
+  <main>
+    <div class="maxWidth" style="text-align: center;">
+
+
+      <div id="gallery" style="display:none;">
+        <img width="100px" data-slot="dosum" alt="dosum">
+        <img width="100px" data-slot="petalia" alt="petalia">
+        <img width="100px" data-slot="plantalia" alt="plantalia">
+        <img width="100px" data-slot="unum" alt="unum">
+        <img width="100px" data-slot="1" alt="dosum">
+        <img width="100px" data-slot="2" alt="petalia">
+        <img width="100px" data-slot="3" alt="plantalia">
+        <img width="100px" data-slot="4" alt="unum">
+      </div>
+
+      <input type="password" name="inputPassword" id="dibesgalleryPassword">
+      <br>
+      <p id="message"></p>
+      <br>
+
+      <button id="enterBtn">Enter </button>
+
+
+
+      <br><br>
+      <div style="text-align: left;">
+        <h3 class="serif">What is this?</h3>
+        <p>The Dibesgallery is a private collection of artwork</p>
+
+        <h3 class="serif">When was it made?</h3>
+        <p>25 May of 2026</p>
+
+        <h3 class="serif">Who made it?</h3>
+        <p>Fer Minero, alias dibesfer</p>
+
+        <details>
+          <summary>More info</summary>
+          <p>It is accessible only with a password code</p>
+          <p>In order to get the code you must send an email to dibesfer@gmail.com using this format</p>
+          <pre>
+Subject: dibesGallery register
+    name: John Smith
+    email: johnsmith@example.com
+      </pre>
+          <p>I manage registrations manually, store them in an email white list and send them password code on
+            convenience.</p>
+          <p>You can do the paypal payment <a href="https://www.paypal.com/ncp/payment/LTKF4EN6EMZZS"
+              target="_blank">here</a></p>
+
+        </details>
+
+      </div>
+
+      
+    </div>
+  </main>
+
+  <script>
+
+    let dibesgalleryPassword = document.getElementById("dibesgalleryPassword")
+    const EDGE_URL = "https://kalidybwmoxhcwlfeftc.supabase.co/functions/v1/dibesGallery";
+
+    document.getElementById("enterBtn").addEventListener("click", async () => {
+      // keep history: const password = prompt("Enter your gallery password:");
+
+      const password = dibesgalleryPassword.value;
+      if (!password) return;
+
+      const message = document.getElementById("message");
+      message.textContent = "Verifying...";
+
+      try {
+        const res = await fetch(EDGE_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ password }),
+        });
+
+        const data = await res.json();
+
+        if (!data.ok) {
+          message.textContent = data.message || "Access denied.";
+          return;
+        }
+
+        // populate images
+        document.querySelectorAll("img[data-slot]").forEach(img => {
+          const slot = img.dataset.slot;
+          if (data.urls[slot]) img.src = data.urls[slot];
+        });
+
+        document.getElementById("gallery").style.display = "inline-flex";
+        document.getElementById("enterBtn").style.display = "none";
+        dibesgalleryPassword.style.display = "none";
+        message.textContent = "";
+        message.style.display = "none";
+
+
+      } catch (e) {
+        document.getElementById("message").textContent = "Something went wrong.";
+      }
+    });
+  </script>
+</body>
+
+</html>

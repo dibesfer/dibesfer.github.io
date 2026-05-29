@@ -1,0 +1,19 @@
+Hola este es un texto de prueba. Lorem ipsum blah blah blah. Lore, lore, macu macu.
+==========*==========*==========*====================*==========*==========*==========
+<!DOCTYPE html>
+<html>
+<head>
+
+<meta charset="UTF-8">
+</head>
+<body>
+</body>
+</html>
+
+¿Cómo organizaría yo la información?
+
+cosas (
+    cosa1 : "Ir a comer al chino",
+    cosa2 : "Nananana",
+    cosa3 : "Acabar esta web"
+)

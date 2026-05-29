@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>dbf - SFC</title>
+    <link rel="stylesheet" href="/web/SquareFaceCreator/style.css">
+    <link rel="shortcut icon" href="/web/SquareFaceCreator/assets/branding/SFC.png" type="image/x-icon">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+</head>
+
+<body>
+    <header>
+        <h1>Square Face Creator</h1>
+        <h3 class="combinations-title"></h3>
+    </header>
+    <main>
+
+        <div id="SFC_flexo">
+            <div id="SFC_face">
+                <div class="canvas-wrapper">
+                    <canvas></canvas>
+                    <input class="canvas-background-picker" type="color" value="#d4af37"
+                        aria-label="Canvas background color">
+                    <input class="canvas-secondary-picker" type="color" value="#d4af37" aria-label="Secondary color">
+                </div>
+            </div>
+
+            <div id="SFC_options">
+                <div class="categoryPicker">
+                    <div class="category-wrapper">
+                        <div class="category" data-category="eyes">
+                            <div class="emojicon">
+                                👁️
+                            </div>
+                            Eyes
+                        </div>
+                        <div class="category" data-category="eyebrows">
+                            <div class="emojicon">
+                                🤨
+                            </div>
+                            Eyebrows
+                        </div>
+                        <div class="category" data-category="nose">
+                            <div class="emojicon">
+                                👃
+                            </div>
+                            Nose
+                        </div>
+                        <div class="category" data-category="mouth">
+                            <div class="emojicon">
+                                👄
+                            </div>
+                            Mouth
+                        </div>
+                        <div class="category" data-category="ears">
+                            <div class="emojicon">
+                                👂
+                            </div>
+                            Ears
+                        </div>
+                        <div class="category" data-category="hair">
+                            <div class="emojicon">
+                                🪮
+                            </div>
+                            Hair
+                        </div>
+                        <div class="category" data-category="glasses">
+                            <div class="emojicon">
+                                👓
+                            </div>
+                            Glasses
+                        </div>
+                        <div class="category" data-category="beard">
+                            <div class="emojicon">
+                                🧔‍♂️
+                            </div>
+                            Beard
+                        </div>
+                    </div>
+                </div>
+                <div class="faceItemGrid">
+                    <!-- The grid starts empty on purpose so production never depends on
+            third-party hotlinked thumbnails that may be blocked by referrer or
+            anti-embed rules. The module script fills these slots with the local
+            mirrored catalog immediately after boot. -->
+                    <div class="faceItem"></div>
+                    <div class="faceItem"></div>
+                    <div class="faceItem"></div>
+                    <div class="faceItem"></div>
+                    <div class="faceItem"></div>
+                    <div class="faceItem"></div>
+                    <div class="faceItem"></div>
+                    <div class="faceItem"></div>
+                    <div class="faceItem"></div>
+                    <div class="faceItem"></div>
+                    <div class="faceItem"></div>
+                    <div class="faceItem"></div>
+
+                </div>
+
+                <div class="presetPicker">
+                    <div class="preset-wrapper">
+                        <div class="preset" data-preset="default">
+                            <div class="emojicon">
+                                😃
+                            </div>
+                            Default
+                        </div>
+                        <div class="preset" data-preset="random">
+                            <div class="emojicon">
+                                🎲
+                            </div>
+                            Random
+                        </div>
+                        <div class="preset" data-preset="empty">
+                            <div class="emojicon">
+                                😶
+                            </div>
+                            Empty
+                        </div>
+
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <div id="saveData">
+            <h3>Your data</h3>
+            <pre contenteditable="true" spellcheck="false" aria-label="Saved face code"></pre>
+            <button class="read-data-button" type="button">Load</button>
+        </div>
+    </main>
+    <footer>
+        <p>made by <a href="https://dibesfer.github.io">dibesfer</a></p>
+    </footer>
+    <script src="/assets/scripts/supabase.js"></script>
+    <script type="module" src="/web/SquareFaceCreator/script.js"></script>
+</body>
+
+</html>

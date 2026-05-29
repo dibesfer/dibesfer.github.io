@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 320">
+  <!-- Rotating the group keeps the drawing simple while flipping the whole
+       ear shape 180 degrees around the center of the SVG canvas. -->
+  <g fill="none" stroke="#1d1414" stroke-linecap="round" stroke-linejoin="round" transform="rotate(180 160 160)">
+    <path
+      d="M224 44
+         C174 56 137 96 123 150
+         C110 201 121 252 156 281
+         C182 303 216 297 237 272
+         C250 257 257 237 257 215"
+      stroke-width="14"/>
+    <path
+      d="M206 92
+         C170 107 147 141 144 183
+         C142 214 152 238 174 255"
+      stroke-width="11"/>
+    <path
+      d="M190 126
+         C168 139 158 162 160 190
+         C161 208 168 222 181 235"
+      stroke-width="10"/>
+    <path
+      d="M178 186
+         C194 183 208 191 215 205"
+      stroke-width="10"/>
+  </g>
+</svg>

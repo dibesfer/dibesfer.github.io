@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BlockCity</title>
+
+    <!-- SEO -->
+    <meta name="author" content="dibesfer - Ferrán Minero" />
+    <meta name="description" content="BlockCity - Creative Minetest/Luanti Server" />
+    <meta name="keywords" content="Block City Creative Minetest Luanti server game dibesfer web website" />
+
+    <style>
+        * {
+            margin: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            text-align: center;
+            font-family: serif;
+            color: white;
+            line-height: 2;
+            background-color: #232323;
+            ;
+        }
+
+        a {
+            text-decoration: none;
+            color: unset;
+        }
+
+        img {
+            max-width: 100%;
+        }
+
+        header {
+            background-color: #181818;
+            padding: 40px;
+            
+        }
+
+        footer {
+            aspect-ratio: 16/6;
+            width: 100%;
+            background-image: url("images/bc-outerspace.png");
+            background-size: cover;
+            background-position: center;
+            padding: 40px;
+        }
+
+        .panoramic {
+            aspect-ratio: 16/9;
+            width: 100%;
+            object-fit: cover;
+        }
+
+        .blurry {
+            background-color: rgba(34, 34, 34, 0.819);
+            padding: 15px;
+            backdrop-filter: blur(10px);
+            width: max-content;
+            margin: auto;
+            border: solid white 1px;
+            text-shadow: 0 0 5px black;
+            border-radius: 5px;
+            max-width: 100%;
+        }
+
+        .flex {
+            display: flex;
+            justify-content: center;
+            align-items: first baseline;
+            flex-wrap: wrap;
+
+        }
+
+        .flex > div {
+            flex: 100%;
+        }
+
+        @media only screen and (min-width: 800px) {
+            .flex > div {
+                flex: 33.33%;
+                padding: 10px;
+            }
+
+            footer {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }
+            
+        }
+
+        #realtimePlayersList {
+            border: solid 1px white;
+            margin: auto;
+            width: 400px;
+            max-width: 100%;
+            height: 120px;
+            overflow: auto;
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+    <header style="line-height: 1;">
+        <h1 >BlockCity Creative</h1><br>
+        <h3 >Minetest/Luanti server game</h3>
+    </header>
+    <main>
+
+        <!-- Main Image -->
+        <img class="panoramic" src="/games/FeXa Games/images/ESL-BC.png" alt="">
+        <h2>The Spawn</h2>
+        <br>
+        <div class="flex">
+
+            <div>
+                <img class="panoramic" src="images/bc-desktop.png" alt="Desktop">
+                <p>Desktop by dibesfer</p>
+            </div>
+
+            <div>
+                <img class="panoramic" src="images/bc-temple.png" alt="Temple">
+                <p>Tower's interior by ThomasZprszadam</p>
+            </div>
+
+            <div>
+                <img class="panoramic" src="images/bc-highway.png" alt="Highway">
+                <p>Highway by 20299</p>
+            </div>
+
+        </div>
+        <br>
+        <div id="realtime">
+            <p>Players: 
+                <span id="realtimeMinPlayers"></span>
+                /
+                <span id="realtimeMaxPlayers"></span>
+            </p>
+            <div id="realtimePlayersList">
+                
+            </div>
+        </div>
+        <br>
+
+    </main>
+
+    <footer>
+
+        <div class="blurry">
+            <p>Address: nri.edgy.net</p>
+            <p>Port: 30000 </p>
+            <p>Supporting connections from:</p>
+            <p>minetest 0.4x, minetest 5x and multicraft</p>
+            <p>Owned By: wsor and Edgy1(Trump) </p>
+            <p>Server Hosts: Edgy1, Maksym, wsor </p>
+            <p>Server Admin: wsor</p>
+            <p>Admins: wsor, meme_queen, Nezrok, ScoutTrooper, Odaxelagnia </p>
+            <p>Moderators: Gulf, Leutomazien, Olliy, msn</p>
+            <p>based on <a href="https://blockcity.edgy1.net/">blockcity.edgy1.net/</a></p>
+            <p>website made by <a href="https://dibesfer.github.io">dibesfer</a> 24/10/2025</p>
+        </div>
+
+    </footer>
+
+
+
+    <script>
+
+        let realtimeMinPlayers = document.getElementById("realtimeMinPlayers")
+        let realtimeMaxPlayers = document.getElementById("realtimeMaxPlayers")
+        let realtimePlayersList = document.getElementById("realtimePlayersList")
+
+        var serverListNewHtml = ""
+
+        function readJson() {
+            // http://localhost:8080
+            fetch('https://servers.minetest.net/list')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error("HTTP error " + response.status);
+                    }
+                    return response.json();
+
+                })
+                .then(json => {
+
+                    console.log(json.list)
+
+                    json.list.forEach(e =>{
+                        if (e.name == "BlockCity Creative [0.4, 5.x]" && e.address == "nri.edgy1.net"){
+                            console.log(e)
+                            realtimeMinPlayers.textContent = e.clients
+                            realtimeMaxPlayers.textContent = e.clients_max
+                            e.clients_list.forEach(client=>{
+                                realtimePlayersList.innerHTML +=
+                                `<p>${client}</p>`
+                            })
+                        }
+                    })
+
+                })
+                .catch(function (e) {
+                    console.log(e);
+                })
+        }
+        readJson()
+
+
+    </script>
+
+</body>
+
+</html>

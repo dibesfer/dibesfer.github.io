@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>dibesfer ads</title>
+    <link rel="stylesheet" href="/dibesferV3/style.css">
+    <script src="/ferscript.js"></script>
+    <style>
+        * {
+            margin: 0;
+            box-sizing: border-box;
+        }
+
+        #EthicalAds {
+            color: black;
+            padding: 5px;
+            overflow: auto;
+        }
+
+        .ad {
+            width: 100%;
+            height: 6rem;
+            
+            background-color: rgb(39, 39, 39);
+            line-height: 1.5;
+            overflow: hidden;
+            padding: 5px 10px;
+            display: flex;
+            flex-direction: column;
+            color: white;
+        }
+
+        a {
+            color:lightblue
+        }
+
+        .flexo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .flexo2 {
+            flex: 1;
+            width: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .adTxt {
+            overflow: auto;
+            white-space: nowrap;
+            height: 2.5rem;
+            min-width: 0;
+            mask-image: linear-gradient(to right, white 95%, transparent 100%);
+            -webkit-mask-image: linear-gradient(to right, white 95%, transparent 100%);
+
+        }
+
+        .adTxt:after {
+            content: "⠀⠀⠀⠀⠀⠀⠀";
+        }
+
+        .adImg {
+            height: 3rem;
+            aspect-ratio: 1;
+            object-fit: cover;
+            filter: drop-shadow(0 0 5px rgba(220, 220, 220, 0.5))
+
+;
+       
+        }
+
+        .discreteInfo {
+            color: gray;
+            font-size: 0.75rem;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="ad">
+        <div style="display: flex; justify-content: space-between;">
+            <div class="discreteInfo" id="EthicalAds_button">Ethical Ads</div>
+            <div class="discreteInfo"></div>
+        </div>
+        <div id="adContent" class="flexo">
+            <img class="adImg">
+            <div class="flexo2">
+                <div class="adTitle"><a href="" target="_blank"></a></div>
+                <div class="adTxt"></div>
+            </div>
+        </div>
+
+        <div id="EthicalAds" class="hidden">
+            <p class="discreteInfo">Ethical ads is a compendium of software I personally use and recommend to you. You
+                can be advertised here if you have something cool to share. Advertise to <a
+                    href="mailto:dibesfer@gmail.com">dibesfer@gmail.com</a></p>
+        </div>
+    </div>
+
+
+
+    <script>
+
+        let myAd = document.querySelector(".ad")
+        let myAdImg = document.querySelector(".adImg")
+        let myAdTxt = document.querySelector(".adTxt")
+        let myAdTitle = document.querySelector(".adTitle")
+
+        let EthicalAds = document.getElementById("EthicalAds")
+        let adContent = document.getElementById("adContent")
+
+        function toggleEthicalAds() {
+            EthicalAds.classList.toggle("hidden")
+            adContent.classList.toggle("hidden")
+            console.log("hey")
+        }
+
+        EthicalAds_button.addEventListener("click", toggleEthicalAds)
+
+        let ads = [
+            {
+                adTitle: "<a href='https://debian.org' target='_blank'>Debian</a>",
+                adImg: "https://www.debian.org/Pics/debian-logo-1024x576.png",
+                adTxt: `El sistema operativo universal. The <b>universal</b> and <i>free</i> operating system.`,
+            },
+            {
+                adTitle: "<a href='https://fedoraproject.org' target='_blank'>Fedora</a>",
+                adImg: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/Fedora_logo.svg/960px-Fedora_logo.svg.png",
+                adTxt: `One of the most advanced and popular Linux distributions`,
+            },
+            {
+                adTitle: "<a href='https://www.gimp.org/' target='_blank'>GIMP</a>",
+                adImg: "https://www.gimp.org/images/frontpage/wilber-big.png",
+                adTxt: `GNU Image Manipulation Program. It is a freely distributed program for such tasks as photo retouching, image composition and image authoring`,
+            },
+            {
+                adTitle: "<a href='https://www.luanti.org' target='_blank'>Luanti</a>",
+                adImg: "https://www.luanti.org/media/icon.svg",
+                adTxt: `An open-source voxel game creation platform. Play one of our many games solo or together. Mod a game as you see fit, or make your own. `,
+            },
+            {
+                adTitle: "<a href='https://www.blockbench.net/' target='_blank'>BlockBench</a>",
+                adImg: "https://www.blockbench.net/images/logos/icon.png",
+                adTxt: `A low-poly 3D model editor`,
+            },
+            {
+                adTitle: "<a href='https://www.qbittorrent.org/' target='_blank'>qBittorrent</a>",
+                adImg: "https://www.muylinux.com/wp-content/uploads/2020/10/qBitTorrent.jpg",
+                adTxt: `open-source software alternative to μTorrent.`,
+            }
+
+
+
+        ]
+
+        let norepeat = localStorage.getItem("dibesfer_ad_norepeat_random_number")
+
+        if (norepeat == null) {
+            norepeat = localStorage.setItem("dibesfer_ad_norepeat_random_number", null)
+        }
+
+        function selectRandomAd() {
+
+            let randomNum = randomInt(0, ads.length - 1)
+
+            while (randomNum == norepeat) {
+                randomNum = randomInt(0, ads.length - 1)
+            }
+
+            myAdTitle.innerHTML = ads[randomNum].adTitle
+            myAdImg.src = ads[randomNum].adImg
+            myAdTxt.innerHTML = ads[randomNum].adTxt
+
+            norepeat = localStorage.setItem("dibesfer_ad_norepeat_random_number", randomNum)
+            norepeat = randomNum
+        }
+        selectRandomAd()
+
+        let intervalVar = setInterval(() => {
+            selectRandomAd()
+
+        }, 15000);
+
+    </script>
+</body>
+
+</html>

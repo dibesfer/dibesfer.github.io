@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cookie</title>
+    <style>
+        body {
+            font-family: sans-serif
+        }
+
+        table {
+            border-collapse: collapse;
+            max-width: 100%;
+
+        }
+
+        th {
+            background-color: gray;
+            color: white;
+        }
+
+        th,
+        td {
+            border: 2px black solid;
+            padding: 5px;
+        }
+
+        tr:nth-child(even) {
+
+            background-color: pink;
+
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>🍪Cookie Creator➕</h1>
+
+    <div>
+        <div>Your cookie is <span id="justShowCookie"></span></div>
+        <div id="yourCookie"></div>
+    </div>
+
+    <p>Example cookie</p>
+    <div id="example"></div>
+
+    <p>Create a cookie</p>
+    <input type="text" id="inputKey" placeholder="Key">
+    <input type="text" id="inputValue" placeholder="Value">
+    <button id="submitCookieButton">Submit cookie</button>
+
+
+    <p>To delete a cookie: add </p>
+    <script>
+    
+    //const maxDate = new Date(8.64e15)
+    let time0 = new Date(0).toUTCString()
+    document.write(";expires=" + time0)
+    //var userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
+    
+    </script>
+    <!-- <p>;expires=Thu, 01 Jan 1970 00:00:00 UTC</p> -->
+    <p>to the value of your Cookie</p>
+
+    <p>add ; path=/ to delete different cookies</p>
+
+    <p>HINT: Write iveBeenHere *</p>
+
+    <script>
+        //expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;
+        // ;expires=Thu, 01 Jan 1970 00:00:00 GMT
+        let stringKey
+        let stringValue
+        let stringCookie
+
+        submitCookieButton.addEventListener("click", submitCookie)
+
+        justShowCookie.textContent = document.cookie
+        // document.cookie = "usuario=Fer; expires=Mon, 01 Jul 2025 14:13:00 GMT; path=/;secure domain=localhost; samesite=Strict"
+        // document.cookie = "administrador=María; expires=Mon, 01 Jul 2025 14:13:00 GMT; path=/;secure domain=localhost; samesite=Strict"
+        let stringExampleCookie = `document.cookie = "administrador=María; expires=Mon, 01 Jul 2025 14:13:00 GMT; path=/;secure domain=localhost; samesite=Strict"`
+        example.textContent = stringExampleCookie
+        let customArrAnswer = []
+
+        function leerGalletas(nombre) {
+        justShowCookie.textContent = document.cookie
+
+            let galletas = document.cookie.split(";")
+            //console.log(galletas)
+            if (!galletas || galletas[0] == "") {
+                yourCookie.textContent = "You have no cookies"
+                return
+            }
+            let galletitas = []
+            for (let galleta of galletas) {
+                galletitas.push(galleta.trim().split("="));
+            }
+
+            let yourCookieHTML = "<h3>Number of cookies " + galletitas.length + "</h3>"
+            yourCookieHTML += `
+                <table>
+                    <tr>
+                        <th>Clave</th>
+                        <th>Valor</th>
+                    </tr>
+            `
+            galletitas.forEach((elemento) => {
+                yourCookieHTML += `
+                <tr>
+                    
+                    <td>${elemento[0]} </td>
+                    <td>${elemento[1]}</td>
+                </tr>
+                `
+                if (elemento[0] == "iveBeenHere" && elemento[1] != "") {
+
+                    let myDate = (new Date().toUTCString())
+
+                    customArrAnswer = elemento[1].split("///")
+
+                    console.log(customArrAnswer)
+                
+                    alert("Welcome " + customArrAnswer[0] + "!")
+                    document.cookie = elemento[0] + "=" + elemento[1] + "///<br>" + myDate
+                    alert("You connected " + (customArrAnswer.length - 1) + " times")
+                }
+            })
+            yourCookieHTML += "</table>"
+            yourCookie.innerHTML = yourCookieHTML
+        }
+
+        leerGalletas()
+        //console.log(document.cookie)
+        function submitCookie() {
+            stringKey = inputKey.value
+            stringValue = inputValue.value
+            stringCookie = stringKey + "=" + stringValue
+
+            if (stringKey == "iveBeenHere") {
+                //let myDate = (new Date(new Date().getTime() + 86400000))
+                if (stringValue.indexOf(";expires=") != -1){
+                    
+                    document.cookie = stringCookie
+                }
+
+                else {
+                    let myDate = new Date()
+                    console.log(customArrAnswer.length)
+                    // if (customArrAnswer.length > 0) {
+                    //     for (let i = 1; i < customArrAnswer.length - 1; i++) {
+                    //         stringValue += customArrAnswer[i]
+                    //     }
+                    // }
+
+
+                    stringValue += "<br>///<br>" + myDate
+                    stringCookie = stringKey + "=" + stringValue
+                    document.cookie = stringCookie
+                    
+                }
+                
+                leerGalletas()
+            }
+
+            else {
+                if (stringKey) {
+                    document.cookie = stringCookie
+                    //Thu, 01 Jan 1970 00:00:00 GMT
+                    leerGalletas()
+                }
+                else {
+                    alert("Nothing to save")
+                }
+            }
+        }
+        //document.cookie = "sexo=luis;administrador=María; expires=Mon, 01 Jul 2025 14:13:00 GMT; path=/;secure domain=localhost; samesite=Strict"
+
+
+    </script>
+
+</body>
+
+</html>

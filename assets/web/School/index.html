@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>dibesfer Web School</title>
+    <script src="/ferscript.js"></script>
+    <style>
+        body {
+            font-family: sans-serif;
+        }
+
+        pre {
+            font: unset;
+            max-width: 100%;
+            line-height: 1.2;
+            white-space: pre-wrap;
+        }
+
+        header,
+        footer {
+            text-align: center;
+        }
+        
+        main {
+            max-width: 800px;
+            margin: auto;
+        }
+
+        textarea {
+            resize: none;
+            height: 200px;
+        }
+
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <h1>dibesfer Web School</h1>
+        <p>Learn how to make a website</p>
+        <p>HTML, CSS and Javascript</p>
+    </header>
+
+    <hr>
+    <main>
+
+        <h2>1. HTML</h2>
+        <p>HyperText Markup Language</p>
+        <p>HTML builds the skeletal structure of a website</p>
+        <pre id="_1html"></pre>
+
+        <script>
+            _1html.textContent = `The most basic element of a web site is a <tag>
+        
+A tag is an element surrounded by < and > like <tag>, it usually contains content and it's closed with a pairing </tag>
+
+The most common tag you'll see is <p></p> which means a paragraph.
+
+Very common tags are h1, h2, h3 (titles), hr (a bar), div (a container), a (link)
+
+The basic HTML structure of a website looks like this:
+`
+        </script>
+
+<textarea name="" id="htmlTA" spellcheck="false">
+
+    
+</textarea>
+
+<script>
+
+</script>
+        
+        <!-- <pre class="prettyprint" lang-html>
+
+            <div>
+                <div></div>
+            </div>
+
+        </pre> -->
+
+        <h2>2. CSS</h2>
+        <p>Cascade Style Sheet applies style to your html content</p>
+        <p>It also allows animations</p>
+        <p style="color:red">I am a styled paragraph!</p>
+
+
+        <h2>3. Javascript</h2>
+        <p>Javascript adds functionality to your website</p>
+        <p id="clockDisplay"></p>
+
+        <p>Most common input used to trigger javascript functions is the button</p>
+        <p id="randomDisplay">Click the button below!</p>
+        <button onclick="randomMessage()">Say something random</button>
+
+    </main>
+
+    <hr>
+    <footer>
+        <p>by <a href="https://dibesfer.github.io">dibesfer</a></p>
+    </footer>
+
+    <!-- <script
+        src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js?lang=html&amp;skin=sunburst"></script> -->
+
+    <script>
+
+        htmlTA.value = `<!DOCTYPE html>
+<html>
+<head>
+</head>
+<body>
+    <h1>Hello World!</h1>
+</body>
+</html>`
+
+        function clockCount() {
+            let time = new Date()
+            clockDisplay.textContent = time
+        }
+
+        clockCount()
+
+        let clockInterval = setInterval(clockCount, 1000)
+
+        let messages = [
+            "Hi!",
+            "Hello",
+            "What's up?",
+            "How are you?",
+            "Wassup?",
+            "How are you doing?",
+            "Click the button below!",
+            "Internet is powerful",
+            "Share your knowledge!",
+            "Life's meaning is 42",
+            "Let's all be good one to another"
+        ]
+
+        function randomMessage(){
+            randomDisplay.textContent = messages[randomInt(0,messages.length-1)]
+        }
+
+    </script>
+</body>
+
+</html>

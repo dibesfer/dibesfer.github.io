@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>dbf - Good Morning</title>
+    <link rel="icon" type="image/x-icon" href="/branding/favicon.ico">
+
+    <style>
+        :root {
+            --opa1: 0.75
+        }
+
+        * {
+            margin: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: sans-serif;
+            color: white;
+            width: 100dvw;
+            height: 100dvh;
+        }
+
+        #centercenter {
+            max-width: 100%;
+            word-break: break-all;
+        }
+
+        a {
+            color: unset;
+        }
+
+        button,
+        select {
+            font: unset;
+            border: solid 3px lime;
+            color: lime;
+            padding: 5px;
+            background-color: green;
+        }
+
+        iframe,
+        img {
+            max-width: 100%;
+        }
+
+        .subFlex {
+            position: absolute;
+            /* background-color: rgb(170, 68, 170); */
+            background-image: radial-gradient(rgb(230, 106, 192, var(--opa1)), rgb(231, 181, 190, var(--opa1)), rgb(51, 0, 47, var(--opa1)));
+            background-repeat: no-repeat;
+            color: rgb(51, 0, 47);
+            background-position: center;
+            animation-name: bg-glow;
+            animation-duration: 4s;
+            animation-iteration-count: infinite;
+            animation-timing-function: ease-in-out;
+            backdrop-filter: blur(0.5px);
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            height: 100%;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .bgFlex_Container {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            max-width: 100%;
+            overflow: hidden;
+        }
+
+        .bgFlex {
+            width: 100%;
+            height: 100%;
+            background-image: url("https://images.unsplash.com/photo-1538370965046-79c0d6907d47?fm=jpg&q=60&w=3000&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8Z2FsYXh5JTIwd2FsbHBhcGVyfGVufDB8fDB8fHww");
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-position: center;
+            animation-name: bg-little-glow;
+            animation-duration: 6s;
+            animation-iteration-count: infinite;
+            animation-timing-function: linear;
+        }
+
+        .mainFlex {
+            position: absolute;
+            display: flex;
+            width: 100%;
+            height: 100%;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .anotherFlex {
+            position: absolute;
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            height: 100%;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+        }
+
+        @keyframes bg-glow {
+            0% {
+                background-size: 100%;
+            }
+
+            50% {
+                background-size: 200%;
+            }
+
+            100% {
+                background-size: 100%;
+            }
+        }
+
+        @keyframes bg-little-glow {
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.1);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        @keyframes spin {
+            0% {
+                filter: drop-shadow(5px 5px 15px rgb(255, 9, 9));
+                transform: rotate(0);
+            }
+
+            50% {
+                filter: drop-shadow(5px 5px 15px rgb(255, 198, 9));
+            }
+
+            100% {
+                filter: drop-shadow(5px 5px 15px rgb(255, 9, 9));
+                transform: rotate(360deg);
+            }
+        }
+
+        #sun {
+            text-align: center;
+        }
+
+        #sun>img {
+            filter: drop-shadow(0px 0px 15px rgb(255, 9, 9));
+            animation-name: spin;
+            animation-duration: 12s;
+            animation-timing-function: linear;
+            animation-iteration-count: infinite;
+            width: 150px;
+        }
+
+        .footer {
+            display: flex;
+            width: 100%;
+            justify-content: space-between;
+            align-items: center;
+            flex: 0;
+        }
+
+        .header {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            width: 100%;
+            height: 70px;
+            overflow: auto;
+        }
+
+        .header>div {
+            height: 100%;
+            min-height: 0;
+            align-content: center;
+        }
+
+        .main {
+            display: flex;
+            width: 100%;
+            justify-content: space-between;
+            align-items: center;
+            flex-direction: column;
+            scroll-behavior: smooth;
+            height: 100%;
+            overflow: auto;
+            flex: 0.75;
+            /* box-shadow:  0 15px 0.75px rgb(255, 255, 255); */
+        }
+
+        .footer>*,
+        .header>*,
+        .main>* {
+            border: dashed 2px white;
+            border-radius: 25px;
+            background-color: rgba(255, 255, 255, 0.3);
+            padding: 15px;
+            transition: 0.2s;
+            cursor: pointer;
+        }
+
+        @media(min-width:740px) {
+
+            .footer>*:hover,
+            .header>*:hover,
+            .main>*:hover {
+                border-color: black;
+                /* backdrop-filter: invert(1); */
+            }
+        }
+
+        .myForm {
+            border: solid 0.3px rgb(255, 255, 255);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="bgFlex_Container">
+        <div class="bgFlex">
+
+            <h1></h1>
+
+        </div>
+
+    </div>
+
+    <div class="subFlex">
+
+
+
+    </div>
+    <div class="mainFlex">
+
+
+
+    </div>
+
+    <div class="anotherFlex">
+
+        <div class="header">
+            <div style="margin-right: auto;">
+                <p>ABOUT ME</p>
+            </div>
+
+            <div style="margin: auto;">
+                <h2>dbf</h2>
+            </div>
+
+            <div style="margin-left: auto;"><a href="LOG IN">log in</a></div>
+        </div>
+
+        <div class="main">
+
+            <div>
+
+                <h2>Apuntes 13/06/2025</h2>
+                <p>1. Repaso del código que hicimos ayer</p>
+                <p>2. Método prompt("Hola, ¿cómo te llamas?")</p>
+                <p>3. window.open("https://dibesfer.com","_blank")</p>
+                <p>4. Variables var let y const</p>
+                <p>5. Casting: document.write("HOLA" + (3+6)) // resultado HOLA9</p>
+                <p>5.1. parseInt(), parseFloat(), String()</p>
+                <p>6. Post/pre-increment ++x VS. x++</p>
+                <p>7. String methods, toUpperCase() substr(0,4) indexOf("p",3)
+                </p>
+                <p>8. Calculadora de letra de DNI</p>
+
+                <p>9. Fecha: let fecha = new Date(); </p>
+                <p>9.1. let fechaTexto = String(fecha)</p>
+                <p>10. Plantilla literal= `ejemplo ${fecha.getFullYear()}`</p>
+            </div>
+
+            <div style="background-color: rgb(124, 124, 124); width: 50%;">
+                <h1 style="font-variant: small-caps;">JavaScript</h1>
+                <h3><i>En programación es posible todo lo matemáticamente expresable.</i></h3>
+
+                <p>Empezamos:</p>
+
+
+                <div
+                    style="height: 400px; background-color: rgb(54, 54, 54); padding: 10px;hyphens: auto;overflow: auto;">
+
+                    <label for="countries">Function:</label>
+                    <select name="countries" id="jsFunctions">
+                        <option value="write document">write document</option>
+                        <option value="say hello">Say("hello")</option>
+                        <option value="make list">Make list</option>
+                        <option value="window open">window.open()</option>
+                        <option value="make a wish">Make a wish ⭐</option>
+                        <option value="DNI letter">DNI Letter</option>
+
+                    </select>
+                    <br><br>
+
+                    <script>
+
+
+                        var currentJsFunction
+
+                        jsFunctions.addEventListener("change", jsFunction)
+
+                        jsFunction()
+
+                        function jsFunction() {
+                            currentJsFunction = jsFunctions.value
+                        }
+
+                    </script>
+
+                    <button id="btnwrite">Write</button>
+                    <button onclick="clearthing()">Clear</button>
+                    <br><br>
+                    <hr>
+                    <br><br>
+
+                    <div id="demo">
+                        <ol type="" start="0"></ol>
+                    </div>
+                    <script>
+
+                        // DNI Validator
+                        function dnicalculate() {
+
+                            // X = 0 Y = 1 Z = 2
+                            let numberInput = parseInt(dniinput.value)
+
+                            let formattedInput = dniinput.value.trim()
+                            formattedInput = formattedInput.toUpperCase()
+
+                            let stringnumbers = formattedInput.substr(0, formattedInput.length - 1)
+                            let letter = formattedInput[formattedInput.length-1]
+                            let letters = "TRWAGMYFPDXBNJZSQVHLCKE"
+                            let result = numberInput % 23
+
+                            dnioutput.textContent = "Your DNI letter is " + letters[result] + " formatted input: " + formattedInput + " /" + formattedInput.length
+                        }
+
+                        btnwrite.addEventListener("click", writething)
+
+                        // DANGEROUS // btnwrite.addEventListener("dblclick", () => { document.write("helloooooo") })
+
+                        function writething() {
+
+                            if (currentJsFunction == "write document") {
+
+                                let mystring = JSON.stringify(document)
+                                mystring = mystring.replace(":{", ":{<br>")
+                                mystring = mystring.replaceAll('"', " ")
+                                mystring = mystring.replaceAll(",", ",<br />")
+                                //demo.innerHTML = "" + JSON.stringify(document, null, "<br>-") + ""
+                                demo.innerHTML = mystring
+
+                            }
+
+                            if (currentJsFunction == "make list") {
+                                if (demo.getElementsByTagName("OL")[0] != undefined) {
+
+
+                                    demo.getElementsByTagName("OL")[0].innerHTML += "<li>Hola mundo</li>"
+
+                                }
+
+                                else {
+                                    demo.appendChild(document.createElement("OL"))
+                                    demo.getElementsByTagName("OL")[0].innerHTML += "<li>Hola mundo</li>"
+
+                                }
+                            }
+
+                            if (currentJsFunction == "window open") {
+
+                                //window.open("https://dibesfer.com", "_blank", "width=600,height=600,toolbar=no,scrollbars=no,resizable=no")
+
+                                popupWindow()
+
+                                // sustituye la pagina actual con la siguiente
+                                // window.open("https://dibesfer.com","_self", "width=600,height=600")
+                            }
+
+                            if (currentJsFunction == "make a wish") {
+
+                                demo.textContent = "count to three..."
+                                setTimeout(() => { demo.innerHTML += "<br>come with me, and you'll be... <br>in a World of Pure Imagination :)"; setTimeout(() => { demo.innerHTML += "<br>if you wanna be in paradise,<br> simply look around and view it :)" }, 3000) }, 3000)
+                            }
+
+                            if (currentJsFunction == "say hello") {
+                                hello(demo, "Hello muthafucka")
+                            }
+
+
+                            if (currentJsFunction == "DNI letter") {
+                                //alert(48142634 % 23)
+                                //si es NIE (X = 0 , Y = 1  , Z = 2)
+
+
+
+                                demo.innerHTML = `
+                                
+                                    <div id="dnioutput"></div>
+                                    <input id="dniinput" type="text">
+                                    <button onclick="dnicalculate()">Calculate</button>
+
+                                `
+                            }
+
+
+                            function popupWindow() {
+                                const myWindow = window.open("", "", "width=300,height=300");
+
+                                myWindow.document.write(`
+                                <p>This is 'MsgWindow'. I am 200px wide and 100px tall!</p>
+                                <button onclick='window.close()'>close</button>
+
+                                `);
+
+
+                                // HIGHLY EXPERIMENTAL
+                                // COMMUNICATING ORIGIN WINDOW TO NEW WINDOW
+
+                                // var myscript = myWindow.document.createElement("script")
+
+                                // myscript.textContent = `
+
+                                // alert("hello world")
+
+                                // `
+                                var myp = myWindow.document.createElement("p")
+                                var oldwindow = myWindow.opener.document
+                                myp.textContent = " holaaaaaaa caracolaaaaa "
+
+                                myWindow.document.body.appendChild(myp)
+                                //myWindow.document.body.appendChild(myscript)
+
+                                myWindow.opener.document.getElementById("demo").innerHTML = "I opened a pop up window!!";
+                            }
+
+
+
+
+                        }
+
+                        function clearthing() {
+                            if (confirm("are you ready?"))
+                                demo.innerHTML = ""
+                        }
+
+                        function hello(where, what) {
+                            where.textContent = what
+                        }
+
+
+                    </script>
+                </div>
+
+                <label for="">localStorage "name"</label><br>
+                <input type="text" name="" id="inputName"><br>
+                <button onclick="localStorage.setItem('name', inputName.value)">Save</button>
+                <button onclick="alert(localStorage.getItem('name'))">Read</button><br>
+
+                <button onclick="setTimeout(function(){alert('hola mundo')},3000)">Temp</button>
+                <button onclick="alert(navigator.userAgent)">userAgent</button>
+                <button onclick="history.back()">Go back</button>
+                <button onclick="location.href = 'https://google.es'">Go link</button>
+                <button onclick="document.write('<h1>hola mundo!</h1>')">BORROW PAGE</button>
+
+
+                <p>Eventos:</p>
+                <ul>
+                    <li>click</li>
+                    <li>dblclick</li>
+                    <li>mousedown</li>
+                    <li>mouseup</li>
+                    <li>mousemove</li>
+                    <li>moveover</li>
+                    <li>mouseout</li>
+                    <li>keypress XXX</li>
+                    <li>keydown</li>
+                    <li>keyup</li>
+                    <li>submit</li>
+                    <li>focus</li>
+                    <li>blur</li>
+                    <li>reset</li>
+                    <li>scroll</li>
+                    <li>resize</li>
+                    <li>load</li>
+                </ul>
+
+
+                <style>
+                    #myCanvas {
+                        background-color: white;
+
+                        image-rendering: pixelated;
+
+                    }
+                </style>
+                <h2>Canvas</h2>
+                <canvas id="myCanvas" width="50" height="50" style="width: 100%;"></canvas>
+
+                <script>
+
+                    var playervelocity = 1
+                    var playervelocityX = 25
+                    var playervelocityY = 25
+
+                    const canvas = document.getElementById("myCanvas");
+                    const ctx = canvas.getContext("2d");
+
+                    function drawCanvas() {
+
+                        // ctx.beginPath();
+                        // ctx.moveTo(0, 0);
+                        // ctx.lineTo(400, 400);
+                        // ctx.lineWidth = 10;
+                        // ctx.stroke();
+
+                        // ctx.fillStyle = "red"
+                        // // "rgba(" + r + "," + g + "," + b + "," + (a / 255) + ")";
+                        // ctx.fillRect(50, 50, 20, 20);
+
+                        // ctx.fillStyle = "blue"
+                        // // "rgba(" + r + "," + g + "," + b + "," + (a / 255) + ")";
+                        // ctx.fillRect(40, 40, 10, 10);
+
+                        ctx.fillStyle = "green"
+                        // "rgba(" + r + "," + g + "," + b + "," + (a / 255) + ")";
+                        ctx.fillRect(playervelocityX, playervelocityY, 1, 1);
+                    }
+                    drawCanvas()
+
+
+
+
+                    window.addEventListener(
+                        "keydown",
+                        (event) => {
+                            // if (event.defaultPrevented) {
+                            //     return; // Do nothing if the event was already processed
+                            // }
+
+                            let key = event.key
+                            if (key == "W" || key == "w" || key == "ArrowUp") {
+                                playervelocityY -= playervelocity
+
+                            }
+
+                            if (key == "W" && key == "D") {
+                                alert("multiple!")
+                            }
+
+                            if (key == "A" || key == "a" || key == "ArrowLeft") {
+                                playervelocityX -= playervelocity
+                            }
+
+                            if (key == "D" || key == "d" || key == "ArrowRight") {
+                                playervelocityX += playervelocity
+                            }
+
+                            if (key == "S" || key == "s" || key == "ArrowDown") {
+                                playervelocityY += playervelocity
+                            }
+
+                            drawCanvas()
+
+                            // Cancel the default action to avoid it being handled twice        
+                            // // event.preventDefault();
+                        },
+                        true,
+                    );
+                    window.addEventListener("keyup", (event) => {
+                        if (event.defaultPrevented) {
+                            return; // Do nothing if the event was already processed
+                        }
+
+                        // let key = event.key
+                        // if (key == "W" || key == "w" || key == "ArrowUp") {
+                        //     playervelocityY = 0
+                        // }
+
+                        // if (key == "A" || key == "a" || key == "ArrowLeft") {
+                        //     playervelocityX = 0
+                        // }
+
+                        // if (key == "D" || key == "d" || key == "ArrowRight") {
+                        //     playervelocityX = 0
+                        // }
+
+                        // if (key == "S" || key == "s" || key == "ArrowDown") {
+                        //     playervelocityY = 0
+                        // }
+
+                        drawCanvas()
+
+                        // Cancel the default action to avoid it being handled twice        
+                        event.preventDefault();
+                    },
+                        true,
+                    )
+
+                    function logKey(e) {
+
+
+                        // switch (e.code) {
+                        //     case "KeyW":
+                        //         playerPosition[1] -= 1
+                        //         break;
+                        //     case "KeyA":
+                        //         playerPosition[0] -= 1
+                        //         break;
+                        //     case "KeyS":
+                        //         playerPosition[1] += 1
+                        //         break;
+                        //     case "KeyD":
+                        //         playerPosition[0] += 1
+                        //         break;
+                        //     case "KeyD" && "KeyS":
+                        //         playerPosition[0] += 1
+                        //         playerPosition[1] += 1
+                        //         break;
+                        //     default:
+
+                        //         break;
+                        // }
+
+
+
+
+
+
+                    }
+
+                </script>
+                <div style="height: 400px;"></div>
+                <p>Juan Pedro Cerro Martínez</p>
+            </div>
+
+            <br>
+
+            <div
+                style="font-family:'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif; min-height: 100%; max-height: 100%; overflow: auto; color:white; background-color: rgba(146, 146, 255, 0.521); width: 100%;">
+
+                <div>
+                    <h1>Register new user</h1>
+                    <form class="myForm" action="" method="GET">
+                        <!-- 
+                        o Nombre completo (input tipo texto)
+                        o Correo electrónico (input tipo email)
+                        o Contraseña y confirmar contraseña (input tipo password)
+                        o Fecha de nacimiento (input tipo date)
+                        o Género (radio buttons)
+                        o Intereses (checkboxes)
+                        o País (select con al menos 5 opciones)
+                        o Foto de perfil (input tipo file)
+                        o Comentarios o biografía (textarea)
+                        o Nivel de satisfacción (input tipo range)
+                        o Aceptación de términos (checkbox obligatorio)
+                        o Botones: Enviar y Limpiar
+                        hidden
+                        autocomplete 
+                        -->
+                        <style>
+
+                        </style>
+                        <p>Complete name</p>
+                        <label for="name">Name:</label>
+                        <input maxlength="24" type="text" id="registeruser_name" name="name"><br>
+                        <label for="fsname">Apellido 1:</label>
+                        <input maxlength="24" type="text" id="registeruser_fsname" name="fsname"><br>
+                        <label for="ssname">Apellido 2:</label>
+                        <input maxlength="24" type="text" id="registeruser_ssname" name="ssname"><br>
+                        <label for="email">Email:</label>
+                        <input maxlength="24" type="email" id="registeruser_email" name="email">
+                        <br>
+                        <label for="password">Password:</label>
+                        <input type="password" name="password" id="registeruser_password">
+                        <br>
+                        <label for="password">Confirm password:</label>
+                        <input type="password" name="password" id="registeruser_password">
+                        <br>
+                        <label for="bdate">Birth date:</label>
+                        <input type="date" name="" id="">
+                        <br>
+                        <p>Gender:</p>
+                          <input type="radio" id="html" name="fav_language" value="HTML">
+                          <label for="html">Male</label><br>
+                          <input type="radio" id="css" name="fav_language" value="CSS">
+                          <label for="css">Female</label><br>
+                          <input type="radio" id="javascript" name="fav_language" value="JavaScript">
+                          <label for="javascript">Other</label>
+
+                        <p>Interests</p>
+                        <input type="checkbox" id="vehicle1" name="vehicle1" value="Bike">
+                        <label for="vehicle1"> Cars</label><br>
+                        <input type="checkbox" id="vehicle2" name="vehicle2" value="Car">
+                        <label for="vehicle2"> Drawing</label><br>
+                        <input type="checkbox" id="vehicle3" name="vehicle3" value="Boat">
+                        <label for="vehicle3"> Dance</label><br><br>
+
+
+
+
+                        <label for="countries">Country:</label>
+                        <select name="countries" id="countries">
+                            <option value="Spain">Spain</option>
+                            <option value="England">England</option>
+                            <option value="France">France</option>
+                            <option value="Germany">Germany</option>
+                        </select>
+                        <br>
+
+                        <label for="pfpic">Profile picture:</label>
+                        <input type="file">
+                        <br><br>
+                        <input type="submit" value="Submit">
+                    </form>
+                </div>
+
+            </div>
+            <div
+                style="align-content: center; text-align: center; font-family:'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif; min-height: 100%; max-height: 100%; overflow: auto; color:white; background-color: rgba(146, 146, 255, 0.521); width: 100%;">
+
+                <div style="text-align: center; ">
+                    <img style=" width: 500px; filter: grayscale(1) drop-shadow(0 0 15px white);"
+                        src="/assets/svg/undraw_learning-sketchingsh.svg" alt="">
+                </div>
+                <h1>undraw.co</h1>
+            </div>
+
+
+
+
+
+            <div id="centercenter">
+                <div id="sun">
+                    <!-- 
+                sun:https://png.pngtree.com/png-vector/20241025/ourmid/pngtree-hot-sun-isolate-on-transparent-backgruond-png-image_14167435.png
+                moon:https://upload.wikimedia.org/wikipedia/commons/3/33/Lune_ico.png
+                -->
+                    <img src="https://png.pngtree.com/png-vector/20241025/ourmid/pngtree-hot-sun-isolate-on-transparent-backgruond-png-image_14167435.png"
+                        alt="">
+
+                </div>
+                <h1 contenteditable="true">Good Morning</h1>
+                <h3 id="diadehoy">Today is Tuesday</h3>
+                <div>
+
+                    <p>SVG</p>
+                    <!-- <img width="50%" src="/assets/svg/test.svg"></img> -->
+
+
+                    <!-- preserveAspectRatio="xMidYMin"  -->
+                    <!-- <style>
+                        .svg-responsive {
+                            width: 100%;
+                            height: 100%;
+
+                        }
+                    </style> -->
+
+
+
+
+
+
+
+                    <!-- <div style=" width: 50%;  margin: auto;  border: solid 3px white;overflow: auto;">
+                        <svg class="svg-responsive" viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg">
+                            <defs>
+                                <filter id="svg_1_blur">
+                                    <feGaussianBlur stdDeviation="1" in="SourceGraphic" />
+                                </filter>
+                            </defs>
+                            <g>
+                                <title>Layer 1</title>
+                                <ellipse filter="url(#svg_1_blur)" stroke-width="5" ry="199.5" rx="199.5" id="svg_1"
+                                    cy="300" cx="400" stroke="#332D40" fill="#FFE2FF" />
+                                <text transform="matrix(1, 0, 0, 1, 0, 0)" xml:space="preserve" text-anchor="start"
+                                    font-family="Noto Sans JP" font-size="24" id="svg_4" y="308" x="318.33334"
+                                    stroke-width="0" stroke="#332D40" fill="#000000">HOLA MUNDO</text>
+                            </g>
+                        </svg>
+                    </div> -->
+
+
+
+
+                    <p>Tasks</p>
+                    <ul>
+                        <li>Walk to the park</li>
+                        <li>Draw</li>
+                        <li>Code your web</li>
+                        <li>Code your <a href="https://dibesfer.itch.io">game</a></li>
+                    </ul>
+
+                    <p>Latest projects</p>
+                    <p><a href="/TECWEB-Fer/">TECWEB-Fer</a></p>
+                    <p><a href="/web/javascript/socialNetwork/index.html">Social Network</a></p>
+
+                    <p><a id="myA" href="">LINK TO FILE</a></p>
+                    <script>
+
+                        //create or obtain the file's content
+                        var content = 'This is a text';
+
+                        //create a file and put the content, name and type
+                        const file = new File([content], "foo.txt", {
+                            type: "text/plain",
+                        });
+
+                        //create a ObjectURL in order to download the created file
+                        var myAURL = window.URL.createObjectURL(file);
+                        myA.href = myAURL
+                        myA.download = file.name;
+                        myA.textContent = myAURL
+                        // CREDITS: https://www.therogerlab.com/sandbox/try?s=0ea4985d74a189e8b7b547976e7192ae.471fd3a22a115e4c2ca7878c8bb83917
+
+                    </script>
+
+
+
+                </div>
+
+
+
+            </div>
+
+
+
+            <div style="background-color: rgba(255, 184, 184, 0.411); max-width: 100%; width: 400px; margin: 10px 0;">
+                <h2>Forms</h2>
+                <label for="name">Como te llamas</label>
+                <input placeholder="Jesús García" type="text" name="" id="">
+                <input type="range" name="" id="" step="10">
+            </div>
+
+
+            <iframe srcdoc="<h1>hola estoy usando un SRCDOC</h1>" frameborder="0"></iframe>
+
+
+            <iframe src="https://dibesfer.github.io" frameborder="0"></iframe>
+
+            <iframe src="https://dibesfer.codeberg.page" frameborder="0"></iframe>
+
+            <iframe src="https://dibesfer.neocities.org" frameborder="0"></iframe>
+
+
+        </div>
+
+        <div class="footer">
+            <div id="toggleFull" onclick="toggleFullscreen();">
+
+
+            </div>
+            <div>
+                <p>Made by <a href="https://dibesfer.github.io">dibesfer</a></p>
+            </div>
+            <div>
+                <a href="#centercenter">go up</a>
+            </div>
+        </div>
+
+    </div>
+    <script>
+
+
+        var elem = document.documentElement;
+
+        var fullmode = false
+
+        if (document.fullscreenElement) {
+            fullmode = true
+            toggleFull.textContent = "No Full"
+        }
+
+        else {
+            toggleFull.textContent = "Full"
+        }
+
+        function toggleFullscreen() {
+
+            console.log("clicked")
+
+            if (document.fullscreenElement) {
+                fullmode = true
+            } else { fullmode = false }
+
+            if (fullmode) {
+                closeFullscreen()
+                toggleFull.textContent = "Full"
+            }
+            else {
+                console.log("no full")
+                openFullscreen()
+                toggleFull.textContent = "No Full"
+
+            }
+
+        }
+        function openFullscreen() {
+            if (elem.requestFullscreen) {
+                elem.requestFullscreen();
+            } else if (elem.webkitRequestFullscreen) { /* Safari */
+                elem.webkitRequestFullscreen();
+            } else if (elem.msRequestFullscreen) { /* IE11 */
+                elem.msRequestFullscreen();
+            }
+        }
+
+        function closeFullscreen() {
+            console.log("activated")
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            } else if (document.webkitExitFullscreen) { /* Safari */
+                document.webkitExitFullscreen();
+            } else if (document.msExitFullscreen) { /* IE11 */
+                document.msExitFullscreen();
+            }
+        }
+        // MY SEPARATO R
+
+        function addZero(i) {
+            if (i < 10) { i = "0" + i }
+            return i;
+        }
+
+        function botoncito() {
+            botoncitodecir.textContent = " " + frases[randomInt(0, frases.length - 1)]
+        }
+
+        var now = new Date()
+        var horas = now.getHours()
+        // var day = now.getDay()
+        var dia = now.toLocaleDateString('es-ES')
+        var diadelasemana = now.toLocaleDateString('es-ES', { weekday: 'long' })
+        var mes = now.toLocaleDateString('es-ES', { month: 'long' })
+        var diadentrodelmes = now.getDate()
+        diadehoy.innerHTML = diadelasemana + " " + diadentrodelmes + " de " + mes + " del " + now.getFullYear() + "<br><span style='text-align:right'><b>" + dia + "</b></span>";
+
+        let h = addZero(now.getHours());
+        let m = addZero(now.getMinutes());
+        let s = addZero(now.getSeconds());
+        let time = h + ":" + m + ":" + s;
+        diadehoy.innerHTML += " - " + time;
+
+
+        // SHOW FPS
+
+
+        let lastTime = performance.now();
+        let frameCount = 0;
+        let fps = 0;
+
+        const fpsDisplay = document.createElement('div');
+        fpsDisplay.style.position = 'fixed';
+        fpsDisplay.style.bottom = '70px';
+        fpsDisplay.style.right = '10px';
+        fpsDisplay.style.backgroundColor = 'black';
+        fpsDisplay.style.color = 'lime';
+        fpsDisplay.style.padding = '5px';
+        fpsDisplay.style.fontFamily = 'monospace';
+        fpsDisplay.style.fontSize = "20px"
+        document.body.appendChild(fpsDisplay);
+
+        function loop() {
+            const now = performance.now();
+            frameCount++;
+
+            if (now - lastTime >= 1000) {
+                fps = frameCount;
+                frameCount = 0;
+                lastTime = now;
+                fpsDisplay.textContent = `FPS: ${fps}`;
+            }
+
+            // Render tu escena aquí si tienes una
+            requestAnimationFrame(loop);
+        }
+
+        loop();
+
+
+
+    </script>
+</body>
+
+</html>

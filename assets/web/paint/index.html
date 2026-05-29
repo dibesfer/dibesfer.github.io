@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>dbf paint</title>
+    <style>
+        body {
+            font-family: sans-serif;
+        }
+
+        #paint_canvas {
+            border: 3px solid;
+            width: 400px;
+            height: 400px;
+            image-rendering: pixelated;
+            touch-action: none;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Paint</h1>
+        <p>16² pixels</p>
+    </header>
+
+    <main>
+        <canvas id="paint_canvas"></canvas>
+        <br>
+        <p>Brush | Line | Square | Fill | Eraser</p>
+        <input type="color" id="colorPicker" value="#000000">
+
+        <p>Mirror</p>
+        <input type="checkbox" id="mirrorX">
+        <label for="mirrorX">X</label>
+
+        <input type="checkbox" id="mirrorY">
+        <label for="mirrorY">Y</label>
+    </main>
+
+    <footer>
+        <p>by <a href="https://dibesfer.github.io">dibesfer</a></p>
+    </footer>
+
+    <script>
+        const canvas = document.getElementById("paint_canvas");
+        const ctx = canvas.getContext("2d");
+
+        const colorPicker = document.getElementById("colorPicker");
+        const mirrorX = document.getElementById("mirrorX");
+        const mirrorY = document.getElementById("mirrorY");
+
+        const SIZE = 16;
+        const DISPLAY_SIZE = 400;
+        const SCALE = DISPLAY_SIZE / SIZE;
+
+        // 🔥 REAL canvas size
+        canvas.width = DISPLAY_SIZE;
+        canvas.height = DISPLAY_SIZE;
+
+        let pixels = Array(SIZE).fill().map(() => Array(SIZE).fill(null));
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // DRAW PIXELS (scaled)
+            ctx.save();
+            ctx.scale(SCALE, SCALE);
+
+            for (let y = 0; y < SIZE; y++) {
+                for (let x = 0; x < SIZE; x++) {
+                    if (pixels[y][x]) {
+                        ctx.fillStyle = pixels[y][x];
+                        ctx.fillRect(x, y, 1, 1);
+                    }
+                }
+            }
+
+            // HOVER (inside scaled space)
+            if (hoverPos) {
+                ctx.fillStyle = "gray";
+                ctx.fillRect(hoverPos.x, hoverPos.y, 1, 1);
+
+                if (mirrorX.checked)
+                    ctx.fillRect(SIZE - 1 - hoverPos.x, hoverPos.y, 1, 1);
+
+                if (mirrorY.checked)
+                    ctx.fillRect(hoverPos.x, SIZE - 1 - hoverPos.y, 1, 1);
+
+                if (mirrorX.checked && mirrorY.checked)
+                    ctx.fillRect(SIZE - 1 - hoverPos.x, SIZE - 1 - hoverPos.y, 1, 1);
+            }
+
+            ctx.restore();
+
+            // 🔥 OVERLAY (real pixels)
+            ctx.strokeStyle = "rgba(255,0,0,0.8)";
+            ctx.lineWidth = 1;
+
+            if (mirrorX.checked) {
+                const x = canvas.width / 2;
+
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height);
+                ctx.stroke();
+            }
+
+            if (mirrorY.checked) {
+                const y = canvas.height / 2;
+
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+                ctx.stroke();
+            }
+        }
+
+        function getMousePos(clientX, clientY) {
+            const rect = canvas.getBoundingClientRect();
+
+            const x = Math.floor((clientX - rect.left) / SCALE);
+            const y = Math.floor((clientY - rect.top) / SCALE);
+
+            return { x, y };
+        }
+
+        function paint(x, y) {
+            const color = colorPicker.value;
+
+            function set(px, py) {
+                if (px < 0 || py < 0 || px >= SIZE || py >= SIZE) return;
+                pixels[py][px] = color;
+            }
+
+            set(x, y);
+
+            if (mirrorX.checked) set(SIZE - 1 - x, y);
+            if (mirrorY.checked) set(x, SIZE - 1 - y);
+            if (mirrorX.checked && mirrorY.checked)
+                set(SIZE - 1 - x, SIZE - 1 - y);
+        }
+
+        let isDrawing = false;
+        let isTouch = false;
+        let hoverPos = null;
+
+        // MOUSE
+        canvas.addEventListener("mousedown", (e) => {
+            isDrawing = true;
+            isTouch = false;
+
+            const pos = getMousePos(e.clientX, e.clientY);
+            paint(pos.x, pos.y);
+            draw();
+        });
+
+        canvas.addEventListener("mousemove", (e) => {
+            const pos = getMousePos(e.clientX, e.clientY);
+
+            if (isDrawing) {
+                paint(pos.x, pos.y);
+            } else if (!isTouch) {
+                hoverPos = pos;
+            }
+
+            draw();
+        });
+
+        window.addEventListener("mouseup", () => isDrawing = false);
+
+        canvas.addEventListener("mouseleave", () => {
+            isDrawing = false;
+            hoverPos = null;
+            draw();
+        });
+
+        // TOUCH
+        canvas.addEventListener("touchstart", (e) => {
+            isDrawing = true;
+            isTouch = true;
+
+            const t = e.touches[0];
+            const pos = getMousePos(t.clientX, t.clientY);
+
+            paint(pos.x, pos.y);
+            draw();
+        });
+
+        canvas.addEventListener("touchmove", (e) => {
+            const t = e.touches[0];
+            const pos = getMousePos(t.clientX, t.clientY);
+
+            paint(pos.x, pos.y);
+            draw();
+        });
+
+        window.addEventListener("touchend", () => isDrawing = false);
+
+        // UI
+        mirrorX.addEventListener("change", draw);
+        mirrorY.addEventListener("change", draw);
+
+        draw();
+    </script>
+</body>
+</html>

@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>monochat</title>
+    <link rel="icon" type="image/x-icon" href="/assets/branding/monochat-logo.png">
+
+    <!-- SUPABASE cdn -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+
+    <link rel="stylesheet" href="/web/chat/style.css">
+    <style>
+        * {
+            margin: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: black;
+            color: white;
+            font-family: UbuntuMono, monospace;
+
+
+            line-height: 2;
+
+        }
+
+        #mainContent {
+            text-align: center;
+        }
+
+        .maxWidth {
+            max-width: 800px;
+            margin: auto;
+            padding: 10px;
+
+        }
+
+        #profilePicture {
+            /* background-color: white; */
+            /* border: 1px solid white; */
+            width: 150px;
+            aspect-ratio: 1;
+            object-fit: cover;
+            /* border-radius: 50%; */
+
+        }
+
+        pre {
+            width: 100%;
+            text-align: left;
+            padding: 10px;
+            white-space: pre-wrap;
+            /* Since CSS 2.1 */
+            white-space: -moz-pre-wrap;
+            /* Mozilla, since 1999 */
+            white-space: -pre-wrap;
+            /* Opera 4-6 */
+            white-space: -o-pre-wrap;
+            /* Opera 7 */
+            word-wrap: break-word;
+            border-left: 3px solid;
+
+
+        }
+
+        .userOptions {
+            width: 100%;
+            display: none;
+            justify-content: space-evenly;
+        }
+
+        textarea {
+
+            width: 100%;
+            height: 250px;
+            border: 3px white solid;
+            background-color: black;
+            color: white;
+            padding: 10px;
+            line-height: 2;
+            display: none;
+
+        }
+
+        #interactions img {
+            width: 50px;
+
+        }
+    </style>
+</head>
+
+<body>
+
+
+    <div id="header" class="flex3">
+        <p><a href="/web/chat/"><img style="width: 1rem; filter: drop-shadow(0 0 1px white);" src="/assets/branding/monochat-logo.png" alt="monochat logo (monkey smiling)"> monochat</a> <span id="usersOnline"></span></p>
+        <div>
+
+            <p id="userNameDisplay">Anonymous</p>
+        </div>
+        <div id="logOutBtnWrapper">
+
+            <!-- <div>
+                <p><a href="user/">profile</a></p>
+            </div> -->
+
+            <div>
+                <p id="logOutBtn" style="color: rgb(221, 58, 58);">⮨Log Out⏻</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- SIGN IN / LOG IN DIV -->
+    <div id="signInDiv" class="minWidth invisible">
+
+        <div id="signInAdvice">You are anonymous</div>
+
+        <form id="loginForm" method="GET">
+            <div id="signInMain" style="display: none;">
+
+                <div>
+
+                    <div class="miniFlex">
+                        <label for="userEmail">
+                            Email
+                        </label>
+                        <input required type="email" name="userEmail" id="userEmail"><br>
+                    </div>
+                    <div class="miniFlex">
+                        <label for="userPass">Password</label>
+                        <input required autocomplete="off" type="password" name="userPass" id="userPass"><br>
+                    </div>
+
+                </div>
+                <p>We will send a confirmation url to your email.</p>
+
+            </div>
+            <input id="identifyBtn" type="submit" style="background-color: blue; color: white" value="IDENTIFY">
+        </form>
+        <br>
+
+    </div>
+
+    <div id="mainContent">
+
+
+
+
+        <div class="maxWidth">
+
+
+
+            <img id="profilePicture" src="https://cdn.pixabay.com/photo/2023/10/03/10/49/anonymous-8291223_1280.png"
+                alt="Anonymous mask">
+            <h1><span id="userUsername">Anonymous</span></h1>
+            <h3>✉ <span id="profileUserEmail">anon@anonymous.com</span></h3>
+            <p>Description</p>
+            <pre id="userDescription">
+Lorem ipsum, dolor sit amet consectetur adipisicing elit. Nobis neque ea molestiae reiciendis a, exercitationem ab dolores, quidem blanditiis debitis illo! Magnam itaque aliquam suscipit odio in fugiat, libero mollitia?
+
+https://en.wikipedia.org/wiki/Free_software
+</pre>
+            <textarea name="" id="userDescriptionTextarea" spellcheck="false"></textarea>
+
+
+            <br>
+            <hr><br>
+            <div id="userOptions" class="userOptions">
+                <div id="EditSaveBtn">EDIT/SAVE</div>
+                <div></div>
+                <div id="deleteButton">DELETE</div>
+            </div>
+            <div id="interactions">
+                <p>
+                    <img src="https://www.freeiconspng.com/uploads/heart-symbol-12.png" alt="heart symbol"> |
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/2/22/Icon_Bubble.png"
+                        alt="bubble message symbol"> |
+                    <img src="https://static.vecteezy.com/system/resources/previews/022/133/469/non_2x/star-shape-star-icon-yellow-star-in-rating-symbol-free-png.png"
+                        alt="star symbol">
+                </p>
+                <p>
+                    10k | 148 | 15M
+                </p>
+
+
+            </div>
+
+
+        </div>
+
+    </div>
+
+    <script>
+
+
+        const supabaseUrl = 'https://qugihsopwjemzakhrbvw.supabase.co'
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF1Z2loc29wd2plbXpha2hyYnZ3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE2OTg0OTQxMDksImV4cCI6MjAxNDA3MDEwOX0.1q5fBic1cjueaiP2-p6W19C68ye8FTPLFne2a-fKwZ8'
+        const database = supabase.createClient(supabaseUrl, supabaseKey)
+
+        const userDescription = document.getElementById("userDescription")
+        const profileUserEmail = document.getElementById("profileUserEmail")
+        const profilePicture = document.getElementById("profilePicture")
+        let deleteButton = document.getElementById("deleteButton")
+
+        let userUsername = document.getElementById("userUsername")
+
+        const userDescriptionTextarea = document.getElementById("userDescriptionTextarea")
+        const EditSaveBtn = document.getElementById("EditSaveBtn")
+
+
+
+        let url = window.location.href
+
+        let myUser
+        let myUserTable
+        let userUrl
+
+        if (url.includes("###")) {
+
+            userUrl = url.split("###")[1]
+            let myP = document.createElement("p")
+            myP.textContent = "welcome to " + userUrl + " profile"
+            mainContent.append(myP)
+
+            getUserTable(userUrl)
+
+        }
+
+
+        getUserOwn()
+
+
+
+        async function getUserOwn() {
+            const { data: { user } } = await database.auth.getUser()
+            if (user) {
+                //console.log(user.email)
+                //signInAdvice.textContent = "You are logged as " + user.email.split("@")[0]
+                //userNameDisplay.textContent = user.email.split("@")[0]
+                //signInDiv.style.display = "none"
+                myUser = user
+
+                //console.log(myUser)
+                fillProfile()
+
+                if (userUrl == user.email.split("@")[0]) {
+                    deleteButton.addEventListener("click", deleteAccount)
+                    profilePicture.addEventListener("click", changeProfilePicture)
+                    EditSaveBtn.addEventListener("click", editMode)
+                }
+
+                return user
+            }
+
+            else {
+                console.log("no user logged in")
+
+                //logOutBtn.style.display = "none"
+                return null
+            }
+        }
+
+        async function getUserTable(userUrl) {
+            const res = await database.from("users").select("*").eq('username', userUrl)//.range(3000,5000)
+            //console.log(res.data[0].dibesfer)
+            let result = res.data[0]
+
+            if (result) {
+
+                myUserTable = result
+                fillProfileFromTable()
+                //console.log(result.description)
+            }
+
+            else {
+                document.write("there is no user named " + userUrl)
+            }
+        }
+
+        async function deleteAccount() {
+
+            let confirmed = confirm("Are you sure you want to delete your account?\nAll the data will be destroyed.\nThis is irreversible. ")
+
+            if (confirmed) {
+                alert("This function is under development")
+                return
+                const response = await database
+                    .from('users')
+                    .delete()
+                    .eq('email', myUser.email)
+
+                alert("user data was deleted")
+
+                const { data, error } = await database.auth.admin.deleteUser(myUser.id)
+
+                if (!error) alert("Your account was successfully removed.\nFarewell! -dibesfer")
+                else alert(error.message)
+            }
+
+        }
+
+
+        async function fillProfile() {
+
+            let url = window.location.href
+            if (url.includes("###") &&
+                url.split("###")[1] == myUser.email.split("@")[0]) {
+
+
+                profileUserEmail.textContent = myUser.email
+
+                const res = await database.from("users").select("*").eq('email', myUser.email)//.range(3000,5000)
+                //console.log(res.data[0].dibesfer)
+                let result = res.data
+
+                if (result.length > 0) {
+                    userUsername.textContent = res.data[0].username
+                    profilePicture.src = res.data[0].profilepicture
+                    userDescription.textContent = res.data[0].description
+                    userOptions.style.display = "flex"
+                    //userDescription.textContent = "Example desc"
+                    userDescriptionTextarea.textContent = res.data[0].description
+                }
+
+                //console.log(result)
+            }
+
+
+
+        }
+
+        async function fillProfileFromTable() {
+
+
+            profileUserEmail.textContent = myUserTable.email
+
+            userUsername.textContent = myUserTable.username
+            profilePicture.src = myUserTable.profilepicture
+            userDescription.textContent = myUserTable.description
+        }
+
+        let editModeStatus = false
+
+        function editMode() {
+
+            if (!editModeStatus) {
+                userDescription.style.display = "none"
+                userDescriptionTextarea.style.display = "block"
+                editModeStatus = true
+            }
+            else {
+                changeDescription()
+
+            }
+
+        }
+
+        async function changeProfilePicture() {
+
+            if (myUser) {
+                let newSrc = prompt("Insert your new profile image url:")
+                if (newSrc == null) {
+
+                    return
+                }
+                myEmail = myUser.email
+                const res = await database.from("users").select("*").eq('email', myEmail)//.range(3000,5000)
+                //console.log(res.data[0].dibesfer)
+                let result = res.data
+
+                if (result.length > 0) {
+
+                    const { data, error } = await database
+                        .from('users')
+                        .update({ profilepicture: newSrc })
+                        .eq('email', myEmail)
+                        .select()
+
+                    if (!error) {
+                        alert("Your profile picture was updated!")
+                        location.reload()
+                    }
+
+                }
+            }
+
+        }
+
+        async function changeDescription() {
+
+            if (myUser) {
+                console.log("Hay usuario")
+                myEmail = myUser.email
+                const res = await database.from("users").select("*").eq('email', myEmail)//.range(3000,5000)
+                //console.log(res.data[0].dibesfer)
+                let result = res.data
+
+                if (result.length > 0) {
+
+                    const { data, error } = await database
+                        .from('users')
+                        .update({ description: userDescriptionTextarea.value })
+                        .eq('email', myEmail)
+                        .select()
+
+                    if (!error) {
+                        alert("Your description was updated!")
+                        location.reload()
+                    }
+
+                }
+            }
+
+        }
+
+
+        // HEADER FUNCTIONING
+
+        myUser = null
+        async function getUser() {
+            const { data: { user } } = await database.auth.getUser()
+            if (user) {
+
+                usernameString = user.email.split("@")[0]
+                //console.log(user.email)
+                signInAdvice.textContent = "You are logged as " + usernameString
+                userNameDisplay.innerHTML = `<a href="/web/chat/user/###${usernameString}">${usernameString}</a>`
+
+                signInDiv.style.display = "none"
+                myUser = user
+
+                const channel = database.channel("online-users", {
+                    config: {
+                        presence: { key: myUser.id }
+                    }
+                })
+
+                channel
+                    .on("presence", { event: "sync" }, () => {
+                        const state = channel.presenceState()
+                        //console.log("Online users:", state)
+                        const count = Object.keys(channel.presenceState()).length
+                        usersOnline.textContent = count
+                    })
+                    .subscribe(async (status) => {
+                        if (status === "SUBSCRIBED") {
+                            await channel.track({
+                                user_id: myUser.id,
+                                username: myUser.email
+                            })
+                        }
+                    })
+
+
+                //console.log(myUser)
+                let myEmail = user.email
+                const res = await database.from("users").select("*").eq('email', myEmail)//.range(3000,5000)
+                //console.log(res.data[0].dibesfer)
+                let result = res.data
+
+                if (result.length > 0) {
+
+                    if (!res.data[0].confirmed) {
+
+                        const { data, error } = await database
+                            .from('users')
+                            .update({ confirmed: true })
+                            .eq('email', myEmail)
+                            .select()
+
+                        if (!error) {
+                            alert("Your account is now confirmed")
+                        }
+                    }
+                }
+
+                //console.log(myUser.last_sign_in_at)
+                return user
+            }
+
+            else {
+                console.log("no user logged in")
+                logOutBtn.style.display = "none"
+                logOutBtnWrapper.style.display = "none"
+                userNameDisplay.addEventListener("click", showSignUpDiv)
+
+
+                const channel = database.channel("online-users", {
+                    config: {
+                        presence: { key: 0 }
+                    }
+                })
+
+                channel
+                    .on("presence", { event: "sync" }, () => {
+                        const state = channel.presenceState()
+                        console.log("Online users:", state)
+                        const count = Object.keys(channel.presenceState()).length
+                        usersOnline.textContent = count
+                    })
+                    .subscribe(async (status) => {
+                        if (status === "SUBSCRIBED") {
+                            await channel.track({
+
+                                user_id: "ANON",
+                                username: "ANON"
+
+                            })
+                        }
+                    })
+
+
+                return null
+            }
+        }
+
+        function toggleSignInMain(e) {
+
+            e.preventDefault()
+            if (signInMain.style.display == "none") {
+
+                // SHOW SIGN IN MAIN
+                signInMain.style.display = "block"
+                signInAdvice.textContent = "Fill both fields"
+                identifyBtn.style.backgroundColor = "darkgray"
+            }
+            else {
+
+                if (!userEmail.value || !userPass.value) {
+                    signInAdvice.textContent = "Fill both fields"
+                }
+                else {
+                    getUsersTable(userEmail.value)
+                }
+                // HIDE SIGN IN MAIN
+                //signInMain.style.display = "none"
+                //identifyBtn.style.backgroundColor = "blue"
+
+            }
+            console.log(signInMain.style)
+        }
+
+        function showSignUpDiv() {
+
+            if (signInDiv.classList.contains("invisible")) {
+
+                signInDiv.classList.remove("invisible")
+
+                setTimeout(() => {
+                    window.addEventListener('click', handleClick)
+                }, 1);
+
+            }
+
+
+        }
+
+        function handleClick(event) {
+            if (!document.getElementById('signInDiv').contains(event.target)) {
+
+
+                signInDiv.classList.add("invisible")
+                console.log("heeey")
+                window.removeEventListener('click', handleClick)
+            }
+        }
+
+        async function signUp() {
+            let { data, error } = await database.auth.signUp({
+                email: userEmail.value,
+                password: userPass.value,
+                // options: { redirectTo: "https://dibesfer.com/web/javascript/chat"  },
+            })
+            console.log("---SIGNUP---")
+            console.log(data)
+            const newUser = data.user
+
+            if (error) {
+                console.log(error)
+
+                signInAdvice.classList.add("error")
+                signInAdvice.textContent = error.message
+            } else {
+
+                console.log("We're gonna create a user profile")
+
+                const { data, error } = await database
+                    .from("users")
+                    .insert([
+                        {
+                            user_id: newUser.id,
+                            email: userEmail.value,
+                            username: userEmail.value.split("@")[0],
+                            profilepicture: "https://upload.wikimedia.org/wikipedia/commons/4/40/Anonymous_mask.svg"
+
+
+                        },
+                    ])
+                    .select()
+                if (!error) signInAdvice.textContent = "We sent a confirmation url to your email."
+                else {
+                    console.log(error.message)
+                }
+            }
+
+
+
+        }
+
+        //signUp()
+
+        async function logIn() {
+            let myEmail
+            let { data, error } = await database.auth.signInWithPassword({
+                email: userEmail.value,
+                password: userPass.value
+            })
+            console.log(data)
+            console.log(error)
+            if (error) {
+                signInAdvice.classList.add("error")
+
+                signInAdvice.textContent = error.message
+            }
+            else {
+                //getUser()
+                myEmail = data.user.email
+                const res = await database.from("users").select("*").eq('email', myEmail)//.range(3000,5000)
+                //console.log(res.data[0].dibesfer)
+                let result = res.data
+
+                if (result.length > 0) {
+
+                    if (!res.data[0].confirmed) {
+
+                        const { data, error } = await database
+                            .from('users')
+                            .update({ confirmed: true })
+                            .eq('email', myEmail)
+                            .select()
+
+                        if (!error) {
+                            alert("Your account is now confirmed")
+                            location.reload()
+                        }
+                    }
+                    else {
+                        location.reload()
+                    }
+                }
+                else {
+                    location.reload()
+
+                }
+            }
+        }
+
+        async function logOut() {
+            let { error } = await database.auth.signOut()
+            location.reload()
+        }
+
+        async function getUsersTable(myEmail) {
+
+            const res = await database.from("users").select("*").eq('email', myEmail)//.range(3000,5000)
+            //console.log(res.data[0].dibesfer)
+            let result = res.data
+
+            if (result.length > 0) {
+                //EMAIL ALREADY REGISTERED, LOG IN
+                logIn()
+            }
+            else {
+                //ELSE, SIGN IN
+
+                signUp()
+
+            }
+
+            console.log(result)
+            //RECIEVED DATA SUPER IMPORTANT
+            //console.log(result)
+
+            //result.forEach(element => {
+            //let myTime = new Date(element.created_at)
+            //createMsg(myTime, element.author, element.message)
+            //});
+
+            //chatScreen.scrollTo(0, chatScreen.scrollHeight)
+            // console.log(result)
+            // //currentVisits++
+            // //insertResources("visits")
+            // if (res.data[0] != undefined) {
+
+            //     chatScreen.textContent = result
+            // }
+        }
+
+        logOutBtn.addEventListener("click", logOut)
+
+        identifyBtn.addEventListener("click", toggleSignInMain)
+
+        getUser()
+
+
+    </script>
+</body>
+
+</html>

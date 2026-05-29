@@ -1,0 +1,53 @@
+* {
+    margin: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: "Delius", serif;    
+    font-size: larger;
+    line-height: 2;
+}
+
+header , footer {
+    text-align: center;
+    background-color: black;
+    padding: 20px;
+    color: white;
+}
+
+main {
+    max-width: 800px;
+    margin: auto;
+    padding: 15px;
+}
+
+::selection {
+    background-color: black;
+    color: white;
+}
+
+img {
+    max-width: 100%;
+    width: 100%;
+    aspect-ratio: 16/9;
+    object-fit: cover;
+    border-radius: 15px;
+    border: solid 3px black;
+    box-shadow: 5px 5px 5px gray;
+    transition: 0.2s;
+}
+
+img:hover {
+    box-shadow: 0 0 5px gray;
+}
+
+a {
+    color: unset;
+}
+
+.container {
+    border: solid 3px black;
+    padding: 15px;
+    border-radius: 15px;
+}

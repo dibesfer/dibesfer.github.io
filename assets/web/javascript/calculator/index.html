@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculator dbf</title>
+    <style>
+        * {
+            margin: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            height: 100vh;
+            font-family: monospace;
+            font-size: large;
+            background-color: rgb(255, 233, 191);
+        }
+
+        #superConsola {
+            height: 10%;
+            border: solid 3px black;
+        }
+
+        #consola {
+            height: 10%;
+            overflow: auto;
+            padding: 5px;
+
+            word-break: break-all;
+            border: solid 3px black;
+        }
+
+        #calculatorInput {
+            width: 100%;
+            text-align: right;
+            padding: 5px;
+            font-size: 40px;
+            height: 10%;
+            border: solid 3px black;
+            background-color: lightblue;
+            font-family: monospace;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            height: 70%;
+        }
+
+        .grid>div {
+            border: solid 2px black;
+            text-align: center;
+            font-size: 40px;
+            align-content: center;
+            cursor: pointer;
+            transition: 0.05s;
+            user-select: none;
+        }
+
+        .grid>div:hover {
+            background-color: rgba(0, 0, 0, 0.418) !important;
+        }
+
+        .grid>div:active {
+            background-color: rgb(88, 88, 88) !important;
+            color: white;
+            font-weight: bold;
+        }
+
+        .keyPressed {
+            background-color: rgb(88, 88, 88) !important;
+            color: white;
+            font-weight: bold;
+        }
+
+        .red {
+            background-color: red;
+        }
+
+        .green {
+            background-color: green;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="superConsola">
+        <p>First number: <span id="superConsolaFirstNumber"></span></p>
+        <p>Operation: <span id="superConsolaOperation"></span></p>
+        <p>Second number: <span id="superConsolaSecondNumber"></span></p>
+        <p>Result: <span id="superConsolaResult"></span></p>
+    </div>
+    <div id="consola">
+        CONSOLA<br>
+    </div>
+    <input value="" placeholder="0" type="text" name="calculatorInput" id="calculatorInput">
+    <div class="grid">
+
+        <div title="Memory Clear" onclick="memoryClear()">MC</div>
+        <div title="Memory Recovery" onclick="memoryRecovery()">MR</div>
+        <div title="Memory Save" onclick="memorySave()">MS</div>
+        <div id="keyCE" onclick="functionCE()" class="red">CE</div>
+        <div id="keyC" onclick="functionC()" class="red">C</div>
+
+        <div id="key7" onclick="insertNumber(7)">7</div>
+        <div id="key8" onclick="insertNumber(8)">8</div>
+        <div id="key9" onclick="insertNumber(9)">9</div>
+        <div id="key+" onclick="add()" style="color: blue; background-color: lightblue;">+</div>
+        <div id="key-" onclick="subtract()" style="color: red; background-color: rgb(255, 174, 174);">-</div>
+        <div id="key4" onclick="insertNumber(4)">4</div>
+        <div id="key5" onclick="insertNumber(5)">5</div>
+        <div id="key6" onclick="insertNumber(6)">6</div>
+        <div id="keyX" onclick="multiply()" style="color: green; background-color: lightgreen;">x</div>
+        <div id="key/" onclick="divide()" style="color: purple; background-color: rgb(255, 128, 255);">/</div>
+        <div id="key1" onclick="insertNumber(1)">1</div>
+        <div id="key2" onclick="insertNumber(2)">2</div>
+        <div id="key3" onclick="insertNumber(3)">3</div>
+        <div id="key0" onclick="insertNumber(0)">0</div>
+        <div id="key," onclick="insertComma()">,</div>
+        <!-- style="grid-column: span 2;" -->
+        <div id="" onclick="insertNumber()"></div>
+
+        <!-- <div id="" onclick="insertNumber()"></div> -->
+
+        <div></div>
+        <div></div>
+        <div id="keyBack" onclick="back()">←</div>
+        <div id="key=" onclick="equals()" class="green">=</div>
+    </div>
+
+    <script>
+
+        let firstNumber = null
+        let secondNumber = null
+        let equalsMemory = null
+        let awaitingInput = true
+        let isFloat = false
+        let memory = null
+        let result = null
+        let stringInput = ""
+        let floatInput = 0.0
+        calculatorInput.value = null
+
+        currentOperation = "none"
+
+        function reset() {
+            firstNumber = null
+            secondNumber = null
+            equalsMemory = null
+            awaitingInput = true
+            isFloat = false
+            memory = null
+            result = null
+            stringInput = ""
+            floatInput = 0.0
+            calculatorInput.value = null
+            currentOperation = "none"
+        }
+
+        // Adds keyPressed class to buttons and takes the class 100 miliseconds after
+        function aestheticPressButton(button) {
+            document.getElementById("key" + button)
+                .classList.add("keyPressed")
+            setTimeout(() => {
+                document.getElementById("key" + button)
+                    .classList.remove("keyPressed")
+            }, 100)
+        }
+
+        function insertNumber(number) {
+            //calculatorInput.value = number
+            aestheticPressButton(number)
+
+            consola.innerHTML += number
+            consola.scrollTop = consola.scrollHeight;
+
+            if (firstNumber == null) {
+                superConsolaFirstNumber.textContent += number
+            }
+            else {
+                superConsolaSecondNumber.textContent += number
+            }
+
+            if (awaitingInput && firstNumber) {
+                calculatorInput.value = null
+                awaitingInput = false
+                isFloat = false
+            }
+
+            stringInput = calculatorInput.value
+
+            stringInput += number
+            floatInput = parseFloat(stringInput)
+
+            calculatorInput.value = stringInput
+            calculatorInput.scrollLeft = calculatorInput.scrollWidth;
+        }
+
+        function insertComma() {
+
+            if (!isFloat) {
+                aestheticPressButton(",")
+                calculatorInput.value += "."
+                consola.innerHTML += "."
+                if (firstNumber == null) {
+                    superConsolaFirstNumber.textContent += "."
+                }
+                else {
+                    superConsolaSecondNumber.textContent += "."
+                }
+                isFloat = true
+            }
+
+        }
+
+        // This function saves firstnumber and secondnumber
+        //is called by all operations
+        function saveValues() {
+            // MEMORY
+            if (firstNumber == null) {
+                firstNumber = calculatorInput.value
+            }
+            else {
+                secondNumber = calculatorInput.value
+            }
+            if (result != null) {
+                firstNumber = result
+                secondNumber = null
+                superConsolaFirstNumber.textContent = firstNumber
+                superConsolaSecondNumber.textContent = null
+                superConsolaResult.textContent = null
+            }
+        }
+
+        function add() {
+            aestheticPressButton("+")
+            consola.innerHTML += " + "
+
+            currentOperation = "add"
+            awaitingInput = true
+            superConsolaOperation.textContent = currentOperation
+            calculatorInput.style.color = "blue"
+
+            saveValues()
+
+        }
+
+        function subtract() {
+            aestheticPressButton("-")
+            consola.innerHTML += " - "
+
+            currentOperation = "subtract"
+            awaitingInput = true
+            superConsolaOperation.textContent = currentOperation
+            calculatorInput.style.color = "red"
+
+            saveValues()
+        }
+
+        function multiply() {
+            aestheticPressButton("X")
+            consola.innerHTML += " x "
+
+            currentOperation = "multiply"
+            awaitingInput = true
+            superConsolaOperation.textContent = currentOperation
+            calculatorInput.style.color = "green"
+
+            saveValues()
+
+        }
+
+        function divide() {
+            aestheticPressButton("/")
+            consola.innerHTML += " / "
+
+            currentOperation = "divide"
+            awaitingInput = true
+            superConsolaOperation.textContent = currentOperation
+            calculatorInput.style.color = "purple"
+
+            saveValues()
+
+
+        }
+
+        function equals() {
+
+            aestheticPressButton("=")
+
+            if (firstNumber) {
+                secondNumber = calculatorInput.value
+
+                switch (currentOperation) {
+                    case "add":
+                        result = parseFloat(firstNumber) + parseFloat(secondNumber)
+                        break;
+
+                    case "subtract":
+                        result = parseFloat(firstNumber) - parseFloat(secondNumber)
+                        break;
+
+                    case "multiply":
+                        result = parseFloat(firstNumber) * parseFloat(secondNumber)
+                        break;
+
+                    case "divide":
+
+                        result = parseFloat(firstNumber) / parseFloat(secondNumber)
+                        break;
+
+                    default:
+                        break;
+                }
+
+
+                if (currentOperation == "divide" && secondNumber == 0) {
+                    consola.innerHTML += "<p style='color:red'>You can't divide by zero</p>"
+                }
+                else {
+                    calculatorInput.value = result
+                    superConsolaResult.textContent = result
+                    consola.innerHTML += " = " + result + "<br>"
+                }
+                firstNumber = null
+                equalsMemory = secondNumber
+                secondNumber = null
+
+                calculatorInput.style.color = "unset"
+
+                consola.scrollTop = consola.scrollHeight;
+
+            }
+
+            else if (equalsMemory) {
+
+                firstNumber = calculatorInput.value
+                switch (currentOperation) {
+                    case "add":
+                        result = parseFloat(firstNumber) + parseFloat(equalsMemory)
+                        break;
+
+                    case "subtract":
+                        result = parseFloat(firstNumber) - parseFloat(equalsMemory)
+                        break;
+
+                    case "multiply":
+                        result = parseFloat(firstNumber) * parseFloat(equalsMemory)
+                        break;
+
+                    case "divide":
+                        result = parseFloat(firstNumber) / parseFloat(equalsMemory)
+                        break;
+
+                    default:
+                        break;
+                }
+
+                calculatorInput.value = result
+                firstNumber = null
+                secondNumber = null
+
+                calculatorInput.style.color = "unset"
+                consola.innerHTML += " = " + result + "<br>"
+                consola.scrollTop = consola.scrollHeight; // scroll al máximo a la derecha
+            }
+        }
+
+        function back() {
+            aestheticPressButton("Back")
+            calculatorInput.value = calculatorInput.value.toString().slice(0, -1)
+        }
+
+        function functionC() {
+            aestheticPressButton("C")
+            calculatorInput.value = null
+            isFloat = false
+            reset()
+        }
+
+        function functionCE() {
+            aestheticPressButton("CE")
+            calculatorInput.value = null
+            isFloat = false
+            consola.innerHTML = "CONSOLA <br>"
+            reset()
+        }
+
+        document.onkeydown = function (e) {
+            e.preventDefault()
+            switch (e.code) {
+                case "Numpad0":
+                    insertNumber(0)
+
+                    break;
+                case "Numpad1":
+                    insertNumber(1)
+
+                    break;
+                case "Numpad2":
+                    insertNumber(2)
+
+                    break;
+                case "Numpad3":
+                    insertNumber(3)
+
+                    break;
+                case "Numpad4":
+                    insertNumber(4)
+
+                    break;
+                case "Numpad5":
+                    insertNumber(5)
+
+                    break;
+                case "Numpad6":
+                    insertNumber(6)
+
+                    break;
+                case "Numpad7":
+                    insertNumber(7)
+
+                    break;
+                case "Numpad8":
+                    insertNumber(8)
+
+                    break;
+                case "Numpad9":
+                    insertNumber(9)
+
+                    break;
+
+                case "NumpadAdd":
+                    add()
+                    break;
+                case "NumpadSubtract":
+                    subtract()
+                    break;
+
+                case "NumpadMultiply":
+                    multiply()
+                    break;
+                case "NumpadDivide":
+                    divide()
+                    break;
+
+                case "NumpadEnter":
+                    equals()
+                    break;
+
+                case "NumpadDecimal":
+                    insertComma()
+                    break;
+
+                case "Delete":
+                    functionC()
+                    break;
+
+                case "Escape":
+                    functionCE()
+                    break;
+
+                case "Backspace":
+                    back()
+                    break;
+
+                default:
+                    console.log(e.code + " is not defined")
+                    break;
+
+            }
+
+        };
+
+        // MEMORY
+
+        function memorySave() {
+            memory = calculatorInput.value
+        }
+
+        function memoryClear() {
+            memory = 0.0
+        }
+
+        function memoryRecovery() {
+            calculatorInput.value = memory
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>GLB Viewer</title>
+
+<style>
+html, body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #111;
+}
+
+canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+</style>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+</head>
+
+<body>
+<script type="module">
+import * as THREE from "three";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+
+const MODEL_SRC = "magichine.glb";
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x111111);
+
+const camera = new THREE.PerspectiveCamera(
+  40,
+  innerWidth / innerHeight,
+  0.1,
+  1000
+);
+
+const renderer = new THREE.WebGLRenderer({
+  antialias: true,
+  preserveDrawingBuffer: true
+});
+
+renderer.setSize(innerWidth, innerHeight);
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+document.body.appendChild(renderer.domElement);
+
+scene.add(new THREE.AmbientLight(0xffffff, 1.2));
+
+const light = new THREE.DirectionalLight(0xffffff, 2);
+light.position.set(3, 5, 4);
+scene.add(light);
+
+const pivot = new THREE.Group();
+scene.add(pivot);
+
+let root = null;
+let mixer = null;
+const clock = new THREE.Clock();
+
+let modelCenterY = 1;
+let modelHeight = 2;
+
+// --------------------
+// DRIFT SYSTEM (kept subtle, unused for now if needed later)
+// --------------------
+function drift(t) {
+  return (
+    Math.sin(t * 0.37) * 0.6 +
+    Math.sin(t * 0.91) * 0.3 +
+    Math.sin(t * 1.73) * 0.1
+  );
+}
+
+// --------------------
+// ROTATION BREATH SYSTEM
+// --------------------
+let currentSpeed = 0.01;
+let targetSpeed = 0.01;
+let nextChange = 0;
+
+function lerp(a, b, t) {
+  return a + (b - a) * t;
+}
+
+function randSpeed() {
+  return 0.003 + Math.random() * 0.02;
+}
+
+const loader = new GLTFLoader();
+
+loader.load(MODEL_SRC, (gltf) => {
+  root = gltf.scene;
+  pivot.add(root);
+
+  console.log("Animaciones encontradas:", gltf.animations.map(a => a.name));
+
+  mixer = new THREE.AnimationMixer(root);
+
+  const clip = THREE.AnimationClip.findByName(gltf.animations, "show");
+  if (clip) {
+    const action = mixer.clipAction(clip);
+    action.setLoop(THREE.LoopRepeat);
+    action.play();
+  } else {
+    console.warn("Animación 'show' no encontrada");
+  }
+
+  const box = new THREE.Box3().setFromObject(root);
+  const size = box.getSize(new THREE.Vector3());
+
+  const maxSize = Math.max(size.x, size.y, size.z);
+  const scale = 2 / maxSize;
+  root.scale.setScalar(scale);
+
+  const finalBox = new THREE.Box3().setFromObject(root);
+  const finalSize = finalBox.getSize(new THREE.Vector3());
+  const finalCenter = finalBox.getCenter(new THREE.Vector3());
+
+  modelCenterY = finalCenter.y;
+  modelHeight = finalSize.y;
+
+  fitCameraToModel();
+});
+
+function fitCameraToModel() {
+  const distance = Math.max(3, modelHeight * 1.7);
+
+  camera.position.set(0, modelCenterY, distance);
+  camera.lookAt(0, modelCenterY, 0);
+}
+
+function animate() {
+  const delta = clock.getDelta();
+  const t = clock.getElapsedTime();
+
+  if (mixer) mixer.update(delta);
+
+  if (root) {
+
+    // change target every 1–5 seconds
+    if (t > nextChange) {
+      targetSpeed = randSpeed() * (Math.random() < 0.5 ? -1 : 1);
+      nextChange = t + (1 + Math.random() * 4);
+    }
+
+    // smooth acceleration / deceleration
+    currentSpeed = lerp(currentSpeed, targetSpeed, 0.02);
+
+    root.rotation.y += currentSpeed;
+  }
+
+  renderer.render(scene, camera);
+}
+
+renderer.setAnimationLoop(animate);
+
+window.addEventListener("resize", () => {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+  fitCameraToModel();
+});
+</script>
+</body>
+</html>

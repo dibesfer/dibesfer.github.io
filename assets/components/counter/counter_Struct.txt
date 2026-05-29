@@ -1,0 +1,104 @@
+=== INFO ===
+Folder name: counter
+Output file: counter_Struct.txt
+Author: fer
+Last modification: 2026-05-26 09:54:16.600522933
+___Stats___
+Total size: 1,55KB
+0 directories, 2 files
+Content files: 2
+Content lines: 65
+Content characters: 1586
+Ignored: .git, node_modules, .godot, .import, android, build, dist, venv, __pycache__, *.uid, *.import
+___Ordered Lists___
+
+File type:
+    .html = 1
+    .js = 1
+
+Folder's folders:
+    [none] > 0 folders
+
+Folder's files:
+(2) files:
+      counter
+
+File size:
+    Top 30 files only
+    counter.js = 992B
+    index.html = 594B
+
+=== TREE ===
+
+=== CONTENT ===
+
+### ./index.html ###
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>counter</title>
+    <link rel="stylesheet" href="../../../style.css">
+
+    <style>
+        body {
+            width: 100%;
+            text-align: center;
+        }
+
+        #display {
+            font-family: monospace;
+            font-size: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <p>Online: <span id="displayPresence"></span></p>
+    <p>Visits <span id="display"></span></p>
+    <script src="counter.js"></script>
+</body>
+</html>
+
+### ./counter.js ###
+// --- CONFIG ---
+const SB_ENDPOINT = "https://qugihsopwjemzakhrbvw.supabase.co/functions/v1/visit_v3";
+const MEMORY_KEY = "dibesferV3_localVisits";
+
+// --- URL ---
+const url = new URLSearchParams(window.location.search).get("url")
+  || window.location.href;
+
+  // --- SB ---
+async function hit(url) {
+  try {
+    const res = await fetch(SB_ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url }),
+      keepalive: true,
+    });
+    return await res.json();
+  } catch {
+    return { count: null };
+  }
+}
+
+// --- MEMORY ---
+function loadLocal() {
+  return localStorage.getItem(MEMORY_KEY);
+}
+function saveLocal(val) {
+  localStorage.setItem(MEMORY_KEY, val);
+}
+
+// --- INIT ---
+hit(url).then(res => {
+  const el = document.getElementById("display");
+  if (typeof res.count === "number") el.textContent = res.count;
+});
+
+let local = parseInt(loadLocal()) || 0;
+local++;
+console.log("Local visits: " + local)
+saveLocal(local);

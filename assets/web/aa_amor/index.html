@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>dibesfer</title>
+    <link rel="stylesheet" href="/ferstyle.css">
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/x-icon" href="/assets/branding/favicon512.ico">
+
+    <script src="/ferscript.js"></script>
+
+    <!-- SUPABASE cdn -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+
+</head>
+
+<body>
+    <header></header>
+
+    <main>
+
+
+        <div class="flexgrid">
+            <div class="flexgriditem">
+                <div>
+                    <a href="/gallery/">
+                        <h2>🖌️Gallery</h2>
+                        <div class="zoomableimage">
+                            <img width="100%" src="/gallery/assets/Alan Moore - 2019Ja23.jpg">
+                        </div>
+                        <p>Drawings I do in paper and in digital.</p>
+
+                    </a>
+                </div>
+
+            </div>
+            <div class="flexgriditem">
+                <div>
+                    <a href="/games/index.html">
+                        <h2>🎮Games</h2>
+                        <div class="zoomableimage">
+                            <img height="100%" width="100%" src="/games/assets/colorlandia-spawn.png">
+                        </div>
+                        <p>Games I code in javascript, Luanti (Lua) and Godot.</p>
+
+                    </a>
+                </div>
+
+            </div>
+            <div class="flexgriditem">
+                <div>
+                    <a href="/web/">
+                        <h2>🌐Web</h2>
+                        <div class="zoomableimage">
+                            <img width="100%" src="/assets/images/web.png">
+                        </div>
+                        <p>Webs I program in HTML, CSS and Javascript.</p>
+
+                    </a>
+                </div>
+
+            </div>
+
+
+        </div>
+
+
+
+
+        <br>
+
+        <img src="https://content.luanti.org/uploads/4e6235eec4.png" alt="">
+
+
+    
+
+    </main>
+    <footer></footer>
+
+   
+    <script src="script.js"></script>
+    <script src="/assets/scripts/supabase.js"></script>
+    <!-- 6. ADD LOAD SCRIPT -->
+    <script>
+
+        async function load(id, file) {
+            fetch(file)
+                .then(r => r.text())
+                .then(html => gettag(id).innerHTML = html)
+                .then(() => {
+
+                    fetch("components/footer.html")
+                        .then(a => a.text())
+                        .then(html => gettag("footer").innerHTML = html)
+                        .then(() => {
+                            app()
+                        })
+                });
+        }
+
+        load("header", "components/header-main.html");
+
+    </script>
+    
+</body>
+
+</html>

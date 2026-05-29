@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <div id="displayer"></div>
+    <script>
+
+
+//HOW I BUILT THE JSON
+let bible = {}
+
+fetch("rvg.json")
+            .then(x => x.json())
+            .then(y => {
+                
+                for (let i = 0; i < y.verses.length; i++) {
+                    const verse = y.verses[i];
+                    const book = verse.book_name;
+                    const chapter = verse.chapter;
+                    const text = verse.text;
+                    console.log(book)
+                    if (!bible[book]){
+                        bible[book] = {}
+                    }
+                    if (!bible[book][chapter]){
+                        bible[book][chapter] = []
+                    }
+                    bible[book][chapter].push(text)
+                }
+                displayer.textContent = JSON.stringify(bible)
+            })
+
+
+    </script>
+</body>
+</html>

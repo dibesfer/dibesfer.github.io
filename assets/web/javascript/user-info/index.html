@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <div id="consola"></div>
+    <button onclick="getClipboard()">Pegar</button>
+    <script>
+        function getClipboard() {
+            navigator.clipboard.readText()
+                .then(text => consola.innerHTML += "<br>📥 Copiado: " + text)
+                .catch(err => consola.innerHTML += "<br>❌ Error: " + err);
+        }
+
+        consola.innerHTML = window.location.href + "<br>" + window.navigator.userAgent
+
+    </script>
+</body>
+</html>

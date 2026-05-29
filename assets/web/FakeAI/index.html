@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fake AI</title>
+    <style>
+        *{
+            box-sizing: border-box;
+        }
+        body {
+            font-family: sans-serif;
+        }
+
+        main {
+            max-width: 400px;
+            margin: auto;
+        }
+
+        header,
+        footer {
+            text-align: center;
+        }
+
+        #chatApplication {
+            border: solid 1px gray;
+            padding: 10px;
+        }
+        .userMessage {
+            background-color: rgb(194, 194, 194);
+            max-width: max-content;
+            padding: 5px;
+            border-radius: 8px;
+            margin-left: auto;
+        }
+
+        .aiMessage {
+            background-color: pink;
+            max-width: max-content;
+            padding: 5px;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>FakeAI</h1>
+        <p>Developed by Winged Monkeys</p>
+    </header>
+    <main>
+        <div id="chatApplication">
+            <h2>How are you doing?</h2>
+            <div id="chatDisplay"></div>
+            <input id="userInput" type="text">
+            <button onclick="send()">Send</button>
+            
+        </div>
+
+        <div>
+                <h3>Devlog</h3>
+                <ul>
+                    <li>For now it only repeats what you say.</li>
+                </ul>
+            </div>
+    </main>
+    <script>
+
+        function send() {
+            if (userInput.value.trim() != "") {
+                let p = document.createElement("p")
+                p.textContent = userInput.value
+                p.classList.add("userMessage")
+                chatDisplay.appendChild(p)
+                answer(userInput.value)
+                userInput.value = ""
+
+            }
+        }
+
+        function answer(input) {
+            let p = document.createElement("p")
+            p.textContent = userInput.value
+            p.classList.add("aiMessage")
+            chatDisplay.appendChild(p)
+        }
+
+    </script>
+</body>
+
+</html>
