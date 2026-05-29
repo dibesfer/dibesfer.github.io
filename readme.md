@@ -1,6 +1,6 @@
 ![dibesfer title](https://dibesfer.github.io/assets/branding/illustrated-title.png)
 
-Hey World! I am Fer :)
+### Hey World! I am Fer :)
 
 **dibesfer** is my pseudonym, it's an acronym of Spanish sentence **Dib**ujos y **es**critos de **Fer** which translates to "Drawings and writings by Fer".
 
