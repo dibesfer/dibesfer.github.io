@@ -48,8 +48,35 @@ function loadRouteFromURL() {
     // TODO change to 404.html
     // KEEP FOR HISTORY: changeIframeSrc("/assets/web/experimental/armillary");
 
-    changeIframeSrc("/404.html");
+    //changeIframeSrc("/assets/web/experimental/armillary");
+    iframe.srcdoc = `
 
+    <style>
+      a {
+        text-decoration: none;
+      }
+    </style>
+
+    <div style="
+      text-align:center;
+      margin-top: 80px;
+      font-family: sans-serif;
+    ">
+    <div>
+    <h2>dibesfer navigator</h2>
+    </div>
+
+    <div><a href="/" class="leftBarLink" target="_top">Landing</a></div>
+    <div><a href="/assets/pages/nav/?page=gallery" class="leftBarLink" target="_top">Gallery</a></div>
+    <div><a href="/assets/pages/nav/?page=games" class="leftBarLink" target="_top">Games</a></div>
+    <div><a href="/assets/pages/nav/?page=web" class="leftBarLink" target="_top">Web</a></div>
+
+    <div><a href="https://liberapay.com/dibesfer" class="leftBarLink">Donate</a></div>
+    <div><a href="https://discord.gg/tUHBS9eERn" class="leftBarLink">Discord</a></div>
+    </div>
+
+
+    `
   }
 }
 
