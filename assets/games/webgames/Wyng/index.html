@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wyng</title>
+    <link href="/img/favicon.ico" rel="icon" type="image/x-icon">
+    <!--#region SEO  -->
+    <meta name="author" content="dibesfer - Ferrán Minero" />
+    <meta name="description" content="Unity, Minetest, Roblox and HTML games by dibesfer" />
+    <meta name="keywords" content="dibesfer games juegos videogames videojuegos unity minetest luanti roblox html" />
+    <!--#endregion -->
+    <!--#region META  -->
+    <!-- Meta imágen y descripción que aparecerá embebida en algunas redes sociales -->
+    <meta property='og:image' content='/img/dibesfer-logo-whiteinside.png' />
+    <meta property='og:description' content='Unity, Minetest, Roblox and HTML games by dibesfer.' />
+    <meta property="og:title" content="dibesfer - Games">
+    <!--#endregion  -->
+    <!-- STYLE CSS -->
+    <link href="/style.css" rel="stylesheet" type="text/css">
+    <!-- FERSCRIPT.JS -->
+    <script src="/ferscript.js"></script>
+    <!-- SUPABASE cdn -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+
+    <style>
+        .contenedor {
+            text-align: center;
+            border: solid 3px white;
+            padding: 15px;
+            border-radius: 15px;
+        }
+
+        input , button {
+            font: unset;
+            background-color: unset;
+            color: white;
+            border: solid 3px white;
+        }
+        button{
+            cursor: pointer;
+        }
+        button:active {
+            background-color: white;
+            color: black;
+        }
+
+        
+    </style>
+
+</head>
+
+<body>
+    <div id="loadingScreen" class="flexCenter fullScreen">
+        <img width="200px" class="icon" src="/img/dibesfer-logo.png" alt="dibesfer logo">
+    </div>
+
+    <div id="navBars"></div>
+
+    <main>
+
+        <section class="maxWidth">
+            <h1 class="textCenter">Wyng</h1>
+            <img class="invert franja" src="" alt="">
+
+            <!-- Empezamos -->
+            <div id="empezamos" class="contenedor">
+                <label for="name">Whats your name?</label>
+                <br><br>
+                <input class="textCenter"type="text" id="inputName">
+                <br><br>
+                <button onclick="sendName()">Send</button>
+            </div>
+            
+            <!-- Profile menu -->
+
+            <div id="mainMenu" class="contenedor invisible" >
+
+                <h2><span id="displayName"></span></h2>
+                <p>Life: <span id="displayLife">100</span></p>
+                <p>Money: <span id="displayMoney">0</span></p>
+                <p>Preparation: <span>0</span>/100</p>
+                <br>
+                <button>Train</button>
+                <br><br>
+                <button onclick="goToCombat()">Combat</button>
+
+            </div>
+
+            <div id="combatMenu" class="contenedor invisible">
+
+                <h2>Combat</h2>
+                <p>Player life 100/100</p>
+                <p>Enemy life 100/100</p>
+                <button>Attack</button>
+                <button>Protect</button>
+
+            </div>
+            
+            <!-- <label for="class">Class:</label>
+            <select name="class" id="class">
+                <option value="Warrior">Warrior</option>
+                <option value="Hunter">Hunter</option>
+                <option value="Rogue">Rogue</option>
+                <option value="Mage">Mage</option>
+            </select> -->
+
+            
+
+            <!-- Restart button -->
+             <div class="textCenter">
+                <br>
+                <button onclick="restart()" style="background-color: red;">Restart</button>
+            </div>
+            
+
+        </section>
+
+        <footer></footer>
+    </main>
+    <script src="/script.js"></script>
+    <script src="/scripts/supabase.js"></script>
+    <!-- Local script -->
+     <script src="script.js"></script>
+</body>
+
+</html>

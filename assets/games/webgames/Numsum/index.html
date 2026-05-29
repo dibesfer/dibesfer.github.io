@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>Numsum</title>
+   <script src="/ferscript.js"></script>
+   <style>
+      * {
+         box-sizing: border-box;
+      }
+      body {
+         background-color: black;
+         color: white;
+         text-align: center;
+         font-size: large;
+      }
+      button {
+         font: unset;
+         border: solid 3px white;
+         background-color: black;
+         color: white;
+         padding: 15px;
+      }
+      .bar {
+         height: 50px;
+         border: solid 3px white;
+         padding: 5px;
+      }
+
+      .bar2{
+         background-color: white;
+         height: 100%;
+         width: 0;
+      
+      }
+
+      #numsum {
+         font-size: 70px;
+      }
+   </style>
+</head>
+<body>
+   <h1>Numsum</h1>
+   <div id="consola">Welcome to Numsum clicker game!</div>
+   <br>
+   <div class="bar">
+      <div id="bar2" class="bar2"></div>
+   </div>
+   <div id="numsum">0</div>
+   <button onclick="sum()">Click</button>
+   <br><br>
+   <div >Levels: <span id="levels">0</span></div>   
+
+   <footer>
+      <br><br><hr>
+      <p><i>A pure HTML, CSS and JS game</i></p>
+      <p><i>made by <a href="https://dibesfer.com">dibesfer</a></i></p>
+      <p><i>2021Mar21</i></p>
+     
+   </footer>
+
+   <script>
+
+      var counter = 0
+      var hundreds = 0
+      var consola = getid("consola")
+      var bar2 = getid("bar2")
+      var numsum = getid("numsum")
+      var levels = getid("levels")
+
+      if (localStorage.getItem("levels")){
+         hundreds = localStorage.getItem("levels")
+         levels.textContent = hundreds
+      }
+
+      function sum(){
+         counter++
+         bar2.style.width = counter + "%"
+         numsum.textContent = counter
+         
+         if (counter == 10){
+
+            consola.textContent = "Well, you already started!"
+         }
+         
+         if (counter == 100){
+            counter = 0
+            hundreds++
+            levels.textContent = hundreds
+            localStorage.setItem("levels", hundreds);
+            
+         }
+         if (hundreds == 10){
+            consola.textContent = "You reached a 1000 clicks!"
+         }
+      }
+
+   </script>
+
+</body>
+</html>

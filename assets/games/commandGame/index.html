@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Command Game</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="script.js" defer></script>
+</head>
+<body>
+    <header>
+        <h1>Command Game</h1>
+    </header>
+    <main>
+        <p>Level <span id="levelOutput"></span></p>
+        <h3 id="youWonMessage" style="display: none;">You won!</h3>
+        <p id="commandLine">Write "<span id="wordOutput"></span>"</p>
+        <input id="commandInput" type="text">
+        <button onclick="checkWord()">Send</button>
+        <br><br>
+        <button onclick="restart()" style="background-color: rgb(255, 154, 154);">Restart</button>
+    </main>
+    <footer>
+        <p>by <a href="https://dibesfer.github.io">dibesfer</a></p>
+    </footer>
+</body>
+</html>

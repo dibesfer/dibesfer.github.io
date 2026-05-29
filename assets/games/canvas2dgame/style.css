@@ -1,0 +1,12 @@
+
+* {
+    margin: 0;
+    box-sizing: border-box;
+}
+
+#myCanvas {
+    border: solid 3px black;
+    width: 100%;
+    
+    image-rendering: pixelated;
+}

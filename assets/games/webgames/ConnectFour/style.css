@@ -1,0 +1,33 @@
+* {
+}
+
+body {
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+img {
+  max-width: 100%;
+}
+
+#grid {
+  border: solid 3px black;
+  height: 120px;
+  width: 140px;
+  display: flex;
+  flex-wrap: wrap;
+}
+
+#grid div {
+  height: 20px;
+  width: 20px;
+}
+
+.playerOne {
+  background-color: blue;
+  border-radius: 10px;
+}
+
+.playerTwo {
+  background-color: red;
+  border-radius: 10px;
+}

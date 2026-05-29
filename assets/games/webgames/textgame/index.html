@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="/ferstyle.css">
+    <script src="/ferscript.js"></script>
+    <style>
+        body {
+            background-color: black;
+            color: white;
+            font-family: monospace;
+            text-align: center;
+            font-size: x-large;
+        }
+
+        button {
+            font: unset;
+            color: white;
+            border: solid white;
+            background-color: unset;
+            margin: 5px;
+        }
+
+    </style>
+</head>
+<body>
+    <h1>TextGame</h1>
+    <p>Experience: <span id="spanExperience">0</span></p>
+    <p>Player life: <span id="displayPlayerLife">100</span></p>
+    <p>Enemy life: <span id="displayEnemyLife">100</span></p>
+    <p id="consola">Consola</p>
+    <button id="attackButton" onclick="attack()">Attack</button>
+    
+    <button id="newEnemyButton" class="invisible" onclick="newEnemy()">New enemy</button>
+    <br><hr><br><p>Timer <span id="spanTimer">0</span></p>
+    <script>
+        var counter = 0
+        var player = {
+            life : 100,
+            experience : 0 
+        }
+        var enemy = {
+            life : 100
+        }
+
+        function setPlayerLife(damage){
+            player.life += damage
+            displayPlayerLife.textContent = player.life
+        }
+        function setEnemyLife(damage){
+            if (enemy.life + damage > 0){
+            enemy.life += damage
+            displayEnemyLife.textContent = enemy.life
+            }
+            else {
+                attackButton.classList.add("invisible")
+                enemy.life = 0
+                displayEnemyLife.textContent = 0
+                consola.textContent = "You win!"
+                player.experience++
+                spanExperience.textContent = player.experience
+                newEnemyButton.classList.remove("invisible")
+            }
+        }
+
+        function attack(){
+
+            var damage = randomInt(-20,0)
+            setEnemyLife(damage)
+        }
+
+        var myInterval = setInterval(intervalFunction,1000)
+
+        function intervalFunction(){
+            counter++
+            spanTimer.textContent = counter
+            enemyAttacks()
+            playerHeals()
+        }
+
+        function newEnemy(){
+            newEnemyButton.classList.add("invisible")
+            enemy.life = 100
+            displayEnemyLife.textContent = 100
+            consola.innerText = "Now, fight!"
+            attackButton.classList.remove("invisible")
+        }
+
+        function enemyAttacks(){
+            if (enemy.life>0){
+                console.log("enemy attaks" + enemy.life)
+            let damage = randomInt(-10,0)
+            setPlayerLife(damage)
+            }
+            
+        }
+
+        function playerHeals(){
+            if(enemy.life <= 0){
+                if (player.life < 100)
+                    setPlayerLife(1)
+
+            }
+        }
+
+    </script>
+</body>
+</html>

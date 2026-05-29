@@ -1,0 +1,703 @@
+#ThreeD {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 100dvw;
+    height: 100dvh;
+    overflow: hidden;
+    z-index: 0;
+}
+
+#threeDCanvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+#UI {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 100dvw;
+    height: 100dvh;
+    overflow: hidden;
+    background-color: transparent;
+    pointer-events: none;
+    z-index: 1;
+}
+
+#chat {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: min(50%, 420px);
+    max-width: 100%;
+    max-height: 35svh;
+    overflow: hidden;
+    background-color: rgba(141, 235, 141, 0.5);
+    pointer-events: auto;
+}
+
+#chat > * {
+    padding: 5px;
+}
+
+#consola {
+    background-color: rgba(94, 94, 94, 0.5);
+}
+
+#chatBox {
+    height: 6rem;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+button {
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: rgba(0, 0, 0, 0.27);
+}
+
+button:active {
+    background-color: rgba(0, 0, 0, 0.827);
+    color: white;
+    border: solid rgba(16, 65, 11, 0.85);
+}
+
+input,
+button, select {
+    background-color: rgb(147, 210, 147);
+    font: unset;
+    border: unset;
+    border: solid rgba(30, 110, 23, 0.85);
+    padding: 2px;
+}
+
+#chatInput {
+    width: 100%;
+    background-color: lime;
+    display: none;
+}
+
+#crosshair {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 2rem;
+    pointer-events: none;
+}
+
+#menu {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+
+    width: min(800px, 100svw);
+    max-height: 80svh;
+    aspect-ratio: 16 / 9;
+
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+
+    overflow: hidden;
+    background-color: rgba(215, 143, 215, 0.594);
+    padding: 10px;
+    pointer-events: auto;
+    z-index: 4;
+}
+
+#menu.isHidden {
+    display: none;
+}
+
+#menuTabs {
+    flex: 0 0 auto;
+    width: 100%;
+    display: flex;
+    justify-content: space-evenly;
+    gap: 10px;
+}
+
+.menuTab {
+    cursor: pointer;
+    user-select: none;
+}
+
+#menuTabSelected {
+    font-weight: bold;
+    color: white;
+    background-color: rgb(111, 23, 111);
+    padding: 0 5px;
+}
+
+#menuContent {
+    flex: 1 1 auto;
+    min-height: 0;
+    width: 100%;
+    border: solid;
+    overflow: auto;
+    padding: 10px;
+    background-color: rgb(245, 210, 232);
+}
+
+.menuSection {
+    min-height: 100%;
+    overflow: auto;
+}
+
+.aboutSection{
+    line-height: 2;
+}
+
+#woxelName {
+    font-variant: small-caps;
+}
+
+.uiGrid {
+    --ui-grid-columns: 8;
+    --ui-grid-rows: auto;
+    --ui-grid-gap: 0px;
+
+    display: grid;
+    grid-template-columns: repeat(var(--ui-grid-columns), minmax(0, 1fr));
+    grid-auto-rows: auto;
+    gap: var(--ui-grid-gap);
+    width: 100%;
+    align-content: start;
+    
+}
+
+.uiGridItem {
+    min-width: 0;
+    aspect-ratio: 1;
+    border: 1px dashed rgb(0, 0, 0);
+    background-color: unset;
+    overflow: hidden;
+    
+}
+
+.uiGrid[data-ui-grid-scroll="true"] {
+    overflow: auto;
+}
+
+.uiGrid[data-ui-grid-fit="height"] {
+    height: 100%;
+    min-height: 0;
+}
+
+.uiGrid[data-ui-grid-fit="height"] .uiGridItem {
+    max-height: 100%;
+}
+
+#playerHUD {
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    transform: translateX(-50%);
+    background-color: rgba(174, 174, 174, 0.615);
+    width: min(50%, 520px);
+    max-width: 100%;
+    pointer-events: auto;
+}
+
+#targetNameP {
+    text-align: center;
+}
+
+#hotbar {
+    --ui-grid-columns: 7;
+}
+
+.icon {
+    width: 100%;
+    aspect-ratio: 1;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    align-items: center;
+    justify-items: center;
+    gap: 0;
+    text-align: center;
+    overflow: hidden;
+    color: inherit;
+}
+
+.icon.isSelected {
+    border: 2px;
+    border-color: gold;
+    box-shadow: inset 0 0 0 3px gold;
+}
+
+.icon.isEmpty {
+    opacity: 0.45;
+}
+
+.iconName,
+.iconCount {
+    width: 100%;
+    min-width: 0;
+    height: 1rem;
+    line-height: 1rem;
+    font-size: 0.8rem;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    text-align: center;
+}
+
+.iconImage {
+    min-width: 0;
+    min-height: 0;
+    width: auto;
+    height: 100%;
+    max-width: 100%;
+    aspect-ratio: 1;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    box-sizing: border-box;
+}
+
+.iconImage .isometriconImage,
+.iconImage .iconImageAsset,
+.iconImage img {
+    display: block;
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    max-height: 100%;
+    aspect-ratio: 1;
+    object-fit: contain;
+    box-sizing: border-box;
+    image-rendering: auto;
+    background: transparent;
+    border: 0;
+}
+
+.iconColor {
+    display: block;
+    width: auto;
+    height: 100%;
+    max-width: 100%;
+    aspect-ratio: 1;
+    box-sizing: border-box;
+    border: solid;
+}
+
+.voxelCatalogItem {
+    min-height: 0;
+}
+
+/* Mobile portrait */
+@media (max-width: 700px) and (orientation: portrait) {
+    #chat {
+        width: 100%;
+        max-height: 25svh;
+    }
+
+    #menu {
+        width: 100svw;
+        max-height: 65svh;
+        aspect-ratio: 9 / 16;
+    }
+
+    #playerHUD {
+        width: 100%;
+    }
+}
+
+/* Mobile landscape */
+@media (max-height: 500px) and (orientation: landscape) {
+    #chat {
+        width: 35svw;
+        max-height: 100svh;
+    }
+
+    #menu {
+        width: 70svw;
+        max-height: 100svh;
+        aspect-ratio: 16 / 9;
+    }
+
+    #playerHUD {
+        width: 50svw;
+    }
+
+    .iconName,
+    .iconCount {
+        font-size: 0.65rem;
+    }
+}
+
+
+/* ScreenMode foundations */
+.isScreenHidden,
+[hidden] {
+    display: none !important;
+}
+
+body[data-screen-mode="mobile-portrait"] {
+    touch-action: none;
+}
+
+body[data-screen-mode="mobile-landscape"] {
+    touch-action: none;
+}
+/* JOYSTICKS - KL1 mobile panel, renamed for KL3 */
+:root {
+    --joysticks-panel-height: 20dvh;
+    --joysticks-border: solid rgba(0, 0, 0, 0.5);
+    --mobile-portrait-chat-space: 25svh;
+    --mobile-portrait-menu-gap: 8px;
+}
+
+#joysticksMount {
+    pointer-events: none;
+}
+
+#joysticks {
+    position: fixed;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    height: var(--joysticks-panel-height);
+    display: none;
+    justify-content: space-around;
+    align-items: center;
+    background-color: rgba(0, 0, 0, 0.783);
+    backdrop-filter: blur(10px);
+    z-index: 3;
+    touch-action: none;
+    pointer-events: auto;
+}
+
+#joysticks:not([hidden]) {
+    display: flex;
+}
+
+#joysticks.isScreenHidden,
+#joysticks[hidden] {
+    display: none !important;
+}
+
+#joysticksLeft,
+#joysticksRight {
+    position: relative;
+    flex: 50%;
+    height: 100%;
+    touch-action: none;
+}
+
+#joysticksLeft {
+    background-color: rgba(255, 0, 0, 0.25);
+}
+
+#joysticksRight {
+    background-color: rgba(0, 128, 0, 0.25);
+}
+
+#joysticksLeft > .joystick,
+#joysticksRight > .joystick {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 2;
+}
+
+.joystick {
+    width: 111px;
+    height: 111px;
+    border-radius: 50%;
+    border: var(--joysticks-border);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: gray;
+    background-image: radial-gradient(white,gray,black);
+    touch-action: none;
+}
+
+.joystickPad {
+    border: var(--joysticks-border);
+    background-color: rgb(75, 75, 75);
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    box-shadow: 0 0 10px white;
+    position: relative;
+    z-index: 2;
+    will-change: transform;
+    touch-action: none;
+}
+
+.joystickIcon {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    color: white;
+    pointer-events: none;
+    user-select: none;
+
+    font-size: 50px;
+    line-height: 1;
+    font-family: "Times New Roman", serif;
+}
+
+.joystickButton {
+    position: absolute;
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    border: var(--joysticks-border);
+    background-color: rgb(75, 75, 75);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    z-index: 1;
+    pointer-events: auto;
+
+    touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+}
+
+.joystickButton.is-pressed:not(.is-active) {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.joystickButton.is-active {
+    background-color: rgb(21, 177, 83);
+}
+
+#joystickLeftDown {
+    left: 5px;
+    bottom: 5px;
+}
+
+#joystickLeftUp {
+    right: 5px;
+    bottom: 5px;
+}
+
+#joystickLeftChat {
+    left: 5px;
+    top: 5px;
+}
+
+#joystickLeftSprint {
+    right: 5px;
+    top: 5px;
+}
+
+#joystickRightAction {
+    left: 5px;
+    top: 5px;
+}
+
+#joystickRightSecondary {
+    top: 5px;
+    right: 5px;
+}
+
+#joystickRightJump {
+    bottom: 5px;
+    left: 5px;
+}
+
+#joystickRightMenu {
+    bottom: 5px;
+    right: 5px;
+    font-size: 30px;
+}
+
+body[data-screen-mode="mobile-portrait"] {
+    height: 100dvh;
+    overflow: hidden;
+}
+
+body[data-screen-mode="mobile-portrait"] #ThreeD,
+body[data-screen-mode="mobile-portrait"] #UI {
+    height: calc(100dvh - var(--joysticks-panel-height));
+}
+
+body[data-screen-mode="mobile-portrait"] #UI {
+    overflow: visible;
+}
+
+body[data-screen-mode="mobile-portrait"] #joysticks {
+    height: var(--joysticks-panel-height);
+}
+
+body[data-screen-mode="mobile-portrait"] #chat {
+    width: 100%;
+    max-height: var(--mobile-portrait-chat-space);
+}
+
+body[data-screen-mode="mobile-portrait"] #menu {
+    top: calc(var(--mobile-portrait-chat-space) + var(--mobile-portrait-menu-gap));
+    bottom: calc(var(--joysticks-panel-height) + var(--mobile-portrait-menu-gap));
+    left: 50%;
+    transform: translateX(-50%);
+
+    width: calc(100svw - (var(--mobile-portrait-menu-gap) * 2));
+    max-height: none;
+    height: 50%;
+    aspect-ratio: auto;
+}
+
+body[data-screen-mode="mobile-portrait"] #joysticksLeft {
+    background-color: rgba(255, 0, 0, 0.377);
+}
+
+body[data-screen-mode="mobile-portrait"] #joysticksRight {
+    background-color: rgba(0, 96, 0, 0.493);
+}
+
+body[data-screen-mode="mobile-landscape"] {
+    height: 100dvh;
+    overflow: hidden;
+}
+
+body[data-screen-mode="mobile-landscape"] #ThreeD,
+body[data-screen-mode="mobile-landscape"] #UI {
+    height: 100dvh;
+}
+
+body[data-screen-mode="mobile-landscape"] #chat {
+    width: 40%;
+    max-height: 40dvh;
+    font-size: 0.85rem;
+}
+
+body[data-screen-mode="mobile-landscape"] #chatBox {
+    height: 6rem;
+}
+
+body[data-screen-mode="mobile-landscape"] #joysticks {
+    top: 0;
+    bottom: 0;
+    height: 100%;
+    justify-content: space-between;
+    align-items: end;
+    background-color: unset;
+    backdrop-filter: unset;
+    pointer-events: none;
+}
+
+body[data-screen-mode="mobile-landscape"] #joysticksLeft,
+body[data-screen-mode="mobile-landscape"] #joysticksRight {
+    max-height: 21dvw;
+    aspect-ratio: 1;
+    flex: 25%;
+    max-width: 21%;
+    pointer-events: auto;
+}
+
+body[data-screen-mode="mobile-landscape"] #joysticksLeft {
+    background-color: rgba(255, 0, 0, 0.377);
+    border-top-right-radius: 50%;
+}
+
+body[data-screen-mode="mobile-landscape"] #joysticksRight {
+    background-color: rgba(0, 96, 0, 0.493);
+    border-top-left-radius: 50%;
+}
+
+.boxelCatalogWarning {
+    margin: 0.35rem 0 0.5rem;
+    padding: 0.45rem 0.6rem;
+    border: 1px dashed rgb(165, 0, 0);
+    background: rgba(255, 225, 225, 0.94);
+    color: rgb(165, 0, 0);
+    font-weight: 700;
+    font-size: 0.85rem;
+    line-height: 1.25;
+}
+
+.boxelCatalogWarning[hidden] {
+    display: none;
+}
+
+.boxelCatalogItem {
+    position: relative;
+}
+
+.boxelCatalogFavoriteBadge {
+    position: absolute;
+    top: 0.18rem;
+    left: 0.18rem;
+    z-index: 3;
+    display: grid;
+    place-items: center;
+    width: 1.3rem;
+    height: 1.3rem;
+    border: 1px dashed rgba(0, 0, 0, 0.65);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.92);
+    font-size: 0.82rem;
+    line-height: 1;
+    pointer-events: none;
+}
+
+.boxelCatalogActions {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0;
+    background: rgba(255, 255, 255, 0.88);
+    border-top: 1px dashed rgb(0, 0, 0);
+    opacity: 0;
+    transform: translateY(100%);
+    transition: opacity 120ms ease, transform 120ms ease;
+    pointer-events: none;
+}
+
+.boxelCatalogItem:hover .boxelCatalogActions,
+.boxelCatalogItem:focus-within .boxelCatalogActions {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+
+.boxelCatalogActionButton {
+    min-width: 0;
+    min-height: 1.25rem;
+    padding: 0.15rem 0.1rem;
+    border: 0;
+    border-right: 1px dashed rgba(0, 0, 0, 0.55);
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-size: 0.68rem;
+    line-height: 1;
+    cursor: pointer;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.boxelCatalogActionButton:last-child {
+    border-right: 0;
+}
+
+.boxelCatalogActionButton:hover,
+.boxelCatalogActionButton:focus-visible {
+    background: rgba(0, 0, 0, 0.10);
+    outline: 0;
+}
+
+

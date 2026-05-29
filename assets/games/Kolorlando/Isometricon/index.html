@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Isometricon Preview</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <main>
+    <header>
+      <div class="brand">
+        <div id="logoMount" class="logoMount" aria-label="Isometricon generated voxel logo"></div>
+        <div>
+          <h1>Isometricon</h1>
+          <p>orthographic voxel icon renderer</p>
+        </div>
+      </div>
+      <button id="reroll" type="button">reroll data</button>
+    </header>
+
+    <section class="grid">
+      <article class="panel">
+        <h2>Boxel icon</h2>
+        <canvas id="boxelIcon" width="192" height="192" aria-label="Random boxel isometric icon"></canvas>
+        <pre id="boxelData"></pre>
+      </article>
+
+      <article class="panel">
+        <h2>Voxel icon</h2>
+        <canvas id="voxelIcon" width="192" height="192" aria-label="Random voxel isometric icon"></canvas>
+        <pre id="voxelData"></pre>
+      </article>
+
+      <article class="panel">
+        <h2>Single cube reference</h2>
+        <canvas id="singleIcon" width="192" height="192" aria-label="Single cube reference icon"></canvas>
+        <pre id="singleData"></pre>
+      </article>
+
+      <article class="panel">
+        <h2>DataURL / cached image</h2>
+        <div id="imageMount" class="imageMount"></div>
+        <pre id="imageData"></pre>
+      </article>
+    </section>
+  </main>
+
+  <script type="module" src="./script.js"></script>
+</body>
+</html>

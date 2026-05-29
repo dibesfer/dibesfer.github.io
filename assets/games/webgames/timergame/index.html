@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <h1>Timer Game</h1>
+    <p><span id="displayTimer"></span></p>
+
+    <script>
+
+        var myTimeInterval = setInterval(functionInterval, 10)
+        var counter = 0
+        function functionInterval(){
+            counter++
+            displayTimer.textContent = counter
+        }
+
+    </script>
+</body>
+</html>

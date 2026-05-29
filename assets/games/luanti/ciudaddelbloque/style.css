@@ -1,0 +1,12 @@
+body {
+    background-color: rgb(18, 69, 0);
+    color: white;
+}
+
+header , footer {
+    text-align: center;
+}
+
+img {
+    max-width: 100%;
+}

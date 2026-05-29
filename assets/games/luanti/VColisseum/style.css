@@ -1,0 +1,76 @@
+* {
+    margin: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+
+}
+
+.playfair-display-sc-regular {
+    font-family: "Playfair Display SC", serif;
+    font-weight: 800;
+    font-style: bold;
+}
+
+img {
+    max-width: 100%;
+}
+
+header {
+    font-variant: small-caps;
+    text-align: center;
+}
+
+header,
+footer {
+    background-color: gray;
+    padding: 56px;
+    background-image: linear-gradient(-45deg, rgb(43, 43, 43), gray);
+}
+
+main {
+    height: 100%;
+}
+
+hr {
+    border: solid 3px rgb(84, 84, 84);
+}
+
+.panoramic div img {
+    aspect-ratio: 16/9;
+    object-fit: cover;
+    border: ridge 4.5px rgb(75, 75, 75);
+    height: 100%;
+    width: 100%;
+}
+
+.textCenter {
+    text-align: center;
+}
+
+.icon {
+    font-size: 60px;
+}
+
+@media screen and (min-width: 800px) {
+    body {
+        /* height: 100dvh; */
+        /* display: flex;
+        flex-direction: column; */
+    }
+
+    .flexy3 {
+        display: flex;
+    }
+
+    .flexy3>div {
+        flex: 33.33%;
+    }
+}
+
+::selection {
+    background-color: rgb(66, 66, 66);
+    color: white;
+}

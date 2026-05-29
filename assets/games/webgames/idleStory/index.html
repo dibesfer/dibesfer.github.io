@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⏱️Idle Story📜</title>
+    <script src="/ferscript.js"></script>
+    <style>
+
+        * {
+            margin: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background-color: black;
+            color: white;
+            text-align: center;
+            max-width: 800px;
+            margin: auto;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: x-large;
+        }
+
+        .beautifulbox {
+            border: solid 3px white
+        }
+
+        .bar {
+            height: 30px;
+            background-color: white;
+            padding: 5px;
+        }
+
+        .barFront {
+            height: 100%;
+            width: 0;
+            background-color: black;
+            transition: 0.2s;
+        }
+
+        button {
+            font: unset;
+            border: solid 3px white;
+            background-color: black;
+            color: white;
+            padding: 5px;
+        }
+
+        .animatedDiv {
+            margin: 50px auto;
+            width: 200px;
+            height: 200px;            
+            animation-name: example;
+            animation-duration: 10s;
+            animation-iteration-count: infinite;
+            animation-timing-function: linear;
+        }
+
+        @keyframes example {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            25% {
+              
+            }
+
+            50% {
+             
+            }
+
+            75% {
+            }
+
+            100% {
+                transform: rotate(360deg)
+            }
+        }
+
+
+        /*backdrop-filter: invert(80%);*/
+        ::-moz-selection {
+            /* Code for Firefox */
+            color: black;
+            background: white;
+        }
+
+        ::selection {
+            color: black;
+            background: white;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>⏱️Idle Story📜</h1>
+    <hr>
+    <p>Idle Story is a story that is being told while you're idleing.</p>
+    <div class="animatedDiv"><img src="/art/pixelart mandalas/15.png" alt="" width="100%"></div>
+    <br>
+    <div class="bar">
+        <div id="barFront" class="barFront"></div>
+    </div>
+    <!-- <div class="barInformation">100</div> -->
+    <div class="beautifulbox">
+        <p id="consola">hello</p>
+    </div>
+    <div class="bar">
+        <div id="barFront2" class="barFront"></div>
+    </div>
+    <br>
+    <button onclick="sumClicks()">Click</button>
+    <p>Clicks: <span id="clickerDisplay">0</span></p>
+    <p>Time: <span id="timerDisplay">0</span></p>
+    <p>Points: <span id="points">0</span></p>
+    <script>
+        var clicks = 0
+        var counter = 0
+        var hundreds = 0
+        var timerDisplay = getid("timerDisplay")
+        var consola = getid("consola")
+        var points = getid("points")
+        var barFront = getid("barFront")
+        var barFront2 = getid("barFront2")
+        var clickerDisplay = getid("clickerDisplay")
+        function myIntervalFunction() {
+            counter++
+            timerDisplay.innerText = counter
+            updateBar()
+            if (counter == 10) {
+                consola.textContent = "Welcome to the game"
+                if (hundreds >= 1)
+                    consola.textContent = "Welcome back to the game!"
+            }
+            if (counter == 20) {
+                consola.textContent = "You stayed enough to say you're playing this."
+            }
+            if (counter == 30) {
+                consola.textContent = "Time is the most valuable thing"
+            }
+            if (counter == 40) {
+                consola.textContent = "Is it worth it to spend it in order to play a game?"
+            }
+            if (counter == 50) {
+                consola.textContent = "Also, many players want to feel they can play forever"
+            }
+            if (counter == 60) {
+                consola.textContent = "How am I supposed to fill all this contents for a game to be infinite?"
+            }
+
+            if (counter == 70) {
+                consola.textContent = "Maybe we can restart on 100 so the game loops forever."
+            }
+
+            if (counter == 80) {
+                consola.textContent = "But how many loops will get til it gets boring?"
+            }
+            if (counter == 90) {
+                consola.textContent = "Will you abandon me? -whispered the player"
+            }
+            if (counter == 100) {
+                consola.textContent = "Zas! Back to zero!"
+                counter = 0
+                hundreds++
+                points.innerText = hundreds
+
+            }
+        }
+        function updateBar() {
+            barFront.style.width = counter + "%"
+        }
+        function sumClicks() {
+            clicks++
+            clickerDisplay.textContent = clicks
+            barFront2.style.width = clicks + "%"
+            if (clicks == 100) {
+                clicks = 0
+            }
+        }
+        var myInterval = setInterval(myIntervalFunction, 1000)
+
+    </script>
+
+</body>
+
+</html>

@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clicker game</title>
+    <script src="/ferscript.js"></script>
+    <style>
+        body{
+            background-color: black;
+            color: white;
+            text-align: center;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: x-large;
+        }
+        button {
+            font: unset;
+            padding: 15px;
+        }
+
+        .bar1 {
+            height:60px;
+            border: solid 3px gray;
+            width: 100%;
+        }
+
+        .bar2 {
+            height: 100%;
+            width: 0;
+            max-width: 100%;
+            background-color: darkgray;
+            transition:0.2s;
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+    <h1>- Clicker Game -</h1>
+    <p id="objective">Reach a hundred!</p>
+    <div  class="bar1">
+        <div id="clickBar2" class="bar2"></div>
+    </div>
+    <span style="font-size: 160px;">👆</span>
+    <p><span id="display"style="font-size: 75px;">0</span></p>
+    <button onclick="sum()">Click me </button>
+
+    <script>
+        var clickBar2 = getid("clickBar2")
+        var display = getid("display")
+        var objective = getid("objective")
+        var count = 0
+        
+        function sum(){
+            count++
+            display.textContent = count
+            clickBar2.style.width = count + "%"
+            if (count == 100){
+                objective.textContent = "You won!"
+                
+            }
+            if (count > 100 && count < 250){
+                objective.textContent = "Reach 250"
+                clickBar2.style.width = 100 * count / 250 + "%"
+            }
+            if (count == 250){
+                objective.textContent ="You won!"
+            }
+
+            if (count > 250 && count < 500){
+                objective.textContent = "Reach 500"
+                clickBar2.style.width = 100 * count / 500 + "%"
+            }
+            if (count == 500){
+                objective.textContent ="You won!"
+            }
+
+        }
+
+
+    </script>
+
+</body>
+</html>

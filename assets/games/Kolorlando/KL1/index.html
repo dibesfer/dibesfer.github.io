@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kolorlando</title>
+    <link rel="shortcut icon" href="assets/brand/KoloraSimbolo_Square_512.png" type="image/x-icon">
+
+    <link rel="stylesheet" href="webstyle.css">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Ubuntu+Sans+Mono:ital,wght@0,400..700;1,400..700&display=swap"
+        rel="stylesheet">
+    <!-- SUPABASE cdn -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+
+
+    <!-- SEO -->
+    <meta name="author" content="dibesfer - Ferrán Minero" />
+    <meta name="description"
+        content="Kolorlando. Lando de la Koloraj Vokseloj. is a 3D voxel world to build, explore, create, combat, settle, conquer, chat, befriend, share." />
+    <meta name="keywords"
+        content="Kolorlando, lando, koloroj, vokseloj, dibesfer, voxel game, 3D game, browser game, sandbox game, building game, exploration game" />
+
+    <!--#region META  -->
+    <!-- Meta imágen y descripción que aparecerá embebida en algunas redes sociales -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://dibesfer.github.io/games/Kolorlando/" />
+
+    <meta property='og:image' content='https://dibesfer.github.io/games/Kolorlando/assets/brand/KoloraSimbolo.png' />
+    <meta property='og:description'
+        content='Kolorlando (Lando de la Koloraj Vokseloj) is a 3D voxel world to build, explore, create, combat, settle, conquer, chat, befriend, share.' />
+    <meta property="og:title" content="Kolorlando">
+    <!--#endregion  -->
+
+
+</head>
+
+<body>
+
+    <div id="idDiv">
+        <span id="idDiv_username"></span>
+        <div id="idDiv_icon_wrapper">
+            <img id="idDiv_icon" src="https://upload.wikimedia.org/wikipedia/commons/9/99/Sample_User_Icon.png"
+                alt="user sign">
+        </div> <!-- <p>Sign/Log in</p> -->
+    </div>
+
+    <div id="authModal" class="authModal invisible" aria-hidden="true">
+        <div id="authModal_backdrop" class="authModal_backdrop"></div>
+
+        <div id="authModal_panel" class="authModal_panel" role="dialog" aria-modal="true"
+            aria-labelledby="authModal_title">
+            <h2 id="authModal_title">Sign / Log in</h2>
+            <p id="authStatusBadge" class="authModal_statusBadge invisible">Session blocked</p>
+
+            <p id="authUserDisplay" class="authModal_message" aria-live="polite">Anonymous</p>
+
+            <form id="kAuthForm" class="authModal_form">
+                <label for="authIdentity">Mail or username</label>
+                <input id="authIdentity" name="authIdentity" type="text" autocomplete="username email"
+                    placeholder="Mail or username">
+
+                <label for="authPassword">Password</label>
+                <input id="authPassword" name="authPassword" type="password" autocomplete="current-password"
+                    placeholder="Password">
+
+                <p id="authMessage" class="authModal_message" aria-live="polite">
+
+                    Save and keep your data by logging in
+
+                </p>
+
+                <button id="kAuthSubmit" class="authModal_sendButton" type="submit">SEND</button>
+                <button id="kAuthAcknowledge" class="authModal_sendButton invisible" type="button">OK</button>
+                <button id="kAuthLogout" class="authModal_sendButton invisible" type="button">LOG OUT</button>
+            </form>
+        </div>
+    </div>
+    <header>
+
+        <div class="KolorTitolo">
+            <a href="index.html"><img src="assets/brand/KolorTitolo_Lula.png" alt="Kolorlando"></a>
+        </div>
+
+        <!-- <h1><a href="index.html">Kolorlando</a></h1> -->
+        <div class="gradient-text">
+            Lando de la Koloraj Vokseloj
+        </div>
+    </header>
+
+    <main>
+
+        <div class="desktopDiv">
+            <div style="height: 20px;"></div>
+        </div>
+
+        <div id="mainMenu">
+
+            <div id="MainIntroBox" class="box">
+                <h2 style="text-align: center;">Landing</h2>
+
+            </div>
+
+            <div class="kLevelsDisplay">
+
+                <div class="kLevels" onclick="changePage('avatar')">
+                    <h2>Avatar</h2>
+                    <div>
+                        <img src="assets/imagenesPortada/avatar_photo.png" alt="">
+                    </div>
+                    <p>Customize your character</p>
+                </div>
+
+                <div id="mainMenu_worldsCard" class="kLevels" onclick="changePage('yourWorlds')">
+                    <h2>Worlds</h2>
+                    <div>
+                        <img src="assets/imagenesPortada/Captura desde 2026-03-09 11-11-06.png" alt="">
+
+                    </div>
+                    <p>Save your progress!</p>
+                </div>
+
+                <!-- <div class="kLevels" onclick="changePage('galaxy')">
+                <h2>Galaxy</h2>
+                <div>
+                    <img src="assets/imagenesPortada/Captura desde 2026-03-10 13-02-09.png" alt="">
+                </div>
+                <p>Explore others' worlds!</p>
+            </div> -->
+            </div>
+        </div>
+
+        <div id="avatarMenu" class=" invisible">
+
+            <div id="AvatarIntroBox" class="box">
+                <h2 style="text-align: center;">Avatar</h2>
+
+            </div>
+
+            <div class="kLevelsDisplay">
+                <div class="kLevels" onclick="window.location = '/web/SquareFaceCreator/' ">
+                    <h2>Face</h2>
+                    <div>
+                        <img style="object-fit: contain;" src="assets/icons/SFC.png" alt="">
+                    </div>
+                    <p>Smile or grunge</p>
+                </div>
+
+
+
+                <div class="kLevels">
+                    <h2>Inventory</h2>
+                    <div>
+                        <img src="assets/imagenesPortada/Captura desde 2026-03-10 13-02-09.png" alt="">
+                    </div>
+                    <p>Belongings, items, pets, mounts...</p>
+                </div>
+
+
+                <div class="kLevels">
+                    <h2>Equipment</h2>
+                    <div>
+
+                        <img src="assets/imagenesPortada/equipment.png" alt="">
+                    </div>
+                    <p>You better shape up!</p>
+                </div>
+            </div>
+
+
+        </div>
+
+        <div id="yourWorldsMenu" class=" invisible">
+
+            <div id="yourWorldsIntroBox" class="box">
+                <h2 style="text-align: center;">Worlds</h2>
+
+                
+
+
+                <!-- <p>Create your singleplayer world</p>
+                <p>Choose a template</p>
+                <ol>
+                    <li>City</li>
+                    <li>Voxelaar (100x100x3 voxels)</li>
+                    <li>other</li>
+                </ol> -->
+            </div>
+            <div class="kLevelsDisplay">
+                <div id="yourWorldsSingleplayerCard" class="kLevels"
+                    onclick="changePage('worldList')">
+                    <h2>Singleplayer</h2>
+                    <div>
+                        <img src="assets/imagenesPortada/Captura desde 2026-03-09 11-11-06.png" alt="">
+                    </div>
+                    <p>Choose a local world</p>
+                </div>
+
+                <!-- <div class="kLevels">
+                    <h2>Create World</h2>
+                    <div>
+                        <img src="assets/imagenesPortada/Captura desde 2026-03-10 13-02-09.png" alt="">
+                    </div>
+                    <p>Start a new world slot</p>
+                </div> -->
+
+                <!-- <div id="yourWorldsMultiplayerCard" class="kLevels"
+                    onclick="window.location = '/games/Kolorlando/multiplayer.html' ">
+                    <h2>Multiplayer</h2>
+                    <div>
+                        <img src="assets/imagenesPortada/Captura desde 2026-03-09 11-11-06.png" alt="">
+                    </div>
+                    <p>See worlds with active players</p>
+                </div> -->
+            </div>
+        </div>
+
+        <div id="worldListMenu" class=" invisible">
+
+            <div id="worldListIntroBox" class="box">
+                <h2 style="text-align: center;">List of worlds</h2>
+            </div>
+
+            <div>
+                <h3>5/10 worlds available</h3>
+                <p><a href="singleplayer.html"
+                        onclick="window.localStorage.setItem('KL_Singleplayer_World', 'Voxelandia')">Voxelandia</a></p>
+                <p><a href="singleplayer.html"
+                        onclick="window.localStorage.setItem('KL_Singleplayer_World', 'Voxelaar')">Voxelaar</a></p>
+                <p><a href="singleplayer.html"
+                        onclick="window.localStorage.setItem('KL_Singleplayer_World', 'Grandaar')">Grandaar</a></p>
+                <p><a href="singleplayer.html"
+                        onclick="window.localStorage.setItem('KL_Singleplayer_World', 'Colorlandia')">Colorlandia</a></p>
+                <p><a href="singleplayer.html"
+                        onclick="window.localStorage.setItem('KL_Singleplayer_World', 'Datatest')">Datatest</a></p>
+                <p>+ Create new World</p>
+            </div>
+        </div>
+
+        <section id="peopleOnlineSection" aria-live="polite">
+            <div id="peopleOnlineHeader">
+                <h2>Players online <span id="peopleOnlineCount">0</span></h2>
+            </div>
+            <ul id="peopleOnlineList" aria-label="Online session list"></ul>
+        </section>
+
+
+        <div id="info">
+            <h3>What is Kolorlando?</h3>
+            <p>Kolorlando is a 3D browser game voxel world to build, explore, create, combat, settle, conquer, chat, befriend, share.</p>
+            <p>Inspired on the <i>metaverse</i></p>
+            <p>You have a voxely avatar, and you appear on a voxel world.</p>
+            <p><a href="/games/Kolorlando/characteristics.html">Characteristics</a></p>
+        </div>
+
+        <div class="gallery">
+            <h1>Gallery</h1>
+            <div id="kImages">
+
+                <div>
+                    <img src="assets/imagenesPortada/Captura desde 2026-03-09 11-11-06.png" alt="">
+                </div>
+
+                <div>
+                    <img src="assets/imagenesPortada/Captura desde 2026-03-10 13-01-58.png" alt="">
+                </div>
+
+                <div>
+                    <img src="assets/imagenesPortada/Captura desde 2026-03-10 13-02-09.png" alt="">
+                </div>
+
+                <div>
+                    <img
+                        src="https://docs.google.com/drawings/d/e/2PACX-1vQ38f9SUvb_rpw1ZxN2Y_kAlRMKdYpDkcPlYI-HPDtvl0YLn3MXbPx_VUN8x9djInHLtmbYD0Iusk2f/pub?w=1000&amp;h=1000">
+                </div>
+                <div>
+                    <img src="assets/imagenesPortada/blue_soldier.jpg" alt="">
+                </div>
+
+                <div>
+                    <img
+                        src="https://docs.google.com/drawings/d/e/2PACX-1vQ9dvOQLhoyGXT-ZBWsVXx_iyafAQw1kbpKhs2aI8m1x1wluJ9v6evy_9rE786qCF-Fhz3KzK1TciSv/pub?w=1000&amp;h=1000">
+                </div>
+
+                <div>
+                    <img src="assets/white_soldier.png">
+                </div>
+
+            </div>
+        </div>
+
+
+    </main>
+
+    <footer>
+        <p>En la mondon venis nova <a href="https://en.wikipedia.org/wiki/La_Espero">sento</a></p>
+        <br>
+        <div style="text-align: center; max-width: 150px; margin: auto;">
+            <img style="border: solid 3px white; border-radius: 50%;" src="assets/brand/KoloraSimbolo.png" alt="Kolorlando symbol">
+        </div>
+
+        <div id="exampleUserProfile">
+
+        </div>
+
+        <p>Contact <a href="mailto:dibesfer@gmail.com">dibesfer@gmail.com</a></p>
+        <p>ThreeJS + <a href="https://dibesfer.github.io">dibesfer</a> + Codex</p>
+
+    </footer>
+    <script type="module">
+        import { printKolorlandoDebugBootSummary } from './code/data/debugConsole.js'
+
+        // Landing shares the same debug entry voice as the runtime pages.
+        printKolorlandoDebugBootSummary()
+    </script>
+    <script src="webscript.js"></script>
+
+    <script src="/assets/scripts/supabase.js"></script>
+    <script src="code/auth/accountSessionShared.js"></script>
+    <script src="code/auth/Kusers.js"></script>
+    <script>
+        const peopleOnlineCount = document.getElementById('peopleOnlineCount')
+        const peopleOnlineList = document.getElementById('peopleOnlineList')
+        const LANDING_ACCOUNT_CLAIMED_STORAGE_KEY = 'kolorlando.accountClaimed'
+
+        function isLandingAccountClaimed() {
+            // Shared browser auth is not enough to publish a username here;
+            // the landing tab should only identify itself after it owns the
+            // Kolorlando account lock for this specific tab session.
+            return window.sessionStorage.getItem(LANDING_ACCOUNT_CLAIMED_STORAGE_KEY) === '1'
+        }
+
+        function resolveLandingPresenceDisplayName() {
+            // The landing page should show the same public-facing identity that
+            // the rest of Kolorlando already caches for the game scene. When no
+            // cached username exists yet, Presence should still publish a clear
+            // anonymous fallback instead of an empty label.
+            if (!isLandingAccountClaimed()) {
+                return 'Anon'
+            }
+
+            const storedName = window.localStorage.getItem('kolorlando.playerName')
+            const trimmedStoredName = typeof storedName === 'string' ? storedName.trim() : ''
+            return trimmedStoredName || 'Anon'
+        }
+
+        function normalizeLandingPresenceUrl(rawUrl) {
+            // Presence payloads may contain either an absolute URL or a direct
+            // path string, so we normalize both into the same path-oriented
+            // value before rendering the roster label.
+            if (typeof rawUrl !== 'string' || rawUrl.trim() === '') {
+                return window.location.pathname
+            }
+
+            try {
+                return new URL(rawUrl, window.location.origin).pathname
+            } catch (error) {
+                return rawUrl
+            }
+        }
+
+        function formatLandingPresenceUrlLabel(rawUrl) {
+            // The landing page deserves a friendlier label than repeating the
+            // raw pathname alone. Translating known Kolorlando scene routes
+            // into player-facing status labels makes the lobby instantly easier
+            // to scan than exposing implementation URLs.
+            const normalizedUrl = normalizeLandingPresenceUrl(rawUrl)
+            const isLandingPage =
+                normalizedUrl === '/Kolorlando/index.html' ||
+                normalizedUrl === '/games/Kolorlando/index.html' ||
+                normalizedUrl.endsWith('/Kolorlando/index.html') ||
+                normalizedUrl.endsWith('/Kolorlando/') ||
+                normalizedUrl.endsWith('/Kolorlando')
+            const isMultiplayerPage =
+                normalizedUrl === '/games/Kolorlando/multiplayer.html' ||
+                normalizedUrl.endsWith('/Kolorlando/multiplayer.html')
+            const isSingleplayerPage =
+                normalizedUrl === '/games/Kolorlando/singleplayer.html' ||
+                normalizedUrl.endsWith('/Kolorlando/singleplayer.html')
+
+            if (isLandingPage) {
+                return `Landing page`
+            }
+
+            if (isMultiplayerPage) {
+                return `Multiplayer`
+            }
+
+            if (isSingleplayerPage) {
+                return `Playing offline`
+            }
+
+            return normalizedUrl
+        }
+
+        function renderLandingPresenceList(state) {
+            // Rendering from DOM nodes instead of HTML strings keeps remote
+            // Presence data harmless even if another client sends unexpected
+            // characters in the display name or url fields.
+            peopleOnlineList.replaceChildren()
+
+            const presenceEntries = Object.values(state).flat()
+
+            if (presenceEntries.length === 0) {
+                const emptyItem = document.createElement('li')
+                emptyItem.textContent = 'No sessions yet.'
+                peopleOnlineList.appendChild(emptyItem)
+                return
+            }
+
+            presenceEntries.forEach((sessionEntry) => {
+                const sessionItem = document.createElement('li')
+                const displayName = typeof sessionEntry?.displayName === 'string' && sessionEntry.displayName.trim()
+                    ? sessionEntry.displayName.trim()
+                    : 'Anon'
+                const urlLabel = formatLandingPresenceUrlLabel(sessionEntry?.url)
+                sessionItem.textContent = `${displayName} - ${urlLabel}`
+                peopleOnlineList.appendChild(sessionItem)
+            })
+        }
+
+        function countLandingPresenceSessions(state) {
+            // The landing page renders one row per tracked Presence session, so
+            // the counter should follow that same flattened session total.
+            return Object.values(state).flat().length
+        }
+
+        let landingPresenceIsSubscribed = false
+
+        async function publishLandingPresence() {
+            // The landing page may stay mounted while auth state changes, so we
+            // centralize Presence tracking in one helper that can be reused both
+            // on first subscribe and on later username/logout updates.
+            if (!landingPresenceIsSubscribed) {
+                return
+            }
+
+            await channel.track({
+                displayName: resolveLandingPresenceDisplayName(),
+                url: window.location.pathname,
+            })
+        }
+
+        // Keep the landing page Presence flow intentionally simple, following
+        // the chat page pattern: one channel, one sync listener, one track.
+        const channel = database.channel('kolorlando-world')
+
+        channel
+            .on('presence', { event: 'sync' }, () => {
+                const state = channel.presenceState()
+
+                peopleOnlineCount.textContent = String(countLandingPresenceSessions(state))
+                renderLandingPresenceList(state)
+            })
+            .subscribe(async (status) => {
+                if (status === 'SUBSCRIBED') {
+                    landingPresenceIsSubscribed = true
+                    await publishLandingPresence()
+                }
+            })
+
+        window.addEventListener('kolorlando:player-name-change', () => {
+            // Auth updates already refresh the local cache, so the landing page
+            // only needs to re-track the same Presence session with the latest
+            // resolved display name to keep the public roster truthful.
+            publishLandingPresence().catch((error) => {
+                console.error('Could not refresh Kolorlando landing Presence.', error)
+            })
+        })
+
+        window.addEventListener('kolorlando:account-claimed-change', () => {
+            // Claim ownership decides whether this tab can publish a username
+            // at all, so the landing Presence row must refresh immediately.
+            publishLandingPresence().catch((error) => {
+                console.error('Could not refresh claimed Kolorlando Presence.', error)
+            })
+        })
+
+
+        // userProfileExample
+
+        let exampleUserProfile = document.getElementById("exampleUserProfile")
+
+        fetch("/games/Kolorlando/code/UI/userProfile.html")
+            .then(x => x.text())
+            .then(y => {
+                exampleUserProfile.innerHTML = y
+            })
+
+    </script>
+</body>
+
+</html>

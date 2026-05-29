@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Combat Game</title>
+    <link rel="stylesheet" href="/ferstyle.css">
+    <script src="/ferscript.js"></script>
+    <style>
+        body {
+            background-color: black;
+            color: white;
+            text-align: center;
+            font-family: 'Courier New', Courier, monospace;
+            max-width: 800px;
+            margin: auto;
+            font-size: x-large;
+        }
+
+        .bar2 {
+            background-color: red;
+        }
+
+        .bar1 {
+            background-color: green;
+        }
+
+        .displayer {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+        }
+
+        .displayer span {
+            font-size: 60px;
+        }
+
+        button {
+            border: solid 3px green;
+
+            font-family: 'Courier New', Courier, monospace;
+            font-size: x-large;
+            background-color: gray;
+        }
+
+        button:active {
+            font-weight: bold;
+        }
+
+        #combatDisplayer {
+            width: 100%;
+            display: flex;
+        }
+
+        #combatDisplayer div {
+            width: 100%;
+        }
+
+        .available {
+            background-color: green;
+        }
+    </style>
+
+</head>
+
+<body>
+    <h1>Combat Game</h1>
+    <div class="bar2" style="background-color: darkblue">
+        <div id="experienceBar1" class="bar1" style="background-color: blue;">EXPERIENCE
+        </div>
+    </div>
+    <div id="combatDisplayer">
+        <div class="bar2">
+            <div id="playerlifeBar1" class="bar1">PLAYER
+            </div>
+        </div>
+        <div class="bar2">
+            <div id="enemylifeBar1" class="bar1">ENEMY
+            </div>
+        </div>
+    </div>
+    <br>
+    <div class="displayer">
+
+        <img class="pixel invert" src="assets/player.png" alt="player icon" width="100px">
+        <span id="playerAction">🗡️</span>
+        <span> </span>
+        <span id="enemyAction">🗡️</span>
+        <img class="pixel invert" src="assets/player.png" alt="player icon" width="100px">
+
+
+
+    </div>
+    <!--     <div class="displayer" style="margin-top: -100px;height: 100px;">
+
+        <span id="playerAction">❌</span>
+        <span id="enemyAction"> - </span>
+        <span id="enemyAction"> - </span>
+        <span id="enemyAction"> - </span>
+        <span id="enemyAction"> - </span>
+
+        <span id="enemyAction">❌ </span>
+
+
+    </div> -->
+    <br>
+    <div id="consola">Consola:</div>
+    <div id="playerAlive">
+        <button id="attackbutton" class="available" onclick="attack(-10)">ATTACK</button>
+        <button>PROTECT</button>
+        <br>
+        <button>SUPERATTACK</button>
+        <br>
+        <button>POTION</button>
+        <button>TRAP</button>
+        <br>
+        <button>LEAVE</button>
+    </div>
+    <div id="playerDead" style="display:none">
+        <button><a href="index.html">RETRY</a></button>
+    </div>
+    <div id="playerWon" style="display:none">
+        <h1>You won!</h1>
+    </div>
+    <footer>
+        <div>
+            <p>You've played <span id="timePassed"></span></p>
+        </div>
+    </footer>
+    <script>
+        var lifePlayer = 100
+        var enemy = {
+            life: 100,
+        }
+        var experience = 0
+        var counter = 0;
+        var timeContinuum = setInterval(timeBeat, 1000)
+        var timePassed = getid("timePassed")
+        var enemylifeBar1 = getid("enemylifeBar1")
+        var playerlifeBar1 = getid("playerlifeBar1")
+        var attackbutton = getid("attackbutton")
+        var consola = getid("consola")
+        var playerAlive = getid("playerAlive")
+        var playerDead = getid("playerDead")
+        var canAttackInterval = true
+
+        function timeBeat() {
+            counter++
+            timePassed.textContent = counter + " seconds"
+            //lifePlayer--
+            //
+            if (lifePlayer > 0 && enemy.life > 0)
+                enemyAttacks(randomInt(-10, 0))
+            else if (lifePlayer <= 0) {
+                playerAlive.style.display = "none"
+                playerDead.style.display = "block"
+                consola.innerText = "You died!"
+            }
+        }
+
+        function clearcanAttackInterval() {
+            canAttackInterval = true
+            attackbutton.classList.add("available")
+        }
+
+        function attack(damage) {
+            if (canAttackInterval) {
+                setEnemyLife(damage)
+                attackbutton.classList.remove("available")
+                setTimeout(clearcanAttackInterval, 1000)
+                consola.innerText += "Player dealed " + damage + " damage." ;               canAttackInterval = false
+
+            }
+        }
+
+        function enemyAttacks(damage) {
+            setPlayerLife(damage)
+            consola.innerText = "Enemy caused " + damage + " damage."
+        }
+
+        function setPlayerLife(damage){
+            lifePlayer += damage
+            playerlifeBar1.style.width = lifePlayer + "%"
+        }
+        function setEnemyLife(damage){
+            if (enemy.life += damage > 0){
+            enemy.life += damage
+            enemylifeBar1.style.width = enemy.life + "%"
+            }
+            else {
+                playerAlive.style.display = "none"
+                playerWon.style.display = "block"
+                setExperience(1)
+            }
+        }
+        function setExperience(){
+            experienceBar1.style.width = experience + "%"
+        }
+
+    </script>
+
+</body>
+
+</html>

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>dibesfer</title>
+    <link href="/img/favicon.ico" rel="icon" type="image/x-icon">
+    <!--#region SEO  -->
+    <meta name="author" content="dibesfer - Ferrán Minero" />
+    <meta name="description"
+        content="Dibujos y escritos de Fer. Dev Illustrauthor. Ningún espacio es limitado si caben ideas en él." />
+    <meta name="keywords"
+        content="dibesfer página web website. Ferrán Minero. Developer Illustrator Writer. Dev Illustrauthor. Symbocracy." />
+    <!--#endregion -->
+    <!--#region META  -->
+    <!-- Meta imágen y descripción que aparecerá embebida en algunas redes sociales -->
+    <meta property='og:image' content='/img/dibesfer-logo-whiteinside.png' />
+    <meta property='og:description'
+        content='Dibujos y escritos de Fer. Dev Illustrauthor. Ningún espacio es limitado si caben ideas en él.' />
+    <meta property="og:title" content="dibesfer">
+    <!--#endregion  -->
+    <!-- STYLE CSS -->
+    <link href="/style.css" rel="stylesheet" type="text/css">
+    <link href="style.css" rel="stylesheet" type="text/css">
+    <!-- FERSCRIPT.JS -->
+    <script src="/ferscript.js"></script>
+    <!-- SUPABASE cdn -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+
+</head>
+
+<body>
+    <div id="loadingScreen" class="flexCenter fullScreen">
+        <img width="200px" class="icon" src="/img/dibesfer-logo.png" alt="dibesfer logo">
+    </div>
+
+    <div id="navBars">
+
+    </div>
+
+    <main>
+
+        <section class="maxWidth">
+            <p id="consolaWrapper">
+                <span id="consola"></span>
+                <span id="position"></span>
+            </p>
+            <canvas id="myCanvas"></canvas>
+            <div id="touchscreenJoystick">
+                <div id="outerJoystick">
+                    <div id="innerJoystick"></div>
+                    
+                </div>
+            </div>
+            <button onclick="playSound('click')">Click</button>
+            <button onclick="playSound('coin')">Coin</button>
+            <button onclick="playSound('levelup')">Level up</button>
+
+            <button onclick="playSound('shoot')">Laser</button>
+        </section>
+
+        <footer></footer>
+    </main>
+
+    <script src="/script.js"></script>
+    <script src="script.js"></script>
+    <script src="/scripts/supabase.js"></script>
+
+</body>
+
+</html>

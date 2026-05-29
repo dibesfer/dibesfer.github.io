@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Colorlandia Gallery</title>
+    <link href="/img/favicon.ico" rel="icon" type="image/x-icon">
+    <!--#region SEO  -->
+    <meta name="author" content="dibesfer - Ferrán Minero" />
+    <meta name="description" content="Unity, Minetest, Roblox and HTML games by dibesfer" />
+    <meta name="keywords" content="dibesfer games juegos videogames videojuegos unity minetest luanti roblox html" />
+    <!--#endregion -->
+    <!--#region META  -->
+    <!-- Meta imágen y descripción que aparecerá embebida en algunas redes sociales -->
+    <meta property='og:image' content='/img/dibesfer-logo-whiteinside.png' />
+    <meta property='og:description' content='Unity, Minetest, Roblox and HTML games by dibesfer.' />
+    <meta property="og:title" content="dibesfer - Games">
+    <!--#endregion  -->
+    <!-- STYLE CSS -->
+    <link href="/style.css" rel="stylesheet" type="text/css">
+    <!-- FERSCRIPT.JS -->
+    <script src="/ferscript.js"></script>
+    <!-- SUPABASE cdn -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+    <style>
+        .panoramic {
+            width: 100%;
+            aspect-ratio: 16/9;
+            object-fit: cover;
+            border: solid 3px white;
+            border-radius: 15px;
+        }
+    </style>
+
+</head>
+
+<body>
+    <div id="loadingScreen" class="flexCenter fullScreen">
+        <img width="200px" class="icon" src="/img/dibesfer-logo.png" alt="dibesfer logo">
+    </div>
+
+    <div id="navBars"></div>
+
+    <main>
+
+        <section class="maxWidth">
+            <h1 class="textCenter">Colorlandia Gallery</h1>
+            <img class="invert franja" src="" alt="">
+            <h2 class="textCenter">Pirate Rainbow Space-Ship</h2>
+            <img src="art/PirateRainbowSpaceship.png" alt="Pirate Rainbow Space-Ship" class="panoramic">
+            <h2 class="textCenter">Treasure</h2>
+            <img src="art/treasure.png" alt="Treasure" class="panoramic">
+            <h2 class="textCenter">Sky Platform</h2>
+            <img src="art/skyplatform.png" alt="Sky Platform" class="panoramic">
+        </section>
+
+        <footer></footer>
+    </main>
+    <script src="/script.js"></script>
+    <script src="/scripts/supabase.js"></script>
+</body>
+
+</html>

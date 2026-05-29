@@ -1,0 +1,576 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   version="1.1"
+   viewBox="0 0 1200 760"
+   role="img"
+   aria-labelledby="title desc"
+   id="svg20"
+   width="1200"
+   height="760"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <title
+     id="title">Kolorlando major systems mind map</title>
+  <desc
+     id="desc">A semantic map of Kolorlando systems grouped around the game nucleus.</desc>
+  <defs
+     id="defs1">
+    <marker
+       id="arrow"
+       viewBox="0 0 10 10"
+       refX="9"
+       refY="5"
+       markerWidth="5"
+       markerHeight="5"
+       orient="auto-start-reverse">
+      <path
+         d="M 0,0 10,5 0,10 Z"
+         class="arrowHead"
+         id="path1" />
+    </marker>
+    <style
+       id="style1">
+            .canvas {
+                fill: #808080;
+            }
+
+            .link {
+                fill: none;
+                stroke: #050505;
+                stroke-width: 4;
+                stroke-linecap: round;
+                stroke-linejoin: round;
+                marker-end: url(#arrow);
+            }
+
+            .nodeShape {
+                stroke: #050505;
+                stroke-width: 4;
+            }
+
+            .nodeText {
+                fill: #050505;
+                font-family: monospace;
+                font-size: 16px;
+                text-anchor: middle;
+                dominant-baseline: middle;
+            }
+
+            .nucleusText {
+                font-size: 16px;
+            }
+
+            .nucleus {
+                fill: #e53935;
+            }
+
+            .ui,
+            .item,
+            .entity,
+            .player,
+            .multiplayer,
+            .web,
+            .world,
+            .voxel,
+            .commands,
+            .audio,
+            .memory {
+                fill: #f28c28;
+            }
+
+            .icon,
+            .inventory,
+            .auth,
+            .camera,
+            .screen,
+            .input,
+            .map,
+            .boxel {
+                fill: #f6d743;
+            }
+
+            .arrowHead {
+                fill: #050505;
+            }
+        </style>
+    <marker
+       id="arrow-6"
+       viewBox="0 0 10 10"
+       refX="9"
+       refY="5"
+       markerWidth="5"
+       markerHeight="5"
+       orient="auto-start-reverse">
+      <path
+         d="M 0,0 10,5 0,10 Z"
+         class="arrowHead"
+         id="path1-7" />
+    </marker>
+    <marker
+       id="arrow-62"
+       viewBox="0 0 10 10"
+       refX="9"
+       refY="5"
+       markerWidth="5"
+       markerHeight="5"
+       orient="auto-start-reverse">
+      <path
+         d="M 0,0 10,5 0,10 Z"
+         class="arrowHead"
+         id="path1-9" />
+    </marker>
+    <marker
+       id="arrow-0"
+       viewBox="0 0 10 10"
+       refX="9"
+       refY="5"
+       markerWidth="5"
+       markerHeight="5"
+       orient="auto-start-reverse">
+      <path
+         d="M 0,0 10,5 0,10 Z"
+         class="arrowHead"
+         id="path1-93" />
+    </marker>
+    <marker
+       id="arrow-2"
+       viewBox="0 0 10 10"
+       refX="9"
+       refY="5"
+       markerWidth="5"
+       markerHeight="5"
+       orient="auto-start-reverse">
+      <path
+         d="M 0,0 10,5 0,10 Z"
+         class="arrowHead"
+         id="path1-6" />
+    </marker>
+  </defs>
+  <rect
+     class="canvas"
+     width="1200"
+     height="760"
+     id="rect1"
+     x="0"
+     y="0" />
+  <!-- Nucleus is the root concept. -->
+  <g
+     id="nucleus"
+     data-map-role="root"
+     data-map-alias="nucleous"
+     transform="matrix(0.86687001,0,0,0.86687001,147.03666,145.52508)">
+    <circle
+       id="kolorlando-shape"
+       class="nodeShape nucleus"
+       cx="535"
+       cy="300"
+       r="80" />
+    <text
+       id="kolorlando-label"
+       class="nodeText nucleusText"
+       x="535"
+       y="300">Kolorlando</text>
+  </g>
+  <g
+     id="ui-node"
+     transform="matrix(0.86687001,0,0,0.86687001,308.68727,514.64659)">
+    <rect
+       class="nodeShape ui"
+       width="86"
+       height="86"
+       id="rect2"
+       x="0"
+       y="0" />
+    <text
+       class="nodeText"
+       x="43"
+       y="43"
+       id="text2">UI</text>
+  </g>
+  <g
+     id="icon-node"
+     transform="matrix(0.86687001,0,0,0.86687001,182.16554,370.58105)">
+    <rect
+       class="nodeShape icon"
+       width="86"
+       height="86"
+       id="rect3"
+       x="0"
+       y="0" />
+    <text
+       class="nodeText"
+       x="43"
+       y="43"
+       id="text3">Icon</text>
+  </g>
+  <g
+     id="item-node"
+     transform="matrix(0.86687001,0,0,0.86687001,260.80303,238.11505)">
+    <rect
+       class="nodeShape item"
+       width="86"
+       height="86"
+       id="rect4"
+       x="0"
+       y="0" />
+    <text
+       class="nodeText"
+       x="43"
+       y="43"
+       id="text4">Item</text>
+  </g>
+  <g
+     id="inventory-node"
+     transform="matrix(0.86687001,0,0,0.86687001,395.49811,183.66736)">
+    <rect
+       class="nodeShape inventory"
+       width="136"
+       height="86"
+       id="rect5"
+       x="0"
+       y="0" />
+    <text
+       class="nodeText"
+       x="68"
+       y="43"
+       id="text5">Inventory</text>
+  </g>
+  <g
+     id="player-node"
+     transform="matrix(0.86687001,0,0,0.86687001,576.48173,186.2054)">
+    <rect
+       class="nodeShape player"
+       width="86"
+       height="86"
+       id="rect6"
+       x="0"
+       y="0" />
+    <text
+       class="nodeText"
+       x="43"
+       y="43"
+       id="text6">Player</text>
+  </g>
+  <g
+     id="entity-node"
+     transform="matrix(0.86687001,0,0,0.86687001,706.69557,192.45489)">
+    <rect
+       class="nodeShape entity"
+       width="86"
+       height="86"
+       id="rect7"
+       x="0"
+       y="0" />
+    <text
+       class="nodeText"
+       x="43"
+       y="43"
+       id="text7">Entity</text>
+  </g>
+  <g
+     id="multiplayer-node"
+     transform="matrix(0.86687001,0,0,0.86687001,766.47719,380.40557)">
+    <rect
+       class="nodeShape multiplayer"
+       width="136"
+       height="86"
+       id="rect8"
+       x="0"
+       y="0" />
+    <text
+       class="nodeText"
+       x="68"
+       y="43"
+       id="text8">Multiplayer</text>
+  </g>
+  <g
+     id="auth-node"
+     transform="matrix(0.86687001,0,0,0.86687001,957.1886,397.74298)">
+    <rect
+       class="nodeShape auth"
+       width="86"
+       height="76"
+       id="rect9"
+       x="0"
+       y="0" />
+    <text
+       class="nodeText"
+       x="43"
+       y="38"
+       id="text9">Auth</text>
+  </g>
+  <g
+     id="camera-node"
+     transform="matrix(0.86687001,0,0,0.86687001,566.36404,25.857211)">
+    <rect
+       class="nodeShape camera"
+       width="92"
+       height="76"
+       id="rect10"
+       x="0"
+       y="0" />
+    <text
+       class="nodeText"
+       x="46"
+       y="38"
+       id="text10">Camera</text>
+  </g>
+  <g
+     id="screen-node"
+     transform="matrix(0.86687001,0,0,0.86687001,468.02897,28.385109)">
+    <rect
+       class="nodeShape screen"
+       width="92"
+       height="76"
+       id="rect11"
+       x="0"
+       y="0" />
+    <text
+       class="nodeText"
+       x="46"
+       y="38"
+       id="text11">Screen</text>
+  </g>
+  <g
+     id="input-node"
+     transform="matrix(0.86687001,0,0,0.86687001,666.27746,25.020457)">
+    <rect
+       class="nodeShape input"
+       width="92"
+       height="76"
+       id="rect12"
+       x="0"
+       y="0" />
+    <text
+       class="nodeText"
+       x="46"
+       y="38"
+       id="text12">Input</text>
+  </g>
+  <g
+     id="world-node"
+     transform="matrix(0.86687001,0,0,0.86687001,568.83083,566.78263)">
+    <rect
+       class="nodeShape world"
+       width="86"
+       height="86"
+       id="rect13"
+       x="0"
+       y="0" />
+    <text
+       class="nodeText"
+       x="43"
+       y="43"
+       id="text13">World</text>
+  </g>
+  <g
+     id="voxel-node"
+     transform="matrix(0.86687001,0,0,0.86687001,421.42165,623.4594)">
+    <rect
+       class="nodeShape voxel"
+       width="86"
+       height="86"
+       id="rect14"
+       x="0"
+       y="0" />
+    <text
+       class="nodeText"
+       x="43"
+       y="43"
+       id="text14">Voxel</text>
+  </g>
+  <g
+     id="boxel-node"
+     transform="matrix(0.86687001,0,0,0.86687001,240.49351,656.35919)">
+    <rect
+       class="nodeShape boxel"
+       width="86"
+       height="86"
+       id="rect15"
+       x="0"
+       y="0" />
+    <text
+       class="nodeText"
+       x="43"
+       y="43"
+       id="text15">Boxel</text>
+  </g>
+  <g
+     id="map-node"
+     transform="matrix(0.86687001,0,0,0.86687001,671.28661,664.36742)">
+    <rect
+       class="nodeShape map"
+       width="86"
+       height="86"
+       id="rect16"
+       x="0"
+       y="0" />
+    <text
+       class="nodeText"
+       x="43"
+       y="43"
+       id="text16">Map</text>
+  </g>
+  <g
+     id="web-node"
+     transform="matrix(0.86687001,0,0,0.86687001,142.33079,137.68197)">
+    <polygon
+       class="nodeShape web"
+       points="755,435 820,550 690,550 "
+       id="polygon16" />
+    <text
+       class="nodeText"
+       x="755"
+       y="510"
+       id="text17">web</text>
+  </g>
+  <g
+     id="commands-node"
+     transform="matrix(0.86687001,0,0,0.86687001,798.33224,286.03712)">
+    <rect
+       class="nodeShape commands"
+       width="116"
+       height="76"
+       id="rect17"
+       x="0"
+       y="0" />
+    <text
+       class="nodeText"
+       x="58"
+       y="38"
+       id="text18">Commands</text>
+  </g>
+  <g
+     id="audio-node"
+     transform="matrix(0.86687001,0,0,0.86687001,948.51989,545.11087)">
+    <rect
+       class="nodeShape audio"
+       width="92"
+       height="76"
+       id="rect18"
+       x="0"
+       y="0" />
+    <text
+       class="nodeText"
+       x="46"
+       y="38"
+       id="text19">Audio</text>
+  </g>
+  <g
+     id="memory-node"
+     transform="matrix(0.86687001,0,0,0.86687001,800.03743,669.11457)">
+    <rect
+       class="nodeShape memory"
+       width="100"
+       height="76"
+       id="rect19"
+       x="0"
+       y="0" />
+    <text
+       class="nodeText"
+       x="50"
+       y="38"
+       id="text20">Memory</text>
+  </g>
+  <!-- Links render last so arrows can sit over node boxes. -->
+  <path
+     id="kolorlando-to-ui"
+     class="link"
+     d="M 543.82554,423.53508 384.80672,552.70630" />
+  <path
+     id="kolorlando-to-item"
+     class="link"
+     d="M 550.75360,370.91128 335.35385,290.90876" />
+  <path
+     id="kolorlando-to-player"
+     class="link"
+     d="M 592.86312,338.59951 609.20221,266.59793" />
+  <path
+     id="kolorlando-to-entity"
+     class="link"
+     d="M 645.48692,345.52757 741.34665,267.61101" />
+  <path
+     id="kolorlando-to-multiplayer"
+     class="link"
+     d="M 677.79869,387.63709 766.47719,419.41472" />
+  <path
+     id="kolorlando-to-web"
+     class="link"
+     d="M 659.84969,454.62366 766.47719,559.84767" />
+  <path
+     id="kolorlando-to-world"
+     class="link"
+     d="M 592.86312,472.57265 606.10624,566.78263" />
+  <path
+     id="kolorlando-to-voxel"
+     class="link"
+     d="M 561.77454,454.62366 462.49478,619.53785" />
+  <path
+     id="kolorlando-to-audio"
+     class="link"
+     d="M 677.79869,423.53508 948.51989,571.11698" />
+  <path
+     id="kolorlando-to-memory"
+     class="link"
+     d="M 628.76111,472.57265 812.46257,673.03612" />
+  <path
+     id="ui-to-icon"
+     class="link"
+     d="M 308.68727,512.41749 223.23866,445.91618" />
+  <path
+     id="icon-to-item"
+     class="link"
+     d="M 241.56923,370.58105 275.95016,312.66587" />
+  <path
+     id="ui-to-inventory"
+     class="link"
+     d="M 348.89354,508.37209 454.44527,258.21818" />
+  <path
+     id="item-to-inventory"
+     class="link"
+     d="M 335.35385,262.41098 395.49811,241.46846" />
+  <path
+     id="inventory-to-player"
+     class="link"
+     d="m 517.31399,219.12648 55.27329,6.39831" />
+  <path
+     id="inventory-to-player-3"
+     class="link"
+     d="M 577.84636,185.34113 508.12834,95.529024"
+     style="fill:none;stroke:#050505;stroke-width:4;stroke-linecap:round;stroke-linejoin:round;marker-end:url(#arrow-6)" />
+  <path
+     id="inventory-to-player-2"
+     class="link"
+     d="M 609.42064,182.67432 607.13213,94.506834"
+     style="fill:none;stroke:#050505;stroke-width:4;stroke-linecap:round;stroke-linejoin:round;marker-end:url(#arrow-62)" />
+  <path
+     id="player-to-input"
+     class="link"
+     d="M 634.56506,186.2054 687.76509,90.902578"
+     style="fill:none;stroke:#050505;stroke-width:4;stroke-linecap:round;stroke-linejoin:round;marker-end:url(#arrow-0)" />
+  <path
+     id="inventory-to-player-8"
+     class="link"
+     d="M 673.6242,375.59864 796.32702,317.03436"
+     style="fill:none;stroke:#050505;stroke-width:4;stroke-linecap:round;stroke-linejoin:round;marker-end:url(#arrow-2)" />
+  <path
+     id="voxel-to-boxel"
+     class="link"
+     d="M 419.85304,660.52842 317.39726,694.33635" />
+  <path
+     id="voxel-to-world"
+     class="link"
+     d="m 498.32541,655.03824 70.50542,-62.24952" />
+  <path
+     id="world-to-map"
+     class="link"
+     d="m 643.38165,623.12917 27.90496,41.77489" />
+  <path
+     id="player-to-entity"
+     class="link"
+     d="m 704.55231,229.09393 -52.17171,0.0635" />
+  <path
+     id="multiplayer-to-auth"
+     class="link"
+     d="m 884.37152,423.74907 72.81708,8.6687" />
+</svg>

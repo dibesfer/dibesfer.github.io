@@ -1,0 +1,67 @@
+<div class="menuSection">
+
+    <fieldset style="text-align: right;">
+        <legend>Render</legend>
+        <label for="settingBoxel15RenderDistance">Boxel15 render distance</label>
+        <input
+            type="number"
+            id="settingBoxel15RenderDistance"
+            value="60"
+            min="0"
+            max="1000"
+            data-setting="boxel15RenderDistance"
+            data-setting-type="number"
+        >
+        <br>
+        <label for="settingBoxel15RenderBudget">Boxel15 render budget</label>
+        <input
+            type="number"
+            id="settingBoxel15RenderBudget"
+            value="48"
+            min="0"
+            max="1000"
+            data-setting="boxel15RenderBudget"
+            data-setting-type="number"
+        >
+        <br>
+        <label>LOD</label>
+        <input type="checkbox" disabled>
+
+    </fieldset>
+
+    <fieldset style="text-align: right;">
+        <legend>Camera</legend>
+        <label for="settingCameraFov">Camera FOV</label>
+        <input
+            type="number"
+            id="settingCameraFov"
+            value="90"
+            min="30"
+            max="120"
+            data-setting="cameraFov"
+            data-setting-type="number"
+        >
+        <br>
+
+        <label for="settingUndersampling">Undersampling (+pixelated upscale)</label>
+        <input
+            type="checkbox"
+            id="settingUndersampling"
+            data-setting="undersampling"
+            data-setting-type="checkbox"
+        >
+        <br>
+        <label for="settingWireframe">Debug mode (wireframe, vertex-color)</label>
+        <input
+            type="checkbox"
+            id="settingWireframe"
+            data-setting="wireframe"
+            data-setting-type="checkbox"
+        >
+    </fieldset>
+    <br>
+    <div style="text-align: center;">
+        <button type="button" data-settings-restore-defaults>Restore all defaults</button>
+    </div>
+
+</div>

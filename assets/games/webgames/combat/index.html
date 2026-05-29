@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>combat</title>
+    <script src="/ferscript.js"></script>
+    <style>
+        *{
+            margin: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background-color: black;
+            color: white;
+            text-align: center;
+            max-width: 800px;
+            margin: auto;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: x-large;
+        }
+        .bigEmoji {
+            font-size: 200px;
+        }
+        .bar{
+            background-color: black;
+            border: solid 3px white;
+            height: 40px;
+            padding: 5px;
+        }
+
+        .bar2{
+            height: 100%;
+            width: 100%;
+            background-color: white;
+            transition: 0.2s;
+        }
+        button {
+            font: unset;
+            font-family: mono;
+            border: solid 3px white;
+            background-color: black;
+            color: white;
+            padding: 15px;
+        }
+</style>
+</head>
+<body>
+    <h1>YourEnemy</h1>
+    <div class="bar">
+        <div id="enemybar" class="bar2"></div>
+    </div>
+    <div class="bigEmoji">🧟</div>
+    <button onclick="attack(5)">ATTACK</button>
+    <button onclick="attack(10)">SUPERATTACK</button>
+    <button onclick="attack(5)">KNIFE</button>
+    
+    <script>
+
+        var enemy = {
+            life : 100
+        }
+        var player = {
+            life: 100
+        }
+        var enemybar = getid("enemybar")
+
+        function attack(damage){
+            
+            enemy.life -= damage
+            enemybar.style.width = enemy.life + "%"
+        }
+
+
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,167 @@
+* {
+    margin: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+
+}
+
+.playfair-display-sc-regular {
+    font-family: "Playfair Display SC", serif;
+    font-weight: 800;
+    font-style: bold;
+}
+
+.orbitron-title {
+    font-family: "Orbitron", sans-serif;
+    font-optical-sizing: auto;
+    font-weight: 800;
+    font-style: normal;
+}
+
+img {
+    max-width: 100%;
+}
+
+header {
+    font-variant: small-caps;
+    text-align: center;
+}
+
+header,
+footer {
+    background-color: gray;
+    padding: 56px;
+    background-image: linear-gradient(-45deg, rgb(43, 43, 43), gray);
+}
+
+h2 {
+    font-variant: small-caps;
+}
+
+main {
+    height: 100%;
+    /* background-image: url("https://cdn.pixabay.com/animation/2022/10/01/15/15/15-15-43-312_256.gif");
+    background-size: cover; */
+    
+}
+
+hr {
+    border: solid 3px rgb(84, 84, 84);
+}
+
+button {
+    padding: 10px;
+    border: ridge 6px black;
+    background-color: rgb(212, 212, 212);
+    font: unset;
+    line-height: 0;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+/* button:hover {
+    border: ridge 6px rgb(243, 0, 0);
+    transition: 0.4s;
+} */
+
+button:active {
+    font-size: larger;
+    background-color: gold;
+    transition: 0.050s;
+}
+
+#btnClick {
+    width: 120px;
+    height: 50px;
+}
+
+.panoramic div img {
+    aspect-ratio: 16/9;
+    object-fit: cover;
+    /* rgb(75, 75, 75) */
+    border: ridge 12px rgb(62, 29, 0);
+    height: 100%;
+    width: 100%;
+    transition: 0.2s;
+    /* cursor: pointer; */
+    /* overflow: hidden; */
+}
+
+.panoramic div img:hover {
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    border: ridge 17px rgb(88, 41, 0);
+}
+
+.textCenter {
+    text-align: center;
+}
+
+.icon {
+    font-size: 60px;
+}
+
+/* The animation code */
+@keyframes purpleToBlue {
+    from {
+        background-image: linear-gradient(90deg, purple, blue);
+    }
+
+    to {
+        background-image: linear-gradient(90deg, blue, purple);
+    }
+}
+
+/* The element to apply the animation to */
+.purple-blue {
+    background-image: linear-gradient(90deg, purple, blue);
+    padding: 5px;
+    border: none;
+    border-radius: 50%;
+    animation-name: purpleToBlue;
+    animation-duration: 0.2s;
+    animation-iteration-count: infinite;
+    animation-timing-function: ease-in-out
+}
+
+#clickerGame {
+    text-align: center;
+}
+
+#outputSeconds {
+    font-family: monospace;
+}
+
+@media screen and (min-width: 800px) {
+    /* body {
+        height: 100dvh;
+        display: flex;
+        flex-direction: column;
+    } */
+
+    .flexy3 {
+        display: flex;
+    }
+
+    .flexy3>div {
+        flex: 33.33%;
+        margin: 5px;
+    }
+}
+
+@media screen and (min-width: 1000px) {
+    main {
+        padding: 15px;
+    }
+}
+
+::selection {
+    background-color: rgb(66, 66, 66);
+    color: white;
+}
