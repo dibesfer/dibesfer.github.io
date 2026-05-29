@@ -1,11 +1,17 @@
 ![dibesfer title](https://dibesfer.github.io/assets/branding/illustrated-title.png)
 
-_dibesfer_ is my artistic pseudonym, it's an acronym of Spanish sentence "_Dib_ujos y escritos de Fer. 
+*dibesfer* is my artistic pseudonym, it's an acronym of Spanish sentence "**Dib**ujos y **es**critos de **Fer**. 
 
-Bajo este nombre realizo 
+Under this name and signature I publish online:
 
-- Ilustraciones
-- Escritos
-- Aplicaciones web
+- Videogames
+- Web applications
+- Illustration (physical and digital)
+- Video (GIF, Youtube...)
+- Writings and essays
 
-publico mis trabajos en la página [dibesfer.github.io](https://dibesfer.github.io)
+I post all my work in [dibesfer.github.io](https://dibesfer.github.io)
+
+![fer logo](https://dibesfer.github.io/assets/branding/fer-logo.svg)
+
+![dibesfer logo](https://dibesfer.github.io/assets/branding/dibesfer-logo.svg)
