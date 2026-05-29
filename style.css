@@ -73,7 +73,7 @@ hr {
     flex-direction: column;
 }
 
-.flexo3>div>a{
+.flexo3>div>a {
     color: unset;
 }
 
@@ -110,7 +110,8 @@ hr {
         color: white;
     }
 
-    button , input  {
+    button,
+    input {
         background: black;
         color: white;
     }
@@ -132,9 +133,13 @@ hr {
     }
 
     a:hover {
-    color: rgb(255, 237, 134);
+        color: rgb(255, 237, 134);
+    }
+
 }
 
+.sectionTitle {
+    text-align: center;
 }
 
 /* RESPONSIVE */
@@ -142,9 +147,12 @@ hr {
 
 /* tablet */
 @media only screen and (max-width: 800px) {
+
+
     .flexo3 {
         justify-content: center;
     }
+
     .flexo3>div {
         flex: 50%;
         max-width: 50%;
@@ -153,15 +161,20 @@ hr {
     .onlyDesktop {
         display: none;
     }
-    
+
 }
 
 /* phone */
 
 @media only screen and (max-width: 600px) {
+
+    .sectionTitle {
+    text-align: left;
+}
     #cuboid {
         aspect-ratio: 1 !important;
     }
+
     .flexo3 {
         justify-content: unset;
     }
