@@ -46,10 +46,11 @@ function loadRouteFromURL() {
 
   } else {
     // TODO change to 404.html
-    // KEEP FOR HISTORY: changeIframeSrc("/assets/web/experimental/armillary");
-
+    //KEEP FOR HISTORY: 
     //changeIframeSrc("/assets/web/experimental/armillary");
-    iframe.srcdoc = `
+    changeIframeSrc("404.hmtl");
+    iframe.src = "/404.html"
+    /*iframe.srcdoc = `
 
     <style>
       a {
@@ -76,7 +77,7 @@ function loadRouteFromURL() {
     </div>
 
 
-    `
+    `*/
   }
 }
 
