@@ -7,7 +7,7 @@
   <title>dibesfer</title>
   <link rel="icon" type="image/x-icon" href="/assets/branding/favicon512.ico">
   <link rel="stylesheet" href="/style.css">
-  <link rel="stylesheet" href="/web/aa_amor/style.css">
+  <link rel="stylesheet" href="assets/web/aa_amor/style.css">
 
   <!-- FERSCRIPT.JS -->
   <script src="/ferscript.js"></script>
@@ -25,7 +25,7 @@
       <div class="flexgriditem">
         <h2>404 - Not found</h2>
         <p>There is no <span id="showHref"></span> page</p>
-        <p>May want to come back <a href="/">home</a>?</p>
+        <p>May want to come back <a href="/" target="_parent">home</a>?</p>
         <div class="zoomableimage" style="padding: 0;">
           <img width="100%"
             src="https://upload.wikimedia.org/wikipedia/commons/c/c3/NGC_4414_%28NASA-med%29.jpg">
@@ -42,10 +42,10 @@
   <script>
     showHref.textContent = window.location.href.split("https://dibesfer.com")[1]
   </script>
-  <script src="/web/aa_amor/script.js"></script>
+  <script src="/assets/web/aa_amor/script.js"></script>
   <script src="/assets/scripts/supabase.js"></script>
   <!-- 6. ADD LOAD SCRIPT -->
-  <script>
+  <!-- <script>
 
     async function load(id, file) {
       fetch(file)
@@ -79,7 +79,7 @@
 
     load("header", "/web/aa_amor/components/header.html");
 
-  </script>
+  </script> -->
 </body>
 
 </html>
