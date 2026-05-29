@@ -1,9 +1,9 @@
 const ROUTES = {
-  gallery: "../../gallery",
-  games: "../../games",
-  web: "../../web",
-  fonish: "../../../../web/conlang/fonish",
-  dibesGallery: "../../web/dibesgallery"
+  gallery: "/assets/gallery",
+  games: "/assets/games",
+  web: "/assets/web",
+  fonish: "/assets/web/conlang/fonish",
+  dibesGallery: "/assets/web/dibesgallery"
 };
 
 // --- ELEMENTS ---
