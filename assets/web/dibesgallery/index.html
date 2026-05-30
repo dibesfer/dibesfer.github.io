@@ -44,6 +44,13 @@
       box-shadow: 0 0 5px purple;
     }
 
+    button:hover, input:hover {
+      background-color: rgba(205, 205, 205, 0.25);
+    }
+    button:active, input:active {
+      background-color: rgba(128, 128, 128, 0.25);
+    }
+
     #title {
       user-select: none;
       transition: 0.2s ease-in;
@@ -161,7 +168,7 @@ Subject: dibesGallery register
 
 
       } catch (e) {
-        document.getElementById("message").textContent = "Something went wrong.";
+        document.getElementById("message").textContent = e.message;
       }
     });
   </script>
