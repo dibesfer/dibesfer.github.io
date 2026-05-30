@@ -106,6 +106,7 @@ main {
 
 #bottomBar {
   pointer-events: auto;
+  overflow: hidden;
 }
 
 #bottomBar * {
