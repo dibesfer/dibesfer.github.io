@@ -24,7 +24,7 @@
         }
 
         .space {
-            width: 16px;
+            visibility: hidden;
             display: inline-block;
         }
 
@@ -105,6 +105,7 @@
         for (let i = 0; i < lulalish.length; i++) {
             let img = document.createElement("img")
             img.src = "assets/lulabet/" + lulalish[i] + ".png"
+            img.alt = lulalish[i]
             img.classList.add("letter")
             showAlphabet.append(img)
         }
@@ -112,6 +113,7 @@
         for (let i = 0; i < alphabet.length; i++) {
             let img = document.createElement("img")
             img.src = "assets/latin/" + alphabet[i] + ".png"
+            img.alt = alphabet[i]
             img.classList.add("letter")
             lulatin_alphabet.append(img)
         }
@@ -119,6 +121,7 @@
         for (let i = 0; i < alphabet.length; i++) {
             let img = document.createElement("img")
             img.src = "assets/latin/" + alphabet_lowerCase[i] + ".png"
+            img.alt = alphabet_lowerCase[i]
             img.classList.add("letter")
             lulatin_alphabet_lower.append(img)
         }
@@ -130,6 +133,7 @@
             if (rndNum < 26) {
                 let img = document.createElement("img")
                 img.src = "assets/lulabet/" + rndNum + ".png"
+                img.alt =  rndNum
                 img.classList.add("letter")
                 lorem.append(img)
             }
@@ -155,7 +159,8 @@
 
             
             let images = []
-            for (let i = 0; i < latin.length; i++) {
+            let i
+            for ( i = 0; i < latin.length; i++) {
                 const element = latin[i];
 
                 if (element == "") {
@@ -167,7 +172,6 @@
                 }
                 else if (element == ".") {
                     images.push('assets/latin/dot.png')
-                    console.log(images[i])
                 }
                 else {
                     images.push("assets/latin/" + element + ".png")
@@ -177,11 +181,10 @@
             for (let i = 0; i < images.length; i++) {
                 const element = images[i];
                 if (element == " ") {
-                    html += `<div class="space"></div>`
-
+                    html += `<div class="space">_</div>`
                 }
                 else {
-                    html += `<img class="letter" src="${element}" alt="letter">`
+                    html += `<img class="letter" src="${element}" alt="${latin[i]}">`
                 }
             }
             return html
