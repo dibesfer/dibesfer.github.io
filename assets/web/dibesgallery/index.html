@@ -20,7 +20,6 @@
       font-weight: 700;
       font-size: 5rem;
       font-style: normal;
-
     }
 
     #gallery {
@@ -44,10 +43,13 @@
       box-shadow: 0 0 5px purple;
     }
 
-    button:hover, input:hover {
+    button:hover,
+    input:hover {
       background-color: rgba(205, 205, 205, 0.25);
     }
-    button:active, input:active {
+
+    button:active,
+    input:active {
       background-color: rgba(128, 128, 128, 0.25);
     }
 
@@ -63,6 +65,27 @@
     #title:hover {
       text-shadow: 0 0 10px white;
     }
+
+    /* --- resource iframe --- */
+    #resourceIframe {
+      display: block;
+      width: 100%;
+      min-height: 400px;
+      border: 2px solid rgb(110, 102, 252);
+      box-shadow: 0 0 10px purple;
+      margin-top: 20px;
+    }
+
+    #resourceSection {
+      margin-top: 30px;
+      text-align: left;
+    }
+
+    #resourceTitle {
+      font-size: 1.2rem;
+      margin-bottom: 8px;
+      color: inherit;
+    }
   </style>
 </head>
 
@@ -74,30 +97,38 @@
   <main>
     <div class="maxWidth" style="text-align: center;">
 
-
+      <!-- IMAGES (from dibesGallery edge function) -->
       <div id="gallery" style="display:none;">
         <img width="100px" data-slot="dosum" alt="dosum">
         <img width="100px" data-slot="petalia" alt="petalia">
         <img width="100px" data-slot="plantalia" alt="plantalia">
         <img width="100px" data-slot="unum" alt="unum">
-        <img width="100px" data-slot="1" alt="dosum">
-        <img width="100px" data-slot="2" alt="petalia">
-        <img width="100px" data-slot="3" alt="plantalia">
-        <img width="100px" data-slot="4" alt="unum">
+        <img width="100px" data-slot="1" alt="1">
+        <img width="100px" data-slot="2" alt="2">
+        <img width="100px" data-slot="3" alt="3">
+        <img width="100px" data-slot="4" alt="4">
       </div>
 
+      <!-- RESOURCE IFRAME (from fortress_ping edge function) -->
+      <div id="resourceSection" style="display:none;">
+        <p id="resourceTitle"></p>
+        <iframe
+          id="resourceIframe"
+          frameborder="0"
+          title="Private resource"
+        ></iframe>
+      </div>
+
+      <!-- FORM -->
       <div id="form">
         <input type="password" name="inputPassword" id="dibesgalleryPassword">
         <br>
         <p id="message"></p>
         <br>
-
-        <button id="enterBtn">Enter </button>
-
-
-
+        <button id="enterBtn">Enter</button>
         <br><br>
       </div>
+
       <div style="text-align: left;">
         <h3 class="serif">What is this?</h3>
         <p>The Dibesgallery is a private collection of artwork</p>
@@ -116,64 +147,117 @@
 Subject: dibesGallery register
     name: John Smith
     email: johnsmith@example.com
-      </pre>
-          <p>I manage registrations manually, store them in an email white list and send them password code on
-            convenience.</p>
-          <p>You can do the paypal payment <a href="https://www.paypal.com/ncp/payment/LTKF4EN6EMZZS"
-              target="_blank">here</a></p>
-
+          </pre>
+          <p>I manage registrations manually, store them in an email white list and send them password code on convenience.</p>
+          <p>You can do the paypal payment <a href="https://www.paypal.com/ncp/payment/LTKF4EN6EMZZS" target="_blank">here</a></p>
         </details>
-
       </div>
-
 
     </div>
   </main>
 
   <script>
+    // --- ENDPOINTS ---
+    const GALLERY_URL   = "https://kalidybwmoxhcwlfeftc.supabase.co/functions/v1/dibesGallery";
+    const FORTRESS_URL  = "https://kalidybwmoxhcwlfeftc.supabase.co/functions/v1/fortress_ping";
+    const FORTRESS_SLUG = "private-test";
 
-    let dibesgalleryPassword = document.getElementById("dibesgalleryPassword")
-    const EDGE_URL = "https://kalidybwmoxhcwlfeftc.supabase.co/functions/v1/dibesGallery";
+    // --- DOM ---
+    const passwordInput   = document.getElementById("dibesgalleryPassword");
+    const enterBtn        = document.getElementById("enterBtn");
+    const message         = document.getElementById("message");
+    const galleryEl       = document.getElementById("gallery");
+    const formEl          = document.getElementById("form");
+    const resourceSection = document.getElementById("resourceSection");
+    const resourceIframe  = document.getElementById("resourceIframe");
+    const resourceTitle   = document.getElementById("resourceTitle");
 
-    document.getElementById("enterBtn").addEventListener("click", async () => {
-      // keep history: const password = prompt("Enter your gallery password:");
+    // --- LOGIC A: signed image URLs ---
+    async function fetchGallery(password) {
+      const res = await fetch(GALLERY_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password }),
+      });
+      return res.json();
+    }
 
-      const password = dibesgalleryPassword.value;
+    // --- LOGIC B: private resource (HTML content from table) ---
+    async function fetchResource(password) {
+      const res = await fetch(FORTRESS_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ attempt: password, slug: FORTRESS_SLUG }),
+      });
+      return res.json();
+    }
+
+    // --- RENDER: images ---
+    function renderGallery(urls) {
+      document.querySelectorAll("img[data-slot]").forEach(img => {
+        const slot = img.dataset.slot;
+        if (urls[slot]) img.src = urls[slot];
+      });
+      galleryEl.style.display = "inline-flex";
+    }
+
+    // --- RENDER: iframe resource ---
+    function renderResource(resource) {
+      if (!resource) return;
+      if (resource.title) {
+        resourceTitle.textContent = resource.title;
+      }
+      if (resource.content) {
+        resourceIframe.srcdoc = resource.content;
+      }
+      resourceSection.style.display = "block";
+    }
+
+    // --- UNLOCK: Promise.all ---
+    async function unlock() {
+      const password = passwordInput.value;
       if (!password) return;
 
-      const message = document.getElementById("message");
       message.textContent = "Verifying...";
+      enterBtn.disabled = true;
 
       try {
-        const res = await fetch(EDGE_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ password }),
-        });
+        const [galleryData, resourceData] = await Promise.all([
+          fetchGallery(password),
+          fetchResource(password),
+        ]);
 
-        const data = await res.json();
-
-        if (!data.ok) {
-          message.textContent = data.message || "Access denied.";
+        // both must succeed
+        if (!galleryData.ok && !resourceData.ok) {
+          message.textContent = galleryData.message || resourceData.message || "Access denied.";
+          enterBtn.disabled = false;
           return;
         }
 
-        // populate images
-        document.querySelectorAll("img[data-slot]").forEach(img => {
-          const slot = img.dataset.slot;
-          if (data.urls[slot]) img.src = data.urls[slot];
-        });
-
-        document.getElementById("gallery").style.display = "inline-flex";
-        
-        document.getElementById("form").style.display = "none";
+        // hide form
+        formEl.style.display = "none";
         message.textContent = "";
-        
 
+        // render whatever succeeded
+        if (galleryData.ok && galleryData.urls) {
+          renderGallery(galleryData.urls);
+        }
+
+        if (resourceData.ok && resourceData.resource) {
+          renderResource(resourceData.resource);
+        }
 
       } catch (e) {
-        document.getElementById("message").textContent = e.message;
+        message.textContent = e.message;
+        enterBtn.disabled = false;
       }
+    }
+
+    // --- EVENTS ---
+    enterBtn.addEventListener("click", unlock);
+
+    passwordInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") unlock();
     });
   </script>
 </body>
