@@ -62,7 +62,7 @@ function subscribeToPresence(onCountChange) {
 // --- INIT ---
 hit(url).then(res => {
   const el = document.getElementById("display");
-  if (typeof res.count === "number" && res.count > 1) el.textContent = "Online: " + res.count;
+  if (typeof res.count === "number") el.textContent = res.count;
 });
 
 let local = parseInt(loadLocal()) || 0;
@@ -71,5 +71,5 @@ saveLocal(local);
 
 subscribeToPresence((count) => {
   const el = document.getElementById("displayPresence");
-  if (el) el.textContent = count;
+  if (el && count > 1) el.textContent = "Online: " + count;
 });
