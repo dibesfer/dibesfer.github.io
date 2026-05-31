@@ -75,5 +75,5 @@ saveLocal(local);
 
 subscribeToPresence((count) => {
   const el = document.getElementById("displayPresence");
-  if (el && count > 1) el.textContent = "Online: " + count;
+  if (el) el.textContent = count > 1 ? "Online: " + count : "";
 });
