@@ -110,15 +110,13 @@
         <img width="100px" data-slot="4" alt="4">
       </div>
 
-      <!-- RESOURCE IFRAME (from fortress_ping edge function) -->
-      <div id="resourceSection" style="display:none;">
-        <p id="resourceTitle"></p>
-        <iframe
-          id="resourceIframe"
-          frameborder="0"
-          title="Private resource"
-        ></iframe>
-      </div>
+    </div>
+    <!-- RESOURCE IFRAME (from fortress_ping edge function) -->
+    <div id="resourceSection" style="display:none;">
+      <p id="resourceTitle"></p>
+      <iframe id="resourceIframe" frameborder="0" title="Private resource"></iframe>
+    </div>
+    <div class="maxWidth" style="text-align: center;">
 
       <!-- FORM -->
       <div id="form">
@@ -149,8 +147,10 @@ Subject: dibesGallery register
     name: John Smith
     email: johnsmith@example.com
           </pre>
-          <p>I manage registrations manually, store them in an email white list and send them password code on convenience.</p>
-          <p>You can do the paypal payment <a href="https://www.paypal.com/ncp/payment/LTKF4EN6EMZZS" target="_blank">here</a></p>
+          <p>I manage registrations manually, store them in an email white list and send them password code on
+            convenience.</p>
+          <p>You can do the paypal payment <a href="https://www.paypal.com/ncp/payment/LTKF4EN6EMZZS"
+              target="_blank">here</a></p>
         </details>
       </div>
 
@@ -159,19 +159,19 @@ Subject: dibesGallery register
 
   <script>
     // --- ENDPOINTS ---
-    const GALLERY_URL   = "https://kalidybwmoxhcwlfeftc.supabase.co/functions/v1/dibesGallery";
-    const FORTRESS_URL  = "https://kalidybwmoxhcwlfeftc.supabase.co/functions/v1/fortress_ping";
+    const GALLERY_URL = "https://kalidybwmoxhcwlfeftc.supabase.co/functions/v1/dibesGallery";
+    const FORTRESS_URL = "https://kalidybwmoxhcwlfeftc.supabase.co/functions/v1/fortress_ping";
     const FORTRESS_SLUG = "private-test";
 
     // --- DOM ---
-    const passwordInput   = document.getElementById("dibesgalleryPassword");
-    const enterBtn        = document.getElementById("enterBtn");
-    const message         = document.getElementById("message");
-    const galleryEl       = document.getElementById("gallery");
-    const formEl          = document.getElementById("form");
+    const passwordInput = document.getElementById("dibesgalleryPassword");
+    const enterBtn = document.getElementById("enterBtn");
+    const message = document.getElementById("message");
+    const galleryEl = document.getElementById("gallery");
+    const formEl = document.getElementById("form");
     const resourceSection = document.getElementById("resourceSection");
-    const resourceIframe  = document.getElementById("resourceIframe");
-    const resourceTitle   = document.getElementById("resourceTitle");
+    const resourceIframe = document.getElementById("resourceIframe");
+    const resourceTitle = document.getElementById("resourceTitle");
 
     // --- LOGIC A: signed image URLs ---
     async function fetchGallery(password) {
