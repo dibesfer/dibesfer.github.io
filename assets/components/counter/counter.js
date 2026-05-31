@@ -50,6 +50,10 @@ function subscribeToPresence(onCountChange) {
       const count = Object.keys(channel.presenceState()).length;
       onCountChange(count);
     })
+    .on("presence", { event: "leave" }, () => {          // <-- add here
+      const count = Object.keys(channel.presenceState()).length;
+      onCountChange(count);
+    })
     .subscribe(async (status) => {
       if (status === "SUBSCRIBED") {
         await channel.track({ user_id: getDeviceId() });
