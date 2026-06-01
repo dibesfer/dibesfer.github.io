@@ -118,4 +118,5 @@ function attachScroll() {
 iframe.addEventListener("load", () => {
   attachScroll();
   updateGoButton();
+  myIframe.style= "background-color: rgba(255, 255, 255, 0.5);border-top: 1px solid rgba(255, 255, 255, 0); border-bottom: 1px solid rgba(255, 255, 255, 0);"
 });
