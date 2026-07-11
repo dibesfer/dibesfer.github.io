@@ -59,7 +59,9 @@ legend {
 #superDescription {
     color: rgb(194, 194, 194)
 }
-
+#audiovisuals {
+    height: 250px;
+}
 .panoramic {
     aspect-ratio: 16/9;
     object-fit: cover;
