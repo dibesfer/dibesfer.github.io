@@ -1,3 +1,7 @@
+* {
+    box-sizing: border-box;
+}
+
 body {
     background-color: gray;
     font-family: sans-serif;
@@ -29,13 +33,21 @@ hr {
     border: solid black;
 }
 fieldset {
+    background-color: rgb(255, 255, 255);
     border: solid black;
     margin: 15px 0;
 }
 
+fieldset > img {
+    border: solid black;
+}
+
 legend {
     font-size: larger;
-    font-variant: small-caps
+    color: white;
+    font-variant: small-caps;
+    background-color: rgb(63, 63, 63);
+    padding: 5px;
 }
 
 #superTitle a {
