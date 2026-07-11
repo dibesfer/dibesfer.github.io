@@ -1,0 +1,40 @@
+body {
+    background-color: gray;
+    font-family: sans-serif;
+}
+
+a {
+    color: red;
+    text-decoration: none;
+}
+
+img {
+    max-width: 100%;
+}
+
+main {
+    max-width: 1000px;
+    margin: auto;
+}
+
+header , footer {
+    text-align: center;
+}
+
+hr {
+    border: solid black;
+}
+fieldset {
+    border: solid black;
+}
+
+legend {
+    font-variant: small-caps
+}
+
+.panoramic {
+    aspect-ratio: 16/9;
+    object-fit: cover;
+    overflow: hidden;
+    width: 100%;
+}
