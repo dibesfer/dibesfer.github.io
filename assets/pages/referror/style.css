@@ -62,5 +62,6 @@ legend {
     object-fit: cover;
     overflow: hidden;
     width: 100%;
+    filter:grayscale(1)
 }
 
