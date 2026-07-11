@@ -62,9 +62,37 @@ legend {
     object-fit: cover;
     overflow: hidden;
     width: 100%;
-    filter:grayscale(1)
+    filter:grayscale(1);
+    transition: 0.2s;
 }
 .panoramic:hover {
     filter: grayscale(0);
 }
 
+@keyframes myAnimation {
+  from {rotate: 0deg;}
+  to {rotate: 360deg;}
+}
+
+/* The element to apply the animation to */
+#panoramicGalaxy {
+  width: 200px;
+  height: 200px;
+  background-color: red;
+  animation-name: myAnimation;
+  animation-duration: 8s;
+  animation-iteration-count: infinite;
+  animation-timing-function: linear;
+}
+
+#panoramicGalaxyContainer {
+    border-radius: 50% ;
+    height: 200px;
+    width: 100%;
+    aspect-ratio: 1/1;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+}
