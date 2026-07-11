@@ -30,9 +30,11 @@ hr {
 }
 fieldset {
     border: solid black;
+    margin: 15px 0;
 }
 
 legend {
+    font-size: larger;
     font-variant: small-caps
 }
 

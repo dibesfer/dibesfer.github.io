@@ -5,5 +5,10 @@ let listOfAudiovisuals = [
     "https://upload.wikimedia.org/wikipedia/commons/c/c4/Al-Attarine_Madrasa_%288753601695%29.jpg"
 ]
 
+changeImage()
+setInterval("changeImage()", 750)
 
-audiovisuals.src = listOfAudiovisuals[randomInt(0,listOfAudiovisuals.length-1)]
+function changeImage(){
+    audiovisuals.src = listOfAudiovisuals[randomInt(0,listOfAudiovisuals.length-1)]
+    
+}
