@@ -41,6 +41,9 @@ legend {
 #superTitle a {
     color: unset;
 }
+#superDescription {
+    color: rgb(194, 194, 194)
+}
 
 .panoramic {
     aspect-ratio: 16/9;
