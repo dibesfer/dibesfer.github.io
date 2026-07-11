@@ -8,12 +8,16 @@ a {
     text-decoration: none;
 }
 
+a:hover {
+    color: white !important;
+}
+
 img {
     max-width: 100%;
 }
 
 main {
-    max-width: 1000px;
+    max-width: 750px;
     margin: auto;
 }
 
@@ -32,9 +36,14 @@ legend {
     font-variant: small-caps
 }
 
+#superTitle a {
+    color: unset;
+}
+
 .panoramic {
     aspect-ratio: 16/9;
     object-fit: cover;
     overflow: hidden;
     width: 100%;
 }
+
