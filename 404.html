@@ -7,7 +7,7 @@
   <title>dibesfer</title>
   <link rel="icon" type="image/x-icon" href="/assets/branding/favicon512.ico">
   <link rel="stylesheet" href="/style.css">
-  <link rel="stylesheet" href="/assets/web/aa_amor/style.css">
+  <!-- <link rel="stylesheet" href="/assets/web/aa_amor/style.css"> -->
 
   <!-- FERSCRIPT.JS -->
   <script src="/ferscript.js"></script>
@@ -22,18 +22,27 @@
 </head>
 
 <body>
-  <header></header>
+  <header>
+    <a href="">
+      <img class="invertable icon" src="/assets/branding/dibesfer-logo.svg" alt="logo">
+      <h1>
+        <img class="invertable icon" style="color: black;" src="/assets/branding/dibesfer-title.png" alt="dibesfer">
+      </h1>
+    </a>
+    <p><b>Dib</b>ujos y <u>es</u>critos de <i>Fer</i></p>
+
+  </header>
 
   <main>
     <div class="maxWidth">
-    <div class="flexgrid" style="width: 100% !important;">
-      <div class="flexgriditem" style="max-width: unset !important;">
-        <h3>dibesfer.github.io</h3>
-        <h2>could not find - 404</h2>
-        <p>"<span id="showHref"></span> page"</p>
-        <p>May want to come back <a href="/" target="_top">home</a>?</p>
-        <br>
-        <div style="
+      <div class="flexgrid" style="width: 100% !important;">
+        <div class="flexgriditem" style="max-width: unset !important;">
+
+          <h2>could not find - 404</h2>
+          <p>"<span id="showHref"></span> page"</p>
+          <p>May want to come back <a href="/" target="_top">home</a>?</p>
+          <br>
+          <div style="
               position: relative;
               border-radius: 50%;
               border: 1px solid white;
@@ -41,34 +50,31 @@
               height: 100%;
               width: 100%;
               aspect-ratio: 16/9;
-              " >
-          <div 
-          style="height: 100%;background-size: cover;">
-            <img width="100%" height="100%" style="object-fit: cover;" src="https://upload.wikimedia.org/wikipedia/commons/c/c3/NGC_4414_%28NASA-med%29.jpg">
-          </div>
+              ">
 
-          <iframe style="
+            <iframe style="
               position: absolute;
               top: 0;
               left: 0;
               height: 100%;
 
           " width="100%" src="/assets/web/experimental/armillary/" frameborder="0"></iframe>
+          </div>
+          <br>
+          <p>Where are we? What is me? Where are we going to?</p>
+          <br>
         </div>
-        <br>
-        <p>Where are we? What is me? Where are we going to?</p>
-        <br>
-        <iframe style="height: 6rem;" width="100%" src="/assets/web/dibesfer_ads/" frameborder="0"></iframe>
-
       </div>
-
-    </div>
-
   </main>
 
-  <footer></footer>
+  <footer>
+    <img class="invertable icon" src="/assets/branding/fer-logo.svg" alt="">
+    <!-- <p><a target="_blank" href="https://liberapay.com/dibesfer">donate</a></p> -->
+    <iframe width="100%" src="/assets/components/counter" frameborder="0" style="border:none; height:1.4rem;"></iframe>
+    <p>dibesfer@gmail.com</p>
+  </footer>
   <script>
-    showHref.textContent = window.location.href.split("https://dibesfer.com")[1] || "404"
+    showHref.textContent = window.location.href.split("https://dibesfer.github.io")[1] || "404"
   </script>
   <script src="/assets/web/aa_amor/script.js"></script>
   <script src="/assets/scripts/supabase.js"></script>
