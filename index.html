@@ -21,7 +21,10 @@
 
     <!-- google adsense -->
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9244841916029231"
-     crossorigin="anonymous"></script>
+        crossorigin="anonymous"></script>
+
+    <!-- PWA -->
+    <link rel="manifest" href="manifest.json">
 
 </head>
 
@@ -67,6 +70,11 @@
         <p><a href="mailto:dibesfer@gmail.com">dibesfer@gmail.com</a></p>
     </footer>
 
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('./service-worker.js');
+        }
+    </script>
     <script src="/assets/code/sb.js"></script>
 </body>
 
